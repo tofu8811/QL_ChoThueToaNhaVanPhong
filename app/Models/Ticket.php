@@ -23,9 +23,14 @@ class Ticket extends Model
     protected $fillable = [
         'ticket_code', // Mã phiếu hỗ trợ (VD: TK-202611-0089)
         'building_id', // Tòa nhà xảy ra sự việc
-        'tenant_id', // Khách thuê tạo yêu cầu
+        'creator_role', // Vai trò người tạo: TENANT | PM | SALE | ADMIN
+        'creator_tenant_id', // ID Khách thuê tạo
+        'creator_pm_id', // ID Kỹ thuật/BQL tạo
+        'creator_sale_id', // ID Nhân viên Sales tạo
+        'creator_admin_id', // ID Admin tạo
+        'tenant_id', // Khách thuê chịu ảnh hưởng (NULL nếu sự cố công cộng)
         'contract_id', // Hợp đồng thuê hiệu lực
-        'unit_id', // Vị trí mặt bằng gặp sự cố
+        'unit_id', // Vị trí mặt bằng gặp sự cố (NULL nếu sự cố khu vực chung)
         'category', // MAINTENANCE | OVERTIME_CONSTRUCTION | SECURITY_CLEANING | SERVICE_COMPLAINT
         'priority', // LOW | NORMAL | HIGH | URGENT
         'title', // Tiêu đề ngắn gọn
@@ -60,6 +65,26 @@ class Ticket extends Model
         return $this->belongsTo(Building::class, 'building_id');
     }
 
+    public function creatorTenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'creator_tenant_id');
+    }
+
+    public function creatorPm(): BelongsTo
+    {
+        return $this->belongsTo(PropertyManager::class, 'creator_pm_id');
+    }
+
+    public function creatorSale(): BelongsTo
+    {
+        return $this->belongsTo(Sale::class, 'creator_sale_id');
+    }
+
+    public function creatorAdmin(): BelongsTo
+    {
+        return $this->belongsTo(Admin::class, 'creator_admin_id');
+    }
+
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
@@ -75,7 +100,7 @@ class Ticket extends Model
         return $this->belongsTo(Unit::class, 'unit_id');
     }
 
-    public function assignedPropertyManager(): BelongsTo
+    public function assignedPm(): BelongsTo
     {
         return $this->belongsTo(PropertyManager::class, 'assigned_pm_id');
     }
@@ -90,8 +115,17 @@ class Ticket extends Model
         return $this->hasMany(TicketProofImage::class, 'ticket_id');
     }
 
-    public function scopeStatus(Builder $query, TicketStatus $status): Builder
+    /**
+     * Lấy thực thể Người tạo bất kể vai trò nào.
+     */
+    public function getCreatorAttribute()
     {
-        return $query->where('status', $status);
+        return match ($this->creator_role) {
+            'TENANT' => $this->creatorTenant,
+            'PM'     => $this->creatorPm,
+            'SALE'   => $this->creatorSale,
+            'ADMIN'  => $this->creatorAdmin,
+            default  => null,
+        };
     }
 }

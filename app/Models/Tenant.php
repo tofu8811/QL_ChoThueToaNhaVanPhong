@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+use App\Models\TicketHistory;
 class Tenant extends Authenticatable
 {
     use HasFactory, HasUuidV7, Notifiable, SoftDeletes;
@@ -95,4 +96,14 @@ class Tenant extends Authenticatable
     {
         return $this->hasMany(Ticket::class, 'tenant_id');
     }
+    public function createdTickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class, 'creator_tenant_id');
+    }
+
+    public function ticketHistories(): HasMany
+    {
+        return $this->hasMany(TicketHistory::class, 'tenant_actor_id');
+    }
+
 }

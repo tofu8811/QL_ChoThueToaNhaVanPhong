@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+use App\Models\Ticket;
+use App\Models\TicketHistory;
 class PropertyManager extends Authenticatable
 {
     use HasFactory, HasUuidV7, Notifiable, SoftDeletes;
@@ -76,4 +78,14 @@ class PropertyManager extends Authenticatable
     {
         return $this->hasMany(Ticket::class, 'assigned_pm_id');
     }
+    public function createdTickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class, 'creator_pm_id');
+    }
+
+    public function ticketHistories(): HasMany
+    {
+        return $this->hasMany(TicketHistory::class, 'pm_actor_id');
+    }
+
 }

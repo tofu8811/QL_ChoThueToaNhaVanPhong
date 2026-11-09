@@ -19,10 +19,11 @@ class TicketProofImage extends Model
      */
     protected $fillable = [
         'ticket_id',
-        'history_id',
+        'ticket_history_id',
         'image_url',
-        'stage', // REPORTED | IN_PROGRESS | RESOLVED | REJECTED
-        'description',
+        'proof_type', // INCIDENT | COMPLETION | LOG_ATTACHMENT
+        'caption',
+        'uploaded_by_actor_type', // TENANT | PM | SALE | ADMIN
         'created_at',
     ];
 
@@ -43,6 +44,6 @@ class TicketProofImage extends Model
 
     public function history(): BelongsTo
     {
-        return $this->belongsTo(TicketHistory::class, 'history_id');
+        return $this->belongsTo(TicketHistory::class, 'ticket_history_id');
     }
 }

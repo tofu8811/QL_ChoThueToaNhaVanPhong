@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use App\Models\Ticket;
 class Contract extends Model
 {
     use HasFactory, HasUuidV7, SoftDeletes;
@@ -130,4 +131,9 @@ class Contract extends Model
         return $query->where('status', ContractStatus::ACTIVE)
             ->whereBetween('end_date', [now()->toDateString(), now()->addDays($days)->toDateString()]);
     }
+    public function tickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class, 'contract_id');
+    }
+
 }

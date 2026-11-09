@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use App\Models\Ticket;
 class Building extends Model
 {
     use HasFactory, HasUuidV7, SoftDeletes;
@@ -212,4 +213,9 @@ class Building extends Model
 
         return "https://www.google.com/maps/search/?api=1&query=" . urlencode("{$this->name} {$this->address} {$this->ward} {$this->district} {$this->province}");
     }
+    public function tickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class, 'building_id');
+    }
+
 }

@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+use App\Models\Ticket;
+use App\Models\TicketHistory;
 class Admin extends Authenticatable
 {
     use HasFactory, HasUuidV7, Notifiable, SoftDeletes;
@@ -55,4 +57,14 @@ class Admin extends Authenticatable
     {
         return $this->hasMany(Building::class, 'created_by_admin_id');
     }
+    public function createdTickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class, 'creator_admin_id');
+    }
+
+    public function ticketHistories(): HasMany
+    {
+        return $this->hasMany(TicketHistory::class, 'admin_actor_id');
+    }
+
 }

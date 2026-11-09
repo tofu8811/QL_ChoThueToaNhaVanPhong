@@ -17,9 +17,18 @@ return new class extends Migration
             $table->uuid('id')->primary(); // Khóa chính UUID phiếu hỗ trợ.
             $table->string('ticket_code', 30); // Mã phiếu hỗ trợ (VD: TK-202611-0089).
             $table->foreignUuid('building_id')->constrained('buildings')->restrictOnDelete(); // Tòa nhà xảy ra sự việc.
-            $table->foreignUuid('tenant_id')->constrained('tenants')->restrictOnDelete(); // Khách thuê tạo yêu cầu.
-            $table->foreignUuid('contract_id')->constrained('contracts')->restrictOnDelete(); // Căn cứ theo hợp đồng thuê đang có hiệu lực.
-            $table->foreignUuid('unit_id')->constrained('units')->restrictOnDelete(); // Vị trí mặt bằng gặp sự cố (Đèn cháy, Máy lạnh hỏng,...).
+
+            // 1. Phân loại và định danh người tạo phiếu (Phương án 1: Explicit Nullable FKs)
+            $table->string('creator_role', 20)->default('TENANT'); // TENANT | PM | SALE | ADMIN
+            $table->foreignUuid('creator_tenant_id')->nullable()->constrained('tenants')->nullOnDelete(); // Khách thuê tạo
+            $table->foreignUuid('creator_pm_id')->nullable()->constrained('property_managers')->nullOnDelete(); // Kỹ thuật / BQL tạo
+            $table->foreignUuid('creator_sale_id')->nullable()->constrained('sales')->nullOnDelete(); // Nhân viên Sales tạo
+            $table->foreignUuid('creator_admin_id')->nullable()->constrained('admins')->nullOnDelete(); // Admin / Ban giám đốc tạo
+
+            // 2. Đối tượng liên quan / mặt bằng phát sinh (cho phép NULL nếu là sự cố khu vực chung tòa nhà)
+            $table->foreignUuid('tenant_id')->nullable()->constrained('tenants')->restrictOnDelete(); // Khách thuê chịu ảnh hưởng (NULL nếu sự cố công cộng).
+            $table->foreignUuid('contract_id')->nullable()->constrained('contracts')->restrictOnDelete(); // Hợp đồng thuê liên quan.
+            $table->foreignUuid('unit_id')->nullable()->constrained('units')->restrictOnDelete(); // Vị trí mặt bằng gặp sự cố (NULL nếu sự cố khu vực chung).
             $table->string('category', 40); // Nhóm yêu cầu: MAINTENANCE (Sửa chữa kỹ thuật) | OVERTIME_CONSTRUCTION (Đăng ký thi công ngoài giờ) | SECURITY_CLEANING (Vệ sinh / An ninh) | SERVICE_COMPLAINT (Khiếu nại dịch vụ).
             $table->string('priority', 20)->default('NORMAL'); // Mức độ khẩn cấp: LOW | NORMAL | HIGH | URGENT.
             $table->string('title', 200); // Tiêu đề ngắn gọn mô tả sự cố.
@@ -35,6 +44,8 @@ return new class extends Migration
             $table->string('tenant_feedback', 500)->nullable(); // Ý kiến đóng góp cải thiện chất lượng dịch vụ của khách.
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index('creator_role', 'idx_tickets_creator_role');
 
             $table->index('status', 'idx_tickets_status');
             $table->index(['ticket_code', 'deleted_at'], 'idx_tickets_code_lookup');
@@ -65,13 +76,28 @@ return new class extends Migration
             } else {
                 DB::statement("CREATE UNIQUE INDEX `uq_tickets_active_code` ON `tickets` ((IF(`deleted_at` IS NULL, `ticket_code`, NULL)))");
             }
+                        DB::statement("ALTER TABLE `tickets` ADD CONSTRAINT `chk_tickets_creator_role` CHECK (`creator_role` IN ('TENANT', 'PM', 'SALE', 'ADMIN'))");
+            DB::statement("ALTER TABLE `tickets` ADD CONSTRAINT `chk_tickets_creator_integrity` CHECK (
+                (`creator_role` = 'TENANT' AND `creator_tenant_id` IS NOT NULL) OR
+                (`creator_role` = 'PM' AND `creator_pm_id` IS NOT NULL) OR
+                (`creator_role` = 'SALE' AND `creator_sale_id` IS NOT NULL) OR
+                (`creator_role` = 'ADMIN' AND `creator_admin_id` IS NOT NULL)
+            )");
+
             DB::statement("ALTER TABLE `tickets` ADD CONSTRAINT `chk_tickets_status` CHECK (`status` IN ('NEW', 'IN_PROGRESS', 'ON_HOLD', 'WAITING_CONFIRMATION', 'COMPLETED', 'CANCELLED'))");
             DB::statement("ALTER TABLE `tickets` ADD CONSTRAINT `chk_tickets_category` CHECK (`category` IN ('MAINTENANCE', 'OVERTIME_CONSTRUCTION', 'SECURITY_CLEANING', 'SERVICE_COMPLAINT'))");
             DB::statement("ALTER TABLE `tickets` ADD CONSTRAINT `chk_tickets_priority` CHECK (`priority` IN ('LOW', 'NORMAL', 'HIGH', 'URGENT'))");
             DB::statement("ALTER TABLE `tickets` ADD CONSTRAINT `chk_tickets_rating` CHECK (`tenant_rating` IS NULL OR `tenant_rating` BETWEEN 1 AND 5)");
         } elseif (in_array($driver, ['pgsql', 'sqlite'])) {
             DB::statement("CREATE UNIQUE INDEX uq_tickets_active_code ON tickets (ticket_code) WHERE deleted_at IS NULL");
-            if ($driver === 'pgsql') {
+                        if ($driver === 'pgsql') {
+                DB::statement("ALTER TABLE tickets ADD CONSTRAINT chk_tickets_creator_role CHECK (creator_role IN ('TENANT', 'PM', 'SALE', 'ADMIN'))");
+                DB::statement("ALTER TABLE tickets ADD CONSTRAINT chk_tickets_creator_integrity CHECK (
+                    (creator_role = 'TENANT' AND creator_tenant_id IS NOT NULL) OR
+                    (creator_role = 'PM' AND creator_pm_id IS NOT NULL) OR
+                    (creator_role = 'SALE' AND creator_sale_id IS NOT NULL) OR
+                    (creator_role = 'ADMIN' AND creator_admin_id IS NOT NULL)
+                )");
                 DB::statement("ALTER TABLE tickets ADD CONSTRAINT chk_tickets_status CHECK (status IN ('NEW', 'IN_PROGRESS', 'ON_HOLD', 'WAITING_CONFIRMATION', 'COMPLETED', 'CANCELLED'))");
                 DB::statement("ALTER TABLE tickets ADD CONSTRAINT chk_tickets_category CHECK (category IN ('MAINTENANCE', 'OVERTIME_CONSTRUCTION', 'SECURITY_CLEANING', 'SERVICE_COMPLAINT'))");
                 DB::statement("ALTER TABLE tickets ADD CONSTRAINT chk_tickets_priority CHECK (priority IN ('LOW', 'NORMAL', 'HIGH', 'URGENT'))");

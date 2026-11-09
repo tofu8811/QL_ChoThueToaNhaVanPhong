@@ -47,6 +47,7 @@ yarn-error.log
 _ide_helper.php
 *.suo
 *.user
+/.agent
 
 # 7. Testing & Quality Tools
 .phpunit.result.cache

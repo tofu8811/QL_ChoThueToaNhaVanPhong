@@ -27,10 +27,10 @@ return new class extends Migration
         $driver = DB::getDriverName();
         if ($driver === 'mysql') {
             DB::statement("ALTER TABLE `ticket_proof_images` ADD CONSTRAINT `chk_tpi_proof_type` CHECK (`proof_type` IN ('INCIDENT', 'COMPLETION', 'LOG_ATTACHMENT'))");
-            DB::statement("ALTER TABLE `ticket_proof_images` ADD CONSTRAINT `chk_tpi_uploader` CHECK (`uploaded_by_actor_type` IN ('TENANT', 'PM', 'ADMIN'))");
+            DB::statement("ALTER TABLE `ticket_proof_images` ADD CONSTRAINT `chk_tpi_uploader` CHECK (`uploaded_by_actor_type` IN ('TENANT', 'PM', 'SALE', 'ADMIN'))");
         } elseif ($driver === 'pgsql') {
             DB::statement("ALTER TABLE ticket_proof_images ADD CONSTRAINT chk_tpi_proof_type CHECK (proof_type IN ('INCIDENT', 'COMPLETION', 'LOG_ATTACHMENT'))");
-            DB::statement("ALTER TABLE ticket_proof_images ADD CONSTRAINT chk_tpi_uploader CHECK (uploaded_by_actor_type IN ('TENANT', 'PM', 'ADMIN'))");
+            DB::statement("ALTER TABLE ticket_proof_images ADD CONSTRAINT chk_tpi_uploader CHECK (uploaded_by_actor_type IN ('TENANT', 'PM', 'SALE', 'ADMIN'))");
         }
     }
 

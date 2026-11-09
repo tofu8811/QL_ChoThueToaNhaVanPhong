@@ -14,7 +14,6 @@ class BuildingAndUnitSeeder extends Seeder
      * - Trải rộng từ Hạng A, B, C tại các quận trọng điểm TP.HCM
      * - Bổ sung tọa độ GPS (latitude, longitude) chuẩn xác phục vụ Google Maps & bản đồ số
      * - Đi kèm 65 Mặt bằng cho thuê (Units) phân bổ diện tích, tầng và hiện trạng bàn giao
-     * - Đơn giá quy đổi từ USD sang VNĐ tỷ giá 25.687 và làm tròn chẵn số tiền
      */
     public function run(): void
     {
@@ -874,6 +873,7 @@ class BuildingAndUnitSeeder extends Seeder
             unset($b['units']);
 
             $buildingRecord = array_merge($b, [
+                'province_code' => 79, // Thành phố Hồ Chí Minh theo chuẩn Open API v2
                 'created_by_admin_id' => $superAdminId,
                 'created_at' => now(),
                 'updated_at' => now(),

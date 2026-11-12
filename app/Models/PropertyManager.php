@@ -10,12 +10,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 use App\Models\Ticket;
 use App\Models\TicketHistory;
 class PropertyManager extends Authenticatable
 {
-    use HasFactory, HasUuidV7, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, HasUuidV7, Notifiable, SoftDeletes;
 
     protected $table = 'property_managers';
 
@@ -67,8 +68,15 @@ class PropertyManager extends Authenticatable
     public function buildings(): BelongsToMany
     {
         return $this->belongsToMany(Building::class, 'manager_buildings', 'pm_id', 'building_id')
-            ->withPivot(['is_primary', 'assigned_by_admin_id', 'assigned_at'])
-            ->withTimestamps();
+            ->withPivot(['is_primary', 'assigned_by_admin_id', 'assigned_at']);
+    }
+
+    /**
+     * Alias quan hệ manager_buildings theo đặc tả Module 5.
+     */
+    public function manager_buildings(): BelongsToMany
+    {
+        return $this->buildings();
     }
 
     /**

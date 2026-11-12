@@ -68,11 +68,13 @@ return new class extends Migration
             } catch (\Throwable $e) {}
 
             // Tạo mới check constraints mở rộng
-            DB::statement("ALTER TABLE `contracts` ADD CONSTRAINT `chk_contracts_status` CHECK (`status` IN ('DRAFT', 'ACTIVE', 'EXPIRING_SOON', 'EXPIRED', 'TERMINATED', 'RESERVED', 'RENEWED'))");
-            DB::statement("ALTER TABLE `units` ADD CONSTRAINT `chk_units_status` CHECK (`status` IN ('AVAILABLE', 'EXPIRING_SOON', 'LEASED', 'MAINTENANCE', 'RESERVED'))");
-            DB::statement("ALTER TABLE `contracts` ADD CONSTRAINT `chk_contracts_deposit_split` CHECK (`refund_deposit_amount` >= 0 AND `penalty_deposit_amount` >= 0 AND `booking_deposit_amount` >= 0)");
-            DB::statement("ALTER TABLE `contracts` ADD CONSTRAINT `chk_contracts_approved_actors` CHECK (`approved_by_admin_id` IS NULL OR `approved_by_pm_id` IS NULL)");
-            DB::statement("ALTER TABLE `contracts` ADD CONSTRAINT `chk_contracts_terminated_actors` CHECK (`terminated_by_admin_id` IS NULL OR `terminated_by_pm_id` IS NULL)");
+            try {
+                DB::statement("ALTER TABLE `contracts` ADD CONSTRAINT `chk_contracts_status` CHECK (`status` IN ('DRAFT', 'ACTIVE', 'EXPIRING_SOON', 'EXPIRED', 'TERMINATED', 'RESERVED', 'RENEWED'))");
+                DB::statement("ALTER TABLE `units` ADD CONSTRAINT `chk_units_status` CHECK (`status` IN ('AVAILABLE', 'EXPIRING_SOON', 'LEASED', 'MAINTENANCE', 'RESERVED'))");
+                DB::statement("ALTER TABLE `contracts` ADD CONSTRAINT `chk_contracts_deposit_split` CHECK (`refund_deposit_amount` >= 0 AND `penalty_deposit_amount` >= 0 AND `booking_deposit_amount` >= 0)");
+                DB::statement("ALTER TABLE `contracts` ADD CONSTRAINT `chk_contracts_approved_actors` CHECK (`approved_by_admin_id` IS NULL OR `approved_by_pm_id` IS NULL)");
+                DB::statement("ALTER TABLE `contracts` ADD CONSTRAINT `chk_contracts_terminated_actors` CHECK (`terminated_by_admin_id` IS NULL OR `terminated_by_pm_id` IS NULL)");
+            } catch (\Throwable $e) {}
         } elseif ($driver === 'pgsql') {
             try {
                 DB::statement("ALTER TABLE contracts DROP CONSTRAINT IF EXISTS chk_contracts_status");

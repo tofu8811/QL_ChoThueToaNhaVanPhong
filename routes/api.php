@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BuildingApiController;
 use App\Http\Controllers\Api\V1\CrmLeadApiController;
 use App\Http\Controllers\Api\V1\LeadActivityApiController;
@@ -88,6 +89,29 @@ Route::prefix('v1')->group(function () {
         // Dòng thời gian chăm sóc & Nhật ký hoạt động
         Route::get('leads/{id}/activities', [LeadActivityApiController::class, 'index'])->name('v1.crm.leads.activities.index');
         Route::post('leads/{id}/activities', [LeadActivityApiController::class, 'store'])->name('v1.crm.leads.activities.store');
+    });
+
+    // =========================================================================
+    // MODULE 5: XÁC THỰC (AUTH) & PHÂN QUYỀN TÒA NHÀ — ENDPOINTS 67 - 71
+    // =========================================================================
+    Route::prefix('auth')->group(function () {
+        // 67. Đăng nhập Đa Tác nhân (Public)
+        Route::post('login', [AuthController::class, 'login'])->name('v1.auth.login');
+
+        // Các Endpoint yêu cầu Sanctum Bearer Token
+        Route::middleware('auth:sanctum')->group(function () {
+            // 68. Đăng xuất Thu hồi Token
+            Route::post('logout', [AuthController::class, 'logout'])->name('v1.auth.logout');
+
+            // 69. Xem Hồ sơ Cá nhân & Phạm vi Quản lý
+            Route::get('me', [AuthController::class, 'me'])->name('v1.auth.me');
+
+            // 70. Làm mới Phiên làm việc
+            Route::post('refresh', [AuthController::class, 'refresh'])->name('v1.auth.refresh');
+
+            // 71. Đổi Mật khẩu Cá nhân
+            Route::put('password', [AuthController::class, 'changePassword'])->name('v1.auth.password');
+        });
     });
 
 });

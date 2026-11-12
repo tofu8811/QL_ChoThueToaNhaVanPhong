@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\CrmLeadApiController;
 use App\Http\Controllers\Api\V1\LeadActivityApiController;
 use App\Http\Controllers\Api\V1\PortalLeadApiController;
 use App\Http\Controllers\Api\V1\ProvinceApiController;
+use App\Http\Controllers\Api\V1\TicketApiController;
 use App\Http\Controllers\Api\V1\UnitApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -111,6 +112,37 @@ Route::prefix('v1')->group(function () {
 
             // 71. Đổi Mật khẩu Cá nhân
             Route::put('password', [AuthController::class, 'changePassword'])->name('v1.auth.password');
+        });
+    });
+
+    // =========================================================================
+    // MODULE 4: QUẢN LÝ YÊU CẦU HỖ TRỢ & SỰ CỐ BẢO TRÌ (TICKETS & MAINTENANCE)
+    // =========================================================================
+    Route::middleware('auth:sanctum')->group(function () {
+        // Cổng Khách thuê (Tenant Portal)
+        Route::prefix('tenant')->group(function () {
+            // 58. Gửi Yêu cầu Hỗ trợ Mới
+            Route::post('tickets', [TicketApiController::class, 'createTenantTicket'])->name('v1.tenant.tickets.store');
+            // 65. Khách thuê Xác nhận Nghiệm thu
+            Route::post('tickets/{id}/confirm', [TicketApiController::class, 'confirm'])->name('v1.tenant.tickets.confirm');
+            // 66. Khách thuê Đánh giá Chất lượng Phục vụ (CSAT)
+            Route::post('tickets/{id}/rate', [TicketApiController::class, 'rate'])->name('v1.tenant.tickets.rate');
+        });
+
+        // Xử lý Sự cố & Điều phối Kỹ thuật
+        Route::prefix('tickets')->group(function () {
+            // 59. Chi tiết Tiến trình Ticket & Lịch sử
+            Route::get('{id}', [TicketApiController::class, 'show'])->name('v1.tickets.show');
+            // 60. Cập nhật Nội dung Ticket (khi còn OPEN)
+            Route::put('{id}', [TicketApiController::class, 'update'])->name('v1.tickets.update');
+            // 61. Xóa mềm Ticket (Admin)
+            Route::delete('{id}', [TicketApiController::class, 'destroy'])->name('v1.tickets.destroy');
+            // 62. Tiếp nhận & Phân công Xử lý (PM / Admin)
+            Route::patch('{id}/assign', [TicketApiController::class, 'assign'])->name('v1.tickets.assign');
+            // 63. Cập nhật Tiến độ Sửa chữa (ON_HOLD / RESOLVED)
+            Route::patch('{id}/status', [TicketApiController::class, 'updateStatus'])->name('v1.tickets.status');
+            // 64. Tải lên Ảnh Bằng chứng (Before / After)
+            Route::post('{id}/proof-images', [TicketApiController::class, 'uploadProofImages'])->name('v1.tickets.proof_images');
         });
     });
 

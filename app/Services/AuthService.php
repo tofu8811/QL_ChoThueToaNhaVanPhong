@@ -62,10 +62,10 @@ class AuthService
                 continue;
             }
 
-            // Tenant hỗ trợ tìm kiếm qua login_email hoặc email
+            // Tenant sử dụng login_email hoặc billing_email để đăng nhập
             if ($modelClass === Tenant::class) {
                 $user = $modelClass::where('login_email', $email)
-                    ->orWhere('email', $email)
+                    ->orWhere('billing_email', $email)
                     ->first();
             } else {
                 $user = $modelClass::where('email', $email)->first();
@@ -194,6 +194,16 @@ class AuthService
         } elseif ($user instanceof Admin) {
             // Super Admin quan sát toàn bộ tòa nhà
             $assignedBuildings = Building::select('id', 'building_code', 'name', 'grade')->get();
+        } elseif ($user instanceof Tenant) {
+            $user->load(['contracts.building', 'debitNotes.building']);
+            $assignedBuildings = $user->contracts->pluck('building')->filter()->unique('id')->values()->map(function ($b) {
+                return [
+                    'id'            => $b->id,
+                    'building_code' => $b->building_code,
+                    'name'          => $b->name,
+                    'grade'         => $b->grade,
+                ];
+            })->all();
         }
 
         return [

@@ -26,9 +26,44 @@ class PortalWebController extends Controller
     {
         $buildings = collect();
         $provinces = collect();
+        $recentContracts = collect();
+        $recentDebitNotes = collect();
+        $stats = [
+            'total_buildings' => 22,
+            'total_leasable_area' => 428430,
+            'total_tenants' => 10,
+            'free_consult_pct' => 100,
+            'by_grade' => ['A' => 7, 'B' => 11, 'C' => 4],
+            'by_district' => ['Quận 1' => 7, 'Quận 3' => 3, 'Bình Thạnh' => 3, 'Quận 7' => 2, 'TP Thủ Đức' => 1],
+        ];
 
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('buildings')) {
+                $totalBuildings = Building::published()->count();
+                $totalArea = (float) Building::published()->sum('total_leasable_area_sqm');
+                $totalTenants = \Illuminate\Support\Facades\Schema::hasTable('tenants') ? \App\Models\Tenant::count() : 10;
+
+                $stats = [
+                    'total_buildings' => $totalBuildings,
+                    'total_leasable_area' => $totalArea > 0 ? $totalArea : 428430,
+                    'total_tenants' => $totalTenants,
+                    'free_consult_pct' => 100,
+                    'by_grade' => [
+                        'A' => Building::published()->where('grade', 'A')->count(),
+                        'B' => Building::published()->where('grade', 'B')->count(),
+                        'C' => Building::published()->where('grade', 'C')->count(),
+                    ],
+                    'by_district' => [
+                        'Quận 1' => Building::published()->where('district', 'like', '%Quận 1%')->count(),
+                        'Quận 3' => Building::published()->where('district', 'like', '%Quận 3%')->count(),
+                        'Bình Thạnh' => Building::published()->where('district', 'like', '%Bình Thạnh%')->count(),
+                        'Quận 7' => Building::published()->where('district', 'like', '%Quận 7%')->count(),
+                        'TP Thủ Đức' => Building::published()->where(function ($q) {
+                            $q->where('district', 'like', '%Thủ Đức%')->orWhere('district', 'like', '%Thành phố Thủ Đức%');
+                        })->count(),
+                    ],
+                ];
+
                 $buildings = Building::query()
                     ->published()
                     ->with(['images', 'primaryImage', 'units'])
@@ -87,6 +122,35 @@ class PortalWebController extends Controller
             if (\Illuminate\Support\Facades\Schema::hasTable('provinces')) {
                 $provinces = Province::orderBy('name')->get();
             }
+
+            if (\Illuminate\Support\Facades\Schema::hasTable('contracts')) {
+                $recentContracts = \App\Models\Contract::with(['tenant', 'building'])->latest()->take(10)->get();
+            }
+
+            if (\Illuminate\Support\Facades\Schema::hasTable('debitnotes')) {
+                $recentDebitNotes = \App\Models\DebitNote::with(['tenant', 'building'])->latest()->take(10)->get();
+            }
+
+            $leads = collect();
+            if (\Illuminate\Support\Facades\Schema::hasTable('leads')) {
+                $leads = \App\Models\Lead::with('building')->latest()->take(15)->get();
+            }
+
+            $openTickets = 5;
+            if (\Illuminate\Support\Facades\Schema::hasTable('tickets')) {
+                $openTickets = \App\Models\Ticket::whereIn('status', ['OPEN', 'NEW', 'IN_PROGRESS'])->count() ?: 5;
+            }
+            $stats['open_tickets'] = $openTickets;
+
+            $sampleTenant = null;
+            if (\Illuminate\Support\Facades\Schema::hasTable('tenants')) {
+                $sampleTenant = \App\Models\Tenant::with(['contracts.building', 'debitNotes.building'])->where('login_email', 'contact@vng.com.vn')->first()
+                    ?? \App\Models\Tenant::with(['contracts.building', 'debitNotes.building'])->first();
+            }
+            $sampleContract = $sampleTenant?->contracts?->first()
+                ?? (\Illuminate\Support\Facades\Schema::hasTable('contracts') ? \App\Models\Contract::with(['building', 'tenant'])->latest()->first() : null);
+            $sampleDebit = $sampleTenant?->debitNotes?->latest()->first()
+                ?? (\Illuminate\Support\Facades\Schema::hasTable('debitnotes') ? \App\Models\DebitNote::with('building')->latest()->first() : null);
         } catch (\Throwable $e) {
             // Fallback an toàn nếu database chưa sẵn sàng
         }
@@ -94,6 +158,13 @@ class PortalWebController extends Controller
         return view('portal.index', [
             'serverBuildings' => $buildings,
             'provinces' => $provinces,
+            'recentContracts' => $recentContracts,
+            'recentDebitNotes' => $recentDebitNotes,
+            'leads' => $leads ?? collect(),
+            'sampleTenant' => $sampleTenant ?? null,
+            'sampleContract' => $sampleContract ?? null,
+            'sampleDebit' => $sampleDebit ?? null,
+            'stats' => $stats,
         ]);
     }
 }

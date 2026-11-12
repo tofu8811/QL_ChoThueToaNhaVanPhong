@@ -8,6 +8,7 @@ enum UnitStatus: string
     case EXPIRING_SOON = 'EXPIRING_SOON';
     case LEASED = 'LEASED';
     case MAINTENANCE = 'MAINTENANCE';
+    case RESERVED = 'RESERVED';
 
     /**
      * Tên hiển thị tiếng Việt trên giao diện.
@@ -19,6 +20,7 @@ enum UnitStatus: string
             self::EXPIRING_SOON => 'Sắp trống',
             self::LEASED => 'Đang cho thuê',
             self::MAINTENANCE => 'Đang sửa chữa',
+            self::RESERVED => 'Đang giữ chỗ',
         };
     }
 
@@ -32,6 +34,7 @@ enum UnitStatus: string
             self::EXPIRING_SOON => 'bg-amber-100 text-amber-800 border-amber-200',
             self::LEASED => 'bg-blue-100 text-blue-800 border-blue-200',
             self::MAINTENANCE => 'bg-rose-100 text-rose-800 border-rose-200',
+            self::RESERVED => 'bg-orange-100 text-orange-800 border-orange-200',
         };
     }
 
@@ -45,6 +48,7 @@ enum UnitStatus: string
             self::EXPIRING_SOON => 'Hợp đồng thuê hiện tại còn dưới 30 - 60 ngày hiệu lực, cho phép Sales chào thuê và đàm phán trước.',
             self::LEASED => 'Mặt bằng đang có khách thuê sử dụng và hợp đồng thuê còn hiệu lực. Bị khóa không cho phép lập hợp đồng trùng.',
             self::MAINTENANCE => 'Mặt bằng đang được bảo trì, nâng cấp nội thất hoặc cải tạo kỹ thuật; tạm ngưng tiếp nhận khách thuê.',
+            self::RESERVED => 'Mặt bằng đã nhận tiền đặt cọc giữ chỗ (Booking). Tạm khóa không cho phép lập hợp đồng trùng, hiển thị badge giữ chỗ trên Portal.',
         };
     }
 
@@ -54,6 +58,14 @@ enum UnitStatus: string
     public function canBeLeased(): bool
     {
         return in_array($this, [self::AVAILABLE, self::EXPIRING_SOON]);
+    }
+
+    /**
+     * Kiểm tra mặt bằng có đang trong diện đặt cọc giữ chỗ tạm thời hay không.
+     */
+    public function isReserved(): bool
+    {
+        return $this === self::RESERVED;
     }
 
     /**

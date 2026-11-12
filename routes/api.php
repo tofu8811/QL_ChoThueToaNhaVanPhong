@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AdminUserApiController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BuildingApiController;
 use App\Http\Controllers\Api\V1\CrmLeadApiController;
@@ -144,6 +145,22 @@ Route::prefix('v1')->group(function () {
             // 64. Tải lên Ảnh Bằng chứng (Before / After)
             Route::post('{id}/proof-images', [TicketApiController::class, 'uploadProofImages'])->name('v1.tickets.proof_images');
         });
+    });
+
+    // =========================================================================
+    // MODULE 5: QUẢN TRỊ NHÂN SỰ & QUẢN TRỊ VIÊN (ADMINS)
+    // =========================================================================
+    Route::middleware(['auth:sanctum', 'super_admin'])->prefix('admin/users/admins')->group(function () {
+        // 72. Danh sách Quản trị viên
+        Route::get('', [AdminUserApiController::class, 'index'])->name('v1.admin.users.admins.index');
+        // 73. Tạo mới Quản trị viên
+        Route::post('', [AdminUserApiController::class, 'store'])->name('v1.admin.users.admins.store');
+        // 74. Chi tiết Quản trị viên
+        Route::get('{id}', [AdminUserApiController::class, 'show'])->name('v1.admin.users.admins.show');
+        // 75. Cập nhật Quản trị viên
+        Route::put('{id}', [AdminUserApiController::class, 'update'])->name('v1.admin.users.admins.update');
+        // 76. Xóa mềm Quản trị viên
+        Route::delete('{id}', [AdminUserApiController::class, 'destroy'])->name('v1.admin.users.admins.destroy');
     });
 
 });

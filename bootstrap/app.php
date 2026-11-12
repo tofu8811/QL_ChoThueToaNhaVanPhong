@@ -23,8 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'force.json' => ForceJsonResponseMiddleware::class,
-            'api.catch'  => GlobalExceptionMiddleware::class,
+            'force.json'  => ForceJsonResponseMiddleware::class,
+            'api.catch'   => GlobalExceptionMiddleware::class,
+            'super_admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

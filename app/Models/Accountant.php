@@ -28,6 +28,7 @@ class Accountant extends Authenticatable
         'phone', // Số điện thoại
         'password', // Mật khẩu băm
         'status', // Trạng thái: ACTIVE | LOCKED | PENDING
+        'can_approve_adjustment', // Cờ quyền hạn: Cho phép lập phiếu điều chỉnh cước
         'last_login_at', // Thời điểm đăng nhập gần nhất
         'created_by_admin_id', // Admin tạo tài khoản
     ];
@@ -46,6 +47,7 @@ class Accountant extends Authenticatable
     protected function casts(): array
     {
         return [
+            'can_approve_adjustment' => 'boolean',
             'last_login_at' => 'datetime',
             'password' => 'hashed',
         ];

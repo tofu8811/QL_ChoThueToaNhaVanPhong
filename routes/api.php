@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AccountantUserApiController;
 use App\Http\Controllers\Api\V1\AdminUserApiController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BuildingApiController;
@@ -195,6 +196,22 @@ Route::prefix('v1')->group(function () {
         Route::put('{id}', [PropertyManagerApiController::class, 'update'])->name('v1.admin.users.pm.update');
         // 86. Xóa mềm Ban Quản lý (PM)
         Route::delete('{id}', [PropertyManagerApiController::class, 'destroy'])->name('v1.admin.users.pm.destroy');
+    });
+
+    // =========================================================================
+    // MODULE 5: NHÂN SỰ & QUẢN TRỊ KẾ TOÁN (ACCOUNTANTS)
+    // =========================================================================
+    Route::middleware('auth:sanctum')->prefix('admin/users/accountants')->group(function () {
+        // 87. Danh sách Nhân viên Kế toán
+        Route::get('', [AccountantUserApiController::class, 'index'])->name('v1.admin.users.accountants.index');
+        // 88. Tạo mới Kế toán
+        Route::post('', [AccountantUserApiController::class, 'store'])->name('v1.admin.users.accountants.store');
+        // 89. Chi tiết Nhân viên Kế toán
+        Route::get('{id}', [AccountantUserApiController::class, 'show'])->name('v1.admin.users.accountants.show');
+        // 90. Cập nhật Kế toán
+        Route::put('{id}', [AccountantUserApiController::class, 'update'])->name('v1.admin.users.accountants.update');
+        // 91. Xóa mềm Kế toán
+        Route::delete('{id}', [AccountantUserApiController::class, 'destroy'])->name('v1.admin.users.accountants.destroy');
     });
 
 });

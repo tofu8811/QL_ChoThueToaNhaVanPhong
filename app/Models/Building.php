@@ -147,8 +147,7 @@ class Building extends Model
     public function propertyManagers(): BelongsToMany
     {
         return $this->belongsToMany(PropertyManager::class, 'manager_buildings', 'building_id', 'pm_id')
-            ->withPivot(['is_primary', 'assigned_by_admin_id', 'assigned_at'])
-            ->withTimestamps();
+            ->withPivot(['is_primary', 'assigned_by_admin_id', 'assigned_at']);
     }
 
     /**
@@ -157,8 +156,7 @@ class Building extends Model
     public function accountants(): BelongsToMany
     {
         return $this->belongsToMany(Accountant::class, 'account_buildings', 'building_id', 'accountant_id')
-            ->withPivot(['assigned_by_admin_id', 'assigned_at'])
-            ->withTimestamps();
+            ->withPivot(['assigned_by_admin_id', 'assigned_at']);
     }
 
     /**

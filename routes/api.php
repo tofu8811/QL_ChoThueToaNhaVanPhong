@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\AccountantUserApiController;
 use App\Http\Controllers\Api\V1\AdminUserApiController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BuildingApiController;
+use App\Http\Controllers\Api\V1\BuildingAssignmentApiController;
 use App\Http\Controllers\Api\V1\CrmLeadApiController;
 use App\Http\Controllers\Api\V1\LeadActivityApiController;
 use App\Http\Controllers\Api\V1\PortalLeadApiController;
@@ -212,6 +213,29 @@ Route::prefix('v1')->group(function () {
         Route::put('{id}', [AccountantUserApiController::class, 'update'])->name('v1.admin.users.accountants.update');
         // 91. Xóa mềm Kế toán
         Route::delete('{id}', [AccountantUserApiController::class, 'destroy'])->name('v1.admin.users.accountants.destroy');
+    });
+
+    // =========================================================================
+    // MODULE 5: PHÂN CÔNG TÒA NHÀ & RBAC (BUILDING ASSIGNMENTS) — ENDPOINTS 92 - 98
+    // =========================================================================
+    Route::middleware('auth:sanctum')->prefix('admin/buildings/{buildingId}/assignments')->group(function () {
+        // 92. Xem Nhân sự Phụ trách Tòa nhà
+        Route::get('', [BuildingAssignmentApiController::class, 'getAssignments'])->name('v1.admin.buildings.assignments.index');
+
+        // 93. Gán Sales vào Tòa nhà
+        Route::post('sales', [BuildingAssignmentApiController::class, 'assignSales'])->name('v1.admin.buildings.assignments.sales.store');
+        // 94. Gỡ Sales khỏi Tòa nhà
+        Route::delete('sales/{saleId}', [BuildingAssignmentApiController::class, 'removeSales'])->name('v1.admin.buildings.assignments.sales.destroy');
+
+        // 95. Gán Ban Quản Lý (PM) vào Tòa nhà
+        Route::post('property-managers', [BuildingAssignmentApiController::class, 'assignPropertyManager'])->name('v1.admin.buildings.assignments.pm.store');
+        // 96. Gỡ Ban Quản Lý (PM) khỏi Tòa nhà
+        Route::delete('property-managers/{pmId}', [BuildingAssignmentApiController::class, 'removePropertyManager'])->name('v1.admin.buildings.assignments.pm.destroy');
+
+        // 97. Gán Kế toán vào Tòa nhà
+        Route::post('accountants', [BuildingAssignmentApiController::class, 'assignAccountant'])->name('v1.admin.buildings.assignments.accountants.store');
+        // 98. Gỡ Kế toán khỏi Tòa nhà
+        Route::delete('accountants/{accountantId}', [BuildingAssignmentApiController::class, 'removeAccountant'])->name('v1.admin.buildings.assignments.accountants.destroy');
     });
 
 });

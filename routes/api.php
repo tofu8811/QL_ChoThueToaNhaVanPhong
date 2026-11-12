@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\BuildingApiController;
 use App\Http\Controllers\Api\V1\CrmLeadApiController;
 use App\Http\Controllers\Api\V1\LeadActivityApiController;
 use App\Http\Controllers\Api\V1\PortalLeadApiController;
+use App\Http\Controllers\Api\V1\PropertyManagerApiController;
 use App\Http\Controllers\Api\V1\ProvinceApiController;
 use App\Http\Controllers\Api\V1\SaleUserApiController;
 use App\Http\Controllers\Api\V1\TicketApiController;
@@ -178,6 +179,22 @@ Route::prefix('v1')->group(function () {
         Route::put('{id}', [SaleUserApiController::class, 'update'])->name('v1.admin.users.sales.update');
         // 81. Xóa mềm Nhân viên Sales
         Route::delete('{id}', [SaleUserApiController::class, 'destroy'])->name('v1.admin.users.sales.destroy');
+    });
+
+    // =========================================================================
+    // MODULE 5: NHÂN SỰ & QUẢN TRỊ BAN QUẢN LÝ TÒA NHÀ (PROPERTY MANAGERS)
+    // =========================================================================
+    Route::middleware('auth:sanctum')->prefix('admin/users/property-managers')->group(function () {
+        // 82. Danh sách Ban Quản lý (PM)
+        Route::get('', [PropertyManagerApiController::class, 'index'])->name('v1.admin.users.pm.index');
+        // 83. Tạo mới Ban Quản lý (PM)
+        Route::post('', [PropertyManagerApiController::class, 'store'])->name('v1.admin.users.pm.store');
+        // 84. Chi tiết Ban Quản lý (PM)
+        Route::get('{id}', [PropertyManagerApiController::class, 'show'])->name('v1.admin.users.pm.show');
+        // 85. Cập nhật Ban Quản lý (PM)
+        Route::put('{id}', [PropertyManagerApiController::class, 'update'])->name('v1.admin.users.pm.update');
+        // 86. Xóa mềm Ban Quản lý (PM)
+        Route::delete('{id}', [PropertyManagerApiController::class, 'destroy'])->name('v1.admin.users.pm.destroy');
     });
 
 });

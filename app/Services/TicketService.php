@@ -27,6 +27,75 @@ use Illuminate\Support\Str;
 class TicketService
 {
     /**
+     * 57. Lấy danh sách phiếu yêu cầu hỗ trợ / bảo trì (Tickets).
+     * Phân quyền: Tenant xem ticket công ty mình, PM xem tòa nhà phụ trách, Admin xem toàn bộ.
+     *
+     * @param array $filters
+     * @param mixed $user
+     * @param int $perPage
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function getTicketList(array $filters, mixed $user, int $perPage = 10)
+    {
+        $query = Ticket::with([
+            'building:id,name,building_code,address',
+            'unit:id,unit_code,floor_number',
+            'tenant:id,company_name,representative_name,contact_phone',
+            'assignedPm:id,full_name,employee_code,phone',
+        ]);
+
+        // Phân quyền dữ liệu (Multi-guard scope)
+        if ($user instanceof Tenant) {
+            $query->where('tenant_id', $user->id);
+        } elseif ($user instanceof PropertyManager) {
+            $managedBuildingIds = DB::table('manager_buildings')
+                ->where('pm_id', $user->id)
+                ->pluck('building_id')
+                ->toArray();
+            $query->whereIn('building_id', $managedBuildingIds);
+        }
+
+        // Lọc theo trạng thái
+        if (!empty($filters['status'])) {
+            $status = strtoupper($filters['status']);
+            $statusMap = [
+                'OPEN' => 'NEW',
+                'RESOLVED' => 'WAITING_CONFIRMATION',
+                'CLOSED' => 'COMPLETED',
+            ];
+            $dbStatus = $statusMap[$status] ?? $status;
+            $query->where('status', $dbStatus);
+        }
+
+        // Lọc theo mức độ ưu tiên
+        if (!empty($filters['priority'])) {
+            $query->where('priority', strtoupper($filters['priority']));
+        }
+
+        // Lọc theo phân loại sự cố
+        if (!empty($filters['category'])) {
+            $query->where('category', strtoupper($filters['category']));
+        }
+
+        // Lọc theo tòa nhà
+        if (!empty($filters['building_id'])) {
+            $query->where('building_id', $filters['building_id']);
+        }
+
+        // Tìm kiếm theo từ khóa
+        if (!empty($filters['keyword'])) {
+            $kw = '%' . trim($filters['keyword']) . '%';
+            $query->where(function ($q) use ($kw) {
+                $q->where('ticket_code', 'like', $kw)
+                  ->orWhere('title', 'like', $kw)
+                  ->orWhere('description', 'like', $kw);
+            });
+        }
+
+        return $query->latest()->paginate($perPage);
+    }
+
+    /**
      * Khách thuê gửi yêu cầu hỗ trợ sự cố mới từ Tenant Portal (UC-04).
      *
      * @param array $data

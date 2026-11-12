@@ -6,6 +6,28 @@ use OpenApi\Attributes as OA;
 
 class TicketDoc extends BaseDoc
 {
+    #[OA\Get(
+        path: '/api/v1/tickets',
+        tags: ['Tickets & Maintenance'],
+        summary: '57. Danh sách Phiếu Yêu cầu Sự cố (Tickets)',
+        description: 'Danh sách phiếu yêu cầu hỗ trợ / bảo trì. Khách thuê xem ticket công ty mình; Ban quản lý xem tòa nhà phụ trách; Admin xem toàn bộ.',
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(name: 'page', in: 'query', required: false, description: 'Số trang', schema: new OA\Schema(type: 'integer', default: 1)),
+            new OA\Parameter(name: 'per_page', in: 'query', required: false, description: 'Số bản ghi mỗi trang', schema: new OA\Schema(type: 'integer', default: 10)),
+            new OA\Parameter(name: 'status', in: 'query', required: false, description: 'Trạng thái ticket (OPEN, IN_PROGRESS, ON_HOLD, RESOLVED, CLOSED)', schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'priority', in: 'query', required: false, description: 'Mức độ ưu tiên (LOW, NORMAL, HIGH, URGENT)', schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'category', in: 'query', required: false, description: 'Phân loại sự cố', schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'building_id', in: 'query', required: false, description: 'Lọc theo ID tòa nhà', schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'keyword', in: 'query', required: false, description: 'Tìm theo mã ticket, tiêu đề, mô tả', schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Lấy danh sách ticket thành công', content: new OA\JsonContent(ref: '#/components/schemas/ApiResponseSuccess')),
+            new OA\Response(response: 401, description: 'Chưa xác thực', content: new OA\JsonContent(ref: '#/components/schemas/ApiResponseError')),
+        ]
+    )]
+    public function index() {}
+
     #[OA\Post(
         path: '/api/v1/tenant/tickets',
         tags: ['Tickets & Maintenance'],

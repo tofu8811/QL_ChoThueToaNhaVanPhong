@@ -55,6 +55,50 @@ class TicketApiTest extends TestCase
     }
 
     /**
+     * 57. GET /api/v1/tickets: Danh sách Ticket có phân quyền theo vai trò (Tenant, PM, Admin).
+     */
+    public function test_can_get_ticket_list_with_role_scoping(): void
+    {
+        // Admin xem toàn bộ danh sách ticket
+        $adminRes = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->getJson('/api/v1/tickets');
+
+        $adminRes->assertStatus(200)
+            ->assertJsonPath('status', 'success')
+            ->assertJsonStructure([
+                'status',
+                'message',
+                'code',
+                'data',
+                'meta' => [
+                    'current_page',
+                    'last_page',
+                    'per_page',
+                    'total',
+                ],
+            ]);
+
+        // Tenant chỉ xem ticket của doanh nghiệp mình
+        $tenantRes = $this->withHeader('Authorization', "Bearer {$this->tenantToken}")
+            ->getJson('/api/v1/tickets');
+
+        $tenantRes->assertStatus(200)
+            ->assertJsonPath('status', 'success');
+    }
+
+    /**
+     * 57. GET /api/v1/tickets: Lọc ticket theo status, priority và từ khóa.
+     */
+    public function test_can_filter_ticket_list(): void
+    {
+        $response = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->getJson('/api/v1/tickets?status=OPEN&priority=NORMAL');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('status', 'success');
+    }
+
+    /**
      * 58. POST /api/v1/tenant/tickets: Khách thuê gửi yêu cầu hỗ trợ mới.
      */
     public function test_tenant_can_create_ticket_with_auto_generated_code(): void

@@ -25,6 +25,19 @@ class TicketApiController extends BaseApiController
     ) {}
 
     /**
+     * 57. GET /api/v1/tickets: Danh sách Phiếu Yêu cầu Sự cố (Tickets).
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $perPage = (int) $request->input('per_page', 10);
+
+        $tickets = $this->ticketService->getTicketList($request->all(), $user, $perPage);
+
+        return $this->paginateResponse($tickets, 'Lấy danh sách phiếu yêu cầu hỗ trợ thành công.');
+    }
+
+    /**
      * 58. POST /api/v1/tenant/tickets: Khách thuê gửi yêu cầu hỗ trợ mới.
      */
     public function createTenantTicket(StoreTenantTicketRequest $request): JsonResponse

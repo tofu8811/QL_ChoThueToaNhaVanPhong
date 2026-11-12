@@ -136,6 +136,8 @@ Route::prefix('v1')->group(function () {
 
         // Xử lý Sự cố & Điều phối Kỹ thuật
         Route::prefix('tickets')->group(function () {
+            // 57. Danh sách Phiếu Yêu cầu Sự cố
+            Route::get('', [TicketApiController::class, 'index'])->name('v1.tickets.index');
             // 59. Chi tiết Tiến trình Ticket & Lịch sử
             Route::get('{id}', [TicketApiController::class, 'show'])->name('v1.tickets.show');
             // 60. Cập nhật Nội dung Ticket (khi còn OPEN)

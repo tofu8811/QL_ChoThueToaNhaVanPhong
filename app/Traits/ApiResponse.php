@@ -43,6 +43,22 @@ trait ApiResponse
     }
 
     /**
+     * Trả về phản hồi tạo mới thành công (HTTP 201 Created).
+     *
+     * @param mixed $data Dữ liệu bản ghi vừa tạo.
+     * @param string $message Thông điệp thành công.
+     * @param array $headers Headers bổ sung.
+     * @return JsonResponse
+     */
+    public function createdResponse(
+        mixed $data = null,
+        string $message = 'Khởi tạo thành công.',
+        array $headers = []
+    ): JsonResponse {
+        return $this->successResponse($data, $message, 201, $headers);
+    }
+
+    /**
      * Trả về phản hồi lỗi chuẩn hóa theo mẫu Tuần 05.
      *
      * @param string $message Thông điệp lỗi hiển thị cho client.

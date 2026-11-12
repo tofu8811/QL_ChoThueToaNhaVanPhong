@@ -1,0 +1,2265 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Hệ Thống Quản Lý Và Cho Thuê Tòa Nhà Văn Phòng API",
+        "description": "Tài liệu RESTful API chuẩn hóa cho Đồ án Tốt nghiệp Quản lý và Cho thuê Tòa nhà Văn phòng.",
+        "contact": {
+            "name": "Đội ngũ phát triển Backend",
+            "email": "contact@officeleasing.vn"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000",
+            "description": "Máy chủ phát triển Localhost"
+        }
+    ],
+    "paths": {
+        "/api/v1/portal/buildings": {
+            "get": {
+                "tags": [
+                    "Buildings (Public)"
+                ],
+                "summary": "Danh sách Tòa nhà văn phòng chào thuê (Public Portal)",
+                "description": "Tìm kiếm và lọc tòa nhà văn phòng công khai theo quận huyện, phân hạng A/B/C, khoảng giá, diện tích trống.",
+                "operationId": "7480a7f37983f5102e08428c6b75cfe6",
+                "parameters": [
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "Từ khóa tên tòa nhà, địa chỉ"
+                    },
+                    {
+                        "name": "province_code",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "district_code",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "grade",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "A",
+                                "B",
+                                "C"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "min_price",
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "max_price",
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "min_area",
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "max_area",
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiPaginateResponse"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/portal/buildings/{slug}": {
+            "get": {
+                "tags": [
+                    "Buildings (Public)"
+                ],
+                "summary": "Xem chi tiết Tòa nhà văn phòng theo slug chuẩn SEO",
+                "operationId": "c11df2be647e4f06408a729311d79439",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "description": "Slug SEO tòa nhà",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/buildings": {
+            "get": {
+                "tags": [
+                    "Buildings (Admin)"
+                ],
+                "summary": "Danh sách Tòa nhà trong phân hệ Quản trị (Admin / BQL)",
+                "operationId": "9f539406c4e3d72f7c7c59db09bca31e",
+                "parameters": [
+                    {
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "name": "grade",
+                        "in": "query"
+                    },
+                    {
+                        "name": "is_published",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiPaginateResponse"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Buildings (Admin)"
+                ],
+                "summary": "Tạo mới Tòa nhà văn phòng",
+                "operationId": "6282cbad626cfbd16c86471b1d63fea1",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreBuildingInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tạo mới thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/buildings/{id}": {
+            "get": {
+                "tags": [
+                    "Buildings (Admin)"
+                ],
+                "summary": "Xem chi tiết Tòa nhà phục vụ chỉnh sửa quản trị",
+                "operationId": "ab135b96aad9849deeed75ca22233128",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID tòa nhà",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Buildings (Admin)"
+                ],
+                "summary": "Cập nhật thông tin Tòa nhà",
+                "operationId": "7073fec7c2c079d4634cca6b123673d1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID tòa nhà",
+                        "required": true
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreBuildingInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Buildings (Admin)"
+                ],
+                "summary": "Xóa mềm Tòa nhà văn phòng",
+                "operationId": "7e5486c7c82ef6a9399b97d177305594",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID tòa nhà",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xóa thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/buildings/{id}/images": {
+            "post": {
+                "tags": [
+                    "Buildings (Admin)"
+                ],
+                "summary": "Tải lên hình ảnh Tòa nhà",
+                "operationId": "46fb9a5bfb939b0c1d51899e5956264f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID tòa nhà",
+                        "required": true
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "images"
+                                ],
+                                "properties": {
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    },
+                                    "caption": {
+                                        "type": "string",
+                                        "example": "Mặt tiền sảnh chính"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Upload thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/buildings/{id}/images/{imageId}": {
+            "delete": {
+                "tags": [
+                    "Buildings (Admin)"
+                ],
+                "summary": "Xóa hình ảnh Tòa nhà",
+                "operationId": "dd4a76c1f416a50175a51b5be533d9c5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID tòa nhà",
+                        "required": true
+                    },
+                    {
+                        "name": "imageId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xóa ảnh thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/buildings/{id}/images/{imageId}/set-primary": {
+            "patch": {
+                "tags": [
+                    "Buildings (Admin)"
+                ],
+                "summary": "Đặt hình ảnh làm ảnh đại diện chính của Tòa nhà",
+                "operationId": "e7268bc8b840ca16647baa0fe3817a3b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID tòa nhà",
+                        "required": true
+                    },
+                    {
+                        "name": "imageId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/portal/leads": {
+            "post": {
+                "tags": [
+                    "Leads (Public Portal)"
+                ],
+                "summary": "Gửi yêu cầu Báo giá / Site tour từ Public Portal",
+                "description": "Khách hàng vãng lai gửi form liên hệ. Tự động kiểm tra chống trùng 30 ngày và phân bổ cho Sales theo Least Active Leads.",
+                "operationId": "218578268f3b03d214f0027efa458bee",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "contact_full_name",
+                                    "phone",
+                                    "email",
+                                    "building_id"
+                                ],
+                                "properties": {
+                                    "contact_full_name": {
+                                        "type": "string",
+                                        "example": "Nguyễn Văn A"
+                                    },
+                                    "company_name": {
+                                        "type": "string",
+                                        "example": "Công ty Cổ phần Alpha"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0901234567"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "contact@alpha.com"
+                                    },
+                                    "building_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "unit_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "desired_area_sqm": {
+                                        "type": "number",
+                                        "example": 150
+                                    },
+                                    "budget_min": {
+                                        "type": "number",
+                                        "example": 30000000
+                                    },
+                                    "budget_max": {
+                                        "type": "number",
+                                        "example": 50000000
+                                    },
+                                    "preferred_site_tour_at": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "customer_note": {
+                                        "type": "string",
+                                        "example": "Cần khảo sát vào sáng thứ Bảy"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tạo Lead thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Lỗi xác thực dữ liệu",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/crm/leads": {
+            "get": {
+                "tags": [
+                    "CRM Leads"
+                ],
+                "summary": "Danh sách Lead theo Pipeline CRM",
+                "operationId": "206621e0d7f108b7e8366b9f0359702e",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Trạng thái: PENDING_ASSIGN, NEW, NEGOTIATING, WON, LOST"
+                    },
+                    {
+                        "name": "building_id",
+                        "in": "query",
+                        "description": "Lọc theo ID tòa nhà"
+                    },
+                    {
+                        "name": "assigned_sales_id",
+                        "in": "query",
+                        "description": "Lọc theo ID Sales phụ trách"
+                    },
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "Từ khóa tên, SĐT, email, công ty"
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiPaginateResponse"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "CRM Leads"
+                ],
+                "summary": "Tạo hồ sơ Lead thủ công từ CRM (Hotline/Trực tiếp)",
+                "operationId": "f3b224772cdf1c8e50ac2b568780604c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "contact_full_name",
+                                    "phone",
+                                    "email"
+                                ],
+                                "properties": {
+                                    "contact_full_name": {
+                                        "type": "string"
+                                    },
+                                    "company_name": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "phone": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "lead_source": {
+                                        "type": "string",
+                                        "example": "HOTLINE"
+                                    },
+                                    "building_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "unit_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "assigned_sales_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Khởi tạo thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Lỗi xác thực",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/crm/leads/{id}": {
+            "get": {
+                "tags": [
+                    "CRM Leads"
+                ],
+                "summary": "Xem chi tiết hồ sơ Lead và toàn bộ lịch sử chăm sóc",
+                "operationId": "2437f9a11eb5014a6553cfcc73ae8c91",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Lead",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "CRM Leads"
+                ],
+                "summary": "Cập nhật thông tin nhu cầu của Lead",
+                "operationId": "a0d518cfcf6c9d1733b1fb3fe3d3f38f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Lead",
+                        "required": true
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "desired_area_sqm": {
+                                        "type": "number"
+                                    },
+                                    "budget_min": {
+                                        "type": "number"
+                                    },
+                                    "budget_max": {
+                                        "type": "number"
+                                    },
+                                    "customer_note": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "CRM Leads"
+                ],
+                "summary": "Xóa mềm hồ sơ Lead",
+                "operationId": "65979123d0abecd813659f4616e23ef4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Lead",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xóa thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Không được phép xóa nếu đã WON",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/crm/leads/{id}/status": {
+            "patch": {
+                "tags": [
+                    "CRM Leads"
+                ],
+                "summary": "Cập nhật trạng thái Pipeline (Bắt buộc lý do nếu chuyển sang LOST)",
+                "operationId": "cdc74c9e4bbf452390e5bcc54fb21eb0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Lead",
+                        "required": true
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "PENDING_ASSIGN",
+                                            "NEW",
+                                            "NEGOTIATING",
+                                            "WON",
+                                            "LOST"
+                                        ]
+                                    },
+                                    "lost_reason_category": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "lost_reason_detail": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Thiếu lý do khi LOST",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/crm/leads/{id}/assign": {
+            "post": {
+                "tags": [
+                    "CRM Leads"
+                ],
+                "summary": "Điều phối hoặc phân công lại Sales phụ trách Lead",
+                "operationId": "241fa285cc098544c027f1aa7309485e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Lead",
+                        "required": true
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "sales_id"
+                                ],
+                                "properties": {
+                                    "sales_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "assignment_note": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Điều phối thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/crm/leads/{id}/convert-to-tenant": {
+            "post": {
+                "tags": [
+                    "CRM Leads"
+                ],
+                "summary": "Chuyển đổi Lead thành công sang Khách thuê chính thức (Tenant)",
+                "operationId": "b377eec64e885ddbf9379b3d4a349fba",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Lead",
+                        "required": true
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tax_code"
+                                ],
+                                "properties": {
+                                    "tax_code": {
+                                        "type": "string",
+                                        "example": "0312345678"
+                                    },
+                                    "company_name": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "representative_position": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "headquarter_address": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Chuyển đổi thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Lead đã được chuyển đổi trước đó",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/crm/leads/{id}/activities": {
+            "get": {
+                "tags": [
+                    "Lead Activities"
+                ],
+                "summary": "Lấy dòng thời gian (Timeline) các lần gọi, email, site tour của Lead",
+                "operationId": "99d9b322e7d621d97ac2497b1bab9f48",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Lead",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Lead Activities"
+                ],
+                "summary": "Ghi nhật ký tương tác mới (Tự động kích hoạt first_contacted_at)",
+                "operationId": "439526c069ce4133c3e7413a39071942",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Lead",
+                        "required": true
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "activity_type",
+                                    "title"
+                                ],
+                                "properties": {
+                                    "activity_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "CALL",
+                                            "SITE_TOUR",
+                                            "EMAIL",
+                                            "MEETING",
+                                            "NOTE",
+                                            "QUOTATION_SENT"
+                                        ]
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Gọi điện báo giá mặt bằng P.1201"
+                                    },
+                                    "content": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "event_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Ghi nhận thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/provinces": {
+            "get": {
+                "tags": [
+                    "Provinces"
+                ],
+                "summary": "Lấy danh mục tất cả Tỉnh / Thành phố",
+                "description": "Trả về danh sách 63 tỉnh/thành phố phục vụ bộ lọc tìm kiếm và dropdown địa chỉ.",
+                "operationId": "6fd657f9493b3e3175c434322bee7792",
+                "responses": {
+                    "200": {
+                        "description": "Lấy danh sách tỉnh thành thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi máy chủ nội bộ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/provinces/{code}": {
+            "get": {
+                "tags": [
+                    "Provinces"
+                ],
+                "summary": "Lấy chi tiết một Tỉnh / Thành phố kèm dữ liệu địa giới",
+                "description": "Trả về thông tin chi tiết tỉnh/thành kèm danh sách quận huyện / phường xã từ bộ nhớ đệm Geo.",
+                "operationId": "bf1e352e0d3e1b93944a93c280a4e4a9",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "description": "Mã code hành chính của tỉnh (VD: 79)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 79
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy thông tin tỉnh thành thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy tỉnh thành",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/portal/units": {
+            "get": {
+                "tags": [
+                    "Units (Public)"
+                ],
+                "summary": "Danh sách Mặt bằng văn phòng chào thuê khả dụng (Public Portal)",
+                "operationId": "8ae3447ded14188705aff2e548634ddd",
+                "parameters": [
+                    {
+                        "name": "building_id",
+                        "in": "query"
+                    },
+                    {
+                        "name": "floor_number",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "min_area",
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "max_area",
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "min_price",
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "max_price",
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 12
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiPaginateResponse"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/portal/units/{id}": {
+            "get": {
+                "tags": [
+                    "Units (Public)"
+                ],
+                "summary": "Chi tiết Mặt bằng văn phòng (Public Portal)",
+                "operationId": "68841358feeed57ff7fbb02deec88d7b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID mặt bằng",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/units": {
+            "get": {
+                "tags": [
+                    "Units (Admin)"
+                ],
+                "summary": "Danh sách Quản lý Mặt bằng (Admin / BQL)",
+                "operationId": "d893b5faebafcfce486e9d63229bc318",
+                "parameters": [
+                    {
+                        "name": "building_id",
+                        "in": "query"
+                    },
+                    {
+                        "name": "unit_code",
+                        "in": "query"
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "AVAILABLE",
+                                "EXPIRING_SOON",
+                                "LEASED",
+                                "MAINTENANCE"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "floor_number",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiPaginateResponse"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Units (Admin)"
+                ],
+                "summary": "Tạo mới Mặt bằng văn phòng",
+                "operationId": "81345805fbd2d248961c6ab59ca4c98d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreUnitInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tạo mới thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/units/{id}": {
+            "get": {
+                "tags": [
+                    "Units (Admin)"
+                ],
+                "summary": "Xem chi tiết kỹ thuật Mặt bằng",
+                "operationId": "31a34568a69ee6eb868aaade299d7115",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID mặt bằng",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Units (Admin)"
+                ],
+                "summary": "Cập nhật thông số Mặt bằng",
+                "operationId": "eee87241daf54be06de932e9b4d935dc",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID mặt bằng",
+                        "required": true
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreUnitInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Units (Admin)"
+                ],
+                "summary": "Xóa mềm Mặt bằng văn phòng",
+                "operationId": "b2e90883b127b87e834c72060cc1a385",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID mặt bằng",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xóa thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/units/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Units (Admin)"
+                ],
+                "summary": "Cập nhật trạng thái Mặt bằng thủ công (Bảo trì / Sẵn sàng thuê)",
+                "operationId": "9c61734d1759cce00b5de756c5f99a39",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID mặt bằng",
+                        "required": true
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "example": "MAINTENANCE",
+                                        "enum": [
+                                            "AVAILABLE",
+                                            "EXPIRING_SOON",
+                                            "LEASED",
+                                            "MAINTENANCE"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/units/{id}/images": {
+            "post": {
+                "tags": [
+                    "Units (Admin)"
+                ],
+                "summary": "Tải lên ảnh chụp thực tế / Sơ đồ layout Mặt bằng",
+                "operationId": "637ded598542799339019d7f1327d8e3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID mặt bằng",
+                        "required": true
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "images"
+                                ],
+                                "properties": {
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    },
+                                    "caption": {
+                                        "type": "string",
+                                        "example": "Bản vẽ sơ đồ mặt bằng CAD 2D"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Upload thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/units/{id}/images/{imageId}": {
+            "delete": {
+                "tags": [
+                    "Units (Admin)"
+                ],
+                "summary": "Xóa hình ảnh Mặt bằng",
+                "operationId": "daf260affa3cd8df18f39c0677808706",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID mặt bằng",
+                        "required": true
+                    },
+                    {
+                        "name": "imageId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xóa thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ApiResponseError": {
+                "title": "Phản hồi Lỗi Chuẩn",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "example": "error"
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Dữ liệu không hợp lệ hoặc không tìm thấy tài nguyên."
+                    },
+                    "code": {
+                        "type": "integer",
+                        "example": 400
+                    },
+                    "errors": {
+                        "type": "object",
+                        "example": null,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "PaginationMeta": {
+                "title": "Thông tin Phân trang",
+                "properties": {
+                    "current_page": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "total": {
+                        "type": "integer",
+                        "example": 100
+                    },
+                    "last_page": {
+                        "type": "integer",
+                        "example": 7
+                    }
+                },
+                "type": "object"
+            },
+            "ApiResponseSuccess": {
+                "title": "Phản hồi Thành công Chuẩn",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "example": "success"
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Thao tác thực hiện thành công."
+                    },
+                    "code": {
+                        "type": "integer",
+                        "example": 200
+                    },
+                    "data": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "errors": {
+                        "type": "object",
+                        "example": null,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ApiPaginateResponse": {
+                "title": "Phản hồi Danh sách Phân trang",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "example": "success"
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Lấy danh sách thành công."
+                    },
+                    "code": {
+                        "type": "integer",
+                        "example": 200
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/PaginationMeta"
+                    },
+                    "errors": {
+                        "type": "object",
+                        "example": null,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "StoreBuildingInput": {
+                "title": "Dữ liệu Tạo mới / Cập nhật Tòa nhà",
+                "required": [
+                    "building_code",
+                    "name",
+                    "address",
+                    "district",
+                    "province",
+                    "province_code",
+                    "total_floors",
+                    "total_leasable_area_sqm",
+                    "electricity_unit_price",
+                    "water_unit_price",
+                    "default_service_fee_per_sqm",
+                    "min_rent_price_per_sqm",
+                    "max_rent_price_per_sqm",
+                    "grade"
+                ],
+                "properties": {
+                    "building_code": {
+                        "type": "string",
+                        "example": "NEXUS-01"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Tòa Nhà The Nexus"
+                    },
+                    "address": {
+                        "type": "string",
+                        "example": "3A Tôn Đức Thắng"
+                    },
+                    "ward": {
+                        "type": "string",
+                        "example": "Bến Nghé"
+                    },
+                    "district": {
+                        "type": "string",
+                        "example": "Quận 1"
+                    },
+                    "province": {
+                        "type": "string",
+                        "example": "TP Hồ Chí Minh"
+                    },
+                    "province_code": {
+                        "type": "integer",
+                        "example": 79
+                    },
+                    "total_floors": {
+                        "type": "integer",
+                        "example": 35
+                    },
+                    "total_basements": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "total_leasable_area_sqm": {
+                        "type": "number",
+                        "example": 55000
+                    },
+                    "default_service_fee_per_sqm": {
+                        "type": "number",
+                        "example": 150000
+                    },
+                    "electricity_unit_price": {
+                        "type": "number",
+                        "example": 4500
+                    },
+                    "water_unit_price": {
+                        "type": "number",
+                        "example": 25000
+                    },
+                    "motorbike_parking_fee": {
+                        "type": "number",
+                        "example": 350000
+                    },
+                    "car_parking_fee": {
+                        "type": "number",
+                        "example": 4500000
+                    },
+                    "min_rent_price_per_sqm": {
+                        "type": "number",
+                        "example": 850000
+                    },
+                    "max_rent_price_per_sqm": {
+                        "type": "number",
+                        "example": 1200000
+                    },
+                    "grade": {
+                        "type": "string",
+                        "example": "A",
+                        "enum": [
+                            "A",
+                            "B",
+                            "C"
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "StoreUnitInput": {
+                "title": "Dữ liệu Tạo mới / Cập nhật Mặt bằng",
+                "required": [
+                    "building_id",
+                    "unit_code",
+                    "floor_number",
+                    "area_sqm",
+                    "base_rental_price"
+                ],
+                "properties": {
+                    "building_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "0192e48e-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                    },
+                    "unit_code": {
+                        "type": "string",
+                        "example": "NEX-0801"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Văn phòng Tầng 8 Phòng 01"
+                    },
+                    "floor_number": {
+                        "type": "integer",
+                        "example": 8
+                    },
+                    "area_sqm": {
+                        "type": "number",
+                        "example": 185.5
+                    },
+                    "base_rental_price": {
+                        "type": "number",
+                        "example": 950000
+                    },
+                    "handover_condition": {
+                        "type": "string",
+                        "example": "BASIC"
+                    },
+                    "direction": {
+                        "type": "string",
+                        "example": "Đông Nam"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "AVAILABLE",
+                        "enum": [
+                            "AVAILABLE",
+                            "EXPIRING_SOON",
+                            "LEASED",
+                            "MAINTENANCE"
+                        ]
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "description": "Nhập mã Bearer Token (Laravel Sanctum) để xác thực các API yêu cầu quyền hạn nội bộ.",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Provinces",
+            "description": "Danh mục Địa giới Hành chính (Tỉnh / Thành phố)"
+        },
+        {
+            "name": "Buildings (Public)",
+            "description": "Cổng thông tin tra cứu Tòa nhà văn phòng chào thuê (Public Portal)"
+        },
+        {
+            "name": "Buildings (Admin)",
+            "description": "Quản trị Tòa nhà, Biểu phí và Thư viện hình ảnh (Admin & BQL)"
+        },
+        {
+            "name": "Units (Public)",
+            "description": "Cổng thông tin Mặt bằng văn phòng chào thuê khả dụng (Public Portal)"
+        },
+        {
+            "name": "Units (Admin)",
+            "description": "Quản trị Mặt bằng sàn, sơ đồ Layout kỹ thuật và đổi trạng thái (Admin & BQL)"
+        },
+        {
+            "name": "Leads (Public Portal)",
+            "description": "Leads (Public Portal)"
+        },
+        {
+            "name": "CRM Leads",
+            "description": "CRM Leads"
+        },
+        {
+            "name": "Lead Activities",
+            "description": "Lead Activities"
+        }
+    ]
+}

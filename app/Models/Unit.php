@@ -142,11 +142,27 @@ class Unit extends Model
     }
 
     /**
+     * Scope lọc mặt bằng đang ở trạng thái đặt cọc giữ chỗ (Booking).
+     */
+    public function scopeReserved(Builder $query): Builder
+    {
+        return $query->where('status', UnitStatus::RESERVED);
+    }
+
+    /**
      * Kiểm tra mặt bằng có đang trống và sẵn sàng cho thuê không.
      */
     public function isAvailable(): bool
     {
         return $this->status === UnitStatus::AVAILABLE;
+    }
+
+    /**
+     * Kiểm tra mặt bằng có đang được đặt cọc giữ chỗ tạm thời hay không.
+     */
+    public function isReserved(): bool
+    {
+        return $this->status === UnitStatus::RESERVED;
     }
     public function tickets(): HasMany
     {

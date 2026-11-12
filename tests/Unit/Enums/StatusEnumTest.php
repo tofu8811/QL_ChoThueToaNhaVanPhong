@@ -17,8 +17,11 @@ class StatusEnumTest extends TestCase
         $this->assertSame('Đang trống', UnitStatus::AVAILABLE->label());
         $this->assertTrue(UnitStatus::AVAILABLE->canBeLeased());
         $this->assertFalse(UnitStatus::LEASED->canBeLeased());
-        $this->assertCount(4, UnitStatus::cases());
+        $this->assertFalse(UnitStatus::RESERVED->canBeLeased());
+        $this->assertTrue(UnitStatus::RESERVED->isReserved());
+        $this->assertCount(5, UnitStatus::cases());
         $this->assertArrayHasKey('MAINTENANCE', UnitStatus::options());
+        $this->assertArrayHasKey('RESERVED', UnitStatus::options());
     }
 
     public function test_lead_status_enum(): void
@@ -39,7 +42,11 @@ class StatusEnumTest extends TestCase
         $this->assertTrue(ContractStatus::ACTIVE->canGenerateInvoice());
         $this->assertFalse(ContractStatus::DRAFT->isEffective());
         $this->assertFalse(ContractStatus::TERMINATED->isEffective());
-        $this->assertCount(5, ContractStatus::cases());
+        $this->assertTrue(ContractStatus::RESERVED->isReserved());
+        $this->assertTrue(ContractStatus::RENEWED->isRenewed());
+        $this->assertCount(7, ContractStatus::cases());
+        $this->assertArrayHasKey('RESERVED', ContractStatus::options());
+        $this->assertArrayHasKey('RENEWED', ContractStatus::options());
     }
 
     public function test_ticket_status_enum(): void

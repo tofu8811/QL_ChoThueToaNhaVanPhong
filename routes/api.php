@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\CrmLeadApiController;
 use App\Http\Controllers\Api\V1\LeadActivityApiController;
 use App\Http\Controllers\Api\V1\PortalLeadApiController;
 use App\Http\Controllers\Api\V1\ProvinceApiController;
+use App\Http\Controllers\Api\V1\SaleUserApiController;
 use App\Http\Controllers\Api\V1\TicketApiController;
 use App\Http\Controllers\Api\V1\UnitApiController;
 use Illuminate\Support\Facades\Route;
@@ -161,6 +162,22 @@ Route::prefix('v1')->group(function () {
         Route::put('{id}', [AdminUserApiController::class, 'update'])->name('v1.admin.users.admins.update');
         // 76. Xóa mềm Quản trị viên
         Route::delete('{id}', [AdminUserApiController::class, 'destroy'])->name('v1.admin.users.admins.destroy');
+    });
+
+    // =========================================================================
+    // MODULE 5: NHÂN SỰ & QUẢN TRỊ SALES
+    // =========================================================================
+    Route::middleware('auth:sanctum')->prefix('admin/users/sales')->group(function () {
+        // 77. Danh sách Nhân viên Sales
+        Route::get('', [SaleUserApiController::class, 'index'])->name('v1.admin.users.sales.index');
+        // 78. Tạo mới Nhân viên Sales
+        Route::post('', [SaleUserApiController::class, 'store'])->name('v1.admin.users.sales.store');
+        // 79. Chi tiết Nhân viên Sales
+        Route::get('{id}', [SaleUserApiController::class, 'show'])->name('v1.admin.users.sales.show');
+        // 80. Cập nhật Nhân viên Sales
+        Route::put('{id}', [SaleUserApiController::class, 'update'])->name('v1.admin.users.sales.update');
+        // 81. Xóa mềm Nhân viên Sales
+        Route::delete('{id}', [SaleUserApiController::class, 'destroy'])->name('v1.admin.users.sales.destroy');
     });
 
 });

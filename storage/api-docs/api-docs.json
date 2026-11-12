@@ -589,6 +589,715 @@
                 ]
             }
         },
+        "/api/v1/portal/leads": {
+            "post": {
+                "tags": [
+                    "Leads (Public Portal)"
+                ],
+                "summary": "Gửi yêu cầu Báo giá / Site tour từ Public Portal",
+                "description": "Khách hàng vãng lai gửi form liên hệ. Tự động kiểm tra chống trùng 30 ngày và phân bổ cho Sales theo Least Active Leads.",
+                "operationId": "218578268f3b03d214f0027efa458bee",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "contact_full_name",
+                                    "phone",
+                                    "email",
+                                    "building_id"
+                                ],
+                                "properties": {
+                                    "contact_full_name": {
+                                        "type": "string",
+                                        "example": "Nguyễn Văn A"
+                                    },
+                                    "company_name": {
+                                        "type": "string",
+                                        "example": "Công ty Cổ phần Alpha"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0901234567"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "contact@alpha.com"
+                                    },
+                                    "building_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "unit_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "desired_area_sqm": {
+                                        "type": "number",
+                                        "example": 150
+                                    },
+                                    "budget_min": {
+                                        "type": "number",
+                                        "example": 30000000
+                                    },
+                                    "budget_max": {
+                                        "type": "number",
+                                        "example": 50000000
+                                    },
+                                    "preferred_site_tour_at": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "customer_note": {
+                                        "type": "string",
+                                        "example": "Cần khảo sát vào sáng thứ Bảy"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tạo Lead thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Lỗi xác thực dữ liệu",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/crm/leads": {
+            "get": {
+                "tags": [
+                    "CRM Leads"
+                ],
+                "summary": "Danh sách Lead theo Pipeline CRM",
+                "operationId": "206621e0d7f108b7e8366b9f0359702e",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Trạng thái: PENDING_ASSIGN, NEW, NEGOTIATING, WON, LOST"
+                    },
+                    {
+                        "name": "building_id",
+                        "in": "query",
+                        "description": "Lọc theo ID tòa nhà"
+                    },
+                    {
+                        "name": "assigned_sales_id",
+                        "in": "query",
+                        "description": "Lọc theo ID Sales phụ trách"
+                    },
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "Từ khóa tên, SĐT, email, công ty"
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiPaginateResponse"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Lỗi",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "CRM Leads"
+                ],
+                "summary": "Tạo hồ sơ Lead thủ công từ CRM (Hotline/Trực tiếp)",
+                "operationId": "f3b224772cdf1c8e50ac2b568780604c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "contact_full_name",
+                                    "phone",
+                                    "email"
+                                ],
+                                "properties": {
+                                    "contact_full_name": {
+                                        "type": "string"
+                                    },
+                                    "company_name": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "phone": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "lead_source": {
+                                        "type": "string",
+                                        "example": "HOTLINE"
+                                    },
+                                    "building_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "unit_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "assigned_sales_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Khởi tạo thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Lỗi xác thực",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/crm/leads/{id}": {
+            "get": {
+                "tags": [
+                    "CRM Leads"
+                ],
+                "summary": "Xem chi tiết hồ sơ Lead và toàn bộ lịch sử chăm sóc",
+                "operationId": "2437f9a11eb5014a6553cfcc73ae8c91",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Lead",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "CRM Leads"
+                ],
+                "summary": "Cập nhật thông tin nhu cầu của Lead",
+                "operationId": "a0d518cfcf6c9d1733b1fb3fe3d3f38f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Lead",
+                        "required": true
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "desired_area_sqm": {
+                                        "type": "number"
+                                    },
+                                    "budget_min": {
+                                        "type": "number"
+                                    },
+                                    "budget_max": {
+                                        "type": "number"
+                                    },
+                                    "customer_note": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "CRM Leads"
+                ],
+                "summary": "Xóa mềm hồ sơ Lead",
+                "operationId": "65979123d0abecd813659f4616e23ef4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Lead",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xóa thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Không được phép xóa nếu đã WON",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/crm/leads/{id}/status": {
+            "patch": {
+                "tags": [
+                    "CRM Leads"
+                ],
+                "summary": "Cập nhật trạng thái Pipeline (Bắt buộc lý do nếu chuyển sang LOST)",
+                "operationId": "cdc74c9e4bbf452390e5bcc54fb21eb0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Lead",
+                        "required": true
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "PENDING_ASSIGN",
+                                            "NEW",
+                                            "NEGOTIATING",
+                                            "WON",
+                                            "LOST"
+                                        ]
+                                    },
+                                    "lost_reason_category": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "lost_reason_detail": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Thiếu lý do khi LOST",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/crm/leads/{id}/assign": {
+            "post": {
+                "tags": [
+                    "CRM Leads"
+                ],
+                "summary": "Điều phối hoặc phân công lại Sales phụ trách Lead",
+                "operationId": "241fa285cc098544c027f1aa7309485e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Lead",
+                        "required": true
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "sales_id"
+                                ],
+                                "properties": {
+                                    "sales_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "assignment_note": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Điều phối thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/crm/leads/{id}/convert-to-tenant": {
+            "post": {
+                "tags": [
+                    "CRM Leads"
+                ],
+                "summary": "Chuyển đổi Lead thành công sang Khách thuê chính thức (Tenant)",
+                "operationId": "b377eec64e885ddbf9379b3d4a349fba",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Lead",
+                        "required": true
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tax_code"
+                                ],
+                                "properties": {
+                                    "tax_code": {
+                                        "type": "string",
+                                        "example": "0312345678"
+                                    },
+                                    "company_name": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "representative_position": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "headquarter_address": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Chuyển đổi thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Lead đã được chuyển đổi trước đó",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/crm/leads/{id}/activities": {
+            "get": {
+                "tags": [
+                    "Lead Activities"
+                ],
+                "summary": "Lấy dòng thời gian (Timeline) các lần gọi, email, site tour của Lead",
+                "operationId": "99d9b322e7d621d97ac2497b1bab9f48",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Lead",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Lead Activities"
+                ],
+                "summary": "Ghi nhật ký tương tác mới (Tự động kích hoạt first_contacted_at)",
+                "operationId": "439526c069ce4133c3e7413a39071942",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Lead",
+                        "required": true
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "activity_type",
+                                    "title"
+                                ],
+                                "properties": {
+                                    "activity_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "CALL",
+                                            "SITE_TOUR",
+                                            "EMAIL",
+                                            "MEETING",
+                                            "NOTE",
+                                            "QUOTATION_SENT"
+                                        ]
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Gọi điện báo giá mặt bằng P.1201"
+                                    },
+                                    "content": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "event_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Ghi nhận thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/provinces": {
             "get": {
                 "tags": [
@@ -1539,6 +2248,18 @@
         {
             "name": "Units (Admin)",
             "description": "Quản trị Mặt bằng sàn, sơ đồ Layout kỹ thuật và đổi trạng thái (Admin & BQL)"
+        },
+        {
+            "name": "Leads (Public Portal)",
+            "description": "Leads (Public Portal)"
+        },
+        {
+            "name": "CRM Leads",
+            "description": "CRM Leads"
+        },
+        {
+            "name": "Lead Activities",
+            "description": "Lead Activities"
         }
     ]
 }

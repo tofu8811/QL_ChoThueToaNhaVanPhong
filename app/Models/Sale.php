@@ -70,8 +70,7 @@ class Sale extends Authenticatable
     public function buildings(): BelongsToMany
     {
         return $this->belongsToMany(Building::class, 'sale_buildings', 'sales_id', 'building_id')
-            ->withPivot(['is_active', 'assigned_by_admin_id', 'assigned_at'])
-            ->withTimestamps();
+            ->withPivot(['is_active', 'assigned_by_admin_id', 'assigned_at']);
     }
 
     /**

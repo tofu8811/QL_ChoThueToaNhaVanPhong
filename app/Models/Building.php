@@ -138,8 +138,7 @@ class Building extends Model
     public function sales(): BelongsToMany
     {
         return $this->belongsToMany(Sale::class, 'sale_buildings', 'building_id', 'sales_id')
-            ->withPivot(['is_active', 'assigned_by_admin_id', 'assigned_at'])
-            ->withTimestamps();
+            ->withPivot(['is_active', 'assigned_by_admin_id', 'assigned_at']);
     }
 
     /**

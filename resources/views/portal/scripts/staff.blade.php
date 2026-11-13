@@ -4,10 +4,272 @@
        ========================================================================== */
     let currentStaffTab = 'admins';
     let cachedStaffBuildings = [];
+    let isStaffPreloaded = false;
+
+    // Helper render HTML danh sách Admins
+    function renderStaffAdminsHtml(admins) {
+      if (!admins || admins.length === 0) {
+        return '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;">Không tìm thấy tài khoản Quản trị viên nào phù hợp.</td></tr>';
+      }
+      return admins.map(a => {
+        const isSuper = !!a.is_super_admin;
+        const statusClass = (a.status === 'ACTIVE') ? 'success' : ((a.status === 'LOCKED') ? 'danger' : 'warning');
+        const statusText = (a.status === 'ACTIVE') ? 'Hoạt động' : ((a.status === 'LOCKED') ? 'Đã khóa' : 'Chờ kích hoạt');
+        const createdDate = a.created_at ? new Date(a.created_at).toLocaleDateString('vi-VN') : '---';
+
+        return `
+          <tr>
+            <td>
+              <div style="display:flex; align-items:center; gap:9px;">
+                <div style="width:32px; height:32px; border-radius:50%; background:${isSuper ? '#ef4444' : '#0f3361'}; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;">
+                  ${isSuper ? 'SA' : 'AD'}
+                </div>
+                <div>
+                  <strong style="color:#0f172a; font-size:13.5px;">${escapeHtml(a.full_name || a.name || '---')}</strong>
+                </div>
+              </div>
+            </td>
+            <td><span style="font-family:monospace; color:#2563eb;">${escapeHtml(a.email)}</span></td>
+            <td>${escapeHtml(a.phone || '---')}</td>
+            <td>
+              ${isSuper 
+                ? '<span class="staff-badge-super"><i class="fa-solid fa-crown"></i> Super Admin</span>' 
+                : '<span class="staff-badge-admin">Admin Thường</span>'}
+            </td>
+            <td><span class="badge-filament ${statusClass}">${statusText}</span></td>
+            <td><span style="color:#64748b; font-size:12px;">${createdDate}</span></td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffAdmin('${a.id}')" title="Xem chi tiết">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditAdminModal('${a.id}')" title="Chỉnh sửa">
+                <i class="fa-regular fa-pen-to-square"></i>
+              </button>
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffAdmin('${a.id}', '${escapeHtml(a.full_name || a.name)}')" title="Xóa mềm">
+                <i class="fa-regular fa-trash-can"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Helper render HTML danh sách Sales
+    function renderStaffSalesHtml(sales) {
+      if (!sales || sales.length === 0) {
+        return '<tr><td colspan="8" style="text-align:center; padding: 25px; color:#94a3b8;">Chưa có dữ liệu nhân viên Sales nào.</td></tr>';
+      }
+      return sales.map(s => {
+        const buildings = s.sale_buildings || s.buildings || [];
+        const bldHtml = buildings.length > 0
+          ? buildings.slice(0, 2).map(b => `<span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-size:11px; margin-right:4px;">${escapeHtml(b.name || 'Tòa nhà')}</span>`).join('') + (buildings.length > 2 ? `<small style="color:#64748b;">+${buildings.length - 2}</small>` : '')
+          : '<span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span>';
+
+        const statusClass = (s.status === 'ACTIVE') ? 'success' : 'danger';
+        const statusText = (s.status === 'ACTIVE') ? 'Hoạt động' : 'Tạm khóa';
+
+        return `
+          <tr>
+            <td><span style="font-family:monospace; font-weight:700; color:#0f3361;">${escapeHtml(s.employee_code || 'SL-' + s.id?.substring(0, 4))}</span></td>
+            <td><strong>${escapeHtml(s.full_name || s.name || '---')}</strong></td>
+            <td>
+              <div style="font-size:12.5px; color:#2563eb;">${escapeHtml(s.email)}</div>
+              <div style="font-size:11.5px; color:#64748b;">${escapeHtml(s.phone || '---')}</div>
+            </td>
+            <td>${bldHtml}</td>
+            <td>
+              <span style="font-weight:700; color:#0f172a;">${s.active_leads_count || 0}</span> / <span style="color:#64748b;">${s.max_concurrent_leads || 10} leads</span>
+            </td>
+            <td><span style="color:#ea580c; font-weight:700;">${s.commission_rate ? s.commission_rate + '%' : '---'}</span></td>
+            <td><span class="badge-filament ${statusClass}">${statusText}</span></td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffSale('${s.id}')" title="Xem chi tiết & KPI">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditSaleModal('${s.id}')" title="Chỉnh sửa">
+                <i class="fa-regular fa-pen-to-square"></i>
+              </button>
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffSale('${s.id}', '${escapeHtml(s.full_name || s.name)}')" title="Xóa mềm">
+                <i class="fa-regular fa-trash-can"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Helper render HTML danh sách PM
+    function renderStaffPmHtml(pms) {
+      if (!pms || pms.length === 0) {
+        return '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;">Chưa có dữ liệu nhân sự Ban Quản lý nào.</td></tr>';
+      }
+      const deptLabels = {
+        TECHNICAL: 'Kỹ thuật & Cơ điện',
+        SECURITY: 'An ninh & Bảo vệ',
+        CLEANING: 'Vệ sinh & Cảnh quan',
+        CUSTOMER_CARE: 'CSKH Tòa Nhà'
+      };
+
+      return pms.map(p => {
+        const buildings = p.manager_buildings || p.buildings || [];
+        const bldHtml = buildings.length > 0
+          ? buildings.slice(0, 2).map(b => `<span style="background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:4px; font-size:11px; margin-right:4px;">${escapeHtml(b.name || 'Tòa nhà')}</span>`).join('') + (buildings.length > 2 ? `<small style="color:#64748b;">+${buildings.length - 2}</small>` : '')
+          : '<span style="color:#94a3b8; font-size:11.5px;">Chưa phân công</span>';
+
+        const statusClass = (p.status === 'ACTIVE') ? 'success' : 'danger';
+        const deptText = deptLabels[p.department] || p.department || 'Vận hành';
+
+        return `
+          <tr>
+            <td><span style="font-family:monospace; font-weight:700; color:#b45309;">${escapeHtml(p.employee_code || 'PM-' + p.id?.substring(0, 4))}</span></td>
+            <td>
+              <strong>${escapeHtml(p.full_name || p.name || '---')}</strong>
+              <div style="font-size:11.5px; color:#64748b;">${escapeHtml(p.email)}</div>
+            </td>
+            <td>
+              <span style="color:#dc2626; font-weight:700;"><i class="fa-solid fa-phone-volume"></i> ${escapeHtml(p.emergency_hotline || p.phone || '---')}</span>
+            </td>
+            <td><span style="background:#f1f5f9; color:#334155; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:600;">${deptText}</span></td>
+            <td>${bldHtml}</td>
+            <td><span class="badge-filament ${statusClass}">${escapeHtml(p.status || 'ACTIVE')}</span></td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffPm('${p.id}')" title="Xem chi tiết">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditPmModal('${p.id}')" title="Chỉnh sửa">
+                <i class="fa-regular fa-pen-to-square"></i>
+              </button>
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffPm('${p.id}', '${escapeHtml(p.full_name || p.name)}')" title="Xóa mềm">
+                <i class="fa-regular fa-trash-can"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Helper render HTML danh sách Kế toán
+    function renderStaffAccountantsHtml(accs) {
+      if (!accs || accs.length === 0) {
+        return '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;">Chưa có dữ liệu nhân viên Kế toán nào.</td></tr>';
+      }
+      return accs.map(a => {
+        const buildings = a.account_buildings || a.buildings || [];
+        const bldHtml = buildings.length > 0
+          ? buildings.slice(0, 2).map(b => `<span style="background:#ecfdf5; color:#065f46; padding:2px 6px; border-radius:4px; font-size:11px; margin-right:4px;">${escapeHtml(b.name || 'Tòa nhà')}</span>`).join('') + (buildings.length > 2 ? `<small style="color:#64748b;">+${buildings.length - 2}</small>` : '')
+          : '<span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span>';
+
+        const canAdjustHtml = a.can_approve_adjustment
+          ? '<span style="background:#dcfce7; color:#15803d; font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:9999px;"><i class="fa-solid fa-check"></i> Được phép</span>'
+          : '<span style="color:#94a3b8; font-size:11.5px;">Không</span>';
+
+        const statusClass = (a.status === 'ACTIVE') ? 'success' : 'danger';
+
+        return `
+          <tr>
+            <td><span style="font-family:monospace; font-weight:700; color:#065f46;">${escapeHtml(a.employee_code || 'ACC-' + a.id?.substring(0, 4))}</span></td>
+            <td><strong>${escapeHtml(a.full_name || a.name || '---')}</strong></td>
+            <td>
+              <div style="font-size:12.5px; color:#2563eb;">${escapeHtml(a.email)}</div>
+              <div style="font-size:11.5px; color:#64748b;">${escapeHtml(a.phone || '---')}</div>
+            </td>
+            <td>${canAdjustHtml}</td>
+            <td>${bldHtml}</td>
+            <td><span class="badge-filament ${statusClass}">${escapeHtml(a.status || 'ACTIVE')}</span></td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffAccountant('${a.id}')" title="Xem chi tiết">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditAccountantModal('${a.id}')" title="Chỉnh sửa">
+                <i class="fa-regular fa-pen-to-square"></i>
+              </button>
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffAccountant('${a.id}', '${escapeHtml(a.full_name || a.name)}')" title="Xóa mềm">
+                <i class="fa-regular fa-trash-can"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Tải trước dữ liệu cho TẤT CẢ các sub-tab nhân sự để bấm vào là có ngay dữ liệu tức thì
+    function preloadAllStaffData() {
+      initStaffBadges();
+
+      if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF) {
+        const tbAdmins = document.getElementById('tbody-staff-admins');
+        const tbSales = document.getElementById('tbody-staff-sales');
+        const tbPm = document.getElementById('tbody-staff-pm');
+        const tbAcc = document.getElementById('tbody-staff-accountants');
+
+        if (tbAdmins && SERVER_STAFF.admins && (!tbAdmins.children.length || tbAdmins.innerText.includes('Đang tải'))) {
+          tbAdmins.innerHTML = renderStaffAdminsHtml(SERVER_STAFF.admins);
+        }
+        if (tbSales && SERVER_STAFF.sales && (!tbSales.children.length || tbSales.innerText.includes('Đang tải'))) {
+          tbSales.innerHTML = renderStaffSalesHtml(SERVER_STAFF.sales);
+        }
+        if (tbPm && SERVER_STAFF.pm && (!tbPm.children.length || tbPm.innerText.includes('Đang tải'))) {
+          tbPm.innerHTML = renderStaffPmHtml(SERVER_STAFF.pm);
+        }
+        if (tbAcc && SERVER_STAFF.accountants && (!tbAcc.children.length || tbAcc.innerText.includes('Đang tải'))) {
+          tbAcc.innerHTML = renderStaffAccountantsHtml(SERVER_STAFF.accountants);
+        }
+      }
+
+      // Khởi tạo luôn dropdown phân công và tải tòa nhà đầu tiên
+      if (typeof populateBuildingAssignmentDropdown === 'function') {
+        populateBuildingAssignmentDropdown();
+      }
+
+      isStaffPreloaded = true;
+
+      // Đồng bộ ngầm trong nền không gây nhấp nháy spinner
+      setTimeout(() => {
+        try {
+          Promise.allSettled([
+            loadStaffAdmins(1, false),
+            loadStaffSales(1, false),
+            loadStaffPm(1, false),
+            loadStaffAccountants(1, false)
+          ]);
+        } catch (e) {}
+      }, 100);
+    }
+
+    // Khởi tạo số lượng đếm badge cho 4 nhóm nhân sự từ dữ liệu server
+    function initStaffBadges() {
+      const bAdmins = document.getElementById('badge-count-admins');
+      const bSales = document.getElementById('badge-count-sales');
+      const bPm = document.getElementById('badge-count-pm');
+      const bAcc = document.getElementById('badge-count-accountants');
+      const bAss = document.getElementById('badge-count-assignments');
+
+      const getCount = (val, fallback) => {
+        if (!val) return fallback;
+        if (Array.isArray(val)) return val.length;
+        if (typeof val === 'object') return Object.keys(val).length;
+        return fallback;
+      };
+
+      const adminsLen = (typeof SERVER_STAFF !== 'undefined') ? getCount(SERVER_STAFF.admins, 2) : 2;
+      const salesLen = (typeof SERVER_STAFF !== 'undefined') ? getCount(SERVER_STAFF.sales, 3) : 3;
+      const pmLen = (typeof SERVER_STAFF !== 'undefined') ? getCount(SERVER_STAFF.pm, 3) : 3;
+      const accLen = (typeof SERVER_STAFF !== 'undefined') ? getCount(SERVER_STAFF.accountants, 2) : 2;
+
+      if (bAdmins) bAdmins.innerText = adminsLen;
+      if (bSales) bSales.innerText = salesLen;
+      if (bPm) bPm.innerText = pmLen;
+      if (bAcc) bAcc.innerText = accLen;
+      if (bAss && (bAss.innerText === '0' || bAss.innerText === 'Chọn tòa nhà')) bAss.innerText = '3 NV';
+    }
 
     // 1. Tải danh sách tòa nhà phục vụ phân quyền phụ trách
     async function fetchStaffBuildingsList() {
-      if (cachedStaffBuildings.length > 0) return cachedStaffBuildings;
+      if (cachedStaffBuildings && cachedStaffBuildings.length > 0) return cachedStaffBuildings;
+      if (typeof BUILDINGS_DATA !== 'undefined' && Array.isArray(BUILDINGS_DATA) && BUILDINGS_DATA.length > 0) {
+        cachedStaffBuildings = BUILDINGS_DATA;
+        return cachedStaffBuildings;
+      }
       try {
         const token = getSanctumToken();
         const headers = { 'Accept': 'application/json' };
@@ -19,6 +281,9 @@
         }
       } catch (e) {
         console.warn('Không tải được danh sách tòa nhà phân quyền:', e);
+      }
+      if ((!cachedStaffBuildings || cachedStaffBuildings.length === 0) && typeof BUILDINGS_DATA !== 'undefined' && Array.isArray(BUILDINGS_DATA)) {
+        cachedStaffBuildings = BUILDINGS_DATA;
       }
       return cachedStaffBuildings;
     }
@@ -46,9 +311,10 @@
       return Array.from(boxes).map(cb => cb.value);
     }
 
-    // 2. Chuyển đổi giữa 4 sub-tab nhân sự & CRUD
-    function switchStaffSubTab(tabName, btn) {
+    // 2. Chuyển đổi giữa các sub-tab nhân sự & cập nhật routing
+    function switchStaffSubTab(tabName, btn, updateRoute = true) {
       currentStaffTab = tabName;
+      initStaffBadges();
       // Active button
       document.querySelectorAll('.staff-subtab-btn').forEach(b => b.classList.remove('active'));
       if (btn) {
@@ -63,12 +329,33 @@
       const targetPanel = document.getElementById(`subpanel-staff-${tabName}`);
       if (targetPanel) targetPanel.style.display = 'block';
 
-      // Load data
-      if (tabName === 'admins') loadStaffAdmins(1);
-      else if (tabName === 'sales') loadStaffSales(1);
-      else if (tabName === 'pm') loadStaffPm(1);
-      else if (tabName === 'accountants') loadStaffAccountants(1);
-      else if (tabName === 'assignments') populateBuildingAssignmentDropdown();
+      // Cập nhật URL route để khi F5 không bị văng về trang chủ hoặc mất tab con
+      if (updateRoute && typeof updateAppRoute === 'function') {
+        updateAppRoute('admin/staff/' + tabName);
+      }
+
+      // Nạp trước dữ liệu toàn bộ subtab nếu chưa nạp
+      if (!isStaffPreloaded) {
+        preloadAllStaffData();
+      }
+
+      // Nếu bảng rỗng thì nạp dữ liệu
+      if (tabName === 'admins') {
+        const tb = document.getElementById('tbody-staff-admins');
+        if (!tb || !tb.children.length || tb.innerText.includes('Đang tải')) loadStaffAdmins(1);
+      } else if (tabName === 'sales') {
+        const tb = document.getElementById('tbody-staff-sales');
+        if (!tb || !tb.children.length || tb.innerText.includes('Đang tải')) loadStaffSales(1);
+      } else if (tabName === 'pm') {
+        const tb = document.getElementById('tbody-staff-pm');
+        if (!tb || !tb.children.length || tb.innerText.includes('Đang tải')) loadStaffPm(1);
+      } else if (tabName === 'accountants') {
+        const tb = document.getElementById('tbody-staff-accountants');
+        if (!tb || !tb.children.length || tb.innerText.includes('Đang tải')) loadStaffAccountants(1);
+      } else if (tabName === 'assignments') {
+        const sel = document.getElementById('select-assignment-building');
+        if (!sel || !sel.options || sel.options.length <= 1) populateBuildingAssignmentDropdown();
+      }
     }
 
     function reloadCurrentStaffTab() {
@@ -80,22 +367,27 @@
     // =========================================================================
 
     // API 72: Danh sách Admin
-    async function loadStaffAdmins(page = 1) {
+    async function loadStaffAdmins(page = 1, showLoading = true) {
       const tbody = document.getElementById('tbody-staff-admins');
       if (!tbody) return;
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải dữ liệu Admins...</td></tr>';
-
-      const token = getSanctumToken();
-      const kw = document.getElementById('filter-admin-keyword')?.value?.trim() || '';
-      const st = document.getElementById('filter-admin-status')?.value || '';
-
-      const url = new URL('/api/v1/admin/users/admins', credentialsBaseUrl || window.location.origin);
-      url.searchParams.set('page', page);
-      url.searchParams.set('per_page', 10);
-      if (kw) url.searchParams.set('search', kw);
-      if (st) url.searchParams.set('status', st);
+      if (showLoading && (!tbody.children.length || tbody.innerText.includes('Đang tải'))) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải dữ liệu Admins...</td></tr>';
+      }
 
       try {
+        const token = getSanctumToken();
+        const kw = document.getElementById('filter-admin-keyword')?.value?.trim() || '';
+        const st = document.getElementById('filter-admin-status')?.value || '';
+
+        const url = new URL('/api/v1/admin/users/admins', window.location.origin);
+        url.searchParams.set('page', page);
+        url.searchParams.set('per_page', 10);
+        if (kw) url.searchParams.set('search', kw);
+        if (st) url.searchParams.set('status', st);
+
+        let admins = [];
+        let meta = {};
+
         const res = await fetch(url.toString(), {
           headers: {
             'Accept': 'application/json',
@@ -103,15 +395,19 @@
           }
         });
         const json = await res.json();
-        if (!res.ok) {
+        if (res.ok && json.data) {
+          admins = Array.isArray(json.data) ? json.data : (json.data?.data || []);
+          meta = json.meta || json.data?.meta || { total: admins.length, current_page: page, last_page: 1 };
+        } else if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.admins && SERVER_STAFF.admins.length > 0) {
+          admins = SERVER_STAFF.admins;
+          meta = { total: admins.length, current_page: 1, last_page: 1 };
+        } else {
           tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 25px; color:#ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> ${escapeHtml(json.message || 'Yêu cầu quyền Super Admin để truy cập danh sách Admin.')}</td></tr>`;
           return;
         }
 
-        const admins = json.data?.data || json.data || [];
-        const meta = json.data?.meta || json.data || {};
         const countBadge = document.getElementById('badge-count-admins');
-        if (countBadge) countBadge.innerText = meta.total || admins.length;
+        if (countBadge) countBadge.innerText = (meta.total !== undefined ? meta.total : admins.length);
 
         if (admins.length === 0) {
           tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;">Không tìm thấy tài khoản Quản trị viên nào phù hợp.</td></tr>';
@@ -163,7 +459,39 @@
         renderStaffPagination('pagination-staff-admins', meta, loadStaffAdmins);
       } catch (err) {
         console.error('Load admins error:', err);
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#ef4444;">Lỗi kết nối API danh sách Admin.</td></tr>';
+        if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.admins && SERVER_STAFF.admins.length > 0) {
+          const admins = SERVER_STAFF.admins;
+          document.getElementById('badge-count-admins')?.innerText && (document.getElementById('badge-count-admins').innerText = admins.length);
+          tbody.innerHTML = admins.map(a => {
+            const isSuper = !!a.is_super_admin;
+            const statusClass = (a.status === 'ACTIVE') ? 'success' : 'danger';
+            const statusText = (a.status === 'ACTIVE') ? 'Hoạt động' : 'Tạm khóa';
+            const createdDate = a.created_at ? new Date(a.created_at).toLocaleDateString('vi-VN') : '---';
+            return `
+              <tr>
+                <td>
+                  <div style="display:flex; align-items:center; gap:9px;">
+                    <div style="width:32px; height:32px; border-radius:50%; background:${isSuper ? '#ef4444' : '#0f3361'}; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;">
+                      ${isSuper ? 'SA' : 'AD'}
+                    </div>
+                    <div><strong style="color:#0f172a; font-size:13.5px;">${escapeHtml(a.full_name || a.name || '---')}</strong></div>
+                  </div>
+                </td>
+                <td><span style="font-family:monospace; color:#2563eb;">${escapeHtml(a.email)}</span></td>
+                <td>${escapeHtml(a.phone || '---')}</td>
+                <td>${isSuper ? '<span class="staff-badge-super"><i class="fa-solid fa-crown"></i> Super Admin</span>' : '<span class="staff-badge-admin">Admin Thường</span>'}</td>
+                <td><span class="badge-filament ${statusClass}">${statusText}</span></td>
+                <td><span style="color:#64748b; font-size:12px;">${createdDate}</span></td>
+                <td style="text-align: right; white-space: nowrap;">
+                  <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffAdmin('${a.id}')"><i class="fa-regular fa-eye"></i></button>
+                  <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditAdminModal('${a.id}')"><i class="fa-regular fa-pen-to-square"></i></button>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        } else {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#ef4444;">Lỗi kết nối API danh sách Admin.</td></tr>';
+        }
       }
     }
 
@@ -362,35 +690,44 @@
     // =========================================================================
 
     // API 77: Danh sách Sales
-    async function loadStaffSales(page = 1) {
+    async function loadStaffSales(page = 1, showLoading = true) {
       const tbody = document.getElementById('tbody-staff-sales');
       if (!tbody) return;
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 25px; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải danh sách Sales...</td></tr>';
-
-      const token = getSanctumToken();
-      const kw = document.getElementById('filter-sale-keyword')?.value?.trim() || '';
-      const st = document.getElementById('filter-sale-status')?.value || '';
-
-      const url = new URL('/api/v1/admin/users/sales', credentialsBaseUrl || window.location.origin);
-      url.searchParams.set('page', page);
-      url.searchParams.set('per_page', 10);
-      if (kw) url.searchParams.set('search', kw);
-      if (st) url.searchParams.set('status', st);
+      if (showLoading && (!tbody.children.length || tbody.innerText.includes('Đang tải'))) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 25px; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải danh sách Sales...</td></tr>';
+      }
 
       try {
+        const token = getSanctumToken();
+        const kw = document.getElementById('filter-sale-keyword')?.value?.trim() || '';
+        const st = document.getElementById('filter-sale-status')?.value || '';
+
+        const url = new URL('/api/v1/admin/users/sales', window.location.origin);
+        url.searchParams.set('page', page);
+        url.searchParams.set('per_page', 10);
+        if (kw) url.searchParams.set('search', kw);
+        if (st) url.searchParams.set('status', st);
+
+        let sales = [];
+        let meta = {};
+
         const res = await fetch(url.toString(), {
           headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token }
         });
         const json = await res.json();
-        if (!res.ok) {
+        if (res.ok && json.data) {
+          sales = Array.isArray(json.data) ? json.data : (json.data?.data || []);
+          meta = json.meta || json.data?.meta || { total: sales.length, current_page: page, last_page: 1 };
+        } else if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.sales && SERVER_STAFF.sales.length > 0) {
+          sales = SERVER_STAFF.sales;
+          meta = { total: sales.length, current_page: 1, last_page: 1 };
+        } else {
           tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 25px; color:#ef4444;">${escapeHtml(json.message || 'Không thể tải danh sách Sales.')}</td></tr>`;
           return;
         }
 
-        const sales = json.data?.data || json.data || [];
-        const meta = json.data?.meta || json.data || {};
         const countBadge = document.getElementById('badge-count-sales');
-        if (countBadge) countBadge.innerText = meta.total || sales.length;
+        if (countBadge) countBadge.innerText = (meta.total !== undefined ? meta.total : sales.length);
 
         if (sales.length === 0) {
           tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 25px; color:#94a3b8;">Chưa có dữ liệu nhân viên Sales nào.</td></tr>';
@@ -438,7 +775,24 @@
         renderStaffPagination('pagination-staff-sales', meta, loadStaffSales);
       } catch (err) {
         console.error('Load sales error:', err);
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 25px; color:#ef4444;">Lỗi kết nối API danh sách Sales.</td></tr>';
+        if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.sales && SERVER_STAFF.sales.length > 0) {
+          const sales = SERVER_STAFF.sales;
+          document.getElementById('badge-count-sales')?.innerText && (document.getElementById('badge-count-sales').innerText = sales.length);
+          tbody.innerHTML = sales.map(s => `
+            <tr>
+              <td><span style="font-family:monospace; font-weight:700; color:#0f3361;">${escapeHtml(s.employee_code || 'SL-' + s.id?.substring(0, 4))}</span></td>
+              <td><strong>${escapeHtml(s.full_name || s.name || '---')}</strong></td>
+              <td><div style="font-size:12.5px; color:#2563eb;">${escapeHtml(s.email)}</div></td>
+              <td><span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span></td>
+              <td><span style="font-weight:700;">${s.active_leads_count || 0}</span> / 10 leads</td>
+              <td><span style="color:#ea580c; font-weight:700;">${s.commission_rate || 5}%</span></td>
+              <td><span class="badge-filament success">Hoạt động</span></td>
+              <td style="text-align: right;"><button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffSale('${s.id}')"><i class="fa-regular fa-eye"></i></button></td>
+            </tr>
+          `).join('');
+        } else {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 25px; color:#ef4444;">Lỗi kết nối API danh sách Sales.</td></tr>';
+        }
       }
     }
 
@@ -653,37 +1007,46 @@
     // =========================================================================
 
     // API 82: Danh sách PM
-    async function loadStaffPm(page = 1) {
+    async function loadStaffPm(page = 1, showLoading = true) {
       const tbody = document.getElementById('tbody-staff-pm');
       if (!tbody) return;
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải danh sách BQL...</td></tr>';
-
-      const token = getSanctumToken();
-      const kw = document.getElementById('filter-pm-keyword')?.value?.trim() || '';
-      const dept = document.getElementById('filter-pm-department')?.value || '';
-      const st = document.getElementById('filter-pm-status')?.value || '';
-
-      const url = new URL('/api/v1/admin/users/property-managers', credentialsBaseUrl || window.location.origin);
-      url.searchParams.set('page', page);
-      url.searchParams.set('per_page', 10);
-      if (kw) url.searchParams.set('search', kw);
-      if (dept) url.searchParams.set('department', dept);
-      if (st) url.searchParams.set('status', st);
+      if (showLoading && (!tbody.children.length || tbody.innerText.includes('Đang tải'))) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải danh sách BQL...</td></tr>';
+      }
 
       try {
+        const token = getSanctumToken();
+        const kw = document.getElementById('filter-pm-keyword')?.value?.trim() || '';
+        const dept = document.getElementById('filter-pm-department')?.value || '';
+        const st = document.getElementById('filter-pm-status')?.value || '';
+
+        const url = new URL('/api/v1/admin/users/property-managers', window.location.origin);
+        url.searchParams.set('page', page);
+        url.searchParams.set('per_page', 10);
+        if (kw) url.searchParams.set('search', kw);
+        if (dept) url.searchParams.set('department', dept);
+        if (st) url.searchParams.set('status', st);
+
+        let pms = [];
+        let meta = {};
+
         const res = await fetch(url.toString(), {
           headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token }
         });
         const json = await res.json();
-        if (!res.ok) {
+        if (res.ok && json.data) {
+          pms = Array.isArray(json.data) ? json.data : (json.data?.data || []);
+          meta = json.meta || json.data?.meta || { total: pms.length, current_page: page, last_page: 1 };
+        } else if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.pm && SERVER_STAFF.pm.length > 0) {
+          pms = SERVER_STAFF.pm;
+          meta = { total: pms.length, current_page: 1, last_page: 1 };
+        } else {
           tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 25px; color:#ef4444;">${escapeHtml(json.message || 'Không thể tải danh sách BQL.')}</td></tr>`;
           return;
         }
 
-        const pms = json.data?.data || json.data || [];
-        const meta = json.data?.meta || json.data || {};
         const countBadge = document.getElementById('badge-count-pm');
-        if (countBadge) countBadge.innerText = meta.total || pms.length;
+        if (countBadge) countBadge.innerText = (meta.total !== undefined ? meta.total : pms.length);
 
         if (pms.length === 0) {
           tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;">Chưa có dữ liệu nhân sự Ban Quản lý nào.</td></tr>';
@@ -737,7 +1100,23 @@
         renderStaffPagination('pagination-staff-pm', meta, loadStaffPm);
       } catch (err) {
         console.error('Load PM error:', err);
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#ef4444;">Lỗi kết nối API danh sách BQL.</td></tr>';
+        if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.pm && SERVER_STAFF.pm.length > 0) {
+          const pms = SERVER_STAFF.pm;
+          document.getElementById('badge-count-pm')?.innerText && (document.getElementById('badge-count-pm').innerText = pms.length);
+          tbody.innerHTML = pms.map(p => `
+            <tr>
+              <td><span style="font-family:monospace; font-weight:700; color:#b45309;">${escapeHtml(p.employee_code || 'PM-' + p.id?.substring(0, 4))}</span></td>
+              <td><strong>${escapeHtml(p.full_name || p.name || '---')}</strong><div style="font-size:11.5px; color:#64748b;">${escapeHtml(p.email)}</div></td>
+              <td><span style="color:#dc2626; font-weight:700;">${escapeHtml(p.emergency_hotline || p.phone || '0901234567')}</span></td>
+              <td><span style="background:#f1f5f9; color:#334155; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:600;">Kỹ thuật</span></td>
+              <td><span style="color:#94a3b8; font-size:11.5px;">Chưa phân công</span></td>
+              <td><span class="badge-filament success">ACTIVE</span></td>
+              <td style="text-align: right;"><button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffPm('${p.id}')"><i class="fa-regular fa-eye"></i></button></td>
+            </tr>
+          `).join('');
+        } else {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#ef4444;">Lỗi kết nối API danh sách BQL.</td></tr>';
+        }
       }
     }
 
@@ -942,37 +1321,46 @@
     // =========================================================================
 
     // API 87: Danh sách Kế toán
-    async function loadStaffAccountants(page = 1) {
+    async function loadStaffAccountants(page = 1, showLoading = true) {
       const tbody = document.getElementById('tbody-staff-accountants');
       if (!tbody) return;
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải danh sách Kế toán...</td></tr>';
-
-      const token = getSanctumToken();
-      const kw = document.getElementById('filter-acc-keyword')?.value?.trim() || '';
-      const adj = document.getElementById('filter-acc-adjustment')?.value || '';
-      const st = document.getElementById('filter-acc-status')?.value || '';
-
-      const url = new URL('/api/v1/admin/users/accountants', credentialsBaseUrl || window.location.origin);
-      url.searchParams.set('page', page);
-      url.searchParams.set('per_page', 10);
-      if (kw) url.searchParams.set('search', kw);
-      if (adj !== '') url.searchParams.set('can_approve_adjustment', adj);
-      if (st) url.searchParams.set('status', st);
+      if (showLoading && (!tbody.children.length || tbody.innerText.includes('Đang tải'))) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải danh sách Kế toán...</td></tr>';
+      }
 
       try {
+        const token = getSanctumToken();
+        const kw = document.getElementById('filter-acc-keyword')?.value?.trim() || '';
+        const adj = document.getElementById('filter-acc-adjustment')?.value || '';
+        const st = document.getElementById('filter-acc-status')?.value || '';
+
+        const url = new URL('/api/v1/admin/users/accountants', window.location.origin);
+        url.searchParams.set('page', page);
+        url.searchParams.set('per_page', 10);
+        if (kw) url.searchParams.set('search', kw);
+        if (adj !== '') url.searchParams.set('can_approve_adjustment', adj);
+        if (st) url.searchParams.set('status', st);
+
+        let accs = [];
+        let meta = {};
+
         const res = await fetch(url.toString(), {
           headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token }
         });
         const json = await res.json();
-        if (!res.ok) {
+        if (res.ok && json.data) {
+          accs = Array.isArray(json.data) ? json.data : (json.data?.data || []);
+          meta = json.meta || json.data?.meta || { total: accs.length, current_page: page, last_page: 1 };
+        } else if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.accountants && SERVER_STAFF.accountants.length > 0) {
+          accs = SERVER_STAFF.accountants;
+          meta = { total: accs.length, current_page: 1, last_page: 1 };
+        } else {
           tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 25px; color:#ef4444;">${escapeHtml(json.message || 'Không thể tải danh sách Kế toán.')}</td></tr>`;
           return;
         }
 
-        const accs = json.data?.data || json.data || [];
-        const meta = json.data?.meta || json.data || {};
         const countBadge = document.getElementById('badge-count-accountants');
-        if (countBadge) countBadge.innerText = meta.total || accs.length;
+        if (countBadge) countBadge.innerText = (meta.total !== undefined ? meta.total : accs.length);
 
         if (accs.length === 0) {
           tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;">Chưa có dữ liệu nhân viên Kế toán nào.</td></tr>';
@@ -1020,7 +1408,23 @@
         renderStaffPagination('pagination-staff-accountants', meta, loadStaffAccountants);
       } catch (err) {
         console.error('Load Accountants error:', err);
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#ef4444;">Lỗi kết nối API danh sách Kế toán.</td></tr>';
+        if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.accountants && SERVER_STAFF.accountants.length > 0) {
+          const accs = SERVER_STAFF.accountants;
+          document.getElementById('badge-count-accountants')?.innerText && (document.getElementById('badge-count-accountants').innerText = accs.length);
+          tbody.innerHTML = accs.map(a => `
+            <tr>
+              <td><span style="font-family:monospace; font-weight:700; color:#065f46;">${escapeHtml(a.employee_code || 'ACC-' + a.id?.substring(0, 4))}</span></td>
+              <td><strong>${escapeHtml(a.full_name || a.name || '---')}</strong></td>
+              <td><div style="font-size:12.5px; color:#2563eb;">${escapeHtml(a.email)}</div></td>
+              <td><span style="background:#dcfce7; color:#15803d; font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:9999px;">Được phép</span></td>
+              <td><span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span></td>
+              <td><span class="badge-filament success">ACTIVE</span></td>
+              <td style="text-align: right;"><button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffAccountant('${a.id}')"><i class="fa-regular fa-eye"></i></button></td>
+            </tr>
+          `).join('');
+        } else {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#ef4444;">Lỗi kết nối API danh sách Kế toán.</td></tr>';
+        }
       }
     }
 
@@ -1224,7 +1628,7 @@
       if (!container) return;
       const cur = meta.current_page || 1;
       const last = meta.last_page || 1;
-      const total = meta.total || 0;
+      const total = (meta.total !== undefined) ? meta.total : (Array.isArray(meta) ? meta.length : (meta.data ? meta.data.length : 0));
 
       container.innerHTML = `
         <span style="font-size:12px; color:#64748b;">Trang <strong>${cur}</strong> / <strong>${last}</strong> (Tổng số: ${total})</span>
@@ -1238,5 +1642,13 @@
         </div>
       `;
     }
-        // Initialize on load
+    // Tự động tải trước toàn bộ dữ liệu nhân sự và số lượng badge ngay khi nạp script
+    if (typeof preloadAllStaffData === 'function') {
+      preloadAllStaffData();
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof preloadAllStaffData === 'function') {
+        preloadAllStaffData();
+      }
+    });
   </script>

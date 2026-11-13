@@ -233,8 +233,8 @@
     /* ==========================================================================
        5. DETAIL PAGE & BOOKING LOGIC
        ========================================================================== */
-    function openBuildingDetail(buildingId) {
-      const b = BUILDINGS_DATA.find(x => String(x.id) === String(buildingId));
+    function openBuildingDetail(buildingId, updateRoute = true) {
+      const b = BUILDINGS_DATA.find(x => String(x.id) === String(buildingId) || String(x.slug) === String(buildingId));
       if (!b) return;
       currentSelectedBuilding = b;
 
@@ -266,7 +266,10 @@
         `).join('');
       }
 
-      showPublicPage('page-detail');
+      showPublicPage('page-detail', false);
+      if (updateRoute && typeof updateAppRoute === 'function') {
+        updateAppRoute('building/' + (b.slug || b.id));
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -286,7 +289,7 @@
     /* ==========================================================================
        6. PUBLIC SPA NAVIGATION
        ========================================================================== */
-    function showPublicPage(pageId) {
+    function showPublicPage(pageId, updateRoute = true) {
       document.querySelectorAll('#portal-wrapper .page-section').forEach(sec => {
         sec.classList.remove('active');
       });
@@ -297,6 +300,10 @@
       if (pageId === 'page-home') {
         const first = document.querySelector('.mo-nav-item');
         if (first) first.classList.add('active');
+      }
+
+      if (updateRoute && typeof updateAppRoute === 'function') {
+        updateAppRoute(pageId === 'page-home' ? 'portal' : (pageId === 'page-quote' ? 'quote' : 'detail'));
       }
     }
 

@@ -119,16 +119,6 @@
           </div>
 
           <div class="filament-topbar-actions">
-            <div class="role-selector-pill" id="role-switcher-container" style="display:none;">
-              <i class="fa-solid fa-user-shield"></i>
-              <span>Đang xem vai trò:</span>
-              <select id="filament-role-select" onchange="handleRoleSwitch(this.value)">
-                <option value="admin">Ban Quản Lý & Admin</option>
-                <option value="sales">Chuyên Viên Sales / Môi Giới</option>
-                <option value="tenant">Khách Thuê (DN An Khang Tech)</option>
-              </select>
-            </div>
-
             <div class="filament-user-pill" onclick="openProfileModal('tab-profile-info')" style="cursor:pointer;" title="Bấm để xem hồ sơ và đổi mật khẩu">
               <div class="filament-avatar" id="filament-user-avatar">AD</div>
               <div>

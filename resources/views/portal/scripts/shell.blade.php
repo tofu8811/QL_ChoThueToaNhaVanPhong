@@ -1,8 +1,119 @@
 <script>
     /* ==========================================================================
-       7. SWITCHING BETWEEN MAISON OFFICE PORTAL & FILAMENT ADMIN SHELL
+       7. SPA HASH ROUTING & VIEW NAVIGATION (GIỮ NGUYÊN TRANG KHI F5)
        ========================================================================== */
-    function switchView(viewType) {
+    const TAB_TO_ROUTE = {
+      'tab-admin-dashboard': 'admin/dashboard',
+      'tab-admin-buildings': 'admin/buildings',
+      'tab-admin-tickets': 'admin/tickets',
+      'tab-admin-contracts': 'admin/contracts',
+      'tab-admin-staff': 'admin/staff',
+      'tab-sales-leads': 'admin/sales-leads',
+      'tab-tenant-workspace': 'tenant/workspace',
+      'tab-tenant-tickets': 'tenant/tickets',
+      'tab-tenant-bills': 'tenant/bills',
+    };
+
+    const ROUTE_TO_TAB = {
+      'admin/dashboard': 'tab-admin-dashboard',
+      'admin': 'tab-admin-dashboard',
+      'admin/buildings': 'tab-admin-buildings',
+      'admin/tickets': 'tab-admin-tickets',
+      'admin/contracts': 'tab-admin-contracts',
+      'admin/staff': 'tab-admin-staff',
+      'admin/sales-leads': 'tab-sales-leads',
+      'tenant/workspace': 'tab-tenant-workspace',
+      'tenant': 'tab-tenant-workspace',
+      'tenant/tickets': 'tab-tenant-tickets',
+      'tenant/bills': 'tab-tenant-bills',
+    };
+
+    // Hàm cập nhật URL hash & lưu session lịch sử
+    function updateAppRoute(routePath) {
+      if (!routePath) return;
+      const cleanRoute = routePath.replace(/^#\/?/, '').trim();
+      localStorage.setItem('last_active_route', cleanRoute);
+      if (window.location.hash !== '#' + cleanRoute) {
+        history.replaceState(null, '', '#' + cleanRoute);
+      }
+    }
+
+    // Hàm điều hướng tuyến SPA khi nạp trang (F5) hoặc hash thay đổi
+    function handleAppRouting() {
+      let hash = window.location.hash ? window.location.hash.replace(/^#\/?/, '').trim() : '';
+      if (!hash) {
+        hash = localStorage.getItem('last_active_route') || '';
+      }
+
+      // 1. Cổng thông tin công khai (Portal)
+      if (!hash || hash === 'portal' || hash === 'home') {
+        switchView('portal-view', false);
+        if (typeof showPublicPage === 'function') showPublicPage('page-home', false);
+        return;
+      }
+
+      if (hash.startsWith('building/')) {
+        const bId = hash.replace('building/', '').trim();
+        switchView('portal-view', false);
+        if (typeof openBuildingDetail === 'function') openBuildingDetail(bId, false);
+        return;
+      }
+
+      if (hash === 'quote') {
+        switchView('portal-view', false);
+        if (typeof showPublicPage === 'function') showPublicPage('page-quote', false);
+        return;
+      }
+
+      // 2. Cổng Khách Thuê (Tenant Workspace)
+      if (hash.startsWith('tenant')) {
+        handleRoleSwitch('tenant', false);
+        if (hash === 'tenant/tickets') {
+          switchFilamentTab('tab-tenant-tickets', document.querySelector('.filament-link[onclick*="tab-tenant-tickets"]'), false);
+        } else if (hash === 'tenant/bills') {
+          switchFilamentTab('tab-tenant-bills', document.querySelector('.filament-link[onclick*="tab-tenant-bills"]'), false);
+        } else {
+          switchFilamentTab('tab-tenant-workspace', document.querySelector('.filament-link[onclick*="tab-tenant-workspace"]'), false);
+        }
+        return;
+      }
+
+      // 3. Phân hệ Admin / BQL / Sales
+      if (hash.startsWith('admin')) {
+        if (hash === 'admin/sales-leads') {
+          handleRoleSwitch('sales', false);
+          switchFilamentTab('tab-sales-leads', document.querySelector('.filament-link[onclick*="tab-sales-leads"]'), false);
+          return;
+        }
+
+        handleRoleSwitch('admin', false);
+
+        if (hash.startsWith('admin/staff')) {
+          const parts = hash.split('/');
+          const subtab = parts[2] || 'admins';
+          const staffLink = document.getElementById('nav-item-staff');
+          switchFilamentTab('tab-admin-staff', staffLink, false);
+          if (typeof switchStaffSubTab === 'function') {
+            const btnEl = document.getElementById(`btn-subtab-${subtab}`);
+            switchStaffSubTab(subtab, btnEl, false);
+          }
+          return;
+        }
+
+        const tabId = ROUTE_TO_TAB[hash] || 'tab-admin-dashboard';
+        const linkEl = document.querySelector(`.filament-link[onclick*="${tabId}"]`);
+        switchFilamentTab(tabId, linkEl, false);
+        return;
+      }
+
+      // Mặc định về portal
+      switchView('portal-view', false);
+    }
+
+    // Lắng nghe thay đổi hash trên thanh địa chỉ trình duyệt (Back / Forward)
+    window.addEventListener('hashchange', handleAppRouting);
+
+    function switchView(viewType, updateRoute = true) {
       const portal = document.getElementById("portal-wrapper");
       const admin = document.getElementById("admin-wrapper");
 
@@ -15,6 +126,7 @@
         admin.style.display = 'none';
         portal.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (updateRoute) updateAppRoute('portal');
       }
     }
 
@@ -37,8 +149,8 @@
       }
     }
 
-    function handleRoleSwitch(role) {
-      switchView('admin-view');
+    function handleRoleSwitch(role, updateRoute = true) {
+      switchView('admin-view', false);
       const selectHeader = document.getElementById("filament-role-select");
       if (selectHeader) selectHeader.value = role;
 
@@ -78,7 +190,7 @@
         groupAdmin.style.display = 'block';
         groupSales.style.display = 'block';
         groupTenant.style.display = 'none';
-        switchFilamentTab('tab-admin-dashboard', document.querySelector('#nav-group-admin .filament-link'));
+        if (updateRoute) switchFilamentTab('tab-admin-dashboard', document.querySelector('#nav-group-admin .filament-link'), true);
       } else if (role === 'pm') {
         if (roleSwitcherContainer) roleSwitcherContainer.style.display = (realRole === 'ADMIN') ? 'inline-flex' : 'none';
         if (sidebarFilamentBtn) sidebarFilamentBtn.style.display = 'none';
@@ -90,7 +202,7 @@
         groupAdmin.style.display = 'block';
         groupSales.style.display = 'none';
         groupTenant.style.display = 'none';
-        switchFilamentTab('tab-admin-dashboard', document.querySelector('#nav-group-admin .filament-link'));
+        if (updateRoute) switchFilamentTab('tab-admin-dashboard', document.querySelector('#nav-group-admin .filament-link'), true);
       } else if (role === 'sales') {
         if (roleSwitcherContainer) roleSwitcherContainer.style.display = (realRole === 'ADMIN') ? 'inline-flex' : 'none';
         if (sidebarFilamentBtn) sidebarFilamentBtn.style.display = 'none';
@@ -102,7 +214,7 @@
         groupAdmin.style.display = 'none';
         groupSales.style.display = 'block';
         groupTenant.style.display = 'none';
-        switchFilamentTab('tab-sales-leads', document.querySelector('#nav-group-sales .filament-link'));
+        if (updateRoute) switchFilamentTab('tab-sales-leads', document.querySelector('#nav-group-sales .filament-link'), true);
       } else if (role === 'tenant') {
         if (roleSwitcherContainer) roleSwitcherContainer.style.display = (realRole === 'ADMIN') ? 'inline-flex' : 'none';
         if (sidebarFilamentBtn) sidebarFilamentBtn.style.display = 'none';
@@ -124,13 +236,13 @@
           contractRep.innerText = realUser.representative_name + (realUser.representative_position ? ` (${realUser.representative_position})` : ' (Đại diện pháp luật)');
         }
 
-        switchFilamentTab('tab-tenant-workspace', document.querySelector('#nav-group-tenant .filament-link'));
+        if (updateRoute) switchFilamentTab('tab-tenant-workspace', document.querySelector('#nav-group-tenant .filament-link'), true);
       } else if (role === 'portal') {
-        switchView('portal-view');
+        switchView('portal-view', updateRoute);
       }
     }
 
-    function switchFilamentTab(tabId, el) {
+    function switchFilamentTab(tabId, el, updateRoute = true) {
       document.querySelectorAll('.filament-tab-pane').forEach(pane => {
         pane.style.display = 'none';
         pane.classList.remove('active');
@@ -145,11 +257,21 @@
       if (el) el.classList.add('active');
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
+      // Cập nhật địa chỉ URL để khi F5 không bị quăng về trang chủ
+      if (updateRoute) {
+        if (tabId === 'tab-admin-staff') {
+          updateAppRoute('admin/staff/' + (typeof currentStaffTab !== 'undefined' ? currentStaffTab : 'admins'));
+        } else {
+          updateAppRoute(TAB_TO_ROUTE[tabId] || 'admin/dashboard');
+        }
+      }
+
       if (tabId === 'tab-admin-tickets' || tabId === 'tab-tenant-tickets') {
         loadTicketsList();
       }
       if (tabId === 'tab-admin-staff') {
-        switchStaffSubTab(currentStaffTab);
+        if (typeof preloadAllStaffData === 'function') preloadAllStaffData();
+        if (typeof switchStaffSubTab === 'function') switchStaffSubTab(currentStaffTab, null, updateRoute);
       }
       if (tabId === 'tab-sales-leads') {
         loadAdminLeadsList();

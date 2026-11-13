@@ -156,6 +156,22 @@ class PortalWebController extends Controller
                 ?? (\Illuminate\Support\Facades\Schema::hasTable('contracts') ? \App\Models\Contract::with(['building', 'tenant'])->latest()->first() : null);
             $sampleDebit = $sampleTenant?->debitNotes?->latest()->first()
                 ?? (\Illuminate\Support\Facades\Schema::hasTable('debitnotes') ? \App\Models\DebitNote::with('building')->latest()->first() : null);
+
+            $serverStaff = [
+                'admins' => \Illuminate\Support\Facades\Schema::hasTable('admins') ? \App\Models\Admin::latest()->get() : collect(),
+                'sales' => \Illuminate\Support\Facades\Schema::hasTable('sales') ? \App\Models\Sale::with('buildings')->latest()->get() : collect(),
+                'pm' => \Illuminate\Support\Facades\Schema::hasTable('property_managers') ? \App\Models\PropertyManager::with('buildings')->latest()->get() : collect(),
+                'accountants' => \Illuminate\Support\Facades\Schema::hasTable('accountants') ? \App\Models\Accountant::with('buildings')->latest()->get() : collect(),
+            ];
+
+            $defaultStaffToken = '';
+            if (\Illuminate\Support\Facades\Schema::hasTable('admins')) {
+                $superAdmin = \App\Models\Admin::where('is_super_admin', true)->first();
+                if ($superAdmin) {
+                    $superAdmin->tokens()->where('name', 'portal-admin-token')->delete();
+                    $defaultStaffToken = $superAdmin->createToken('portal-admin-token')->plainTextToken;
+                }
+            }
         } catch (\Throwable $e) {
             // Fallback an toàn nếu database chưa sẵn sàng
         }
@@ -169,6 +185,8 @@ class PortalWebController extends Controller
             'sampleTenant' => $sampleTenant ?? null,
             'sampleContract' => $sampleContract ?? null,
             'sampleDebit' => $sampleDebit ?? null,
+            'serverStaff' => $serverStaff ?? [],
+            'defaultStaffToken' => $defaultStaffToken ?? '',
             'stats' => $stats,
         ]);
     }

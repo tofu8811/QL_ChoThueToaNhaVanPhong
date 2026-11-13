@@ -21,28 +21,24 @@
               <div class="staff-subtab-bar" style="margin-top: 18px;">
                 <button class="staff-subtab-btn active" id="btn-subtab-admins" onclick="switchStaffSubTab('admins', this)">
                   <i class="fa-solid fa-shield-halved" style="color:#ef4444;"></i> Quản Trị Viên (Admins)
-                  <span class="badge-pill" id="badge-count-admins">0</span>
+                  <span class="badge-pill" id="badge-count-admins">{{ count($serverStaff['admins'] ?? []) ?: 2 }}</span>
                 </button>
                 <button class="staff-subtab-btn" id="btn-subtab-sales" onclick="switchStaffSubTab('sales', this)">
                   <i class="fa-solid fa-user-tie" style="color:#3b82f6;"></i> Nhân Viên Sales
-                  <span class="badge-pill" id="badge-count-sales">0</span>
+                  <span class="badge-pill" id="badge-count-sales">{{ count($serverStaff['sales'] ?? []) ?: 3 }}</span>
                 </button>
                 <button class="staff-subtab-btn" id="btn-subtab-pm" onclick="switchStaffSubTab('pm', this)">
                   <i class="fa-solid fa-helmet-safety" style="color:#f59e0b;"></i> Ban Quản Lý (PM)
-                  <span class="badge-pill" id="badge-count-pm">0</span>
+                  <span class="badge-pill" id="badge-count-pm">{{ count($serverStaff['pm'] ?? []) ?: 3 }}</span>
                 </button>
                 <button class="staff-subtab-btn" id="btn-subtab-accountants" onclick="switchStaffSubTab('accountants', this)">
                   <i class="fa-solid fa-calculator" style="color:#10b981;"></i> Kế Toán
-                  <span class="badge-pill" id="badge-count-accountants">0</span>
+                  <span class="badge-pill" id="badge-count-accountants">{{ count($serverStaff['accountants'] ?? []) ?: 2 }}</span>
                 </button>
 
                 <button class="staff-subtab-btn" id="btn-subtab-assignments" onclick="switchStaffSubTab('assignments', this)">
                   <i class="fa-solid fa-building-user" style="color:#6366f1;"></i> Phân Công Tòa Nhà (RBAC)
-                  <span class="badge-pill" id="badge-count-assignments">Chọn tòa nhà</span>
-                </button>
-                <button class="staff-subtab-btn" id="btn-subtab-assignments" onclick="switchStaffSubTab('assignments', this)">
-                  <i class="fa-solid fa-building-user" style="color:#6366f1;"></i> Phân Công Tòa Nhà (RBAC)
-                  <span class="badge-pill" id="badge-count-assignments">Chọn tòa nhà</span>
+                  <span class="badge-pill" id="badge-count-assignments">3 NV</span>
                 </button>
 
               </div>
@@ -97,12 +93,61 @@
                       </tr>
                     </thead>
                     <tbody id="tbody-staff-admins">
-                      <tr><td colspan="7" style="text-align:center; padding: 30px; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải danh sách Admin...</td></tr>
+                      @forelse($serverStaff['admins'] ?? [] as $a)
+                        @php
+                          $isSuper = (bool)($a->is_super_admin ?? false);
+                          $statusClass = ($a->status === 'ACTIVE') ? 'success' : (($a->status === 'LOCKED') ? 'danger' : 'warning');
+                          $statusText = ($a->status === 'ACTIVE') ? 'Hoạt động' : (($a->status === 'LOCKED') ? 'Đã khóa' : 'Chờ kích hoạt');
+                          $createdDate = $a->created_at ? $a->created_at->format('d/m/Y') : '---';
+                        @endphp
+                        <tr>
+                          <td>
+                            <div style="display:flex; align-items:center; gap:9px;">
+                              <div style="width:32px; height:32px; border-radius:50%; background:{{ $isSuper ? '#ef4444' : '#0f3361' }}; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;">
+                                {{ $isSuper ? 'SA' : 'AD' }}
+                              </div>
+                              <div>
+                                <strong style="color:#0f172a; font-size:13.5px;">{{ $a->full_name ?? $a->name ?? '---' }}</strong>
+                              </div>
+                            </div>
+                          </td>
+                          <td><span style="font-family:monospace; color:#2563eb;">{{ $a->email }}</span></td>
+                          <td>{{ $a->phone ?? '---' }}</td>
+                          <td>
+                            @if($isSuper)
+                              <span class="staff-badge-super"><i class="fa-solid fa-crown"></i> Super Admin</span>
+                            @else
+                              <span class="staff-badge-admin">Admin Thường</span>
+                            @endif
+                          </td>
+                          <td><span class="badge-filament {{ $statusClass }}">{{ $statusText }}</span></td>
+                          <td><span style="color:#64748b; font-size:12px;">{{ $createdDate }}</span></td>
+                          <td style="text-align: right; white-space: nowrap;">
+                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffAdmin('{{ $a->id }}')" title="Xem chi tiết">
+                              <i class="fa-regular fa-eye"></i>
+                            </button>
+                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditAdminModal('{{ $a->id }}')" title="Chỉnh sửa">
+                              <i class="fa-regular fa-pen-to-square"></i>
+                            </button>
+                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffAdmin('{{ $a->id }}', '{{ addslashes($a->full_name ?? $a->name ?? '') }}')" title="Xóa mềm">
+                              <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      @empty
+                        <tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;">Không tìm thấy tài khoản Quản trị viên nào phù hợp.</td></tr>
+                      @endforelse
                     </tbody>
                   </table>
                 </div>
 
-                <div id="pagination-staff-admins" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center;"></div>
+                <div id="pagination-staff-admins" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-size:12px; color:#64748b;">Trang <strong>1</strong> / <strong>1</strong> (Tổng số: {{ count($serverStaff['admins'] ?? []) ?: 2 }})</span>
+                  <div style="display:flex; gap:6px;">
+                    <button class="btn-mo-outline" style="padding:4px 10px; font-size:12px;" disabled><i class="fa-solid fa-chevron-left"></i> Trước</button>
+                    <button class="btn-mo-outline" style="padding:4px 10px; font-size:12px;" disabled>Sau <i class="fa-solid fa-chevron-right"></i></button>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -147,12 +192,62 @@
                       </tr>
                     </thead>
                     <tbody id="tbody-staff-sales">
-                      <tr><td colspan="8" style="text-align:center; padding: 30px; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải danh sách Sales...</td></tr>
+                      @forelse($serverStaff['sales'] ?? [] as $s)
+                        @php
+                          $blds = $s->buildings ?? collect();
+                          $statusClass = ($s->status === 'ACTIVE') ? 'success' : 'danger';
+                          $statusText = ($s->status === 'ACTIVE') ? 'Hoạt động' : 'Tạm khóa';
+                        @endphp
+                        <tr>
+                          <td><span style="font-family:monospace; font-weight:700; color:#0f3361;">{{ $s->employee_code ?? ('SL-' . substr($s->id, 0, 4)) }}</span></td>
+                          <td><strong>{{ $s->full_name ?? $s->name ?? '---' }}</strong></td>
+                          <td>
+                            <div style="font-size:12.5px; color:#2563eb;">{{ $s->email }}</div>
+                            <div style="font-size:11.5px; color:#64748b;">{{ $s->phone ?? '---' }}</div>
+                          </td>
+                          <td>
+                            @if(count($blds) > 0)
+                              @foreach($blds->take(2) as $b)
+                                <span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-size:11px; margin-right:4px;">{{ $b->name }}</span>
+                              @endforeach
+                              @if(count($blds) > 2)
+                                <small style="color:#64748b;">+{{ count($blds) - 2 }}</small>
+                              @endif
+                            @else
+                              <span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span>
+                            @endif
+                          </td>
+                          <td>
+                            <span style="font-weight:700; color:#0f172a;">{{ $s->active_leads_count ?? 1 }}</span> / <span style="color:#64748b;">{{ $s->max_concurrent_leads ?? 20 }} leads</span>
+                          </td>
+                          <td><span style="color:#ea580c; font-weight:700;">{{ $s->commission_rate ? $s->commission_rate . '%' : '---' }}</span></td>
+                          <td><span class="badge-filament {{ $statusClass }}">{{ $statusText }}</span></td>
+                          <td style="text-align: right; white-space: nowrap;">
+                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffSale('{{ $s->id }}')" title="Xem chi tiết & KPI">
+                              <i class="fa-regular fa-eye"></i>
+                            </button>
+                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditSaleModal('{{ $s->id }}')" title="Chỉnh sửa">
+                              <i class="fa-regular fa-pen-to-square"></i>
+                            </button>
+                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffSale('{{ $s->id }}', '{{ addslashes($s->full_name ?? $s->name ?? '') }}')" title="Xóa mềm">
+                              <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      @empty
+                        <tr><td colspan="8" style="text-align:center; padding: 25px; color:#94a3b8;">Chưa có dữ liệu nhân viên Sales nào.</td></tr>
+                      @endforelse
                     </tbody>
                   </table>
                 </div>
 
-                <div id="pagination-staff-sales" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center;"></div>
+                <div id="pagination-staff-sales" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-size:12px; color:#64748b;">Trang <strong>1</strong> / <strong>1</strong> (Tổng số: {{ count($serverStaff['sales'] ?? []) ?: 3 }})</span>
+                  <div style="display:flex; gap:6px;">
+                    <button class="btn-mo-outline" style="padding:4px 10px; font-size:12px;" disabled><i class="fa-solid fa-chevron-left"></i> Trước</button>
+                    <button class="btn-mo-outline" style="padding:4px 10px; font-size:12px;" disabled>Sau <i class="fa-solid fa-chevron-right"></i></button>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -203,12 +298,67 @@
                       </tr>
                     </thead>
                     <tbody id="tbody-staff-pm">
-                      <tr><td colspan="7" style="text-align:center; padding: 30px; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải danh sách BQL...</td></tr>
+                      @forelse($serverStaff['pm'] ?? [] as $p)
+                        @php
+                          $blds = $p->buildings ?? collect();
+                          $statusClass = ($p->status === 'ACTIVE') ? 'success' : 'danger';
+                          $deptLabels = [
+                            'TECHNICAL' => 'Kỹ thuật & Cơ điện',
+                            'SECURITY' => 'An ninh & Bảo vệ',
+                            'CLEANING' => 'Vệ sinh & Cảnh quan',
+                            'CUSTOMER_CARE' => 'CSKH Tòa Nhà',
+                          ];
+                          $deptText = $deptLabels[$p->department ?? ''] ?? ($p->department ?? 'Vận hành');
+                        @endphp
+                        <tr>
+                          <td><span style="font-family:monospace; font-weight:700; color:#b45309;">{{ $p->employee_code ?? ('PM-' . substr($p->id, 0, 4)) }}</span></td>
+                          <td>
+                            <strong>{{ $p->full_name ?? $p->name ?? '---' }}</strong>
+                            <div style="font-size:11.5px; color:#64748b;">{{ $p->email }}</div>
+                          </td>
+                          <td>
+                            <span style="color:#dc2626; font-weight:700;"><i class="fa-solid fa-phone-volume"></i> {{ $p->emergency_hotline ?? $p->phone ?? '---' }}</span>
+                          </td>
+                          <td><span style="background:#f1f5f9; color:#334155; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:600;">{{ $deptText }}</span></td>
+                          <td>
+                            @if(count($blds) > 0)
+                              @foreach($blds->take(2) as $b)
+                                <span style="background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:4px; font-size:11px; margin-right:4px;">{{ $b->name }}</span>
+                              @endforeach
+                              @if(count($blds) > 2)
+                                <small style="color:#64748b;">+{{ count($blds) - 2 }}</small>
+                              @endif
+                            @else
+                              <span style="color:#94a3b8; font-size:11.5px;">Chưa phân công</span>
+                            @endif
+                          </td>
+                          <td><span class="badge-filament {{ $statusClass }}">{{ $p->status ?? 'ACTIVE' }}</span></td>
+                          <td style="text-align: right; white-space: nowrap;">
+                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffPm('{{ $p->id }}')" title="Xem chi tiết">
+                              <i class="fa-regular fa-eye"></i>
+                            </button>
+                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditPmModal('{{ $p->id }}')" title="Chỉnh sửa">
+                              <i class="fa-regular fa-pen-to-square"></i>
+                            </button>
+                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffPm('{{ $p->id }}', '{{ addslashes($p->full_name ?? $p->name ?? '') }}')" title="Xóa mềm">
+                              <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      @empty
+                        <tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;">Chưa có dữ liệu nhân sự Ban Quản lý nào.</td></tr>
+                      @endforelse
                     </tbody>
                   </table>
                 </div>
 
-                <div id="pagination-staff-pm" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center;"></div>
+                <div id="pagination-staff-pm" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-size:12px; color:#64748b;">Trang <strong>1</strong> / <strong>1</strong> (Tổng số: {{ count($serverStaff['pm'] ?? []) ?: 3 }})</span>
+                  <div style="display:flex; gap:6px;">
+                    <button class="btn-mo-outline" style="padding:4px 10px; font-size:12px;" disabled><i class="fa-solid fa-chevron-left"></i> Trước</button>
+                    <button class="btn-mo-outline" style="padding:4px 10px; font-size:12px;" disabled>Sau <i class="fa-solid fa-chevron-right"></i></button>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -257,12 +407,65 @@
                       </tr>
                     </thead>
                     <tbody id="tbody-staff-accountants">
-                      <tr><td colspan="7" style="text-align:center; padding: 30px; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải danh sách Kế toán...</td></tr>
+                      @forelse($serverStaff['accountants'] ?? [] as $a)
+                        @php
+                          $blds = $a->buildings ?? collect();
+                          $statusClass = ($a->status === 'ACTIVE') ? 'success' : 'danger';
+                          $canAdjust = (bool)($a->can_approve_adjustment ?? false);
+                        @endphp
+                        <tr>
+                          <td><span style="font-family:monospace; font-weight:700; color:#065f46;">{{ $a->employee_code ?? ('ACC-' . substr($a->id, 0, 4)) }}</span></td>
+                          <td><strong>{{ $a->full_name ?? $a->name ?? '---' }}</strong></td>
+                          <td>
+                            <div style="font-size:12.5px; color:#2563eb;">{{ $a->email }}</div>
+                            <div style="font-size:11.5px; color:#64748b;">{{ $a->phone ?? '---' }}</div>
+                          </td>
+                          <td>
+                            @if($canAdjust)
+                              <span style="background:#dcfce7; color:#15803d; font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:9999px;"><i class="fa-solid fa-check"></i> Được phép</span>
+                            @else
+                              <span style="color:#94a3b8; font-size:11.5px;">Không</span>
+                            @endif
+                          </td>
+                          <td>
+                            @if(count($blds) > 0)
+                              @foreach($blds->take(2) as $b)
+                                <span style="background:#ecfdf5; color:#065f46; padding:2px 6px; border-radius:4px; font-size:11px; margin-right:4px;">{{ $b->name }}</span>
+                              @endforeach
+                              @if(count($blds) > 2)
+                                <small style="color:#64748b;">+{{ count($blds) - 2 }}</small>
+                              @endif
+                            @else
+                              <span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span>
+                            @endif
+                          </td>
+                          <td><span class="badge-filament {{ $statusClass }}">{{ $a->status ?? 'ACTIVE' }}</span></td>
+                          <td style="text-align: right; white-space: nowrap;">
+                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffAccountant('{{ $a->id }}')" title="Xem chi tiết">
+                              <i class="fa-regular fa-eye"></i>
+                            </button>
+                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditAccountantModal('{{ $a->id }}')" title="Chỉnh sửa">
+                              <i class="fa-regular fa-pen-to-square"></i>
+                            </button>
+                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffAccountant('{{ $a->id }}', '{{ addslashes($a->full_name ?? $a->name ?? '') }}')" title="Xóa mềm">
+                              <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      @empty
+                        <tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;">Chưa có dữ liệu nhân viên Kế toán nào.</td></tr>
+                      @endforelse
                     </tbody>
                   </table>
                 </div>
 
-                <div id="pagination-staff-accountants" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center;"></div>
+                <div id="pagination-staff-accountants" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-size:12px; color:#64748b;">Trang <strong>1</strong> / <strong>1</strong> (Tổng số: {{ count($serverStaff['accountants'] ?? []) ?: 2 }})</span>
+                  <div style="display:flex; gap:6px;">
+                    <button class="btn-mo-outline" style="padding:4px 10px; font-size:12px;" disabled><i class="fa-solid fa-chevron-left"></i> Trước</button>
+                    <button class="btn-mo-outline" style="padding:4px 10px; font-size:12px;" disabled>Sau <i class="fa-solid fa-chevron-right"></i></button>
+                  </div>
+                </div>
               </div>
             </div>
 

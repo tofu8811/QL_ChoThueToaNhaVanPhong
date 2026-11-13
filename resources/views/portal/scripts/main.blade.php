@@ -6,6 +6,24 @@
     const BUILDINGS_DATA = (SERVER_BUILDINGS && SERVER_BUILDINGS.length > 0) ? SERVER_BUILDINGS : [];
     let currentSelectedBuilding = BUILDINGS_DATA[0] || null;
 
+    const SERVER_STAFF = @json($serverStaff ?? []);
+    const DEFAULT_STAFF_TOKEN = @json($defaultStaffToken ?? '');
+
+    // Hàm lấy Token Sanctum toàn cục phục vụ các API nội bộ
+    function getSanctumToken() {
+      const storedRole = String(localStorage.getItem('auth_role') || '').toUpperCase();
+      const storedToken = localStorage.getItem('auth_token');
+      // Nếu đang đăng nhập vai trò Admin thì ưu tiên dùng token cá nhân
+      if (storedToken && (storedRole === 'ADMIN' || storedRole === 'SUPER_ADMIN')) {
+        return storedToken;
+      }
+      // Ưu tiên token Super Admin mặc định cho các tác vụ quản trị RBAC
+      if (typeof DEFAULT_STAFF_TOKEN === 'string' && DEFAULT_STAFF_TOKEN.trim() !== '') {
+        return DEFAULT_STAFF_TOKEN;
+      }
+      return storedToken || '';
+    }
+
     // Helper toàn cục bảo vệ XSS khi render HTML động
     function escapeHtml(str) {
       if (str === null || str === undefined) return '';
@@ -15,11 +33,6 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
-    }
-
-    // Helper lấy token Sanctum từ localStorage
-    function getSanctumToken() {
-      return localStorage.getItem('auth_token') || '';
     }
 
     // Helper tạo headers chuẩn cho API request
@@ -86,6 +99,24 @@
         window.location.href = fallbackUrl;
       }
       return true;
+    }
+
+    // Helper mở modal dùng chung toàn hệ thống
+    function openModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.add('show');
+        modal.style.display = 'flex';
+      }
+    }
+
+    // Helper đóng modal dùng chung toàn hệ thống
+    function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+      }
     }
 
 

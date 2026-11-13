@@ -273,7 +273,7 @@
     /* ==========================================================================
        6. PUBLIC SPA NAVIGATION
        ========================================================================== */
-    function showPublicPage(pageId) {
+    function showPublicPage(pageId, updateRoute = true) {
       document.querySelectorAll('#portal-wrapper .page-section').forEach(sec => {
         sec.classList.remove('active');
       });
@@ -284,6 +284,10 @@
       if (pageId === 'page-home') {
         const first = document.querySelector('.mo-nav-item');
         if (first) first.classList.add('active');
+      }
+
+      if (updateRoute && typeof updateAppRoute === 'function') {
+        updateAppRoute(pageId === 'page-home' ? 'portal' : (pageId === 'page-quote' ? 'quote' : 'detail'));
       }
     }
 

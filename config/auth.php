@@ -33,27 +33,32 @@ return [
         ],
 
         'admin' => [
-            'driver' => 'sanctum',
+            'driver' => 'session',
             'provider' => 'admins',
         ],
 
         'sales' => [
-            'driver' => 'sanctum',
+            'driver' => 'session',
             'provider' => 'sales',
         ],
 
         'property_manager' => [
-            'driver' => 'sanctum',
+            'driver' => 'session',
+            'provider' => 'property_managers',
+        ],
+
+        'pm' => [
+            'driver' => 'session',
             'provider' => 'property_managers',
         ],
 
         'accountant' => [
-            'driver' => 'sanctum',
+            'driver' => 'session',
             'provider' => 'accountants',
         ],
 
         'tenant' => [
-            'driver' => 'sanctum',
+            'driver' => 'session',
             'provider' => 'tenants',
         ],
     ],

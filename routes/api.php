@@ -5,12 +5,15 @@ use App\Http\Controllers\Api\V1\AdminUserApiController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BuildingApiController;
 use App\Http\Controllers\Api\V1\BuildingAssignmentApiController;
+use App\Http\Controllers\Api\V1\ContractApiController;
 use App\Http\Controllers\Api\V1\CrmLeadApiController;
 use App\Http\Controllers\Api\V1\LeadActivityApiController;
 use App\Http\Controllers\Api\V1\PortalLeadApiController;
 use App\Http\Controllers\Api\V1\PropertyManagerApiController;
 use App\Http\Controllers\Api\V1\ProvinceApiController;
 use App\Http\Controllers\Api\V1\SaleUserApiController;
+use App\Http\Controllers\Api\V1\TenantApiController;
+use App\Http\Controllers\Api\V1\TenantPortalApiController;
 use App\Http\Controllers\Api\V1\TicketApiController;
 use App\Http\Controllers\Api\V1\UnitApiController;
 use Illuminate\Support\Facades\Route;
@@ -67,6 +70,38 @@ Route::prefix('v1')->group(function () {
         Route::patch('units/{id}/status', [UnitApiController::class, 'updateStatus'])->name('v1.admin.units.status');
         Route::post('units/{id}/images', [UnitApiController::class, 'uploadImages'])->name('v1.admin.units.images.store');
         Route::delete('units/{id}/images/{imageId}', [UnitApiController::class, 'deleteImage'])->name('v1.admin.units.images.destroy');
+
+        // =====================================================================
+        // MODULE 3: QUẢN TRỊ KHÁCH THUÊ DOANH NGHIỆP (TENANTS)
+        // =====================================================================
+        Route::get('tenants', [TenantApiController::class, 'index'])->name('v1.admin.tenants.index');
+        Route::post('tenants', [TenantApiController::class, 'store'])->name('v1.admin.tenants.store');
+        Route::get('tenants/{id}', [TenantApiController::class, 'show'])->name('v1.admin.tenants.show');
+        Route::put('tenants/{id}', [TenantApiController::class, 'update'])->name('v1.admin.tenants.update');
+        Route::delete('tenants/{id}', [TenantApiController::class, 'destroy'])->name('v1.admin.tenants.destroy');
+
+        Route::post('tenants/{id}/upload-license', [TenantApiController::class, 'uploadLicense'])->name('v1.admin.tenants.uploadLicense');
+        Route::get('tenants/{id}/download-license', [TenantApiController::class, 'downloadLicense'])->name('v1.admin.tenants.downloadLicense');
+
+        // =====================================================================
+        // MODULE 3: QUẢN TRỊ HỢP ĐỒNG THUÊ VĂN PHÒNG (CONTRACTS & UNITS)
+        // =====================================================================
+        Route::get('contracts', [ContractApiController::class, 'index'])->name('v1.admin.contracts.index');
+        Route::post('contracts', [ContractApiController::class, 'store'])->name('v1.admin.contracts.store');
+        Route::post('contracts/reserve', [ContractApiController::class, 'reserve'])->name('v1.admin.contracts.reserve');
+        Route::get('contracts/{id}', [ContractApiController::class, 'show'])->name('v1.admin.contracts.show');
+        Route::put('contracts/{id}', [ContractApiController::class, 'update'])->name('v1.admin.contracts.update');
+        Route::delete('contracts/{id}', [ContractApiController::class, 'destroy'])->name('v1.admin.contracts.destroy');
+
+        Route::post('contracts/{id}/units', [ContractApiController::class, 'attachUnit'])->name('v1.admin.contracts.units.attach');
+        Route::delete('contracts/{id}/units/{unitId}', [ContractApiController::class, 'detachUnit'])->name('v1.admin.contracts.units.detach');
+
+        Route::post('contracts/{id}/sign', [ContractApiController::class, 'sign'])->name('v1.admin.contracts.sign');
+        Route::post('contracts/{id}/renew', [ContractApiController::class, 'renew'])->name('v1.admin.contracts.renew');
+        Route::post('contracts/{id}/terminate', [ContractApiController::class, 'terminate'])->name('v1.admin.contracts.terminate');
+
+        Route::post('contracts/{id}/upload-files', [ContractApiController::class, 'uploadFiles'])->name('v1.admin.contracts.uploadFiles');
+        Route::get('contracts/{id}/files/{fileId}/download', [ContractApiController::class, 'downloadFile'])->name('v1.admin.contracts.downloadFile');
     });
 
     // =========================================================================
@@ -95,6 +130,16 @@ Route::prefix('v1')->group(function () {
         // Dòng thời gian chăm sóc & Nhật ký hoạt động
         Route::get('leads/{id}/activities', [LeadActivityApiController::class, 'index'])->name('v1.crm.leads.activities.index');
         Route::post('leads/{id}/activities', [LeadActivityApiController::class, 'store'])->name('v1.crm.leads.activities.store');
+    });
+
+    // =========================================================================
+    // MODULE 3: CỔNG THÔNG TIN KHÁCH THUÊ (TENANT PORTAL)
+    // =========================================================================
+    Route::prefix('tenant')->group(function () {
+        Route::get('profile', [TenantPortalApiController::class, 'getProfile'])->name('v1.tenant.profile.show');
+        Route::put('profile', [TenantPortalApiController::class, 'updateProfile'])->name('v1.tenant.profile.update');
+        Route::get('contracts', [TenantPortalApiController::class, 'getContracts'])->name('v1.tenant.contracts.index');
+        Route::get('contracts/{id}', [TenantPortalApiController::class, 'getContractDetail'])->name('v1.tenant.contracts.show');
     });
 
     // =========================================================================

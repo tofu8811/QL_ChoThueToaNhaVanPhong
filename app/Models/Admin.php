@@ -8,12 +8,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 use App\Models\Ticket;
 use App\Models\TicketHistory;
 class Admin extends Authenticatable
 {
-    use HasFactory, HasUuidV7, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, HasUuidV7, Notifiable, SoftDeletes;
 
     protected $table = 'admins';
 

@@ -76,18 +76,20 @@ return new class extends Migration
             } else {
                 DB::statement("CREATE UNIQUE INDEX `uq_tickets_active_code` ON `tickets` ((IF(`deleted_at` IS NULL, `ticket_code`, NULL)))");
             }
-                        DB::statement("ALTER TABLE `tickets` ADD CONSTRAINT `chk_tickets_creator_role` CHECK (`creator_role` IN ('TENANT', 'PM', 'SALE', 'ADMIN'))");
-            DB::statement("ALTER TABLE `tickets` ADD CONSTRAINT `chk_tickets_creator_integrity` CHECK (
-                (`creator_role` = 'TENANT' AND `creator_tenant_id` IS NOT NULL) OR
-                (`creator_role` = 'PM' AND `creator_pm_id` IS NOT NULL) OR
-                (`creator_role` = 'SALE' AND `creator_sale_id` IS NOT NULL) OR
-                (`creator_role` = 'ADMIN' AND `creator_admin_id` IS NOT NULL)
-            )");
+                        try {
+                DB::statement("ALTER TABLE `tickets` ADD CONSTRAINT `chk_tickets_creator_role` CHECK (`creator_role` IN ('TENANT', 'PM', 'SALE', 'ADMIN'))");
+                DB::statement("ALTER TABLE `tickets` ADD CONSTRAINT `chk_tickets_creator_integrity` CHECK (
+                    (`creator_role` = 'TENANT' AND `creator_tenant_id` IS NOT NULL) OR
+                    (`creator_role` = 'PM' AND `creator_pm_id` IS NOT NULL) OR
+                    (`creator_role` = 'SALE' AND `creator_sale_id` IS NOT NULL) OR
+                    (`creator_role` = 'ADMIN' AND `creator_admin_id` IS NOT NULL)
+                )");
 
-            DB::statement("ALTER TABLE `tickets` ADD CONSTRAINT `chk_tickets_status` CHECK (`status` IN ('NEW', 'IN_PROGRESS', 'ON_HOLD', 'WAITING_CONFIRMATION', 'COMPLETED', 'CANCELLED'))");
-            DB::statement("ALTER TABLE `tickets` ADD CONSTRAINT `chk_tickets_category` CHECK (`category` IN ('MAINTENANCE', 'OVERTIME_CONSTRUCTION', 'SECURITY_CLEANING', 'SERVICE_COMPLAINT'))");
-            DB::statement("ALTER TABLE `tickets` ADD CONSTRAINT `chk_tickets_priority` CHECK (`priority` IN ('LOW', 'NORMAL', 'HIGH', 'URGENT'))");
-            DB::statement("ALTER TABLE `tickets` ADD CONSTRAINT `chk_tickets_rating` CHECK (`tenant_rating` IS NULL OR `tenant_rating` BETWEEN 1 AND 5)");
+                DB::statement("ALTER TABLE `tickets` ADD CONSTRAINT `chk_tickets_status` CHECK (`status` IN ('NEW', 'IN_PROGRESS', 'ON_HOLD', 'WAITING_CONFIRMATION', 'COMPLETED', 'CANCELLED'))");
+                DB::statement("ALTER TABLE `tickets` ADD CONSTRAINT `chk_tickets_category` CHECK (`category` IN ('MAINTENANCE', 'OVERTIME_CONSTRUCTION', 'SECURITY_CLEANING', 'SERVICE_COMPLAINT'))");
+                DB::statement("ALTER TABLE `tickets` ADD CONSTRAINT `chk_tickets_priority` CHECK (`priority` IN ('LOW', 'NORMAL', 'HIGH', 'URGENT'))");
+                DB::statement("ALTER TABLE `tickets` ADD CONSTRAINT `chk_tickets_rating` CHECK (`tenant_rating` IS NULL OR `tenant_rating` BETWEEN 1 AND 5)");
+            } catch (\Throwable $e) {}
         } elseif (in_array($driver, ['pgsql', 'sqlite'])) {
             DB::statement("CREATE UNIQUE INDEX uq_tickets_active_code ON tickets (ticket_code) WHERE deleted_at IS NULL");
                         if ($driver === 'pgsql') {

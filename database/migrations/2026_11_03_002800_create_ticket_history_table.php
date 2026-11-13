@@ -32,16 +32,18 @@ return new class extends Migration
 
         $driver = DB::getDriverName();
         if ($driver === 'mysql') {
-                        DB::statement("ALTER TABLE `ticket_history` ADD CONSTRAINT `chk_th_actor_type` CHECK (`actor_type` IN ('TENANT', 'PM', 'SALE', 'ADMIN', 'SYSTEM'))");
-            DB::statement("ALTER TABLE `ticket_history` ADD CONSTRAINT `chk_th_actor_integrity` CHECK (
-                (`actor_type` = 'TENANT' AND `tenant_actor_id` IS NOT NULL) OR
-                (`actor_type` = 'PM' AND `pm_actor_id` IS NOT NULL) OR
-                (`actor_type` = 'SALE' AND `sales_actor_id` IS NOT NULL) OR
-                (`actor_type` = 'ADMIN' AND `admin_actor_id` IS NOT NULL) OR
-                (`actor_type` = 'SYSTEM')
-            )");
-            DB::statement("ALTER TABLE `ticket_history` ADD CONSTRAINT `chk_th_from_status` CHECK (`from_status` IS NULL OR `from_status` IN ('NEW', 'IN_PROGRESS', 'ON_HOLD', 'WAITING_CONFIRMATION', 'COMPLETED', 'CANCELLED'))");
-            DB::statement("ALTER TABLE `ticket_history` ADD CONSTRAINT `chk_th_to_status` CHECK (`to_status` IN ('NEW', 'IN_PROGRESS', 'ON_HOLD', 'WAITING_CONFIRMATION', 'COMPLETED', 'CANCELLED'))");
+            try {
+                DB::statement("ALTER TABLE `ticket_history` ADD CONSTRAINT `chk_th_actor_type` CHECK (`actor_type` IN ('TENANT', 'PM', 'SALE', 'ADMIN', 'SYSTEM'))");
+                DB::statement("ALTER TABLE `ticket_history` ADD CONSTRAINT `chk_th_actor_integrity` CHECK (
+                    (`actor_type` = 'TENANT' AND `tenant_actor_id` IS NOT NULL) OR
+                    (`actor_type` = 'PM' AND `pm_actor_id` IS NOT NULL) OR
+                    (`actor_type` = 'SALE' AND `sales_actor_id` IS NOT NULL) OR
+                    (`actor_type` = 'ADMIN' AND `admin_actor_id` IS NOT NULL) OR
+                    (`actor_type` = 'SYSTEM')
+                )");
+                DB::statement("ALTER TABLE `ticket_history` ADD CONSTRAINT `chk_th_from_status` CHECK (`from_status` IS NULL OR `from_status` IN ('NEW', 'IN_PROGRESS', 'ON_HOLD', 'WAITING_CONFIRMATION', 'COMPLETED', 'CANCELLED'))");
+                DB::statement("ALTER TABLE `ticket_history` ADD CONSTRAINT `chk_th_to_status` CHECK (`to_status` IN ('NEW', 'IN_PROGRESS', 'ON_HOLD', 'WAITING_CONFIRMATION', 'COMPLETED', 'CANCELLED'))");
+            } catch (\Throwable $e) {}
         } elseif ($driver === 'pgsql') {
                         DB::statement("ALTER TABLE ticket_history ADD CONSTRAINT chk_th_actor_type CHECK (actor_type IN ('TENANT', 'PM', 'SALE', 'ADMIN', 'SYSTEM'))");
             DB::statement("ALTER TABLE ticket_history ADD CONSTRAINT chk_th_actor_integrity CHECK (

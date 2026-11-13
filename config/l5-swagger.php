@@ -101,7 +101,7 @@ return [
             'exclude' => [],
 
             // Phiên bản chuẩn OpenAPI: 3.0.0 hoặc 3.1.0
-            'open_api_spec_version' => env('L5_SWAGGER_OPEN_API_SPEC_VERSION', \L5Swagger\Generator::OPEN_API_DEFAULT_SPEC_VERSION),
+            'open_api_spec_version' => env('L5_SWAGGER_OPEN_API_SPEC_VERSION', defined('\L5Swagger\Generator::OPEN_API_DEFAULT_SPEC_VERSION') ? \L5Swagger\Generator::OPEN_API_DEFAULT_SPEC_VERSION : '3.0.0'),
         ],
 
         // Cấu hình bảo mật (Token / Bearer / OAuth2)

@@ -16,6 +16,7 @@
 
   <!-- Portal Stylesheet -->
   @include('portal.partials.styles')
+  @livewireStyles
   @stack('styles')
 </head><body style="margin: 0 !important; padding: 0 !important;">
   @yield('content')
@@ -25,6 +26,7 @@
 
   <!-- JavaScript Client Logic & API Sync -->
   @include('portal.partials.scripts')
+  @livewireScripts
   @stack('scripts')
 </body>
 </html>

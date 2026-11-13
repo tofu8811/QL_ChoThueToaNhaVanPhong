@@ -1839,6 +1839,15 @@
     .mo-pagination-pagesize select:focus {
       border-color: #2563eb;
     }
+    .mo-pagination-wrapper svg,
+    nav[role="navigation"] svg {
+      width: 14px !important;
+      height: 14px !important;
+      max-width: 14px !important;
+      max-height: 14px !important;
+      display: inline-block !important;
+      vertical-align: middle;
+    }
 
     /* ==========================================================================
        USER PROFILE & SECURITY MODAL STYLES (ENDPOINTS 67 - 71)

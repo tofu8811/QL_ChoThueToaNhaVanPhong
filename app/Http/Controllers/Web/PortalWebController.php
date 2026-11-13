@@ -167,4 +167,22 @@ class PortalWebController extends Controller
             'stats' => $stats,
         ]);
     }
+
+    /**
+     * Hiển thị trang chi tiết Tòa nhà Văn phòng chuẩn SEO SSR (Module 1).
+     */
+    public function showBuilding(string $slug): View
+    {
+        try {
+            $building = $this->buildingService->getPublicBuildingBySlug($slug);
+        } catch (\Throwable $e) {
+            $building = Building::query()
+                ->where('slug', $slug)
+                ->orWhere('id', $slug)
+                ->with(['images', 'primaryImage', 'units'])
+                ->firstOrFail();
+        }
+
+        return view('pages.building-detail', compact('building'));
+    }
 }

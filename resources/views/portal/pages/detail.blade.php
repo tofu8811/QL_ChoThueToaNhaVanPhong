@@ -65,44 +65,20 @@
             </table>
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-              <button class="btn-mo-orange" style="flex: 1; justify-content: center;" onclick="bookSurveyFromDetail()">
+              <button class="btn-mo-orange" style="flex: 1; justify-content: center;" type="button" onclick="bookSurveyFromDetail()">
                 <i class="fa-regular fa-calendar-check"></i> Đặt Lịch Khảo Sát
               </button>
-              <button class="btn-mo-outline" onclick="openQuoteModal()">
+              <button class="btn-mo-outline" type="button" onclick="openQuoteModal()">
                 <i class="fa-solid fa-file-pdf"></i> Tải Báo Giá PDF
               </button>
             </div>
           </div>
         </div>
 
-        <!-- BẢNG MẶT BẰNG & DIỆN TÍCH CẮT THUÊ (YÊU CẦU ĐỀ TÀI TỐT NGHIỆP) -->
-        <div class="detail-floors-card">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div>
-              <h2 style="font-size: 20px; font-weight: 800; color: var(--mo-primary);"><i class="fa-solid fa-table-cells"></i> Danh Sách Mặt Bằng & Diện Tích Cắt Thuê Trống</h2>
-              <p style="font-size: 13.5px; color: #64748b;">Dữ liệu cập nhật theo thời gian thực từ Ban Quản Lý tòa nhà</p>
-            </div>
-            <span class="badge-filament success"><i class="fa-solid fa-circle"></i> Sẵn sàng bàn giao</span>
-          </div>
+        <!-- Nhúng Livewire Component Mặt Bằng Trống (Module 1) -->
+        <livewire:floor-vacancy-list :buildingId="''" />
 
-          <table class="mo-table">
-            <thead>
-              <tr>
-                <th>Vị trí Tầng</th>
-                <th>Diện tích trống</th>
-                <th>Hiện trạng bàn giao</th>
-                <th>Đơn giá thuê</th>
-                <th>Tình trạng lấp đầy</th>
-                <th>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody id="detail-floors-tbody">
-              <!-- Rendered via Javascript -->
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Bản đồ vị trí tòa nhà (Interactive Map Mockup) -->
+        <!-- Bản đồ vị trí tòa nhà -->
         <div class="detail-floors-card">
           <h2 style="font-size: 20px; font-weight: 800; color: var(--mo-primary);"><i class="fa-solid fa-map-pin"></i> Vị Trí Tòa Nhà Trên Bản Đồ TP. Hồ Chí Minh</h2>
           <p style="font-size: 13.5px; color: #64748b;">Tọa lạc tại vị trí đắc địa, giao thông thuận tiện kết nối các tuyến đường huyết mạch</p>
@@ -112,5 +88,3 @@
         </div>
       </div>
     </main>
-
-    <!-- PAGE 3: QUOTE & SURVEY FORM (PHÂN HỆ THU THẬP LEAD) -->

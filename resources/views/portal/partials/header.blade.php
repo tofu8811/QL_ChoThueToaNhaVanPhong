@@ -4,21 +4,39 @@
     <!-- Main Header -->
     <header class="mo-header">
       <div class="container">
-        <div class="mo-logo" onclick="showPublicPage('page-home')" style="cursor: pointer;">
+        <a href="{{ route('home') }}" class="mo-logo" style="cursor: pointer; text-decoration: none;">
           <div class="mo-logo-icon">
             <i class="fa-solid fa-building-wheat"></i>
           </div>
           <div class="mo-logo-text">
             <h1>Office</h1>
           </div>
-        </div>
+        </a>
 
         <nav class="mo-nav">
-          <div class="mo-nav-item active" onclick="showPublicPage('page-home')">Cho Thuê VP TP.HCM</div>
-          <div class="mo-nav-item" onclick="filterByDistrict('Quận 1')">Văn Phòng Quận 1</div>
-          <div class="mo-nav-item" onclick="filterByDistrict('Quận 3')">Văn Phòng Quận 3</div>
-          <div class="mo-nav-item" onclick="filterByGrade('Hạng A')">Tòa Nhà Hạng A</div>
-          <div class="mo-nav-item" onclick="showPublicPage('page-quote')">Nhận Báo Giá</div>
+          <a href="{{ route('home') }}" 
+             class="mo-nav-item {{ (request()->routeIs('home') && !request()->has('district') && !request()->has('grade')) ? 'active' : '' }}" 
+             onclick="return handleHeaderFilter(event, 'reset', null, '{{ route('home') }}')"
+             style="text-decoration:none;">Cho Thuê VP TP.HCM</a>
+
+          <a href="{{ route('home', ['district' => 'Quận 1']) }}" 
+             class="mo-nav-item {{ (request('district') === 'Quận 1') ? 'active' : '' }}" 
+             onclick="return handleHeaderFilter(event, 'district', 'Quận 1', '{{ route('home', ['district' => 'Quận 1']) }}')"
+             style="text-decoration:none;">Văn Phòng Quận 1</a>
+
+          <a href="{{ route('home', ['district' => 'Quận 3']) }}" 
+             class="mo-nav-item {{ (request('district') === 'Quận 3') ? 'active' : '' }}" 
+             onclick="return handleHeaderFilter(event, 'district', 'Quận 3', '{{ route('home', ['district' => 'Quận 3']) }}')"
+             style="text-decoration:none;">Văn Phòng Quận 3</a>
+
+          <a href="{{ route('home', ['grade' => 'A']) }}" 
+             class="mo-nav-item {{ (request('grade') === 'A') ? 'active' : '' }}" 
+             onclick="return handleHeaderFilter(event, 'grade', 'A', '{{ route('home', ['grade' => 'A']) }}')"
+             style="text-decoration:none;">Tòa Nhà Hạng A</a>
+
+          <a href="{{ route('quote.page') }}" 
+             class="mo-nav-item {{ request()->routeIs('quote.page') ? 'active' : '' }}" 
+             style="text-decoration:none;">Nhận Báo Giá</a>
         </nav>
 
         <div class="mo-header-actions">

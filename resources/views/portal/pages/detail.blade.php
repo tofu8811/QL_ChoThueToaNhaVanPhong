@@ -13,13 +13,21 @@
           <!-- Gallery -->
           <div class="detail-gallery">
             <div class="detail-main-img">
-              <img id="detail-hero-img" src="https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=1200&q=80" alt="Building">
+              <img id="detail-hero-img" src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80" alt="Building">
             </div>
-            <div class="detail-sub-thumbs">
-              <img class="active" src="https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=600&q=80" onclick="changeDetailImg(this.src)">
-              <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80" onclick="changeDetailImg(this.src)">
-              <img src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=600&q=80" onclick="changeDetailImg(this.src)">
-              <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=600&q=80" onclick="changeDetailImg(this.src)">
+            <div class="detail-thumbs-slider">
+              <button type="button" class="thumb-slider-btn prev" onclick="scrollThumbs('prev')" aria-label="Lùi lại">
+                <i class="fa-solid fa-chevron-left"></i>
+              </button>
+              <div class="detail-sub-thumbs" id="detail-sub-thumbs">
+                <img class="active" src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80" onclick="changeDetailImg(this, this.src)">
+                <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80" onclick="changeDetailImg(this, this.src)">
+                <img src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=600&q=80" onclick="changeDetailImg(this, this.src)">
+                <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=600&q=80" onclick="changeDetailImg(this, this.src)">
+              </div>
+              <button type="button" class="thumb-slider-btn next" onclick="scrollThumbs('next')" aria-label="Xem tiếp">
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
             </div>
           </div>
 

@@ -9,9 +9,23 @@
   <meta property="og:type" content="article">
   <meta property="og:url" content="{{ url()->current() }}">
   @php
-    $heroImg = $building->primaryImage?->image_url ?? $building->images?->first()?->image_url ?? 'https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=1200&q=80';
+    $heroImg = $building->primaryImage?->image_url ?? $building->images?->first()?->image_url ?? 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80';
     $minUsd = $building->min_rent_price_per_sqm ? round($building->min_rent_price_per_sqm / 24000) : 35;
     $maxUsd = $building->max_rent_price_per_sqm ? round($building->max_rent_price_per_sqm / 24000) : 45;
+
+    // Danh sách ảnh gallery hiển thị (ảnh chính đầu tiên, không trùng lặp)
+    $galleryImages = collect();
+    if ($building->primaryImage?->image_url) {
+        $galleryImages->push($building->primaryImage->image_url);
+    }
+    if (isset($building->images)) {
+        foreach ($building->images as $img) {
+            if (!empty($img->image_url)) {
+                $galleryImages->push($img->image_url);
+            }
+        }
+    }
+    $galleryImages = $galleryImages->unique()->values();
   @endphp
   <meta property="og:image" content="{{ $heroImg }}">
   <!-- Schema.org Product / Place -->
@@ -49,21 +63,62 @@
         <!-- Detail Hero Grid -->
         <div class="detail-hero-grid">
           <!-- Gallery ảnh bằng Alpine.js (0ms delay) -->
-          <div class="detail-gallery" x-data="{ activeImg: '{{ $heroImg }}' }">
+          <div class="detail-gallery" x-data="{
+              activeImg: '{{ $heroImg }}',
+              canScrollPrev: false,
+              canScrollNext: false,
+              init() {
+                this.$nextTick(() => { this.checkScroll(); });
+                window.addEventListener('resize', () => { this.checkScroll(); });
+              },
+              checkScroll() {
+                const el = this.$refs.thumbsTrack;
+                if (!el) return;
+                this.canScrollPrev = el.scrollLeft > 4;
+                this.canScrollNext = el.scrollLeft < (el.scrollWidth - el.clientWidth - 4);
+              },
+              slideThumbs(dir) {
+                const el = this.$refs.thumbsTrack;
+                if (!el) return;
+                const step = el.clientWidth * 0.8;
+                el.scrollBy({ left: dir === 'next' ? step : -step, behavior: 'smooth' });
+                setTimeout(() => { this.checkScroll(); }, 320);
+              }
+          }">
             <div class="detail-main-img">
               <img :src="activeImg" alt="{{ $building->name ?? 'Tòa nhà' }}" id="detail-hero-img">
             </div>
-            <div class="detail-sub-thumbs">
-              <img src="{{ $heroImg }}" @click="activeImg = '{{ $heroImg }}'" :class="{ 'active': activeImg === '{{ $heroImg }}' }">
-              @if(isset($building->images) && $building->images->count() > 0)
-                @foreach($building->images->take(3) as $img)
-                  <img src="{{ $img->image_url }}" @click="activeImg = '{{ $img->image_url }}'" :class="{ 'active': activeImg === '{{ $img->image_url }}' }">
-                @endforeach
-              @else
-                <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80" @click="activeImg = 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80'" :class="{ 'active': activeImg === 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80' }">
-                <img src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=600&q=80" @click="activeImg = 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=600&q=80'" :class="{ 'active': activeImg === 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=600&q=80' }">
-                <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=600&q=80" @click="activeImg = 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=600&q=80'" :class="{ 'active': activeImg === 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=600&q=80' }">
-              @endif
+            <div class="detail-thumbs-slider">
+              <button type="button" 
+                      class="thumb-slider-btn prev" 
+                      @click="slideThumbs('prev')" 
+                      x-show="canScrollPrev" 
+                      x-transition
+                      aria-label="Xem ảnh trước">
+                <i class="fa-solid fa-chevron-left"></i>
+              </button>
+
+              <div class="detail-sub-thumbs" x-ref="thumbsTrack" @scroll="checkScroll()">
+                @if($galleryImages->count() > 0)
+                  @foreach($galleryImages as $imgUrl)
+                    <img src="{{ $imgUrl }}" @click="activeImg = '{{ $imgUrl }}'" :class="{ 'active': activeImg === '{{ $imgUrl }}' }">
+                  @endforeach
+                @else
+                  <img src="{{ $heroImg }}" @click="activeImg = '{{ $heroImg }}'" :class="{ 'active': activeImg === '{{ $heroImg }}' }">
+                  <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80" @click="activeImg = 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80'" :class="{ 'active': activeImg === 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80' }">
+                  <img src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=600&q=80" @click="activeImg = 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=600&q=80'" :class="{ 'active': activeImg === 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=600&q=80' }">
+                  <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=600&q=80" @click="activeImg = 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=600&q=80'" :class="{ 'active': activeImg === 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=600&q=80' }">
+                @endif
+              </div>
+
+              <button type="button" 
+                      class="thumb-slider-btn next" 
+                      @click="slideThumbs('next')" 
+                      x-show="canScrollNext" 
+                      x-transition
+                      aria-label="Xem ảnh kế tiếp">
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
             </div>
           </div>
 

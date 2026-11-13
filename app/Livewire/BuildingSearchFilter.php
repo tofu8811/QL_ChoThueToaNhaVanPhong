@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Building;
 use App\Services\BuildingService;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -35,6 +36,25 @@ class BuildingSearchFilter extends Component
 
     public int $perPage = 8;
 
+    public function mount(): void
+    {
+        if (request()->filled('district')) {
+            $this->district = (string) request()->query('district');
+        }
+        if (request()->filled('grade')) {
+            $this->grade = (string) request()->query('grade');
+        }
+        if (request()->filled('keyword')) {
+            $this->keyword = (string) request()->query('keyword');
+        }
+        if (request()->filled('price')) {
+            $this->price = (string) request()->query('price');
+        }
+        if (request()->filled('area')) {
+            $this->area = (string) request()->query('area');
+        }
+    }
+
     /**
      * Tùy chỉnh view phân trang theo phong cách Maison Office.
      */
@@ -53,18 +73,21 @@ class BuildingSearchFilter extends Component
         }
     }
 
+    #[On('filter-district')]
     public function setDistrict(string $district): void
     {
         $this->district = $district;
         $this->resetPage();
     }
 
+    #[On('filter-grade')]
     public function setGrade(string $grade): void
     {
         $this->grade = $grade;
         $this->resetPage();
     }
 
+    #[On('reset-filters')]
     public function resetFilters(): void
     {
         $this->reset(['keyword', 'district', 'grade', 'price', 'area', 'sortBy']);

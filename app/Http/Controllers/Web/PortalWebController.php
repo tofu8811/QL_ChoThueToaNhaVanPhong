@@ -75,7 +75,11 @@ class PortalWebController extends Controller
                     ->latest()
                     ->get()
                     ->map(function (Building $b) {
-                        $primaryImg = $b->primaryImage?->image_url ?? $b->images->first()?->image_url ?? 'https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=800&q=80';
+                        $primaryImg = $b->primaryImage?->image_url ?? $b->images->first()?->image_url ?? 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80';
+                        $buildingImages = $b->images->pluck('image_url')->toArray();
+                        if (empty($buildingImages) && $primaryImg) {
+                            $buildingImages = [$primaryImg];
+                        }
                         
                         $floors = $b->units->map(function ($unit) {
                             return [
@@ -114,6 +118,7 @@ class PortalWebController extends Controller
                             'status' => 'Đang trống',
                             'statusClass' => 'empty',
                             'image' => $primaryImg,
+                            'images' => $buildingImages,
                             'floors' => $floors,
                         ];
                     });
@@ -172,6 +177,24 @@ class PortalWebController extends Controller
     public function quotePage(Request $request): View
     {
         return view('pages.quote');
+    }
+
+    // Hiển thị trang quản lý hợp đồng thuê văn phòng chuẩn SEO SSR (Module 3)
+    public function contractsPage(Request $request): View
+    {
+        return view('pages.contracts');
+    }
+
+    // Hiển thị trang quản lý hồ sơ khách thuê doanh nghiệp chuẩn SEO SSR (Module 3)
+    public function tenantsPage(Request $request): View
+    {
+        return view('pages.tenants');
+    }
+
+    // Hiển thị cổng thông tin không gian làm việc khách thuê Tenant Portal SSR (Module 3)
+    public function tenantPortalPage(Request $request): View
+    {
+        return view('pages.tenant-portal');
     }
 
     /**

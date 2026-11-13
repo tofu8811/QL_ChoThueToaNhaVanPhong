@@ -109,7 +109,10 @@ class BuildingService
     {
         return Building::query()
             ->published()
-            ->where('slug', $slug)
+            ->where(function ($q) use ($slug) {
+                $q->where('slug', $slug)
+                  ->orWhere('id', $slug);
+            })
             ->with([
                 'provinceRelation',
                 'images',
@@ -267,7 +270,11 @@ class BuildingService
             // Fallback lưu local nếu Supabase disk chưa cấu hình
             try {
                 if (config('filesystems.disks.supabase.key')) {
-                    Storage::disk('supabase')->put($path, file_get_contents($file));
+                    $mime = method_exists($file, 'getClientMimeType') ? $file->getClientMimeType() : null;
+                    Storage::disk('supabase')->put($path, file_get_contents($file), [
+                        'mimetype' => $mime ?: 'image/jpeg',
+                        'visibility' => 'public',
+                    ]);
                     $url = Storage::disk('supabase')->url($path);
                 } else {
                     $localPath = $file->storeAs("public/buildings/{$building->id}", $filename);

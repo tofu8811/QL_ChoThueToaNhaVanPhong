@@ -20,6 +20,8 @@ class ContractImage extends Model
     protected $fillable = [
         'contract_id',
         'image_url',
+        'document_type',
+        'file_name',
         'display_order',
         'description',
         'created_at',

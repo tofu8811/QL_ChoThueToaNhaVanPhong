@@ -301,7 +301,11 @@ class UnitService
 
             try {
                 if (config('filesystems.disks.supabase.key')) {
-                    Storage::disk('supabase')->put($path, file_get_contents($file));
+                    $mime = method_exists($file, 'getClientMimeType') ? $file->getClientMimeType() : null;
+                    Storage::disk('supabase')->put($path, file_get_contents($file), [
+                        'mimetype' => $mime ?: 'image/jpeg',
+                        'visibility' => 'public',
+                    ]);
                     $url = Storage::disk('supabase')->url($path);
                 } else {
                     $localPath = $file->storeAs("public/units/{$unit->id}", $filename);

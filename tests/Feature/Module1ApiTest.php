@@ -7,6 +7,8 @@ use App\Models\Building;
 use App\Models\Province;
 use App\Models\Unit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class Module1ApiTest extends TestCase
@@ -51,6 +53,12 @@ class Module1ApiTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('status', 'success')
             ->assertJsonCount(1, 'data');
+
+        // Test chi tiết tỉnh thành theo code (STT 2)
+        $detailRes = $this->getJson('/api/v1/provinces/79');
+        $detailRes->assertStatus(200)
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('data.province.code', 79);
     }
 
     /**
@@ -107,6 +115,40 @@ class Module1ApiTest extends TestCase
         $buildingId = $createBuildingRes->json('data.id');
         $slug = $createBuildingRes->json('data.slug');
 
+        // 1b. GET ADMIN BUILDINGS LIST (STT 5)
+        $adminBuildingsRes = $this->getJson('/api/v1/admin/buildings');
+        $adminBuildingsRes->assertStatus(200);
+
+        // 1c. GET ADMIN BUILDING DETAIL (STT 7)
+        $adminDetailRes = $this->getJson("/api/v1/admin/buildings/{$buildingId}");
+        $adminDetailRes->assertStatus(200)
+            ->assertJsonPath('data.id', $buildingId);
+
+        // 1d. UPLOAD BUILDING IMAGES (STT 10)
+        Storage::fake('public');
+        $uploadImgRes = $this->postJson("/api/v1/admin/buildings/{$buildingId}/images", [
+            'images' => [
+                UploadedFile::fake()->image('building_front.jpg'),
+                UploadedFile::fake()->image('building_lobby.jpg'),
+            ],
+            'caption' => 'Mặt tiền tòa nhà',
+        ]);
+        $uploadImgRes->assertStatus(201);
+        $imageId1 = $uploadImgRes->json('data.0.id');
+        $imageId2 = $uploadImgRes->json('data.1.id');
+
+        // 1e. SET PRIMARY BUILDING IMAGE (STT 12)
+        if ($imageId2) {
+            $primaryRes = $this->patchJson("/api/v1/admin/buildings/{$buildingId}/images/{$imageId2}/set-primary");
+            $primaryRes->assertStatus(200);
+        }
+
+        // 1f. DELETE BUILDING IMAGE (STT 11)
+        if ($imageId1) {
+            $delImgRes = $this->deleteJson("/api/v1/admin/buildings/{$buildingId}/images/{$imageId1}");
+            $delImgRes->assertStatus(200);
+        }
+
         // 2. GET PUBLIC DETAIL BY SLUG
         $publicDetailRes = $this->getJson("/api/v1/portal/buildings/{$slug}");
         $publicDetailRes->assertStatus(200)
@@ -136,6 +178,31 @@ class Module1ApiTest extends TestCase
             ->assertJsonPath('status', 'success');
 
         $unitId = $createUnitRes->json('data.id');
+
+        // 4b. GET ADMIN UNITS LIST (STT 15)
+        $adminUnitsRes = $this->getJson('/api/v1/admin/units');
+        $adminUnitsRes->assertStatus(200);
+
+        // 4c. GET ADMIN UNIT DETAIL (STT 17)
+        $adminUnitDetailRes = $this->getJson("/api/v1/admin/units/{$unitId}");
+        $adminUnitDetailRes->assertStatus(200)
+            ->assertJsonPath('data.id', $unitId);
+
+        // 4d. UPLOAD UNIT IMAGES (STT 21)
+        $uploadUnitImgRes = $this->postJson("/api/v1/admin/units/{$unitId}/images", [
+            'images' => [
+                UploadedFile::fake()->image('floorplan_12.png'),
+            ],
+            'caption' => 'Sơ đồ mặt bằng sàn tầng 12',
+        ]);
+        $uploadUnitImgRes->assertStatus(201);
+        $unitImageId = $uploadUnitImgRes->json('data.0.id');
+
+        // 4e. DELETE UNIT IMAGE (STT 22)
+        if ($unitImageId) {
+            $delUnitImgRes = $this->deleteJson("/api/v1/admin/units/{$unitId}/images/{$unitImageId}");
+            $delUnitImgRes->assertStatus(200);
+        }
 
         // 5. GET PUBLIC UNIT DETAIL
         $publicUnitRes = $this->getJson("/api/v1/portal/units/{$unitId}");

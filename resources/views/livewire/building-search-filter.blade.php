@@ -1,6 +1,6 @@
 <div>
   <!-- Advanced Filter Floating Box -->
-  <div class="container mo-filter-container">
+  <div class="container mo-filter-container" id="mo-building-filter-section">
     <div class="mo-filter-box">
       <div class="mo-filter-tabs">
         <div class="mo-filter-tab active"><i class="fa-solid fa-building"></i> Cho Thuê Văn Phòng</div>
@@ -193,21 +193,25 @@
             @php
               $minUsd = $b->min_rent_price_per_sqm ? round($b->min_rent_price_per_sqm / 24000) : 25;
               $maxUsd = $b->max_rent_price_per_sqm ? round($b->max_rent_price_per_sqm / 24000) : ($minUsd + 10);
-              $image = $b->primaryImage?->image_url ?? $b->images->first()?->image_url ?? 'https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=800&q=80';
+              $image = $b->primaryImage?->image_url ?? $b->images->first()?->image_url ?? 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80';
               $slug = $b->slug ?? \Illuminate\Support\Str::slug($b->name);
               $gradeLabel = 'Hạng ' . ($b->grade ?? 'A');
             @endphp
             <article class="mo-building-card" wire:key="building-card-{{ $b->id }}">
-              <div class="mo-card-thumb" onclick="openBuildingDetail('{{ $b->id }}')" style="cursor:pointer;">
-                <img src="{{ $image }}" alt="{{ $b->name }}">
-                <div class="mo-thumb-badges">
-                  <span class="mo-badge-grade">{{ $gradeLabel }}</span>
-                  <span class="mo-badge-status empty"><i class="fa-solid fa-circle" style="font-size:8px;"></i> Đang trống</span>
+              <a href="{{ route('buildings.show', $slug) }}" style="display:block; text-decoration:none; color:inherit;">
+                <div class="mo-card-thumb" style="cursor:pointer;">
+                  <img src="{{ $image }}" alt="{{ $b->name }}">
+                  <div class="mo-thumb-badges">
+                    <span class="mo-badge-grade">{{ $gradeLabel }}</span>
+                    <span class="mo-badge-status empty"><i class="fa-solid fa-circle" style="font-size:8px;"></i> Đang trống</span>
+                  </div>
                 </div>
-              </div>
+              </a>
               <div class="mo-card-body">
                 <span class="mo-card-district"><i class="fa-solid fa-location-dot"></i> {{ $b->district ?? 'TP.HCM' }}</span>
-                <h3 class="mo-card-name" onclick="openBuildingDetail('{{ $b->id }}')" style="cursor:pointer;">{{ $b->name }}</h3>
+                <h3 class="mo-card-name">
+                  <a href="{{ route('buildings.show', $slug) }}" style="text-decoration:none; color:inherit; display:inline-block;">{{ $b->name }}</a>
+                </h3>
                 <p class="mo-card-address">{{ $b->address }}</p>
 
                 <div class="mo-card-specs">
@@ -225,7 +229,7 @@
                   </div>
                   <div class="mo-card-actions">
                     <button class="btn-card-quote" type="button" onclick="openQuoteForBuilding('{{ addslashes($b->name) }}')">Nhận Báo Giá</button>
-                    <button class="btn-card-view" type="button" onclick="openBuildingDetail('{{ $b->id }}')">Xem Chi Tiết</button>
+                    <a href="{{ route('buildings.show', $slug) }}" class="btn-card-view" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Xem Chi Tiết</a>
                   </div>
                 </div>
               </div>

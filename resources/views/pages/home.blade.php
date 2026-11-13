@@ -9,7 +9,7 @@
   <meta property="og:description" content="Hệ thống khảo sát và phân phối mặt bằng văn phòng chuyên nghiệp tại TP. Hồ Chí Minh. Dữ liệu thực tế, tư vấn miễn phí.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="{{ url()->current() }}">
-  <meta property="og:image" content="https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=1200&q=80">
+  <meta property="og:image" content="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80">
   <!-- Schema.org JSON-LD -->
   <script type="application/ld+json">
   {!! json_encode([

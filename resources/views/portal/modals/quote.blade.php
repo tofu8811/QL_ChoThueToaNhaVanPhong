@@ -33,6 +33,11 @@
             <button type="submit" class="btn-mo-orange" style="width:100%;justify-content:center;padding:12px;">
               <i class="fa-solid fa-paper-plane"></i> Gửi Yêu Cầu Nhận Báo Giá
             </button>
+            <div style="text-align:center;margin-top:12px;">
+              <a href="{{ route('quote.page') }}" style="font-size:12.5px;color:var(--mo-primary);text-decoration:none;font-weight:600;">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Mở Trang Đăng Ký Khảo Sát Chi Tiết
+              </a>
+            </div>
           </form>
         </div>
       </div>

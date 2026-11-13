@@ -41,10 +41,9 @@
           <td><strong style="color:#ea580c;">${{ $priceUsd }} / m²</strong></td>
           <td><span class="badge-filament success">{{ $statusLabel }}</span></td>
           <td>
-            <button class="btn-mo-orange" style="padding:4px 10px;font-size:12px;" type="button"
-                    onclick="bookSpecificFloor('{{ addslashes($building?->name ?? 'Tòa nhà') }}', 'Tầng {{ $unit->floor_number }}', '{{ number_format($unit->area_sqm, 0) }} m²')">
+            <a href="{{ route('quote.page', ['building_id' => $building?->id, 'unit_id' => $unit->id]) }}" class="btn-mo-orange" style="padding:4px 10px;font-size:12px;text-decoration:none;display:inline-block;">
               Đăng ký xem sàn này
-            </button>
+            </a>
           </td>
         </tr>
       @empty

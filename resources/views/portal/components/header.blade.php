@@ -18,13 +18,13 @@
           <div class="mo-nav-item" onclick="filterByDistrict('Quận 1')">Văn Phòng Quận 1</div>
           <div class="mo-nav-item" onclick="filterByDistrict('Quận 3')">Văn Phòng Quận 3</div>
           <div class="mo-nav-item" onclick="filterByGrade('Hạng A')">Tòa Nhà Hạng A</div>
-          <div class="mo-nav-item" onclick="showPublicPage('page-quote')">Nhận Báo Giá</div>
+          <a href="{{ route('quote.page') }}" class="mo-nav-item" style="text-decoration:none;">Nhận Báo Giá</a>
         </nav>
 
         <div class="mo-header-actions">
-          <button class="btn-mo-orange" onclick="openQuoteModal()">
+          <a href="{{ route('quote.page') }}" class="btn-mo-orange" style="text-decoration:none;">
             <i class="fa-solid fa-file-invoice-dollar"></i> Báo Giá Nhanh
-          </button>
+          </a>
           
           <button class="btn-mo-outline" id="btn-workspace-nav" style="display:none;" onclick="handleGoToWorkspace()">
             <i class="fa-solid fa-desktop"></i> <span id="btn-workspace-text">Không Gian Làm Việc</span>

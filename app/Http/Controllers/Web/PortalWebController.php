@@ -168,6 +168,12 @@ class PortalWebController extends Controller
         ]);
     }
 
+    // Hiển thị trang đăng ký nhận báo giá và đặt lịch khảo sát chuẩn SEO SSR
+    public function quotePage(Request $request): View
+    {
+        return view('pages.quote');
+    }
+
     /**
      * Hiển thị trang chi tiết Tòa nhà Văn phòng chuẩn SEO SSR (Module 1).
      */

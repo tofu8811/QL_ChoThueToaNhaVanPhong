@@ -113,12 +113,12 @@
             </table>
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-              <button class="btn-mo-orange" style="flex: 1; justify-content: center;" type="button" onclick="openQuoteForBuilding('{{ addslashes($building->name ?? '') }}')">
+              <a href="{{ route('quote.page', ['building_id' => $building->id]) }}" class="btn-mo-orange" style="flex: 1; justify-content: center; text-decoration: none;">
                 <i class="fa-regular fa-calendar-check"></i> Đặt Lịch Khảo Sát
-              </button>
-              <button class="btn-mo-outline" type="button" onclick="openQuoteModal()">
+              </a>
+              <a href="{{ route('quote.page', ['building_id' => $building->id]) }}" class="btn-mo-outline" style="text-decoration: none;">
                 <i class="fa-solid fa-file-pdf"></i> Nhận Báo Giá Chi Tiết
-              </button>
+              </a>
             </div>
           </div>
         </div>

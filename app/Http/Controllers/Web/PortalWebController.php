@@ -43,15 +43,30 @@ class PortalWebController extends Controller
                 $totalArea = (float) Building::published()->sum('total_leasable_area_sqm');
                 $totalTenants = \Illuminate\Support\Facades\Schema::hasTable('tenants') ? \App\Models\Tenant::count() : 10;
 
+                $provincesList = Building::published()->distinct()->pluck('province')->filter()->values();
+                $cleanProvinces = $provincesList->map(fn($p) => str_replace(['Thành phố ', 'Tỉnh '], '', $p))->implode(', ');
+                $minPriceVnd = Building::published()->min('min_rent_price_per_sqm') ?: 240000;
+                $maxPriceVnd = Building::published()->max('max_rent_price_per_sqm') ?: 1680000;
+
                 $stats = [
                     'total_buildings' => $totalBuildings,
                     'total_leasable_area' => $totalArea > 0 ? $totalArea : 428430,
                     'total_tenants' => $totalTenants,
                     'free_consult_pct' => 100,
+                    'active_provinces' => $provincesList->toArray(),
+                    'active_provinces_text' => $cleanProvinces ?: 'Hà Nội, TP.HCM, Đồng Nai & Đà Nẵng',
+                    'min_price_usd' => round($minPriceVnd / 24000),
+                    'max_price_usd' => round($maxPriceVnd / 24000),
                     'by_grade' => [
                         'A' => Building::published()->where('grade', 'A')->count(),
                         'B' => Building::published()->where('grade', 'B')->count(),
                         'C' => Building::published()->where('grade', 'C')->count(),
+                    ],
+                    'by_province' => [
+                        'ha_noi' => Building::published()->where('province_code', 1)->count(),
+                        'ho_chi_minh' => Building::published()->where('province_code', 79)->count(),
+                        'dong_nai' => Building::published()->where('province_code', 75)->count(),
+                        'da_nang' => Building::published()->where('province_code', 48)->count(),
                     ],
                     'by_district' => [
                         'Quận 1' => Building::published()->where('district', 'like', '%Quận 1%')->count(),
@@ -61,6 +76,10 @@ class PortalWebController extends Controller
                         'TP Thủ Đức' => Building::published()->where(function ($q) {
                             $q->where('district', 'like', '%Thủ Đức%')->orWhere('district', 'like', '%Thành phố Thủ Đức%');
                         })->count(),
+                        'Ba Đình' => Building::published()->where('district', 'like', '%Ba Đình%')->count(),
+                        'Cầu Giấy' => Building::published()->where('district', 'like', '%Cầu Giấy%')->count(),
+                        'Biên Hòa' => Building::published()->where('district', 'like', '%Biên Hòa%')->count(),
+                        'Hải Châu' => Building::published()->where('district', 'like', '%Hải Châu%')->count(),
                     ],
                 ];
 

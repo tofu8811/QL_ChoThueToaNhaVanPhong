@@ -33,12 +33,64 @@
       }
 
       if (totalItems === 0) {
+        const provEl = document.getElementById("filter-province");
+        const distEl = document.getElementById("filter-district");
+        const kwEl = document.getElementById("filter-keyword");
+        let regionName = "Toàn Quốc";
+        if (distEl && distEl.value !== 'all') {
+          regionName = distEl.value;
+        } else if (provEl && provEl.value !== 'all') {
+          const pVal = provEl.value;
+          regionName = pVal === '1' ? 'Hà Nội' : (pVal === '79' ? 'TP. Hồ Chí Minh' : (pVal === '48' ? 'Đà Nẵng' : (pVal === '75' ? 'Đồng Nai' : pVal)));
+        } else if (kwEl && kwEl.value.trim()) {
+          regionName = 'từ khóa "' + kwEl.value.trim() + '"';
+        }
+
         container.innerHTML = `
-          <div style="grid-column: 1 / -1; background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:40px; text-align:center;">
-            <i class="fa-solid fa-building-circle-exclamation" style="font-size:44px; color:#94a3b8; margin-bottom:12px;"></i>
-            <h3 style="font-size:18px; color:var(--mo-primary); margin-bottom:6px;">Không tìm thấy tòa nhà phù hợp</h3>
-            <p style="color:#64748b; font-size:14px; margin-bottom:16px;">Vui lòng thử bỏ bớt bộ lọc hoặc chọn khoảng giá/diện tích khác.</p>
-            <button class="btn-mo-orange" onclick="resetAllFilters()">Đặt lại bộ lọc</button>
+          <div class="mo-empty-lead-card">
+            <span class="mo-empty-lead-badge">
+              <i class="fa-solid fa-bell"></i> Kế hoạch thẩm định nguồn cung 2026
+            </span>
+            <h3 class="mo-empty-lead-title">
+              Văn phòng cho thuê tại ${regionName} đang được thẩm định nguồn cung mới
+            </h3>
+            <p class="mo-empty-lead-desc">
+              Hiện tại các diện tích văn phòng tại <strong>${regionName}</strong> đã được các doanh nghiệp lấp đầy hoặc đội ngũ chuyên viên đang hoàn tất thẩm định pháp lý và biểu phí quản lý của các tòa nhà mới. Quý khách vui lòng để lại thông tin nhu cầu để được chuyên viên phụ trách khu vực ưu tiên gửi thông tin giữ chỗ ngay khi có mặt bằng trống phù hợp.
+            </p>
+
+            <div class="mo-empty-lead-form">
+              <form id="lead-capture-form" onsubmit="handleEmptyLeadSubmit(event, '${regionName.replace(/'/g, "\\'")}')">
+                <div class="mo-empty-lead-grid">
+                  <div class="mo-empty-input-group">
+                    <label><i class="fa-solid fa-user"></i> Họ và tên của bạn</label>
+                    <input type="text" id="empty-lead-name" class="mo-empty-input" placeholder="Ví dụ: Nguyễn Văn A" required>
+                  </div>
+                  <div class="mo-empty-input-group">
+                    <label><i class="fa-solid fa-phone"></i> Số điện thoại nhận tin</label>
+                    <input type="tel" id="empty-lead-phone" class="mo-empty-input" placeholder="0901 xxx xxx" required>
+                  </div>
+                  <div class="mo-empty-input-group">
+                    <label><i class="fa-solid fa-expand"></i> Diện tích cần (m²)</label>
+                    <input type="number" id="empty-lead-area" class="mo-empty-input" placeholder="Ví dụ: 150" min="20">
+                  </div>
+                  <div>
+                    <button type="submit" class="btn-mo-orange" style="height:40px;width:100%;justify-content:center;">
+                      <i class="fa-solid fa-paper-plane"></i> Đăng Ký Giữ Chỗ
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <div class="mo-empty-lead-footer">
+              <button class="btn-mo-orange" type="button" onclick="resetAllFilters()" style="background:#f1f5f9;color:#334155;box-shadow:none;border:1px solid #cbd5e1;">
+                <i class="fa-solid fa-rotate-left"></i> Xem tất cả tòa nhà toàn quốc (39+ tòa)
+              </button>
+              <div style="font-size:13.5px;color:#64748b;display:flex;align-items:center;gap:8px;">
+                <i class="fa-solid fa-headset" style="color:#ea580c;font-size:16px;"></i>
+                <span>Hotline ưu tiên 24/7: <strong style="color:var(--mo-primary);font-size:15px;">0901.888.789</strong> (Khảo sát miễn phí)</span>
+              </div>
+            </div>
           </div>
         `;
         renderPaginationControls(0, 1, 1);
@@ -167,6 +219,7 @@
        ========================================================================== */
     function applyFilters() {
       const keyword = (document.getElementById("filter-keyword")?.value || "").toLowerCase().trim();
+      const province = document.getElementById("filter-province")?.value || "all";
       const district = document.getElementById("filter-district")?.value || "all";
       const grade = document.getElementById("filter-grade")?.value || "all";
       const price = document.getElementById("filter-price")?.value || "all";
@@ -174,6 +227,10 @@
 
       let filtered = BUILDINGS_DATA.filter(b => {
         if (keyword && !b.name.toLowerCase().includes(keyword) && !b.address.toLowerCase().includes(keyword)) return false;
+        if (province !== "all") {
+          const provName = province === '1' ? 'Hà Nội' : (province === '79' ? 'Hồ Chí Minh' : (province === '75' ? 'Đồng Nai' : (province === '48' ? 'Đà Nẵng' : province)));
+          if (!b.address.includes(provName) && !b.district.includes(provName) && (!b.province || !b.province.includes(provName))) return false;
+        }
         if (district !== "all" && b.district !== district) return false;
         if (grade !== "all" && !b.grade.includes(grade.replace(' / A+', '').replace(' / B+', '').replace(' / Giá rẻ', ''))) return false;
         if (price === "under20" && b.priceUsd >= 20) return false;
@@ -183,6 +240,13 @@
       });
 
       renderBuildings(filtered, 1);
+    }
+
+    function quickFilterProvince(prov) {
+      const el = document.getElementById("filter-province");
+      if (el) el.value = prov;
+      applyFilters();
+      window.scrollTo({ top: 380, behavior: 'smooth' });
     }
 
     function quickFilterDistrict(dist) {
@@ -201,6 +265,7 @@
 
     function resetAllFilters() {
       if (document.getElementById("filter-keyword")) document.getElementById("filter-keyword").value = "";
+      if (document.getElementById("filter-province")) document.getElementById("filter-province").value = "all";
       if (document.getElementById("filter-district")) document.getElementById("filter-district").value = "all";
       if (document.getElementById("filter-grade")) document.getElementById("filter-grade").value = "all";
       if (document.getElementById("filter-price")) document.getElementById("filter-price").value = "all";

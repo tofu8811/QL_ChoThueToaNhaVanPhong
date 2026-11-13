@@ -42,6 +42,22 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'admin' => [
+            'driver' => 'session',
+            'provider' => 'admins',
+        ],
+        'tenant' => [
+            'driver' => 'session',
+            'provider' => 'tenants',
+        ],
+        'sales' => [
+            'driver' => 'session',
+            'provider' => 'sales',
+        ],
+        'pm' => [
+            'driver' => 'session',
+            'provider' => 'property_managers',
+        ],
     ],
 
     /*
@@ -66,11 +82,22 @@ return [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
         ],
-
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        'admins' => [
+            'driver' => 'eloquent',
+            'model' => \App\Models\Admin::class,
+        ],
+        'tenants' => [
+            'driver' => 'eloquent',
+            'model' => \App\Models\Tenant::class,
+        ],
+        'sales' => [
+            'driver' => 'eloquent',
+            'model' => \App\Models\Sale::class,
+        ],
+        'property_managers' => [
+            'driver' => 'eloquent',
+            'model' => \App\Models\PropertyManager::class,
+        ],
     ],
 
     /*

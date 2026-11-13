@@ -67,8 +67,7 @@ class PropertyManager extends Authenticatable
     public function buildings(): BelongsToMany
     {
         return $this->belongsToMany(Building::class, 'manager_buildings', 'pm_id', 'building_id')
-            ->withPivot(['is_primary', 'assigned_by_admin_id', 'assigned_at'])
-            ->withTimestamps();
+            ->withPivot(['is_primary', 'assigned_by_admin_id', 'assigned_at']);
     }
 
     /**

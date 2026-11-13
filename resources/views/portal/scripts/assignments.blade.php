@@ -12,7 +12,11 @@
       const select = document.getElementById('select-assignment-building');
       if (!select) return;
 
-      const buildings = await fetchStaffBuildingsList();
+      let buildings = await fetchStaffBuildingsList();
+      if ((!buildings || buildings.length === 0) && typeof BUILDINGS_DATA !== 'undefined' && Array.isArray(BUILDINGS_DATA) && BUILDINGS_DATA.length > 0) {
+        buildings = BUILDINGS_DATA;
+      }
+
       if (!buildings || buildings.length === 0) {
         select.innerHTML = '<option value="">-- Hệ thống chưa có dữ liệu tòa nhà --</option>';
         return;
@@ -20,7 +24,7 @@
 
       select.innerHTML = '<option value="">-- Chọn một tòa nhà văn phòng --</option>' + buildings.map(b => `
         <option value="${b.id}" ${(preferredBuildingId && preferredBuildingId === b.id) ? 'selected' : ''}>
-          ${escapeHtml(b.name)} [${escapeHtml(b.code || 'BLD')}] - ${escapeHtml(b.district || 'TP.HCM')}
+          ${escapeHtml(b.name)} [${escapeHtml(b.code || b.grade || 'VP')}] - ${escapeHtml(b.district || 'TP.HCM')}
         </option>
       `).join('');
 
@@ -40,13 +44,37 @@
     function onBuildingAssignmentChange(buildingId) {
       if (!buildingId) {
         currentAssignmentBuildingId = '';
-        document.getElementById('box-assignment-building-info').style.display = 'none';
-        document.getElementById('tbody-building-assigned-sales').innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;">Vui lòng chọn tòa nhà để xem danh sách Sales phụ trách.</td></tr>';
-        document.getElementById('tbody-building-assigned-pm').innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;">Vui lòng chọn tòa nhà để xem danh sách BQL phụ trách.</td></tr>';
-        document.getElementById('tbody-building-assigned-accountants').innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;">Vui lòng chọn tòa nhà để xem danh sách Kế toán phụ trách.</td></tr>';
+        const boxInfo = document.getElementById('box-assignment-building-info');
+        if (boxInfo) boxInfo.style.display = 'none';
+        const tbSales = document.getElementById('tbody-building-assigned-sales');
+        const tbPm = document.getElementById('tbody-building-assigned-pm');
+        const tbAcc = document.getElementById('tbody-building-assigned-accountants');
+        if (tbSales) tbSales.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;">Vui lòng chọn tòa nhà để xem danh sách Sales phụ trách.</td></tr>';
+        if (tbPm) tbPm.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;">Vui lòng chọn tòa nhà để xem danh sách BQL phụ trách.</td></tr>';
+        if (tbAcc) tbAcc.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#94a3b8;">Vui lòng chọn tòa nhà để xem danh sách Kế toán phụ trách.</td></tr>';
         return;
       }
       currentAssignmentBuildingId = buildingId;
+
+      // Cập nhật ngay thông tin tóm tắt của tòa nhà từ BUILDINGS_DATA
+      if (typeof BUILDINGS_DATA !== 'undefined' && Array.isArray(BUILDINGS_DATA)) {
+        const found = BUILDINGS_DATA.find(b => String(b.id) === String(buildingId));
+        if (found) {
+          const boxInfo = document.getElementById('box-assignment-building-info');
+          if (boxInfo) {
+            boxInfo.style.display = 'flex';
+            const codeEl = document.getElementById('info-bld-code');
+            const nameEl = document.getElementById('info-bld-name');
+            const addrEl = document.getElementById('info-bld-address');
+            const gradeEl = document.getElementById('info-bld-grade');
+            if (codeEl) codeEl.innerText = found.code || found.id?.substring(0, 8) || 'BLD';
+            if (nameEl) nameEl.innerText = found.name || '---';
+            if (addrEl) addrEl.innerText = found.address || found.district || 'TP.HCM';
+            if (gradeEl) gradeEl.innerText = found.grade || 'Hạng A';
+          }
+        }
+      }
+
       loadBuildingAssignments(buildingId);
     }
 
@@ -87,6 +115,10 @@
         });
         const json = await res.json();
         if (!res.ok) {
+          if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF) {
+            renderFallbackAssignments(buildingId, tbSales, tbPm, tbAcc);
+            return;
+          }
           const errMsg = json.message || 'Không thể tải phân công nhân sự.';
           if (tbSales) tbSales.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#ef4444; padding:20px;">${escapeHtml(errMsg)}</td></tr>`;
           if (tbPm) tbPm.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#ef4444; padding:20px;">${escapeHtml(errMsg)}</td></tr>`;
@@ -219,6 +251,47 @@
 
       } catch (err) {
         console.error('Load building assignments error:', err);
+        if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF) {
+          renderFallbackAssignments(buildingId, tbSales, tbPm, tbAcc);
+        } else {
+          if (tbSales) tbSales.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#ef4444; padding:20px;">Lỗi kết nối máy chủ phân công.</td></tr>';
+          if (tbPm) tbPm.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#ef4444; padding:20px;">Lỗi kết nối máy chủ phân công.</td></tr>';
+          if (tbAcc) tbAcc.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#ef4444; padding:20px;">Lỗi kết nối máy chủ phân công.</td></tr>';
+        }
+      }
+    }
+
+    // Render dự phòng khi chưa tải được API phân công
+    function renderFallbackAssignments(buildingId, tbSales, tbPm, tbAcc) {
+      if (typeof SERVER_STAFF === 'undefined' || !SERVER_STAFF) return;
+      const filterAssigned = (list) => (list || []).filter(item => {
+        const blds = item.buildings || item.assigned_buildings || [];
+        return blds.some(b => String(b.id) === String(buildingId));
+      });
+      const sales = filterAssigned(SERVER_STAFF.sales);
+      const managers = filterAssigned(SERVER_STAFF.pm);
+      const accountants = filterAssigned(SERVER_STAFF.accountants);
+
+      currentAssignedSalesIds = new Set(sales.map(s => String(s.id)));
+      currentAssignedPmIds = new Set(managers.map(m => String(m.id)));
+      currentAssignedAccountantIds = new Set(accountants.map(a => String(a.id)));
+
+      const badgeAssignments = document.getElementById('badge-count-assignments');
+      if (badgeAssignments) badgeAssignments.innerText = `${sales.length + managers.length + accountants.length} NV`;
+
+      if (tbSales) {
+        if (sales.length === 0) tbSales.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:25px; color:#94a3b8;">Chưa có nhân viên Sales nào được phân công phụ trách tòa nhà này.</td></tr>';
+        else tbSales.innerHTML = sales.map(s => `<tr><td><span style="font-family:monospace; font-weight:700; color:#0f3361;">${escapeHtml(s.employee_code || 'SL')}</span></td><td><strong>${escapeHtml(s.full_name || s.name || '---')}</strong></td><td><div style="font-size:12px; color:#2563eb;">${escapeHtml(s.email)}</div></td><td><span style="font-weight:700;">${s.max_concurrent_leads || 10}</span> leads</td><td><span class="badge-filament success">Đang nhận Lead</span></td><td><span style="font-size:12px; color:#64748b;">Mặc định</span></td><td style="text-align:right;"><button class="btn-mo-outline" style="padding:4px 10px; font-size:12px; color:#dc2626;" onclick="removeSalesAssignment('${s.id}', '${escapeHtml(s.full_name || s.name)}')"><i class="fa-solid fa-user-minus"></i> Gỡ Bỏ</button></td></tr>`).join('');
+      }
+
+      if (tbPm) {
+        if (managers.length === 0) tbPm.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:25px; color:#94a3b8;">Chưa có Ban Quản Lý được phân công phụ trách tòa nhà này.</td></tr>';
+        else tbPm.innerHTML = managers.map(p => `<tr><td><span style="font-family:monospace; font-weight:700; color:#b45309;">${escapeHtml(p.employee_code || 'PM')}</span></td><td><strong>${escapeHtml(p.full_name || p.name || '---')}</strong></td><td><span style="color:#dc2626; font-weight:700;">${escapeHtml(p.emergency_hotline || p.phone || '0901234567')}</span></td><td><span style="background:#f1f5f9; padding:2px 8px; border-radius:4px; font-size:11.5px;">Kỹ thuật</span></td><td><span style="color:#64748b; font-size:11.5px;">Thành viên BQL</span></td><td><span style="font-size:12px; color:#64748b;">Mặc định</span></td><td style="text-align:right;"><button class="btn-mo-outline" style="padding:4px 10px; font-size:12px; color:#dc2626;" onclick="removePmAssignment('${p.id}', '${escapeHtml(p.full_name || p.name)}')"><i class="fa-solid fa-user-minus"></i> Gỡ Bỏ</button></td></tr>`).join('');
+      }
+
+      if (tbAcc) {
+        if (accountants.length === 0) tbAcc.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:25px; color:#94a3b8;">Chưa có Kế toán được phân công theo dõi công nợ cho tòa nhà này.</td></tr>';
+        else tbAcc.innerHTML = accountants.map(a => `<tr><td><span style="font-family:monospace; font-weight:700; color:#065f46;">${escapeHtml(a.employee_code || 'ACC')}</span></td><td><strong>${escapeHtml(a.full_name || a.name || '---')}</strong></td><td><div style="font-size:12px; color:#2563eb;">${escapeHtml(a.email)}</div></td><td><span style="color:#15803d; font-weight:700; font-size:11.5px;">Được phép duyệt cước</span></td><td><span class="badge-filament success">ACTIVE</span></td><td><span style="font-size:12px; color:#64748b;">Mặc định</span></td><td style="text-align:right;"><button class="btn-mo-outline" style="padding:4px 10px; font-size:12px; color:#dc2626;" onclick="removeAccountantAssignment('${a.id}', '${escapeHtml(a.full_name || a.name)}')"><i class="fa-solid fa-user-minus"></i> Gỡ Bỏ</button></td></tr>`).join('');
       }
     }
 
@@ -242,11 +315,17 @@
 
       const token = getSanctumToken();
       try {
+        let allSales = [];
         const res = await fetch('/api/v1/admin/users/sales?per_page=100', {
           headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token }
         });
-        const json = await res.json();
-        const allSales = json.data?.data || json.data || [];
+        if (res.ok) {
+          const json = await res.json();
+          allSales = json.data?.data || json.data || [];
+        }
+        if ((!allSales || allSales.length === 0) && typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.sales) {
+          allSales = SERVER_STAFF.sales;
+        }
 
         // Lọc các sales chưa gán
         const availableSales = allSales.filter(s => !currentAssignedSalesIds.has(String(s.id)));
@@ -264,7 +343,21 @@
         `).join('');
 
       } catch (e) {
-        container.innerHTML = '<span style="color:#ef4444; font-size:12px;">Lỗi kết nối khi tải danh sách Sales.</span>';
+        if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.sales && SERVER_STAFF.sales.length > 0) {
+          const availableSales = SERVER_STAFF.sales.filter(s => !currentAssignedSalesIds.has(String(s.id)));
+          if (availableSales.length === 0) {
+            container.innerHTML = '<span style="color:#64748b; font-size:12.5px;">Tất cả nhân viên Sales đã được phân công vào tòa nhà này.</span>';
+          } else {
+            container.innerHTML = availableSales.map(s => `
+              <label class="building-check-label">
+                <input type="checkbox" name="assign_sales_chk[]" value="${s.id}">
+                <span><strong>${escapeHtml(s.full_name || s.name)}</strong> <small style="color:#64748b;">(${escapeHtml(s.employee_code || s.email)})</small></span>
+              </label>
+            `).join('');
+          }
+        } else {
+          container.innerHTML = '<span style="color:#ef4444; font-size:12px;">Lỗi kết nối khi tải danh sách Sales.</span>';
+        }
       }
     }
 
@@ -357,11 +450,17 @@
 
       const token = getSanctumToken();
       try {
+        let allPm = [];
         const res = await fetch('/api/v1/admin/users/property-managers?per_page=100', {
           headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token }
         });
-        const json = await res.json();
-        const allPm = json.data?.data || json.data || [];
+        if (res.ok) {
+          const json = await res.json();
+          allPm = json.data?.data || json.data || [];
+        }
+        if ((!allPm || allPm.length === 0) && typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.pm) {
+          allPm = SERVER_STAFF.pm;
+        }
 
         // Lọc PM chưa gán
         const availablePm = allPm.filter(p => !currentAssignedPmIds.has(String(p.id)));
@@ -378,7 +477,20 @@
         `).join('');
 
       } catch (e) {
-        select.innerHTML = '<option value="">-- Lỗi tải danh sách PM --</option>';
+        if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.pm && SERVER_STAFF.pm.length > 0) {
+          const availablePm = SERVER_STAFF.pm.filter(p => !currentAssignedPmIds.has(String(p.id)));
+          if (availablePm.length === 0) {
+            select.innerHTML = '<option value="">-- Tất cả PM đã được phân công vào tòa nhà này --</option>';
+          } else {
+            select.innerHTML = '<option value="">-- Chọn nhân sự Ban Quản Lý --</option>' + availablePm.map(p => `
+              <option value="${p.id}">
+                ${escapeHtml(p.full_name || p.name)} (${escapeHtml(p.department || 'BQL')}) - ${escapeHtml(p.emergency_hotline || p.phone || p.email)}
+              </option>
+            `).join('');
+          }
+        } else {
+          select.innerHTML = '<option value="">-- Lỗi tải danh sách PM --</option>';
+        }
       }
     }
 
@@ -470,11 +582,17 @@
 
       const token = getSanctumToken();
       try {
+        let allAcc = [];
         const res = await fetch('/api/v1/admin/users/accountants?per_page=100', {
           headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token }
         });
-        const json = await res.json();
-        const allAcc = json.data?.data || json.data || [];
+        if (res.ok) {
+          const json = await res.json();
+          allAcc = json.data?.data || json.data || [];
+        }
+        if ((!allAcc || allAcc.length === 0) && typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.accountants) {
+          allAcc = SERVER_STAFF.accountants;
+        }
 
         // Lọc Kế toán chưa gán
         const availableAcc = allAcc.filter(a => !currentAssignedAccountantIds.has(String(a.id)));
@@ -492,7 +610,21 @@
         `).join('');
 
       } catch (e) {
-        container.innerHTML = '<span style="color:#ef4444; font-size:12px;">Lỗi kết nối khi tải danh sách Kế toán.</span>';
+        if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.accountants && SERVER_STAFF.accountants.length > 0) {
+          const availableAcc = SERVER_STAFF.accountants.filter(a => !currentAssignedAccountantIds.has(String(a.id)));
+          if (availableAcc.length === 0) {
+            container.innerHTML = '<span style="color:#64748b; font-size:12.5px;">Tất cả nhân viên Kế toán đã được phân công vào tòa nhà này.</span>';
+          } else {
+            container.innerHTML = availableAcc.map(a => `
+              <label class="building-check-label">
+                <input type="checkbox" name="assign_acc_chk[]" value="${a.id}">
+                <span><strong>${escapeHtml(a.full_name || a.name)}</strong> <small style="color:#64748b;">(${escapeHtml(a.employee_code || a.email)})</small></span>
+              </label>
+            `).join('');
+          }
+        } else {
+          container.innerHTML = '<span style="color:#ef4444; font-size:12px;">Lỗi kết nối khi tải danh sách Kế toán.</span>';
+        }
       }
     }
 
@@ -571,5 +703,11 @@
       renderAdminTables();
       calculateQuickQuote();
       checkAuthState();
+      if (typeof preloadAllStaffData === 'function') {
+        preloadAllStaffData();
+      }
+      if (typeof handleAppRouting === 'function') {
+        handleAppRouting();
+      }
     });
   </script>

@@ -94,6 +94,10 @@
       if (e.target.id === 'ticket-confirm-modal') closeTicketConfirmModal();
       if (e.target.id === 'ticket-rate-modal') closeTicketRateModal();
       if (e.target.id === 'ticket-edit-modal') closeTicketEditModal();
+      if (e.target.id === 'modal-assign-sales') closeModal('modal-assign-sales');
+      if (e.target.id === 'modal-assign-pm') closeModal('modal-assign-pm');
+      if (e.target.id === 'modal-assign-accountant') closeModal('modal-assign-accountant');
+      if (e.target.id && e.target.id.startsWith('staff-') && e.target.classList.contains('mo-modal')) closeModal(e.target.id);
     });
 
     async function handleLoginSubmit(e) {

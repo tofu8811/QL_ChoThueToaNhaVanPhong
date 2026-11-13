@@ -44,6 +44,20 @@ use OpenApi\Attributes as OA;
     ]
 )]
 #[OA\Schema(
+    schema: "ApiResponseValidationError",
+    title: "Phản hồi Lỗi Kiểm Thực Dữ Liệu (422)",
+    properties: [
+        new OA\Property(property: "status", type: "string", example: "error"),
+        new OA\Property(property: "message", type: "string", example: "Dữ liệu gửi lên không thỏa mãn quy tắc kiểm thực."),
+        new OA\Property(property: "code", type: "integer", example: 422),
+        new OA\Property(
+            property: "errors",
+            type: "object",
+            example: ["field_name" => ["Trường dữ liệu này không hợp lệ hoặc bắt buộc."]]
+        ),
+    ]
+)]
+#[OA\Schema(
     schema: "PaginationMeta",
     title: "Thông tin Phân trang",
     properties: [

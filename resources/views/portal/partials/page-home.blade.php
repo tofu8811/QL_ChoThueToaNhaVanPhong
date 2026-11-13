@@ -5,10 +5,10 @@
           <div class="mo-breadcrumbs">
             <a href="#">Trang chủ</a>
             <i class="fa-solid fa-chevron-right" style="font-size:10px;"></i>
-            <span>Cho thuê văn phòng TP.HCM</span>
+            <span>Cho thuê văn phòng toàn quốc</span>
           </div>
-          <h1 class="mo-hero-title">Cho Thuê Văn Phòng TP.HCM - Cập Nhật Báo Giá & Diện Tích Mới Nhất 2026</h1>
-          <p class="mo-hero-desc">Hệ thống khảo sát và phân phối mặt bằng văn phòng chuyên nghiệp tại TP. Hồ Chí Minh. Dữ liệu thực tế hơn {{ $stats['total_buildings'] ?? 22 }}+ cao ốc từ Hạng A, B, C và Giá rẻ. Tư vấn miễn phí và hỗ trợ thương lượng giá tốt nhất cho doanh nghiệp.</p>
+          <h1 class="mo-hero-title">Cho Thuê Văn Phòng Toàn Quốc - Hà Nội, TP.HCM, Đồng Nai & Đà Nẵng</h1>
+          <p class="mo-hero-desc">Hệ thống khảo sát và phân phối mặt bằng văn phòng chuyên nghiệp toàn quốc theo chuẩn Maison Office. Dữ liệu thực tế hơn {{ $stats['total_buildings'] ?? 39 }}+ cao ốc từ Hạng A, B, C tại Hà Nội, TP. Hồ Chí Minh, Đồng Nai và Đà Nẵng. Tư vấn miễn phí và hỗ trợ thương lượng giá tốt nhất cho doanh nghiệp.</p>
         </div>
       </section>
 
@@ -31,18 +31,46 @@
               </div>
             </div>
 
+            <!-- Province -->
+            <div class="mo-filter-group">
+              <label class="mo-filter-label"><i class="fa-solid fa-map-location-dot"></i> Tỉnh / Thành phố</label>
+              <select id="filter-province" class="mo-filter-select" onchange="applyFilters()">
+                <option value="all">Toàn quốc (Tất cả khu vực)</option>
+                <option value="1">Thành phố Hà Nội</option>
+                <option value="79">TP. Hồ Chí Minh</option>
+                <option value="75">Thành phố Đồng Nai</option>
+                <option value="48">Thành phố Đà Nẵng</option>
+              </select>
+            </div>
+
             <!-- District -->
             <div class="mo-filter-group">
-              <label class="mo-filter-label"><i class="fa-solid fa-location-dot"></i> Khu vực (Quận)</label>
+              <label class="mo-filter-label"><i class="fa-solid fa-location-dot"></i> Quận / Huyện</label>
               <select id="filter-district" class="mo-filter-select" onchange="applyFilters()">
                 <option value="all">Tất cả Quận / Huyện</option>
-                <option value="Quận 1">Quận 1</option>
-                <option value="Quận 3">Quận 3</option>
-                <option value="Quận 7">Quận 7</option>
-                <option value="Quận 10">Quận 10</option>
-                <option value="Bình Thạnh">Bình Thạnh</option>
-                <option value="Phú Nhuận">Phú Nhuận</option>
-                <option value="TP Thủ Đức">TP. Thủ Đức</option>
+                <optgroup label="Thủ đô Hà Nội">
+                  <option value="Quận Ba Đình">Quận Ba Đình</option>
+                  <option value="Quận Cầu Giấy">Quận Cầu Giấy</option>
+                  <option value="Quận Hoàn Kiếm">Quận Hoàn Kiếm</option>
+                  <option value="Quận Nam Từ Liêm">Quận Nam Từ Liêm</option>
+                  <option value="Quận Hai Bà Trưng">Quận Hai Bà Trưng</option>
+                  <option value="Huyện Gia Lâm">Huyện Gia Lâm</option>
+                </optgroup>
+                <optgroup label="TP. Hồ Chí Minh">
+                  <option value="Quận 1">Quận 1</option>
+                  <option value="Quận 3">Quận 3</option>
+                  <option value="Quận 7">Quận 7</option>
+                  <option value="Bình Thạnh">Bình Thạnh</option>
+                  <option value="TP Thủ Đức">TP. Thủ Đức</option>
+                  <option value="Quận 10">Quận 10</option>
+                  <option value="Phú Nhuận">Phú Nhuận</option>
+                </optgroup>
+                <optgroup label="Đồng Nai">
+                  <option value="Thành phố Biên Hòa">TP. Biên Hòa</option>
+                </optgroup>
+                <optgroup label="Đà Nẵng">
+                  <option value="Quận Hải Châu">Quận Hải Châu</option>
+                </optgroup>
               </select>
             </div>
 

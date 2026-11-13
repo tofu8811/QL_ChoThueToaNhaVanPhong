@@ -14,36 +14,191 @@
         </a>
 
         <nav class="mo-nav">
+          <!-- 1. Tất cả tòa nhà toàn quốc -->
           <a href="{{ route('home') }}" 
-             class="mo-nav-item {{ (request()->routeIs('home') && !request()->has('district') && !request()->has('grade')) ? 'active' : '' }}" 
+             class="mo-nav-item {{ (request()->routeIs('home') && !request()->has('province') && !request()->has('province_code') && !request()->has('district') && !request()->has('grade')) ? 'active' : '' }}" 
              onclick="return handleHeaderFilter(event, 'reset', null, '{{ route('home') }}')"
-             style="text-decoration:none;">Cho Thuê VP TP.HCM</a>
+             style="text-decoration:none;">Toàn Quốc</a>
 
-          <a href="{{ route('home', ['district' => 'Quận 1']) }}" 
-             class="mo-nav-item {{ (request('district') === 'Quận 1') ? 'active' : '' }}" 
-             onclick="return handleHeaderFilter(event, 'district', 'Quận 1', '{{ route('home', ['district' => 'Quận 1']) }}')"
-             style="text-decoration:none;">Văn Phòng Quận 1</a>
+          <!-- 2. Hà Nội Dropdown (Cố định) -->
+          @php
+            $hnInfo = $headerLocations['hanoi'] ?? ['count' => 10, 'districts' => []];
+            $hnCount = $hnInfo['count'] ?? 0;
+            $hnDistricts = is_array($hnInfo['districts'] ?? null) ? $hnInfo['districts'] : (is_iterable($hnInfo['districts'] ?? null) ? $hnInfo['districts'] : []);
+          @endphp
+          <div class="mo-nav-dropdown-wrap">
+            <button type="button" 
+               class="mo-nav-item {{ (request('province') === '1' || request('province_code') === '1') ? 'active' : '' }}" 
+               onclick="toggleNavDropdown(event, this)">
+              Hà Nội <i class="fa-solid fa-chevron-down nav-caret"></i>
+            </button>
+            <div class="mo-nav-dropdown">
+              <a href="{{ route('home', ['province' => '1']) }}" 
+                 class="mo-dropdown-link" 
+                 onclick="return handleHeaderFilter(event, 'province', '1', '{{ route('home', ['province' => '1']) }}')">
+                <span><i class="fa-solid fa-city" style="color:#2563eb;margin-right:6px;"></i> <strong>Tất cả Hà Nội</strong></span>
+                <span class="badge-num">{{ $hnCount }} tòa</span>
+              </a>
+              <div class="mo-dropdown-divider"></div>
+              @if($hnCount > 0 && !empty($hnDistricts))
+                @foreach(array_slice((array) $hnDistricts, 0, 6) as $d)
+                  @php
+                    $dName = is_array($d) ? ($d['district'] ?? '') : ($d->district ?? '');
+                    $dNum = is_array($d) ? ($d['count'] ?? 0) : ($d->count ?? 0);
+                  @endphp
+                  <a href="{{ route('home', ['district' => $dName, 'province' => '1']) }}" 
+                     class="mo-dropdown-link" 
+                     onclick="return handleHeaderFilter(event, 'district', '{{ $dName }}', '{{ route('home', ['district' => $dName, 'province' => '1']) }}')">
+                    <span>{{ $dName }}</span> <span class="badge-num">{{ $dNum }} tòa</span>
+                  </a>
+                @endforeach
+              @else
+                <div class="mo-dropdown-empty">
+                  <i class="fa-solid fa-clock-rotate-left"></i>
+                  <span>Đang thẩm định nguồn cung mới</span>
+                </div>
+              @endif
+            </div>
+          </div>
 
-          <a href="{{ route('home', ['district' => 'Quận 3']) }}" 
-             class="mo-nav-item {{ (request('district') === 'Quận 3') ? 'active' : '' }}" 
-             onclick="return handleHeaderFilter(event, 'district', 'Quận 3', '{{ route('home', ['district' => 'Quận 3']) }}')"
-             style="text-decoration:none;">Văn Phòng Quận 3</a>
+          <!-- 3. TP. Hồ Chí Minh Dropdown (Cố định) -->
+          @php
+            $hcmInfo = $headerLocations['hcm'] ?? ['count' => 22, 'districts' => []];
+            $hcmCount = $hcmInfo['count'] ?? 0;
+            $hcmDistricts = is_array($hcmInfo['districts'] ?? null) ? $hcmInfo['districts'] : (is_iterable($hcmInfo['districts'] ?? null) ? $hcmInfo['districts'] : []);
+          @endphp
+          <div class="mo-nav-dropdown-wrap">
+            <button type="button" 
+               class="mo-nav-item {{ (request('province') === '79' || request('province_code') === '79' || (!request()->has('province') && request()->has('district') && in_array(request('district'), ['Quận 1', 'Quận 3', 'Quận 7', 'Bình Thạnh', 'TP Thủ Đức']))) ? 'active' : '' }}" 
+               onclick="toggleNavDropdown(event, this)">
+              TP. Hồ Chí Minh <i class="fa-solid fa-chevron-down nav-caret"></i>
+            </button>
+            <div class="mo-nav-dropdown">
+              <a href="{{ route('home', ['province' => '79']) }}" 
+                 class="mo-dropdown-link" 
+                 onclick="return handleHeaderFilter(event, 'province', '79', '{{ route('home', ['province' => '79']) }}')">
+                <span><i class="fa-solid fa-city" style="color:#ea580c;margin-right:6px;"></i> <strong>Tất cả TP.HCM</strong></span>
+                <span class="badge-num">{{ $hcmCount }} tòa</span>
+              </a>
+              <div class="mo-dropdown-divider"></div>
+              @if($hcmCount > 0 && !empty($hcmDistricts))
+                @foreach(array_slice((array) $hcmDistricts, 0, 6) as $d)
+                  @php
+                    $dName = is_array($d) ? ($d['district'] ?? '') : ($d->district ?? '');
+                    $dNum = is_array($d) ? ($d['count'] ?? 0) : ($d->count ?? 0);
+                  @endphp
+                  <a href="{{ route('home', ['district' => $dName, 'province' => '79']) }}" 
+                     class="mo-dropdown-link" 
+                     onclick="return handleHeaderFilter(event, 'district', '{{ $dName }}', '{{ route('home', ['district' => $dName, 'province' => '79']) }}')">
+                    <span>{{ $dName }}</span> <span class="badge-num">{{ $dNum }} tòa</span>
+                  </a>
+                @endforeach
+              @else
+                <div class="mo-dropdown-empty">
+                  <i class="fa-solid fa-clock-rotate-left"></i>
+                  <span>Đang thẩm định nguồn cung mới</span>
+                </div>
+              @endif
+            </div>
+          </div>
 
+          <!-- 4. Đà Nẵng Dropdown (Cố định) -->
+          @php
+            $dnInfo = $headerLocations['danang'] ?? ['count' => 3, 'districts' => []];
+            $dnCount = $dnInfo['count'] ?? 0;
+            $dnDistricts = is_array($dnInfo['districts'] ?? null) ? $dnInfo['districts'] : (is_iterable($dnInfo['districts'] ?? null) ? $dnInfo['districts'] : []);
+          @endphp
+          <div class="mo-nav-dropdown-wrap">
+            <button type="button" 
+               class="mo-nav-item {{ (request('province') === '48' || request('province_code') === '48') ? 'active' : '' }}" 
+               onclick="toggleNavDropdown(event, this)">
+              Đà Nẵng <i class="fa-solid fa-chevron-down nav-caret"></i>
+            </button>
+            <div class="mo-nav-dropdown">
+              <a href="{{ route('home', ['province' => '48']) }}" 
+                 class="mo-dropdown-link" 
+                 onclick="return handleHeaderFilter(event, 'province', '48', '{{ route('home', ['province' => '48']) }}')">
+                <span><i class="fa-solid fa-city" style="color:#6366f1;margin-right:6px;"></i> <strong>Tất cả Đà Nẵng</strong></span>
+                <span class="badge-num">{{ $dnCount }} tòa</span>
+              </a>
+              <div class="mo-dropdown-divider"></div>
+              @if($dnCount > 0 && !empty($dnDistricts))
+                @foreach(array_slice((array) $dnDistricts, 0, 6) as $d)
+                  @php
+                    $dName = is_array($d) ? ($d['district'] ?? '') : ($d->district ?? '');
+                    $dNum = is_array($d) ? ($d['count'] ?? 0) : ($d->count ?? 0);
+                  @endphp
+                  <a href="{{ route('home', ['district' => $dName, 'province' => '48']) }}" 
+                     class="mo-dropdown-link" 
+                     onclick="return handleHeaderFilter(event, 'district', '{{ $dName }}', '{{ route('home', ['district' => $dName, 'province' => '48']) }}')">
+                    <span>{{ $dName }}</span> <span class="badge-num">{{ $dNum }} tòa</span>
+                  </a>
+                @endforeach
+              @else
+                <div class="mo-dropdown-empty">
+                  <i class="fa-solid fa-clock-rotate-left"></i>
+                  <span>Đang thẩm định nguồn cung mới</span>
+                </div>
+              @endif
+            </div>
+          </div>
+
+          <!-- 5. Khu Vực Khác Dropdown (Động từ Database) -->
+          @php
+            $otherProvinces = $headerLocations['other_provinces'] ?? [];
+            $otherList = is_array($otherProvinces) ? $otherProvinces : (is_iterable($otherProvinces) ? $otherProvinces : []);
+            $isOtherActive = request()->has('province') && !in_array(request('province'), ['1', '79', '48']);
+          @endphp
+          <div class="mo-nav-dropdown-wrap">
+            <button type="button" 
+               class="mo-nav-item {{ $isOtherActive ? 'active' : '' }}" 
+               onclick="toggleNavDropdown(event, this)">
+              Khu Vực Khác <i class="fa-solid fa-chevron-down nav-caret"></i>
+            </button>
+            <div class="mo-nav-dropdown">
+              @if(!empty($otherList))
+                @foreach($otherList as $op)
+                  @php
+                    $pName = is_array($op) ? ($op['province'] ?? '') : ($op->province ?? '');
+                    $pCode = is_array($op) ? ($op['province_code'] ?? $pName) : ($op->province_code ?? $pName);
+                    $pCount = is_array($op) ? ($op['count'] ?? 0) : ($op->count ?? 0);
+                    $cleanProvName = str_replace('Thành phố ', '', $pName);
+                  @endphp
+                  <a href="{{ route('home', ['province' => $pCode]) }}" 
+                     class="mo-dropdown-link" 
+                     onclick="return handleHeaderFilter(event, 'province', '{{ $pCode }}', '{{ route('home', ['province' => $pCode]) }}')">
+                    <span><i class="fa-solid fa-location-dot" style="color:#10b981;margin-right:6px;"></i> <strong>{{ $cleanProvName }}</strong></span>
+                    <span class="badge-num">{{ $pCount }} tòa</span>
+                  </a>
+                @endforeach
+              @else
+                <div class="mo-dropdown-empty">
+                  <i class="fa-solid fa-compass"></i>
+                  <span>Đang mở rộng mạng lưới tỉnh thành</span>
+                </div>
+              @endif
+              <div class="mo-dropdown-divider"></div>
+              <a href="{{ route('quote.page') }}" 
+                 class="mo-dropdown-link" 
+                 style="color:#ea580c;font-weight:600;">
+                <span><i class="fa-solid fa-plus-circle"></i> Đề xuất tỉnh thành khác</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- 6. Tòa Nhà Hạng A -->
           <a href="{{ route('home', ['grade' => 'A']) }}" 
              class="mo-nav-item {{ (request('grade') === 'A') ? 'active' : '' }}" 
              onclick="return handleHeaderFilter(event, 'grade', 'A', '{{ route('home', ['grade' => 'A']) }}')"
              style="text-decoration:none;">Tòa Nhà Hạng A</a>
 
+          <!-- 7. Nhận Báo Giá -->
           <a href="{{ route('quote.page') }}" 
              class="mo-nav-item {{ request()->routeIs('quote.page') ? 'active' : '' }}" 
              style="text-decoration:none;">Nhận Báo Giá</a>
         </nav>
 
         <div class="mo-header-actions">
-          <button class="btn-mo-orange" onclick="openQuoteModal()">
-            <i class="fa-solid fa-file-invoice-dollar"></i> Báo Giá Nhanh
-          </button>
-          
           <button class="btn-mo-outline" id="btn-workspace-nav" style="display:none;" onclick="handleGoToWorkspace()">
             <i class="fa-solid fa-desktop"></i> <span id="btn-workspace-text">Không Gian Làm Việc</span>
           </button>

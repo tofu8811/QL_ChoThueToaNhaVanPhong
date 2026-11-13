@@ -20,6 +20,9 @@ class BuildingSearchFilter extends Component
     public string $keyword = '';
 
     #[Url(history: true)]
+    public string $province = 'all';
+
+    #[Url(history: true)]
     public string $district = 'all';
 
     #[Url(history: true)]
@@ -38,6 +41,11 @@ class BuildingSearchFilter extends Component
 
     public function mount(): void
     {
+        if (request()->filled('province')) {
+            $this->province = (string) request()->query('province');
+        } elseif (request()->filled('province_code')) {
+            $this->province = (string) request()->query('province_code');
+        }
         if (request()->filled('district')) {
             $this->district = (string) request()->query('district');
         }
@@ -68,9 +76,20 @@ class BuildingSearchFilter extends Component
      */
     public function updated($property): void
     {
-        if (in_array($property, ['keyword', 'district', 'grade', 'price', 'area', 'sortBy', 'perPage'])) {
+        if (in_array($property, ['keyword', 'province', 'district', 'grade', 'price', 'area', 'sortBy', 'perPage'])) {
+            if ($property === 'province') {
+                $this->district = 'all';
+            }
             $this->resetPage();
         }
+    }
+
+    #[On('filter-province')]
+    public function setProvince(string $province): void
+    {
+        $this->province = $province;
+        $this->district = 'all';
+        $this->resetPage();
     }
 
     #[On('filter-district')]
@@ -90,7 +109,7 @@ class BuildingSearchFilter extends Component
     #[On('reset-filters')]
     public function resetFilters(): void
     {
-        $this->reset(['keyword', 'district', 'grade', 'price', 'area', 'sortBy']);
+        $this->reset(['keyword', 'province', 'district', 'grade', 'price', 'area', 'sortBy']);
         $this->resetPage();
     }
 
@@ -135,15 +154,17 @@ class BuildingSearchFilter extends Component
         }
 
         $filterParams = [
-            'keyword'    => $this->keyword,
-            'district'   => $this->district !== 'all' ? $this->district : null,
-            'grade'      => $this->grade !== 'all' ? $this->grade : null,
-            'min_price'  => $minPrice,
-            'max_price'  => $maxPrice,
-            'min_area'   => $minArea,
-            'max_area'   => $maxArea,
-            'sort_by'    => $sortCol,
-            'sort_order' => $sortOrder,
+            'keyword'       => $this->keyword,
+            'province'      => $this->province !== 'all' ? $this->province : null,
+            'province_code' => is_numeric($this->province) ? (int) $this->province : null,
+            'district'      => $this->district !== 'all' ? $this->district : null,
+            'grade'         => $this->grade !== 'all' ? $this->grade : null,
+            'min_price'     => $minPrice,
+            'max_price'     => $maxPrice,
+            'min_area'      => $minArea,
+            'max_area'      => $maxArea,
+            'sort_by'       => $sortCol,
+            'sort_order'    => $sortOrder,
         ];
 
         $buildings = $buildingService->getPublicBuildings($filterParams, $this->perPage);
@@ -152,24 +173,44 @@ class BuildingSearchFilter extends Component
         $totalArea = (float) Building::published()->sum('total_leasable_area_sqm');
         $totalBuildings = Building::published()->count();
         $totalTenants = \Illuminate\Support\Facades\Schema::hasTable('tenants') ? \App\Models\Tenant::count() : 10;
+        $totalProvinces = Building::published()->distinct()->count('province_code');
 
         $stats = [
-            'total_buildings' => $totalBuildings > 0 ? $totalBuildings : 22,
-            'total_area' => $totalArea > 0 ? $totalArea : 428430,
+            'total_buildings' => $totalBuildings > 0 ? $totalBuildings : 39,
+            'total_area' => $totalArea > 0 ? $totalArea : 1050000,
             'total_tenants' => $totalTenants > 0 ? $totalTenants : 10,
+            'total_provinces' => $totalProvinces > 0 ? $totalProvinces : 4,
             'count_grade_a' => Building::published()->where('grade', 'A')->count(),
             'count_grade_b' => Building::published()->where('grade', 'B')->count(),
             'count_grade_c' => Building::published()->where('grade', 'C')->count(),
-            'count_q1' => Building::published()->where('district', 'like', '%Quận 1%')->count(),
-            'count_q3' => Building::published()->where('district', 'like', '%Quận 3%')->count(),
-            'count_bt' => Building::published()->where('district', 'like', '%Bình Thạnh%')->count(),
-            'count_q7' => Building::published()->where('district', 'like', '%Quận 7%')->count(),
-            'count_td' => Building::published()->where('district', 'like', '%Thủ Đức%')->count(),
+            // Thống kê theo Tỉnh / Thành phố
+            'count_hanoi'   => Building::published()->where('province_code', 1)->count(),
+            'count_hcm'     => Building::published()->where('province_code', 79)->count(),
+            'count_dongnai' => Building::published()->where('province_code', 75)->count(),
+            'count_danang'  => Building::published()->where('province_code', 48)->count(),
+            // Thống kê theo Quận / Khu vực trọng điểm
+            'count_q1'      => Building::published()->where('district', 'like', '%Quận 1%')->count(),
+            'count_q3'      => Building::published()->where('district', 'like', '%Quận 3%')->count(),
+            'count_bt'      => Building::published()->where('district', 'like', '%Bình Thạnh%')->count(),
+            'count_q7'      => Building::published()->where('district', 'like', '%Quận 7%')->count(),
+            'count_td'      => Building::published()->where('district', 'like', '%Thủ Đức%')->count(),
+            'count_badinh'  => Building::published()->where('district', 'like', '%Ba Đình%')->count(),
+            'count_caugiay' => Building::published()->where('district', 'like', '%Cầu Giấy%')->count(),
+            'count_hoankiem'=> Building::published()->where('district', 'like', '%Hoàn Kiếm%')->count(),
+            'count_bienhoa' => Building::published()->where('district', 'like', '%Biên Hòa%')->count(),
+            'count_haichau' => Building::published()->where('district', 'like', '%Hải Châu%')->count(),
         ];
 
         return view('livewire.building-search-filter', [
             'buildings' => $buildings,
             'stats'     => $stats,
+            'keyword'   => $this->keyword,
+            'province'  => $this->province,
+            'district'  => $this->district,
+            'grade'     => $this->grade,
+            'price'     => $this->price,
+            'area'      => $this->area,
+            'sortBy'    => $this->sortBy,
         ]);
     }
 }

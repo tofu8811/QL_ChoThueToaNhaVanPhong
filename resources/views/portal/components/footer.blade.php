@@ -15,24 +15,24 @@
           </div>
 
           <div class="mo-footer-col">
-            <h4>Văn Phòng Theo Quận</h4>
+            <h4>Khu Vực & Tỉnh Thành</h4>
             <ul>
-              <li><a href="{{ route('home', ['district' => 'Quận 1']) }}" onclick="return handleHeaderFilter(event, 'district', 'Quận 1', '{{ route('home', ['district' => 'Quận 1']) }}')">Cho thuê văn phòng Quận 1</a></li>
-              <li><a href="{{ route('home', ['district' => 'Quận 3']) }}" onclick="return handleHeaderFilter(event, 'district', 'Quận 3', '{{ route('home', ['district' => 'Quận 3']) }}')">Cho thuê văn phòng Quận 3</a></li>
+              <li><a href="{{ route('home', ['province' => '1']) }}" onclick="return handleHeaderFilter(event, 'province', '1', '{{ route('home', ['province' => '1']) }}')">Văn phòng Hà Nội (Ba Đình, Cầu Giấy)</a></li>
+              <li><a href="{{ route('home', ['province' => '79']) }}" onclick="return handleHeaderFilter(event, 'province', '79', '{{ route('home', ['province' => '79']) }}')">Văn phòng TP.HCM (Quận 1, Quận 3)</a></li>
+              <li><a href="{{ route('home', ['province' => '75']) }}" onclick="return handleHeaderFilter(event, 'province', '75', '{{ route('home', ['province' => '75']) }}')">Văn phòng Đồng Nai (Biên Hòa)</a></li>
+              <li><a href="{{ route('home', ['province' => '48']) }}" onclick="return handleHeaderFilter(event, 'province', '48', '{{ route('home', ['province' => '48']) }}')">Văn phòng Đà Nẵng (Hải Châu)</a></li>
               <li><a href="{{ route('home', ['district' => 'Bình Thạnh']) }}" onclick="return handleHeaderFilter(event, 'district', 'Bình Thạnh', '{{ route('home', ['district' => 'Bình Thạnh']) }}')">Cho thuê văn phòng Bình Thạnh</a></li>
-              <li><a href="{{ route('home', ['district' => 'Quận 7']) }}" onclick="return handleHeaderFilter(event, 'district', 'Quận 7', '{{ route('home', ['district' => 'Quận 7']) }}')">Cho thuê văn phòng Quận 7</a></li>
-              <li><a href="{{ route('home', ['district' => 'TP Thủ Đức']) }}" onclick="return handleHeaderFilter(event, 'district', 'TP Thủ Đức', '{{ route('home', ['district' => 'TP Thủ Đức']) }}')">Cho thuê văn phòng TP Thủ Đức</a></li>
             </ul>
           </div>
 
           <div class="mo-footer-col">
-            <h4>Phân Loại Hạng</h4>
+            <h4>Phân Loại Hạng & Giá</h4>
             <ul>
-              <li><a href="{{ route('home', ['grade' => 'A']) }}" onclick="return handleHeaderFilter(event, 'grade', 'A', '{{ route('home', ['grade' => 'A']) }}')">Tòa nhà văn phòng Hạng A</a></li>
-              <li><a href="{{ route('home', ['grade' => 'B']) }}" onclick="return handleHeaderFilter(event, 'grade', 'B', '{{ route('home', ['grade' => 'B']) }}')">Tòa nhà văn phòng Hạng B</a></li>
-              <li><a href="{{ route('home', ['grade' => 'C']) }}" onclick="return handleHeaderFilter(event, 'grade', 'C', '{{ route('home', ['grade' => 'C']) }}')">Văn phòng Hạng C & Giá Rẻ</a></li>
-              <li><a href="{{ route('quote.page') }}">Văn phòng trọn gói Quận 1</a></li>
-              <li><a href="{{ route('home') }}" onclick="return handleHeaderFilter(event, 'reset', null, '{{ route('home') }}')">Bảng giá thuê văn phòng 2026</a></li>
+              <li><a href="{{ route('home', ['grade' => 'A']) }}" onclick="return handleHeaderFilter(event, 'grade', 'A', '{{ route('home', ['grade' => 'A']) }}')">Tòa nhà văn phòng Hạng A (21 tòa)</a></li>
+              <li><a href="{{ route('home', ['grade' => 'B']) }}" onclick="return handleHeaderFilter(event, 'grade', 'B', '{{ route('home', ['grade' => 'B']) }}')">Tòa nhà văn phòng Hạng B (14 tòa)</a></li>
+              <li><a href="{{ route('home', ['grade' => 'C']) }}" onclick="return handleHeaderFilter(event, 'grade', 'C', '{{ route('home', ['grade' => 'C']) }}')">Văn phòng Hạng C & Tiêu chuẩn</a></li>
+              <li><a href="{{ route('home') }}" onclick="return handleHeaderFilter(event, 'reset', null, '{{ route('home') }}')">Tất cả tòa nhà toàn quốc</a></li>
+              <li><a href="{{ route('quote.page') }}">Bảng giá thuê văn phòng 2026</a></li>
             </ul>
           </div>
 

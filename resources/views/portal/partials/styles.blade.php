@@ -14,7 +14,7 @@
       --mo-text-main: #1e293b;
       --mo-text-muted: #64748b;
       --mo-text-light: #94a3b8;
-      --mo-bg: #f8fafc;
+      --mo-bg: #ffffff;
       --mo-card-bg: #ffffff;
       --mo-border: #e2e8f0;
       --mo-border-light: #f1f5f9;
@@ -43,23 +43,28 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
+    html {
+      scroll-behavior: smooth;
+      overflow-x: clip;
+    }
+    body {
       margin: 0 !important;
       padding: 0 !important;
       width: 100%;
-      overflow-x: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--mo-text-main);
+      background-color: #ffffff;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
     }
-    #portal-wrapper, #admin-wrapper {
+    #portal-wrapper {
+      background-color: #ffffff;
       margin: 0 !important;
       padding: 0 !important;
     }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      color: var(--mo-text-main);
-      background-color: var(--mo-bg);
-      line-height: 1.5;
-      -webkit-font-smoothing: antialiased;
+    #admin-wrapper {
+      margin: 0 !important;
+      padding: 0 !important;
     }
 
     a { text-decoration: none; color: inherit; transition: all 0.2s; }
@@ -174,14 +179,27 @@
       font-weight: 600;
     }
 
-    /* Main Navbar */
+    /* Main Navbar (Smart Sticky Header / Headroom) */
     .mo-header {
       margin: 0 !important;
       background: #ffffff;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
       position: sticky;
       top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
       z-index: 1000;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+      will-change: transform;
+    }
+    .mo-header.header-hidden {
+      transform: translateY(-115%) !important;
+      box-shadow: none !important;
+      pointer-events: none !important;
+    }
+    .mo-header.header-scrolled {
+      box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.12), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
     }
     .mo-header .container {
       gap: 16px;
@@ -229,13 +247,13 @@
       flex-shrink: 0;
       display: flex;
       align-items: center;
-      gap: 24px;
+      gap: 16px;
     }
     .mo-nav-item {
       white-space: nowrap !important;
       flex-shrink: 0;
       letter-spacing: 0.15px;
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 600;
       color: #334155;
       padding: 8px 4px;
@@ -243,7 +261,10 @@
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
+      background: none;
+      border: none;
+      font-family: inherit;
     }
     .mo-nav-item:hover, .mo-nav-item.active {
       color: var(--mo-orange);
@@ -257,6 +278,202 @@
       height: 3px;
       background: var(--mo-orange);
       border-radius: 2px;
+    }
+
+    /* Sub-dropdown cho menu địa bàn tỉnh thành */
+    .mo-nav-dropdown-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .mo-nav-dropdown-wrap:hover .mo-nav-dropdown,
+    .mo-nav-dropdown-wrap.open .mo-nav-dropdown {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .mo-nav-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      margin-top: 4px;
+      min-width: 230px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+      padding: 6px 0;
+      z-index: 1050;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(6px);
+      transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+    }
+    /* Cầu đệm tàng hình giúp rê chuột xuống dropdown không bao giờ bị mất */
+    .mo-nav-dropdown::before {
+      content: '';
+      position: absolute;
+      top: -16px;
+      left: 0;
+      right: 0;
+      height: 16px;
+      background: transparent;
+    }
+    .mo-nav-dropdown-wrap:hover .nav-caret,
+    .mo-nav-dropdown-wrap.open .nav-caret {
+      transform: rotate(180deg);
+    }
+    .mo-dropdown-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #334155;
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+    }
+    .mo-dropdown-link:hover {
+      background: #f8fafc;
+      color: var(--mo-orange);
+    }
+    .mo-dropdown-link .badge-num {
+      font-size: 11px;
+      font-weight: 600;
+      background: #f1f5f9;
+      color: #64748b;
+      padding: 2px 7px;
+      border-radius: 9999px;
+    }
+    .mo-dropdown-divider {
+      height: 1px;
+      background: #e2e8f0;
+      margin: 4px 0;
+    }
+    .mo-dropdown-empty {
+      padding: 10px 14px;
+      font-size: 12.5px;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f8fafc;
+      border-radius: 6px;
+      margin: 4px 8px;
+      line-height: 1.4;
+    }
+    .nav-caret {
+      font-size: 10px;
+      margin-left: 2px;
+      transition: transform 0.2s;
+    }
+    .mo-nav-dropdown-wrap:hover .nav-caret {
+      transform: rotate(180deg);
+    }
+
+    /* Kịch bản 1: Thẻ Empty State chuyên nghiệp & Thu thập khách hàng tiềm năng */
+    .mo-empty-lead-card {
+      grid-column: 1 / -1;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 36px 32px;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05);
+      position: relative;
+      overflow: hidden;
+    }
+    .mo-empty-lead-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #ea580c, #f59e0b, #2563eb);
+    }
+    .mo-empty-lead-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff7ed;
+      color: #ea580c;
+      border: 1px solid #fed7aa;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      margin-bottom: 14px;
+    }
+    .mo-empty-lead-title {
+      font-size: 21px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 10px;
+      line-height: 1.35;
+    }
+    .mo-empty-lead-desc {
+      font-size: 14.5px;
+      color: #64748b;
+      max-width: 760px;
+      line-height: 1.6;
+      margin-bottom: 22px;
+    }
+    .mo-empty-lead-form {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 18px;
+      max-width: 820px;
+      margin-bottom: 20px;
+    }
+    .mo-empty-lead-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1.2fr 1fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+    .mo-empty-input-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+    .mo-empty-input {
+      width: 100%;
+      height: 40px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 0 12px;
+      font-size: 13.5px;
+      color: #1e293b;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .mo-empty-input:focus {
+      border-color: #ea580c;
+      box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
+    }
+    .mo-empty-lead-footer {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding-top: 16px;
+      border-top: 1px dashed #e2e8f0;
+    }
+    @media (max-width: 860px) {
+      .mo-empty-lead-grid {
+        grid-template-columns: 1fr;
+      }
+      .mo-empty-lead-card {
+        padding: 24px 18px;
+      }
     }
 
     .mo-header-actions button,
@@ -291,51 +508,69 @@
        3. MAISON OFFICE PUBLIC HERO & SEARCH FILTER (Trang Cho thuê VP TPHCM)
        ========================================================================== */
     .mo-hero-banner {
-      background: linear-gradient(180deg, #0f2b4c 0%, #091a2f 100%);
+      background: linear-gradient(180deg, rgba(12, 33, 62, 0.84) 0%, rgba(8, 20, 38, 0.93) 100%);
       color: #ffffff;
-      padding: 40px 0 75px;
+      padding: 75px 0 155px;
+      min-height: 480px;
       position: relative;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
     .mo-hero-banner::before {
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1800&q=80') center/cover no-repeat;
-      opacity: 0.12;
+      background: url('https://images.unsplash.com/photo-1583417319070-4a69db38a482?auto=format&fit=crop&w=2200&q=85') center 35%/cover no-repeat;
+      opacity: 0.40;
       pointer-events: none;
+      filter: brightness(0.95) contrast(1.08);
+      transform: scale(1.02);
+      transition: transform 6s ease-out;
+    }
+    .mo-hero-banner:hover::before {
+      transform: scale(1.05);
     }
     .mo-breadcrumbs {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 13px;
+      font-size: 13.5px;
       color: #94a3b8;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 2;
     }
-    .mo-breadcrumbs a { color: #cbd5e1; }
+    .mo-breadcrumbs a { color: #e2e8f0; font-weight: 500; }
     .mo-breadcrumbs a:hover { color: #f97316; }
     .mo-hero-title {
-      font-size: 32px;
+      font-size: 34px;
       font-weight: 800;
       color: #ffffff;
-      line-height: 1.25;
-      margin-bottom: 12px;
-      max-width: 900px;
+      line-height: 1.3;
+      margin-bottom: 14px;
+      max-width: 950px;
+      position: relative;
+      z-index: 2;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
     }
     .mo-hero-desc {
-      font-size: 15px;
-      color: #cbd5e1;
-      max-width: 820px;
-      line-height: 1.6;
+      font-size: 16px;
+      color: #e2e8f0;
+      max-width: 860px;
+      line-height: 1.68;
+      position: relative;
+      z-index: 2;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
     }
 
     /* Maison Office Floating Filter Box */
     .mo-filter-container {
-      margin-top: -45px;
+      margin-top: -75px;
       position: relative;
       z-index: 20;
-      margin-bottom: 35px;
+      margin-bottom: 40px;
     }
     .mo-filter-box {
       background: #ffffff;
@@ -368,8 +603,8 @@
     }
     .mo-filter-grid {
       display: grid;
-      grid-template-columns: 1.8fr 1.2fr 1fr 1fr 1fr auto;
-      gap: 12px;
+      grid-template-columns: 1.4fr 1.1fr 1.1fr 0.9fr 1fr 1fr auto;
+      gap: 10px;
       align-items: end;
     }
     .mo-filter-group {
@@ -467,32 +702,51 @@
       font-weight: 600;
     }
 
-    /* Market Highlights Counter */
+    /* Market Highlights Counter (5 Cards Maison Office Style on 1 Row) */
     .mo-stats-strip {
-      background: #ffffff;
-      border: 1px solid var(--mo-border);
-      border-radius: var(--radius-md);
-      padding: 16px 24px;
-      margin-bottom: 28px;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      margin-bottom: 32px;
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 16px;
-      text-align: center;
+      text-align: left;
     }
     .mo-stat-item {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 24px 20px;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      justify-content: flex-start;
+      align-items: flex-start;
+      text-align: left;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      min-height: 155px;
+    }
+    .mo-stat-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px -6px rgba(15, 23, 42, 0.08);
+      border-color: #cbd5e1;
     }
     .mo-stat-num {
-      font-size: 24px;
+      font-size: clamp(23px, 2.1vw, 30px);
       font-weight: 800;
-      color: var(--mo-primary);
+      color: #e11d48;
+      line-height: 1.15;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+      white-space: nowrap;
     }
     .mo-stat-label {
-      font-size: 13px;
-      color: #64748b;
-      font-weight: 500;
+      font-size: 14px;
+      color: #475569;
+      font-weight: 600;
+      line-height: 1.5;
     }
 
     /* ==========================================================================
@@ -1407,6 +1661,9 @@
     }
 
     /* Responsive */
+    @media (max-width: 1200px) {
+      .mo-stats-strip { grid-template-columns: repeat(3, 1fr); }
+    }
     @media (max-width: 1024px) {
       .mo-filter-grid { grid-template-columns: 1fr 1fr; }
       .mo-content-grid { grid-template-columns: 1fr; }
@@ -1421,9 +1678,12 @@
       .mo-topbar-right { display: none; }
       .filament-sidebar { display: none; }
       .filament-widgets-grid { grid-template-columns: 1fr; }
-      .mo-stats-strip { grid-template-columns: 1fr 1fr; }
+      .mo-stats-strip { grid-template-columns: repeat(2, 1fr); }
       .lead-form-grid { grid-template-columns: 1fr; }
       .mo-footer-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .mo-stats-strip { grid-template-columns: 1fr; }
     }
 
     /* Login Modal Specific Styling */

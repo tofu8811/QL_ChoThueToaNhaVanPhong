@@ -51,6 +51,14 @@ class BuildingService
         // 2. Lọc theo Tỉnh / Thành phố
         if (!empty($filters['province_code'])) {
             $query->where('province_code', (int) $filters['province_code']);
+        } elseif (!empty($filters['province']) && $filters['province'] !== 'all') {
+            if (is_numeric($filters['province'])) {
+                $query->where('province_code', (int) $filters['province']);
+            } else {
+                $query->where(function ($q) use ($filters) {
+                    $q->where('province', 'like', "%{$filters['province']}%");
+                });
+            }
         }
 
         // 3. Lọc theo Quận / Huyện

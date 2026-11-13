@@ -71,7 +71,7 @@ class Module2LeadApiTest extends TestCase
             'employee_code' => $code,
             'full_name' => $name,
             'email' => strtolower($code) . '@office.vn',
-            'phone' => '090000000' . rand(1, 9),
+            'phone' => '09' . str_pad((string) mt_rand(10000000, 99999999), 8, '0', STR_PAD_LEFT),
             'password' => bcrypt('password123'),
             'commission_rate' => 1.5,
             'max_concurrent_leads' => $maxLeads,

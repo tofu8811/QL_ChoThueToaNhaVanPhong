@@ -9,11 +9,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 use App\Models\TicketHistory;
 class Tenant extends Authenticatable
 {
-    use HasFactory, HasUuidV7, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, HasUuidV7, Notifiable, SoftDeletes;
 
     protected $table = 'tenants';
 
@@ -46,6 +47,10 @@ class Tenant extends Authenticatable
         'remember_token',
     ];
 
+    protected $appends = [
+        'full_name',
+    ];
+
     /**
      * @return array<string, string>
      */
@@ -55,6 +60,14 @@ class Tenant extends Authenticatable
             'last_login_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Accessor tạo thuộc tính full_name tương thích toàn bộ hệ thống Auth & Portal.
+     */
+    public function getFullNameAttribute(): string
+    {
+        return $this->company_name ?: ($this->representative_name ?: 'Doanh nghiệp khách thuê');
     }
 
     /**

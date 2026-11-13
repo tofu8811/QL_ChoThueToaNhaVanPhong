@@ -1,13 +1,20 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AccountantUserApiController;
+use App\Http\Controllers\Api\V1\AdminUserApiController;
+use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BuildingApiController;
+use App\Http\Controllers\Api\V1\BuildingAssignmentApiController;
 use App\Http\Controllers\Api\V1\ContractApiController;
 use App\Http\Controllers\Api\V1\CrmLeadApiController;
 use App\Http\Controllers\Api\V1\LeadActivityApiController;
 use App\Http\Controllers\Api\V1\PortalLeadApiController;
+use App\Http\Controllers\Api\V1\PropertyManagerApiController;
 use App\Http\Controllers\Api\V1\ProvinceApiController;
+use App\Http\Controllers\Api\V1\SaleUserApiController;
 use App\Http\Controllers\Api\V1\TenantApiController;
 use App\Http\Controllers\Api\V1\TenantPortalApiController;
+use App\Http\Controllers\Api\V1\TicketApiController;
 use App\Http\Controllers\Api\V1\UnitApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -133,6 +140,149 @@ Route::prefix('v1')->group(function () {
         Route::put('profile', [TenantPortalApiController::class, 'updateProfile'])->name('v1.tenant.profile.update');
         Route::get('contracts', [TenantPortalApiController::class, 'getContracts'])->name('v1.tenant.contracts.index');
         Route::get('contracts/{id}', [TenantPortalApiController::class, 'getContractDetail'])->name('v1.tenant.contracts.show');
+    });
+
+    // =========================================================================
+    // MODULE 5: XÁC THỰC (AUTH) & PHÂN QUYỀN TÒA NHÀ — ENDPOINTS 67 - 71
+    // =========================================================================
+    Route::prefix('auth')->group(function () {
+        // 67. Đăng nhập Đa Tác nhân (Public)
+        Route::post('login', [AuthController::class, 'login'])->name('v1.auth.login');
+
+        // Các Endpoint yêu cầu Sanctum Bearer Token
+        Route::middleware('auth:sanctum')->group(function () {
+            // 68. Đăng xuất Thu hồi Token
+            Route::post('logout', [AuthController::class, 'logout'])->name('v1.auth.logout');
+
+            // 69. Xem Hồ sơ Cá nhân & Phạm vi Quản lý
+            Route::get('me', [AuthController::class, 'me'])->name('v1.auth.me');
+
+            // 70. Làm mới Phiên làm việc
+            Route::post('refresh', [AuthController::class, 'refresh'])->name('v1.auth.refresh');
+
+            // 71. Đổi Mật khẩu Cá nhân
+            Route::put('password', [AuthController::class, 'changePassword'])->name('v1.auth.password');
+        });
+    });
+
+    // =========================================================================
+    // MODULE 4: QUẢN LÝ YÊU CẦU HỖ TRỢ & SỰ CỐ BẢO TRÌ (TICKETS & MAINTENANCE)
+    // =========================================================================
+    Route::middleware('auth:sanctum')->group(function () {
+        // Cổng Khách thuê (Tenant Portal)
+        Route::prefix('tenant')->group(function () {
+            // 58. Gửi Yêu cầu Hỗ trợ Mới
+            Route::post('tickets', [TicketApiController::class, 'createTenantTicket'])->name('v1.tenant.tickets.store');
+            // 65. Khách thuê Xác nhận Nghiệm thu
+            Route::post('tickets/{id}/confirm', [TicketApiController::class, 'confirm'])->name('v1.tenant.tickets.confirm');
+            // 66. Khách thuê Đánh giá Chất lượng Phục vụ (CSAT)
+            Route::post('tickets/{id}/rate', [TicketApiController::class, 'rate'])->name('v1.tenant.tickets.rate');
+        });
+
+        // Xử lý Sự cố & Điều phối Kỹ thuật
+        Route::prefix('tickets')->group(function () {
+            // 57. Danh sách Phiếu Yêu cầu Sự cố
+            Route::get('', [TicketApiController::class, 'index'])->name('v1.tickets.index');
+            // 59. Chi tiết Tiến trình Ticket & Lịch sử
+            Route::get('{id}', [TicketApiController::class, 'show'])->name('v1.tickets.show');
+            // 60. Cập nhật Nội dung Ticket (khi còn OPEN)
+            Route::put('{id}', [TicketApiController::class, 'update'])->name('v1.tickets.update');
+            // 61. Xóa mềm Ticket (Admin)
+            Route::delete('{id}', [TicketApiController::class, 'destroy'])->name('v1.tickets.destroy');
+            // 62. Tiếp nhận & Phân công Xử lý (PM / Admin)
+            Route::patch('{id}/assign', [TicketApiController::class, 'assign'])->name('v1.tickets.assign');
+            // 63. Cập nhật Tiến độ Sửa chữa (ON_HOLD / RESOLVED)
+            Route::patch('{id}/status', [TicketApiController::class, 'updateStatus'])->name('v1.tickets.status');
+            // 64. Tải lên Ảnh Bằng chứng (Before / After)
+            Route::post('{id}/proof-images', [TicketApiController::class, 'uploadProofImages'])->name('v1.tickets.proof_images');
+        });
+    });
+
+    // =========================================================================
+    // MODULE 5: QUẢN TRỊ NHÂN SỰ & QUẢN TRỊ VIÊN (ADMINS)
+    // =========================================================================
+    Route::middleware(['auth:sanctum', 'super_admin'])->prefix('admin/users/admins')->group(function () {
+        // 72. Danh sách Quản trị viên
+        Route::get('', [AdminUserApiController::class, 'index'])->name('v1.admin.users.admins.index');
+        // 73. Tạo mới Quản trị viên
+        Route::post('', [AdminUserApiController::class, 'store'])->name('v1.admin.users.admins.store');
+        // 74. Chi tiết Quản trị viên
+        Route::get('{id}', [AdminUserApiController::class, 'show'])->name('v1.admin.users.admins.show');
+        // 75. Cập nhật Quản trị viên
+        Route::put('{id}', [AdminUserApiController::class, 'update'])->name('v1.admin.users.admins.update');
+        // 76. Xóa mềm Quản trị viên
+        Route::delete('{id}', [AdminUserApiController::class, 'destroy'])->name('v1.admin.users.admins.destroy');
+    });
+
+    // =========================================================================
+    // MODULE 5: NHÂN SỰ & QUẢN TRỊ SALES
+    // =========================================================================
+    Route::middleware('auth:sanctum')->prefix('admin/users/sales')->group(function () {
+        // 77. Danh sách Nhân viên Sales
+        Route::get('', [SaleUserApiController::class, 'index'])->name('v1.admin.users.sales.index');
+        // 78. Tạo mới Nhân viên Sales
+        Route::post('', [SaleUserApiController::class, 'store'])->name('v1.admin.users.sales.store');
+        // 79. Chi tiết Nhân viên Sales
+        Route::get('{id}', [SaleUserApiController::class, 'show'])->name('v1.admin.users.sales.show');
+        // 80. Cập nhật Nhân viên Sales
+        Route::put('{id}', [SaleUserApiController::class, 'update'])->name('v1.admin.users.sales.update');
+        // 81. Xóa mềm Nhân viên Sales
+        Route::delete('{id}', [SaleUserApiController::class, 'destroy'])->name('v1.admin.users.sales.destroy');
+    });
+
+    // =========================================================================
+    // MODULE 5: NHÂN SỰ & QUẢN TRỊ BAN QUẢN LÝ TÒA NHÀ (PROPERTY MANAGERS)
+    // =========================================================================
+    Route::middleware('auth:sanctum')->prefix('admin/users/property-managers')->group(function () {
+        // 82. Danh sách Ban Quản lý (PM)
+        Route::get('', [PropertyManagerApiController::class, 'index'])->name('v1.admin.users.pm.index');
+        // 83. Tạo mới Ban Quản lý (PM)
+        Route::post('', [PropertyManagerApiController::class, 'store'])->name('v1.admin.users.pm.store');
+        // 84. Chi tiết Ban Quản lý (PM)
+        Route::get('{id}', [PropertyManagerApiController::class, 'show'])->name('v1.admin.users.pm.show');
+        // 85. Cập nhật Ban Quản lý (PM)
+        Route::put('{id}', [PropertyManagerApiController::class, 'update'])->name('v1.admin.users.pm.update');
+        // 86. Xóa mềm Ban Quản lý (PM)
+        Route::delete('{id}', [PropertyManagerApiController::class, 'destroy'])->name('v1.admin.users.pm.destroy');
+    });
+
+    // =========================================================================
+    // MODULE 5: NHÂN SỰ & QUẢN TRỊ KẾ TOÁN (ACCOUNTANTS)
+    // =========================================================================
+    Route::middleware('auth:sanctum')->prefix('admin/users/accountants')->group(function () {
+        // 87. Danh sách Nhân viên Kế toán
+        Route::get('', [AccountantUserApiController::class, 'index'])->name('v1.admin.users.accountants.index');
+        // 88. Tạo mới Kế toán
+        Route::post('', [AccountantUserApiController::class, 'store'])->name('v1.admin.users.accountants.store');
+        // 89. Chi tiết Nhân viên Kế toán
+        Route::get('{id}', [AccountantUserApiController::class, 'show'])->name('v1.admin.users.accountants.show');
+        // 90. Cập nhật Kế toán
+        Route::put('{id}', [AccountantUserApiController::class, 'update'])->name('v1.admin.users.accountants.update');
+        // 91. Xóa mềm Kế toán
+        Route::delete('{id}', [AccountantUserApiController::class, 'destroy'])->name('v1.admin.users.accountants.destroy');
+    });
+
+    // =========================================================================
+    // MODULE 5: PHÂN CÔNG TÒA NHÀ & RBAC (BUILDING ASSIGNMENTS) — ENDPOINTS 92 - 98
+    // =========================================================================
+    Route::middleware('auth:sanctum')->prefix('admin/buildings/{buildingId}/assignments')->group(function () {
+        // 92. Xem Nhân sự Phụ trách Tòa nhà
+        Route::get('', [BuildingAssignmentApiController::class, 'getAssignments'])->name('v1.admin.buildings.assignments.index');
+
+        // 93. Gán Sales vào Tòa nhà
+        Route::post('sales', [BuildingAssignmentApiController::class, 'assignSales'])->name('v1.admin.buildings.assignments.sales.store');
+        // 94. Gỡ Sales khỏi Tòa nhà
+        Route::delete('sales/{saleId}', [BuildingAssignmentApiController::class, 'removeSales'])->name('v1.admin.buildings.assignments.sales.destroy');
+
+        // 95. Gán Ban Quản Lý (PM) vào Tòa nhà
+        Route::post('property-managers', [BuildingAssignmentApiController::class, 'assignPropertyManager'])->name('v1.admin.buildings.assignments.pm.store');
+        // 96. Gỡ Ban Quản Lý (PM) khỏi Tòa nhà
+        Route::delete('property-managers/{pmId}', [BuildingAssignmentApiController::class, 'removePropertyManager'])->name('v1.admin.buildings.assignments.pm.destroy');
+
+        // 97. Gán Kế toán vào Tòa nhà
+        Route::post('accountants', [BuildingAssignmentApiController::class, 'assignAccountant'])->name('v1.admin.buildings.assignments.accountants.store');
+        // 98. Gỡ Kế toán khỏi Tòa nhà
+        Route::delete('accountants/{accountantId}', [BuildingAssignmentApiController::class, 'removeAccountant'])->name('v1.admin.buildings.assignments.accountants.destroy');
     });
 
 });

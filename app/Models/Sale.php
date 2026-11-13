@@ -10,12 +10,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 use App\Models\Ticket;
 use App\Models\TicketHistory;
 class Sale extends Authenticatable
 {
-    use HasFactory, HasUuidV7, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, HasUuidV7, Notifiable, SoftDeletes;
 
     protected $table = 'sales';
 
@@ -71,6 +72,14 @@ class Sale extends Authenticatable
     {
         return $this->belongsToMany(Building::class, 'sale_buildings', 'sales_id', 'building_id')
             ->withPivot(['is_active', 'assigned_by_admin_id', 'assigned_at']);
+    }
+
+    /**
+     * Alias quan hệ sale_buildings theo đặc tả Module 5.
+     */
+    public function sale_buildings(): BelongsToMany
+    {
+        return $this->buildings();
     }
 
     /**

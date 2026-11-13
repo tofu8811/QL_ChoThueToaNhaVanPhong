@@ -5,3 +5,7 @@
 @include('portal.scripts.tickets')
 @include('portal.scripts.staff')
 @include('portal.scripts.assignments')
+@include('portal.scripts.admin-buildings')
+@include('portal.scripts.crm-leads')
+@include('portal.scripts.tenants')
+@include('portal.scripts.contracts')

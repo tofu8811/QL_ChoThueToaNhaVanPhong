@@ -385,4 +385,54 @@ class Module2LeadApiTest extends TestCase
             'tax_code' => '0312345678',
         ]);
     }
+
+    /**
+     * Test đầy đủ CRUD cho Lead CRM và lấy Timeline Activities.
+     */
+    public function test_crm_lead_crud_and_activity_list(): void
+    {
+        $sale = $this->createSales('Sales CRM Test', 'SALE-TEST', 10);
+
+        // 1. Tạo mới Lead qua POST /api/v1/crm/leads
+        $createRes = $this->postJson('/api/v1/crm/leads', [
+            'contact_full_name' => 'Nguyễn Quản Trị',
+            'phone' => '0933333333',
+            'email' => 'crmtest@company.vn',
+            'company_name' => 'Công Ty Công Nghệ CRM',
+            'building_id' => $this->building->id,
+            'lead_source' => 'HOTLINE',
+        ]);
+        $createRes->assertStatus(201);
+        $leadId = $createRes->json('data.id');
+
+        // 2. Lấy danh sách qua GET /api/v1/crm/leads
+        $listRes = $this->getJson('/api/v1/crm/leads');
+        $listRes->assertStatus(200);
+
+        // 3. Lấy chi tiết qua GET /api/v1/crm/leads/{id}
+        $detailRes = $this->getJson("/api/v1/crm/leads/{$leadId}");
+        $detailRes->assertStatus(200)
+            ->assertJsonPath('data.id', $leadId);
+
+        // 4. Cập nhật thông tin qua PUT /api/v1/crm/leads/{id}
+        $updateRes = $this->putJson("/api/v1/crm/leads/{$leadId}", [
+            'contact_full_name' => 'Nguyễn Quản Trị Cập Nhật',
+            'expected_area_sqm' => 200,
+        ]);
+        $updateRes->assertStatus(200);
+
+        // 5. Thêm hoạt động và lấy danh sách timeline qua GET /api/v1/crm/leads/{id}/activities
+        $this->postJson("/api/v1/crm/leads/{$leadId}/activities", [
+            'activity_type' => 'NOTE',
+            'title' => 'Ghi chú hệ thống',
+            'content' => 'Kiểm thử ghi nhận hoạt động.',
+        ]);
+
+        $actListRes = $this->getJson("/api/v1/crm/leads/{$leadId}/activities");
+        $actListRes->assertStatus(200);
+
+        // 6. Xóa mềm Lead qua DELETE /api/v1/crm/leads/{id}
+        $deleteRes = $this->deleteJson("/api/v1/crm/leads/{$leadId}");
+        $deleteRes->assertStatus(200);
+    }
 }

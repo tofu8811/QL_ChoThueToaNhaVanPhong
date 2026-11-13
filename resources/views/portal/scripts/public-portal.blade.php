@@ -233,44 +233,28 @@
     /* ==========================================================================
        5. DETAIL PAGE & BOOKING LOGIC
        ========================================================================== */
-    function openBuildingDetail(buildingId, updateRoute = true) {
-      const b = BUILDINGS_DATA.find(x => String(x.id) === String(buildingId) || String(x.slug) === String(buildingId));
-      if (!b) return;
-      currentSelectedBuilding = b;
-
-      document.getElementById("detail-breadcrumb-name").innerText = b.name;
-      document.getElementById("detail-hero-img").src = b.image;
-      document.getElementById("detail-name").innerText = b.name;
-      document.getElementById("detail-address").innerHTML = `<i class="fa-solid fa-location-dot" style="color:#ea580c;"></i> ${b.address}`;
-      document.getElementById("detail-badge-grade").innerText = b.grade;
-      document.getElementById("detail-badge-status").innerText = b.status;
-      document.getElementById("detail-price-text").innerText = `$${b.priceUsd} - $${b.priceMaxUsd} / m² / tháng`;
-      document.getElementById("detail-spec-structure").innerText = b.structure;
-      document.getElementById("detail-spec-floorplate").innerText = b.floorPlate;
-
-      const tbody = document.getElementById("detail-floors-tbody");
-      if (tbody && b.floors) {
-        tbody.innerHTML = b.floors.map(f => `
-          <tr>
-            <td><strong>${f.floor}</strong></td>
-            <td><strong style="color:var(--mo-blue-accent);">${f.area}</strong></td>
-            <td>${f.deliver}</td>
-            <td><strong style="color:#ea580c;">${f.price}</strong></td>
-            <td><span class="badge-filament success">${f.status}</span></td>
-            <td>
-              <button class="btn-mo-orange" style="padding:4px 10px;font-size:12px;" onclick="bookSpecificFloor('${b.name}', '${f.floor}', '${f.area}')">
-                Đăng ký xem sàn này
-              </button>
-            </td>
-          </tr>
-        `).join('');
+    function openBuildingDetail(buildingId) {
+      const b = BUILDINGS_DATA.find(x => String(x.id) === String(buildingId));
+      if (b && (b.slug || b.id)) {
+        window.location.href = '/toa-nha/' + (b.slug || b.id);
+        return;
       }
+      window.location.href = '/toa-nha/' + buildingId;
+    }
 
-      showPublicPage('page-detail', false);
-      if (updateRoute && typeof updateAppRoute === 'function') {
-        updateAppRoute('building/' + (b.slug || b.id));
-      }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    function scrollThumbs(dir) {
+      const el = document.getElementById("detail-sub-thumbs");
+      if (!el) return;
+      const step = el.clientWidth * 0.8;
+      el.scrollBy({ left: dir === 'next' ? step : -step, behavior: 'smooth' });
+    }
+
+    function changeDetailImg(thumbEl, src) {
+      const hero = document.getElementById("detail-hero-img");
+      if (hero) hero.src = src;
+      const thumbs = document.querySelectorAll("#detail-sub-thumbs img");
+      thumbs.forEach(t => t.classList.remove("active"));
+      if (thumbEl) thumbEl.classList.add("active");
     }
 
     function bookSurveyFromDetail() {

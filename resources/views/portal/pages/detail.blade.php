@@ -13,13 +13,21 @@
           <!-- Gallery -->
           <div class="detail-gallery">
             <div class="detail-main-img">
-              <img id="detail-hero-img" src="https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=1200&q=80" alt="Building">
+              <img id="detail-hero-img" src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80" alt="Building">
             </div>
-            <div class="detail-sub-thumbs">
-              <img class="active" src="https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=600&q=80" onclick="changeDetailImg(this.src)">
-              <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80" onclick="changeDetailImg(this.src)">
-              <img src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=600&q=80" onclick="changeDetailImg(this.src)">
-              <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=600&q=80" onclick="changeDetailImg(this.src)">
+            <div class="detail-thumbs-slider">
+              <button type="button" class="thumb-slider-btn prev" onclick="scrollThumbs('prev')" aria-label="Lùi lại">
+                <i class="fa-solid fa-chevron-left"></i>
+              </button>
+              <div class="detail-sub-thumbs" id="detail-sub-thumbs">
+                <img class="active" src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80" onclick="changeDetailImg(this, this.src)">
+                <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80" onclick="changeDetailImg(this, this.src)">
+                <img src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=600&q=80" onclick="changeDetailImg(this, this.src)">
+                <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=600&q=80" onclick="changeDetailImg(this, this.src)">
+              </div>
+              <button type="button" class="thumb-slider-btn next" onclick="scrollThumbs('next')" aria-label="Xem tiếp">
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
             </div>
           </div>
 
@@ -65,44 +73,20 @@
             </table>
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-              <button class="btn-mo-orange" style="flex: 1; justify-content: center;" onclick="bookSurveyFromDetail()">
+              <button class="btn-mo-orange" style="flex: 1; justify-content: center;" type="button" onclick="bookSurveyFromDetail()">
                 <i class="fa-regular fa-calendar-check"></i> Đặt Lịch Khảo Sát
               </button>
-              <button class="btn-mo-outline" onclick="openQuoteModal()">
+              <button class="btn-mo-outline" type="button" onclick="openQuoteModal()">
                 <i class="fa-solid fa-file-pdf"></i> Tải Báo Giá PDF
               </button>
             </div>
           </div>
         </div>
 
-        <!-- BẢNG MẶT BẰNG & DIỆN TÍCH CẮT THUÊ (YÊU CẦU ĐỀ TÀI TỐT NGHIỆP) -->
-        <div class="detail-floors-card">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div>
-              <h2 style="font-size: 20px; font-weight: 800; color: var(--mo-primary);"><i class="fa-solid fa-table-cells"></i> Danh Sách Mặt Bằng & Diện Tích Cắt Thuê Trống</h2>
-              <p style="font-size: 13.5px; color: #64748b;">Dữ liệu cập nhật theo thời gian thực từ Ban Quản Lý tòa nhà</p>
-            </div>
-            <span class="badge-filament success"><i class="fa-solid fa-circle"></i> Sẵn sàng bàn giao</span>
-          </div>
+        <!-- Nhúng Livewire Component Mặt Bằng Trống (Module 1) -->
+        <livewire:floor-vacancy-list :buildingId="''" />
 
-          <table class="mo-table">
-            <thead>
-              <tr>
-                <th>Vị trí Tầng</th>
-                <th>Diện tích trống</th>
-                <th>Hiện trạng bàn giao</th>
-                <th>Đơn giá thuê</th>
-                <th>Tình trạng lấp đầy</th>
-                <th>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody id="detail-floors-tbody">
-              <!-- Rendered via Javascript -->
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Bản đồ vị trí tòa nhà (Interactive Map Mockup) -->
+        <!-- Bản đồ vị trí tòa nhà -->
         <div class="detail-floors-card">
           <h2 style="font-size: 20px; font-weight: 800; color: var(--mo-primary);"><i class="fa-solid fa-map-pin"></i> Vị Trí Tòa Nhà Trên Bản Đồ TP. Hồ Chí Minh</h2>
           <p style="font-size: 13.5px; color: #64748b;">Tọa lạc tại vị trí đắc địa, giao thông thuận tiện kết nối các tuyến đường huyết mạch</p>
@@ -112,5 +96,3 @@
         </div>
       </div>
     </main>
-
-    <!-- PAGE 3: QUOTE & SURVEY FORM (PHÂN HỆ THU THẬP LEAD) -->

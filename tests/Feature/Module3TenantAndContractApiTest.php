@@ -262,7 +262,22 @@ class Module3TenantAndContractApiTest extends TestCase
 
         $contractId = $response->json('data.id');
 
-        // Gắn mặt bằng P.801 vào hợp đồng
+        // Lấy danh sách hợp đồng (STT 43)
+        $listContractsRes = $this->getJson('/api/v1/admin/contracts');
+        $listContractsRes->assertStatus(200);
+
+        // Xem chi tiết hợp đồng (STT 45)
+        $detailContractRes = $this->getJson("/api/v1/admin/contracts/{$contractId}");
+        $detailContractRes->assertStatus(200)
+            ->assertJsonPath('data.id', $contractId);
+
+        // Cập nhật điều khoản hợp đồng (STT 46)
+        $updateContractRes = $this->putJson("/api/v1/admin/contracts/{$contractId}", [
+            'deposit_amount' => 190000000,
+        ]);
+        $updateContractRes->assertStatus(200);
+
+        // Gắn mặt bằng P.801 vào hợp đồng (STT 48)
         $attachResponse = $this->postJson("/api/v1/admin/contracts/{$contractId}/units", [
             'unit_id' => $this->unitA->id,
             'leased_area_sqm' => 150.00,
@@ -278,6 +293,31 @@ class Module3TenantAndContractApiTest extends TestCase
             'unit_id' => $this->unitA->id,
             'leased_area_sqm' => 150.00,
         ]);
+
+        // Tải lên file scan hợp đồng (STT 53)
+        Storage::fake('public');
+        $uploadScanRes = $this->postJson("/api/v1/admin/contracts/{$contractId}/upload-files", [
+            'files' => [
+                UploadedFile::fake()->create('contract_signed.pdf', 200, 'application/pdf'),
+            ],
+            'document_type' => 'SIGNED_CONTRACT_SCAN',
+        ]);
+        $uploadScanRes->assertStatus(201);
+        $fileId = $uploadScanRes->json('data.0.id');
+
+        // Tải xuống file scan hợp đồng (STT 54)
+        if ($fileId) {
+            $downloadRes = $this->getJson("/api/v1/admin/contracts/{$contractId}/files/{$fileId}/download");
+            $downloadRes->assertStatus(200);
+        }
+
+        // Gỡ mặt bằng khỏi hợp đồng nháp (STT 49)
+        $detachRes = $this->deleteJson("/api/v1/admin/contracts/{$contractId}/units/{$this->unitA->id}");
+        $detachRes->assertStatus(200);
+
+        // Xóa hợp đồng bản nháp (STT 47)
+        $deleteContractRes = $this->deleteJson("/api/v1/admin/contracts/{$contractId}");
+        $deleteContractRes->assertStatus(200);
     }
 
     /**

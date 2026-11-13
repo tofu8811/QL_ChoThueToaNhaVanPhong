@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="moGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f3361" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="moOrange" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fb923c" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Rounded Background -->
+  <rect width="64" height="64" rx="14" fill="url(#moGrad)" />
+  
+  <!-- Left Office Tower -->
+  <path d="M12 28 H23 V52 H12 Z" fill="#93c5fd" opacity="0.9" />
+  <rect x="15" y="32" width="2.5" height="3" rx="0.5" fill="#0f3361" />
+  <rect x="18.5" y="32" width="2.5" height="3" rx="0.5" fill="#0f3361" />
+  <rect x="15" y="38" width="2.5" height="3" rx="0.5" fill="#0f3361" />
+  <rect x="18.5" y="38" width="2.5" height="3" rx="0.5" fill="#0f3361" />
+  <rect x="15" y="44" width="2.5" height="3" rx="0.5" fill="#0f3361" />
+  <rect x="18.5" y="44" width="2.5" height="3" rx="0.5" fill="#0f3361" />
+  
+  <!-- Right Office Tower -->
+  <path d="M41 22 H52 V52 H41 Z" fill="#cbd5e1" />
+  <!-- Slanted Roof Accent -->
+  <path d="M41 22 L46.5 16 L52 22 Z" fill="url(#moOrange)" />
+  <rect x="43" y="26" width="2.5" height="3" rx="0.5" fill="#0f3361" />
+  <rect x="47.5" y="26" width="2.5" height="3" rx="0.5" fill="#0f3361" />
+  <rect x="43" y="32" width="2.5" height="3" rx="0.5" fill="#0f3361" />
+  <rect x="47.5" y="32" width="2.5" height="3" rx="0.5" fill="#0f3361" />
+  <rect x="43" y="38" width="2.5" height="3" rx="0.5" fill="#0f3361" />
+  <rect x="47.5" y="38" width="2.5" height="3" rx="0.5" fill="#0f3361" />
+  <rect x="43" y="44" width="2.5" height="3" rx="0.5" fill="#0f3361" />
+  <rect x="47.5" y="44" width="2.5" height="3" rx="0.5" fill="#0f3361" />
+
+  <!-- Center Main Landmark Tower -->
+  <path d="M21 14 H43 V52 H21 Z" fill="#ffffff" />
+  
+  <!-- Spire & Beacon -->
+  <line x1="32" y1="6" x2="32" y2="14" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" />
+  <circle cx="32" cy="5.5" r="1.8" fill="#ea580c" />
+  
+  <!-- Center Tower Windows -->
+  <rect x="24.5" y="18" width="3" height="3.5" rx="0.6" fill="#0f3361" />
+  <rect x="30.5" y="18" width="3" height="3.5" rx="0.6" fill="#0f3361" />
+  <rect x="36.5" y="18" width="3" height="3.5" rx="0.6" fill="#0f3361" />
+
+  <rect x="24.5" y="24" width="3" height="3.5" rx="0.6" fill="#0f3361" />
+  <rect x="30.5" y="24" width="3" height="3.5" rx="0.6" fill="#0f3361" />
+  <rect x="36.5" y="24" width="3" height="3.5" rx="0.6" fill="#0f3361" />
+
+  <rect x="24.5" y="30" width="3" height="3.5" rx="0.6" fill="#0f3361" />
+  <rect x="30.5" y="30" width="3" height="3.5" rx="0.6" fill="#0f3361" />
+  <rect x="36.5" y="30" width="3" height="3.5" rx="0.6" fill="#0f3361" />
+
+  <rect x="24.5" y="36" width="3" height="3.5" rx="0.6" fill="#0f3361" />
+  <rect x="30.5" y="36" width="3" height="3.5" rx="0.6" fill="#0f3361" />
+  <rect x="36.5" y="36" width="3" height="3.5" rx="0.6" fill="#0f3361" />
+
+  <!-- Main entrance doorway -->
+  <path d="M28.5 44 H35.5 V52 H28.5 Z" fill="url(#moOrange)" />
+
+  <!-- Foundation line -->
+  <rect x="8" y="52" width="48" height="3" rx="1.5" fill="#38bdf8" />
+</svg>

@@ -273,8 +273,20 @@
         if (typeof preloadAllStaffData === 'function') preloadAllStaffData();
         if (typeof switchStaffSubTab === 'function') switchStaffSubTab(currentStaffTab, null, updateRoute);
       }
-      if (tabId === 'tab-sales-leads') {
-        loadAdminLeadsList();
+      if (tabId === 'tab-admin-buildings') {
+        loadAdminBuildingsList();
+      }
+      if (tabId === 'tab-sales-leads' || tabId === 'tab-sales-pipeline') {
+        loadCrmLeads();
+      }
+      if (tabId === 'tab-admin-tenants') {
+        loadTenantsList();
+      }
+      if (tabId === 'tab-admin-contracts') {
+        loadContractsList();
+      }
+      if (tabId === 'tab-tenant-workspace') {
+        loadTenantWorkspaceContracts();
       }
     }
 
@@ -282,24 +294,8 @@
        8. POPULATING FILAMENT ADMIN TABLES
        ========================================================================== */
     function renderAdminTables() {
-      // 1. Admin Buildings Table
-      const bTable = document.getElementById("admin-buildings-tbody");
-      if (bTable) {
-        bTable.innerHTML = BUILDINGS_DATA.map(b => `
-          <tr>
-            <td><strong>${b.name}</strong></td>
-            <td>${b.district}</td>
-            <td><span class="badge-filament info">${b.grade}</span></td>
-            <td>${b.totalArea}</td>
-            <td><strong style="color:#10b981;">85%</strong></td>
-            <td>$${b.priceUsd} / m²</td>
-            <td>
-              <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;" onclick="openBuildingDetail('${b.id}')">Sửa sàn</button>
-              <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#4f46e5;border-color:#c7d2fe;margin-left:4px;" onclick="openBuildingAssignmentsFromBuilding('${b.id}', '${escapeHtml(b.name)}')"><i class="fa-solid fa-users-gear"></i> Phân công</button>
-            </td>
-          </tr>
-        `).join('');
-      }
+      // 1. Admin Buildings Table từ RESTful API
+      loadAdminBuildingsList();
 
       // 2 & 4: Load and render Tickets from API
       loadTicketsList();

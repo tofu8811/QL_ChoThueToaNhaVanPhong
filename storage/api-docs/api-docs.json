@@ -16,6 +16,1459 @@
         }
     ],
     "paths": {
+        "/api/v1/admin/users/accountants": {
+            "get": {
+                "tags": [
+                    "Accountants Management"
+                ],
+                "summary": "87. Danh sách Nhân viên Kế toán",
+                "description": "Danh sách nhân viên Kế toán. Kèm cờ quyền hạn can_approve_adjustment (lập phiếu điều chỉnh cước). Eager load account_buildings.",
+                "operationId": "f934344eaa6b4bb6bc96f78ab1c27f1b",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Số trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Số bản ghi mỗi trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "Tìm theo họ tên, email, phone, mã nhân viên",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Trạng thái (ACTIVE, LOCKED, PENDING)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ACTIVE",
+                                "LOCKED",
+                                "PENDING"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "can_approve_adjustment",
+                        "in": "query",
+                        "description": "Lọc theo quyền duyệt điều chỉnh (true/false)",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "building_id",
+                        "in": "query",
+                        "description": "Lọc theo ID tòa nhà phụ trách",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy danh sách Kế toán thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Không có quyền truy cập",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Accountants Management"
+                ],
+                "summary": "88. Tạo mới Kế toán",
+                "description": "Tạo tài khoản Kế toán mới (full_name, email, phone, can_approve_adjustment, building_ids). Lưu ID Admin tạo.",
+                "operationId": "89868711d3395354facb60d947bdf67f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "full_name",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "employee_code": {
+                                        "type": "string",
+                                        "example": "NV-KT-005",
+                                        "nullable": true
+                                    },
+                                    "full_name": {
+                                        "type": "string",
+                                        "example": "Đỗ Thị Kế Toán"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "acc.ketoan@officeleasing.vn"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0933221100",
+                                        "nullable": true
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "AccPass@123"
+                                    },
+                                    "can_approve_adjustment": {
+                                        "type": "boolean",
+                                        "default": false
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "default": "ACTIVE",
+                                        "enum": [
+                                            "ACTIVE",
+                                            "LOCKED",
+                                            "PENDING"
+                                        ]
+                                    },
+                                    "building_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "uuid"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tạo Kế toán thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/users/accountants/{id}": {
+            "get": {
+                "tags": [
+                    "Accountants Management"
+                ],
+                "summary": "89. Chi tiết Nhân viên Kế toán",
+                "description": "Xem chi tiết tài khoản Kế toán và các tòa nhà đang phụ trách theo dõi công nợ. Accountant xem được trang profile của mình.",
+                "operationId": "38d3daf6bfd5e60c174e7a4d192786f4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Kế toán",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy chi tiết thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Không có quyền truy cập",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Accountants Management"
+                ],
+                "summary": "90. Cập nhật Kế toán",
+                "description": "Cập nhật tài khoản Kế toán (quyền duyệt điều chỉnh, trạng thái làm việc, tòa nhà phụ trách).",
+                "operationId": "a53cc06d56c7eb378429fdc77fbbe8ee",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Kế toán",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "full_name": {
+                                        "type": "string",
+                                        "example": "Đỗ Thị Kế Toán Đổi Tên"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0933229988"
+                                    },
+                                    "can_approve_adjustment": {
+                                        "type": "boolean"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ACTIVE",
+                                            "LOCKED",
+                                            "PENDING"
+                                        ]
+                                    },
+                                    "building_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "uuid"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Accountants Management"
+                ],
+                "summary": "91. Xóa mềm Kế toán",
+                "description": "Xóa mềm tài khoản Kế toán.",
+                "operationId": "b561eee619aded3a5e535a7d53664d61",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Kế toán",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xóa nhân sự Kế toán thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/users/admins": {
+            "get": {
+                "tags": [
+                    "Admin Management"
+                ],
+                "summary": "72. Danh sách Quản trị viên (Admin)",
+                "description": "Liệt kê danh sách các tài khoản Quản trị viên toàn hệ thống. Hỗ trợ phân trang, tìm kiếm theo tên, email, số điện thoại. Chỉ Super Admin mới có quyền truy cập.",
+                "operationId": "2468d9c19bbd6ce244f82020da5b27cf",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Số trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Số bản ghi mỗi trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "Từ khóa tìm kiếm (họ tên, email, phone)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Trạng thái (ACTIVE, LOCKED, PENDING)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ACTIVE",
+                                "LOCKED",
+                                "PENDING"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "is_super_admin",
+                        "in": "query",
+                        "description": "Lọc quyền Super Admin (true/false)",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy danh sách thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Chỉ Super Admin mới có quyền truy cập",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Management"
+                ],
+                "summary": "73. Tạo mới Tài khoản Admin",
+                "description": "Tạo tài khoản Admin mới (full_name, email, phone, password, is_super_admin, status). Mật khẩu được mã hóa bcrypt trước khi lưu. Không trả về hash password.",
+                "operationId": "59db91ff84220e0ed017f4d2d4186a3a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "full_name",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "full_name": {
+                                        "type": "string",
+                                        "example": "Lê Văn Quản Trị"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "admin.le@officeleasing.vn"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0988776655",
+                                        "nullable": true
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "AdminPass@123"
+                                    },
+                                    "is_super_admin": {
+                                        "type": "boolean",
+                                        "default": false
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "default": "ACTIVE",
+                                        "enum": [
+                                            "ACTIVE",
+                                            "LOCKED",
+                                            "PENDING"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tạo tài khoản admin thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu đầu vào không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/users/admins/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Management"
+                ],
+                "summary": "74. Chi tiết Tài khoản Admin",
+                "description": "Xem chi tiết một tài khoản Admin theo UUID v7.",
+                "operationId": "65f3db281a34d94025aba6669459f158",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID v7 của tài khoản Admin",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy thông tin thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy tài khoản admin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Management"
+                ],
+                "summary": "75. Cập nhật Tài khoản Admin",
+                "description": "Cập nhật thông tin tài khoản Admin (họ tên, số điện thoại, quyền super admin, trạng thái).",
+                "operationId": "b04c746c947bb635710349e5e61b40d9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID v7 của tài khoản Admin",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "full_name": {
+                                        "type": "string",
+                                        "example": "Lê Văn Quản Trị Đã Đổi Tên"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "admin.le@officeleasing.vn"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0988776655"
+                                    },
+                                    "is_super_admin": {
+                                        "type": "boolean"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ACTIVE",
+                                            "LOCKED",
+                                            "PENDING"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Management"
+                ],
+                "summary": "76. Xóa mềm Tài khoản Admin",
+                "description": "Xóa mềm (Soft Delete) tài khoản Admin. Cấm tự xóa tài khoản của chính mình.",
+                "operationId": "4b8f16d6f8b7a1ab5de11ce69f48fad2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID v7 của tài khoản Admin",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xóa tài khoản thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Không được phép tự xóa tài khoản của chính mình",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Đăng nhập đa tác nhân (Multi-guard Login)",
+                "description": "Đăng nhập tài khoản đa tác nhân (Admin, Sales, Quản lý tòa nhà, Kế toán, Khách thuê) qua email và mật khẩu.",
+                "operationId": "7511682cfb09973c55c292668a21bc76",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "admin@officeleasing.vn"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "Admin@123456"
+                                    },
+                                    "device_name": {
+                                        "type": "string",
+                                        "example": "Windows Chrome",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đăng nhập thành công, trả về Bearer Token và Role",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Email hoặc mật khẩu không chính xác",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa hoặc chưa kích hoạt",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu đầu vào không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Đăng xuất tài khoản (Thu hồi token)",
+                "description": "Thu hồi (revoke) token hiện tại khỏi cơ sở dữ liệu để vô hiệu hóa phiên làm việc ngay lập tức.",
+                "operationId": "582266f56706ba42d79a0c27f4251921",
+                "responses": {
+                    "200": {
+                        "description": "Đăng xuất thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập hoặc token không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/me": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Xem hồ sơ cá nhân (User Profile)",
+                "description": "Lấy thông tin chi tiết của người dùng đang đăng nhập (Profile, Role, danh sách ID các tòa nhà được phân quyền phụ trách).",
+                "operationId": "94b1020dc2dd57fd8f02ee81d3c34192",
+                "responses": {
+                    "200": {
+                        "description": "Lấy thông tin người dùng thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập hoặc token không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/refresh": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Làm mới phiên làm việc (Refresh Token)",
+                "description": "Làm mới phiên làm việc: Hủy token cũ và cấp token mới kéo dài hạn đăng nhập.",
+                "operationId": "bf2ce059f39ce39a1b3829034aab6e16",
+                "responses": {
+                    "200": {
+                        "description": "Làm mới token thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập hoặc token không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/password": {
+            "put": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Đổi mật khẩu tài khoản cá nhân",
+                "description": "Đổi mật khẩu tài khoản cá nhân. Yêu cầu nhập đúng mật khẩu hiện tại và xác nhận mật khẩu mới.",
+                "operationId": "ad9edcf38ac58bdb84f87c6c3f912b3d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "current_password",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "current_password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "OldPassword@123"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "NewPassword@123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "NewPassword@123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đổi mật khẩu thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập hoặc token không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Mật khẩu hiện tại không đúng hoặc mật khẩu mới không đạt chuẩn",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/buildings/{buildingId}/assignments": {
+            "get": {
+                "tags": [
+                    "Building Assignments & RBAC"
+                ],
+                "summary": "92. Xem Nhân sự Phụ trách Tòa nhà",
+                "description": "Xem danh sách toàn bộ đội ngũ nhân sự đang phụ trách tòa nhà cụ thể: Các Sales phụ trách nhận Lead, BQL phụ trách sự cố, Kế toán phụ trách xuất hóa đơn. Trả về gom nhóm: { sales: [...], managers: [...], accountants: [...] }.",
+                "operationId": "e901c2cb810e7e89800cd2fbaf9db351",
+                "parameters": [
+                    {
+                        "name": "buildingId",
+                        "in": "path",
+                        "description": "UUID định danh của tòa nhà",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy danh sách nhân sự phụ trách thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Không có quyền truy cập",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy tòa nhà",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/buildings/{buildingId}/assignments/sales": {
+            "post": {
+                "tags": [
+                    "Building Assignments & RBAC"
+                ],
+                "summary": "93. Gán Sales vào Tòa nhà",
+                "description": "Gán một hoặc nhiều nhân viên Sales vào danh sách phụ trách bán mặt bằng tại tòa nhà này. Tự động kiểm tra trùng lặp (sales_id + building_id).",
+                "operationId": "19deb373f3d41c05a3854ab737674fc3",
+                "parameters": [
+                    {
+                        "name": "buildingId",
+                        "in": "path",
+                        "description": "UUID của tòa nhà",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "sales_ids"
+                                ],
+                                "properties": {
+                                    "sales_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "uuid"
+                                        }
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "default": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Phân công Sales thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Lỗi kiểm thực dữ liệu",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/buildings/{buildingId}/assignments/sales/{saleId}": {
+            "delete": {
+                "tags": [
+                    "Building Assignments & RBAC"
+                ],
+                "summary": "94. Gỡ Sales khỏi Tòa nhà",
+                "description": "Gỡ bỏ phân công Sales khỏi tòa nhà. Xóa bản ghi trong bảng pivot sale_buildings.",
+                "operationId": "c80253b41dc956b8255807f033b017e0",
+                "parameters": [
+                    {
+                        "name": "buildingId",
+                        "in": "path",
+                        "description": "UUID của tòa nhà",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "saleId",
+                        "in": "path",
+                        "description": "UUID của nhân viên Sales",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Gỡ bỏ phân công thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy dữ liệu",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/buildings/{buildingId}/assignments/property-managers": {
+            "post": {
+                "tags": [
+                    "Building Assignments & RBAC"
+                ],
+                "summary": "95. Gán BQL vào Tòa nhà",
+                "description": "Gán Ban quản lý vào tòa nhà (kèm cờ is_head_manager nếu là Trưởng ban quản lý tòa nhà). Bảng pivot manager_buildings.",
+                "operationId": "ccc3d16e2d57e9a38ab1ffb7f1f15d8f",
+                "parameters": [
+                    {
+                        "name": "buildingId",
+                        "in": "path",
+                        "description": "UUID của tòa nhà",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "pm_id"
+                                ],
+                                "properties": {
+                                    "pm_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "is_primary": {
+                                        "type": "boolean",
+                                        "default": false
+                                    },
+                                    "is_head_manager": {
+                                        "type": "boolean",
+                                        "default": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Phân công BQL thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Lỗi kiểm thực dữ liệu",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/buildings/{buildingId}/assignments/property-managers/{pmId}": {
+            "delete": {
+                "tags": [
+                    "Building Assignments & RBAC"
+                ],
+                "summary": "96. Gỡ BQL khỏi Tòa nhà",
+                "description": "Gỡ bỏ phân công Ban quản lý khỏi tòa nhà. Xóa bản ghi pivot manager_buildings.",
+                "operationId": "43b57e5dbd90fae09d1e2afe8739a763",
+                "parameters": [
+                    {
+                        "name": "buildingId",
+                        "in": "path",
+                        "description": "UUID của tòa nhà",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "pmId",
+                        "in": "path",
+                        "description": "UUID của Ban Quản Lý",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Gỡ bỏ BQL thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy dữ liệu",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/buildings/{buildingId}/assignments/accountants": {
+            "post": {
+                "tags": [
+                    "Building Assignments & RBAC"
+                ],
+                "summary": "97. Gán Kế toán vào Tòa nhà",
+                "description": "Gán Kế toán phụ trách theo dõi công nợ, xuất Debit Note cho tòa nhà. Bảng pivot account_buildings.",
+                "operationId": "6ad88b18d7737269355fab1dce7489da",
+                "parameters": [
+                    {
+                        "name": "buildingId",
+                        "in": "path",
+                        "description": "UUID của tòa nhà",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "accountant_ids"
+                                ],
+                                "properties": {
+                                    "accountant_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "uuid"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Phân công Kế toán thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Lỗi kiểm thực dữ liệu",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/buildings/{buildingId}/assignments/accountants/{accountantId}": {
+            "delete": {
+                "tags": [
+                    "Building Assignments & RBAC"
+                ],
+                "summary": "98. Gỡ Kế toán khỏi Tòa nhà",
+                "description": "Gỡ bỏ phân công Kế toán khỏi tòa nhà. Xóa bản ghi pivot account_buildings.",
+                "operationId": "6bc2c2f19ca0fbf71d0858092360e880",
+                "parameters": [
+                    {
+                        "name": "buildingId",
+                        "in": "path",
+                        "description": "UUID của tòa nhà",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "accountantId",
+                        "in": "path",
+                        "description": "UUID của Kế toán",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Gỡ bỏ Kế toán thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy dữ liệu",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/portal/buildings": {
             "get": {
                 "tags": [
@@ -1298,6 +2751,402 @@
                 ]
             }
         },
+        "/api/v1/admin/users/property-managers": {
+            "get": {
+                "tags": [
+                    "Property Managers Management"
+                ],
+                "summary": "82. Danh sách Ban Quản lý (PM)",
+                "description": "Danh sách nhân viên Ban quản lý tòa nhà (PM). Kèm số hotline sự cố và phòng ban phụ trách kỹ thuật. Eager load manager_buildings.",
+                "operationId": "8359356061b807856679b80426fd9293",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Số trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Số bản ghi mỗi trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "Tìm theo họ tên, email, phone, mã nhân viên",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Trạng thái (ACTIVE, LOCKED, PENDING)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ACTIVE",
+                                "LOCKED",
+                                "PENDING"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "department",
+                        "in": "query",
+                        "description": "Bộ phận (TECHNICAL, SECURITY, CLEANING, CUSTOMER_CARE)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "TECHNICAL",
+                                "SECURITY",
+                                "CLEANING",
+                                "CUSTOMER_CARE"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "building_id",
+                        "in": "query",
+                        "description": "Lọc theo ID tòa nhà phụ trách",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy danh sách Ban Quản lý thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Không có quyền truy cập",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Property Managers Management"
+                ],
+                "summary": "83. Tạo mới Ban Quản lý (PM)",
+                "description": "Tạo tài khoản Ban quản lý tòa nhà mới (full_name, email, phone, emergency_hotline, department, building_ids). Lưu ID Admin tạo.",
+                "operationId": "eb4a472be8ab1703387020ef7c3b2bd2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "full_name",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "employee_code": {
+                                        "type": "string",
+                                        "example": "NV-BQL-005",
+                                        "nullable": true
+                                    },
+                                    "full_name": {
+                                        "type": "string",
+                                        "example": "Trần Kỹ Thuật Trưởng"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "pm.trantruong@officeleasing.vn"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0977665544",
+                                        "nullable": true
+                                    },
+                                    "emergency_hotline": {
+                                        "type": "string",
+                                        "example": "19001234",
+                                        "nullable": true
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "PmPass@123"
+                                    },
+                                    "department": {
+                                        "type": "string",
+                                        "default": "TECHNICAL",
+                                        "enum": [
+                                            "TECHNICAL",
+                                            "SECURITY",
+                                            "CLEANING",
+                                            "CUSTOMER_CARE"
+                                        ]
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "default": "ACTIVE",
+                                        "enum": [
+                                            "ACTIVE",
+                                            "LOCKED",
+                                            "PENDING"
+                                        ]
+                                    },
+                                    "building_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "uuid"
+                                        }
+                                    },
+                                    "is_primary_building_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tạo Ban Quản lý thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/users/property-managers/{id}": {
+            "get": {
+                "tags": [
+                    "Property Managers Management"
+                ],
+                "summary": "84. Chi tiết Ban Quản lý (PM)",
+                "description": "Xem chi tiết tài khoản Ban quản lý tòa nhà và các tòa nhà được giao trách nhiệm kèm thống kê tickets. PM có thể xem hồ sơ của mình.",
+                "operationId": "da3b46d794fae2d43c0c86571d5bdd47",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của nhân sự BQL",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy chi tiết thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Không có quyền truy cập",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Property Managers Management"
+                ],
+                "summary": "85. Cập nhật Ban Quản lý (PM)",
+                "description": "Cập nhật thông tin nhân viên BQL (hotline khẩn cấp, phòng kỹ thuật, trạng thái, danh sách tòa nhà).",
+                "operationId": "b879e3b3457353f7bc9cf23fb45ae545",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của nhân sự BQL",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "full_name": {
+                                        "type": "string",
+                                        "example": "Trần Kỹ Thuật Đổi Tên"
+                                    },
+                                    "emergency_hotline": {
+                                        "type": "string",
+                                        "example": "0977889900"
+                                    },
+                                    "department": {
+                                        "type": "string",
+                                        "enum": [
+                                            "TECHNICAL",
+                                            "SECURITY",
+                                            "CLEANING",
+                                            "CUSTOMER_CARE"
+                                        ]
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ACTIVE",
+                                            "LOCKED",
+                                            "PENDING"
+                                        ]
+                                    },
+                                    "building_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "uuid"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Property Managers Management"
+                ],
+                "summary": "86. Xóa mềm Ban Quản lý (PM)",
+                "description": "Xóa mềm tài khoản Ban quản lý tòa nhà.",
+                "operationId": "350c8b919fdfbff3f0cc5f32e58c7add",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của nhân sự BQL",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xóa nhân sự BQL thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/provinces": {
             "get": {
                 "tags": [
@@ -1372,6 +3221,992 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/v1/admin/users/sales": {
+            "get": {
+                "tags": [
+                    "Sales Management"
+                ],
+                "summary": "77. Danh sách Nhân viên Sales",
+                "description": "Danh sách nhân viên kinh doanh / môi giới (Sales). Hiển thị kèm số lượng Lead đang xử lý (active_leads_count) và các tòa nhà được phân công phụ trách.",
+                "operationId": "30aa2a909508df7d344d9669f320cce8",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Số trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Số bản ghi mỗi trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "Tìm theo họ tên, email, phone, mã nhân viên",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Trạng thái (ACTIVE, LOCKED, PENDING)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ACTIVE",
+                                "LOCKED",
+                                "PENDING"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "building_id",
+                        "in": "query",
+                        "description": "Lọc theo ID tòa nhà phụ trách",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy danh sách Sales thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Không có quyền truy cập",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Sales Management"
+                ],
+                "summary": "78. Tạo mới Nhân viên Sales",
+                "description": "Tạo mới nhân viên Sales (full_name, email, phone, password, max_concurrent_leads, building_ids). Mật khẩu được mã hóa bcrypt.",
+                "operationId": "ddfd4596190b72acc41590015b98bc12",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "full_name",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "employee_code": {
+                                        "type": "string",
+                                        "example": "NV-SALE-010",
+                                        "nullable": true
+                                    },
+                                    "full_name": {
+                                        "type": "string",
+                                        "example": "Nguyễn Văn Kinh Doanh"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "sales.kinhdoanh@officeleasing.vn"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0912345678",
+                                        "nullable": true
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "SalesPass@123"
+                                    },
+                                    "commission_rate": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 1.5,
+                                        "default": 1.5
+                                    },
+                                    "max_concurrent_leads": {
+                                        "type": "integer",
+                                        "example": 10,
+                                        "default": 10
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "default": "ACTIVE",
+                                        "enum": [
+                                            "ACTIVE",
+                                            "LOCKED",
+                                            "PENDING"
+                                        ]
+                                    },
+                                    "building_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "uuid"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tạo nhân viên Sales thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/users/sales/{id}": {
+            "get": {
+                "tags": [
+                    "Sales Management"
+                ],
+                "summary": "79. Chi tiết Nhân viên Sales (kèm KPI tỷ lệ chốt)",
+                "description": "Xem chi tiết hồ sơ nhân viên Sales, danh sách tòa nhà phụ trách và thống kê tỷ lệ chốt hợp đồng thành công (conversion_rate). Hỗ trợ Sales xem chính mình.",
+                "operationId": "91a152ee8af95ed515a374a725f50821",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của nhân viên Sales",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy chi tiết thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Không có quyền xem hồ sơ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Sales Management"
+                ],
+                "summary": "80. Cập nhật Nhân viên Sales",
+                "description": "Cập nhật thông tin nhân viên Sales, hạn mức tiếp nhận Lead (max_concurrent_leads) hoặc trạng thái làm việc (ACTIVE, LOCKED, PENDING).",
+                "operationId": "80110f104f9580f2faaa3ea339ad6d5b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của nhân viên Sales",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "full_name": {
+                                        "type": "string",
+                                        "example": "Nguyễn Văn Sales Đổi Tên"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0912349999"
+                                    },
+                                    "max_concurrent_leads": {
+                                        "type": "integer",
+                                        "example": 15
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ACTIVE",
+                                            "LOCKED",
+                                            "PENDING"
+                                        ]
+                                    },
+                                    "building_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "uuid"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Sales Management"
+                ],
+                "summary": "81. Xóa mềm Nhân viên Sales",
+                "description": "Xóa mềm nhân viên Sales. Cần cảnh báo hoặc re-assign các Lead đang hoạt động trước khi xóa.",
+                "operationId": "55801f9a66c9b3ede22ebca4247d0b6a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của nhân viên Sales",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "re_assign_to_sales_id": {
+                                        "description": "ID của sales tiếp nhận lại Lead chưa đóng",
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Xóa nhân viên Sales thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Nhân viên còn Lead chưa hoàn tất cần chuyển giao",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tickets": {
+            "get": {
+                "tags": [
+                    "Tickets & Maintenance"
+                ],
+                "summary": "57. Danh sách Phiếu Yêu cầu Sự cố (Tickets)",
+                "description": "Danh sách phiếu yêu cầu hỗ trợ / bảo trì. Khách thuê xem ticket công ty mình; Ban quản lý xem tòa nhà phụ trách; Admin xem toàn bộ.",
+                "operationId": "df858c9926469eeffd0509c28f1167f0",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Số trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Số bản ghi mỗi trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Trạng thái ticket (OPEN, IN_PROGRESS, ON_HOLD, RESOLVED, CLOSED)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "priority",
+                        "in": "query",
+                        "description": "Mức độ ưu tiên (LOW, NORMAL, HIGH, URGENT)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "description": "Phân loại sự cố",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "building_id",
+                        "in": "query",
+                        "description": "Lọc theo ID tòa nhà",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "Tìm theo mã ticket, tiêu đề, mô tả",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy danh sách ticket thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Chưa xác thực",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/tickets": {
+            "post": {
+                "tags": [
+                    "Tickets & Maintenance"
+                ],
+                "summary": "58. Khách thuê gửi yêu cầu hỗ trợ mới (Tenant Portal)",
+                "description": "Khách thuê gửi yêu cầu hỗ trợ sự cố mới từ Tenant Portal: Tiêu đề, danh mục sự cố, mức độ ưu tiên, mô tả hiện trường, mặt bằng và ảnh chụp.",
+                "operationId": "9901cfe10d90c6bb1642488d59449a5d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "building_id",
+                                    "title",
+                                    "description",
+                                    "category"
+                                ],
+                                "properties": {
+                                    "building_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": "018f3a2b-1111-7000-8000-000000000001"
+                                    },
+                                    "unit_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": "018f3a2b-2222-7000-8000-000000000002",
+                                        "nullable": true
+                                    },
+                                    "contract_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Hỏng điều hòa trung tâm phòng họp"
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "example": "MAINTENANCE",
+                                        "enum": [
+                                            "MAINTENANCE",
+                                            "OVERTIME_CONSTRUCTION",
+                                            "SECURITY_CLEANING",
+                                            "SERVICE_COMPLAINT"
+                                        ]
+                                    },
+                                    "priority": {
+                                        "type": "string",
+                                        "example": "HIGH",
+                                        "enum": [
+                                            "LOW",
+                                            "NORMAL",
+                                            "HIGH",
+                                            "URGENT"
+                                        ]
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Điều hòa chảy nước và phát tiếng kêu lớn tại khu vực phòng họp số 2."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Gửi yêu cầu hỗ trợ thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu đầu vào không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tickets/{id}": {
+            "get": {
+                "tags": [
+                    "Tickets & Maintenance"
+                ],
+                "summary": "59. Xem chi tiết tiến trình xử lý Ticket & Lịch sử",
+                "description": "Xem chi tiết tiến trình xử lý Ticket: Nội dung phản ánh ban đầu, ảnh hiện trường sự cố, nhân viên BQL đang phụ trách, lịch sử các mốc chuyển trạng thái và ảnh nghiệm thu.",
+                "operationId": "dbb3d530013804ca359b801798f3a2ea",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Ticket",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy chi tiết ticket thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy ticket",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Tickets & Maintenance"
+                ],
+                "summary": "60. Cập nhật thông tin chi tiết ticket (khi còn ở trạng thái Mới OPEN)",
+                "description": "Khách thuê hoặc BQL cập nhật bổ sung mô tả, tiêu đề, mức độ ưu tiên khi ticket còn ở trạng thái OPEN / NEW.",
+                "operationId": "b4948d3eba48f97236ea551611238685",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Ticket",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật ticket thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Ticket không còn ở trạng thái OPEN",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Tickets & Maintenance"
+                ],
+                "summary": "61. Xóa mềm ticket (Admin)",
+                "description": "Xóa mềm ticket (chỉ áp dụng cho Quản trị viên Admin nếu là yêu cầu thử nghiệm hoặc tạo nhầm).",
+                "operationId": "6428dcd7de74e763fd274fd9ff9cc568",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Ticket",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xóa ticket thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Không có quyền xóa ticket",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tickets/{id}/assign": {
+            "patch": {
+                "tags": [
+                    "Tickets & Maintenance"
+                ],
+                "summary": "62. Ban quản lý tiếp nhận & phân công nhân viên kỹ thuật",
+                "description": "Ban quản lý tiếp nhận và phân công nhân viên kỹ thuật trực tiếp xử lý sự cố (assigned_pm_id). Chuyển trạng thái sang IN_PROGRESS.",
+                "operationId": "33496f08b647df00faa3cedfae462268",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Ticket",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "assigned_pm_id"
+                                ],
+                                "properties": {
+                                    "assigned_pm_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": "018f3a2b-3333-7000-8000-000000000003"
+                                    },
+                                    "expected_completion_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Phân công nhân viên thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tickets/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Tickets & Maintenance"
+                ],
+                "summary": "63. Cập nhật tiến độ sửa chữa (ON_HOLD / RESOLVED)",
+                "description": "Cập nhật tiến độ xử lý: Chuyển sang ON_HOLD (kèm lý do) hoặc RESOLVED (kèm tóm tắt cách xử lý).",
+                "operationId": "34195aa19fd6ab9cb4f431df7d860f18",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Ticket",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật trạng thái thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tickets/{id}/proof-images": {
+            "post": {
+                "tags": [
+                    "Tickets & Maintenance"
+                ],
+                "summary": "64. Tải lên hình ảnh bằng chứng nghiệm thu (Before / After)",
+                "description": "Tải lên hình ảnh bằng chứng nghiệm thu sự cố (proof_type: BEFORE - hiện trạng hư hỏng, AFTER - kết quả sau khi sửa chữa).",
+                "operationId": "a4e5d530de0be808cb0909d78744d7f1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Ticket",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Tải lên hình ảnh thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/tickets/{id}/confirm": {
+            "post": {
+                "tags": [
+                    "Tickets & Maintenance"
+                ],
+                "summary": "65. Khách thuê xác nhận nghiệm thu kết quả xử lý",
+                "description": "Khách thuê xác nhận nghiệm thu kết quả xử lý. Chuyển sang CLOSED (COMPLETED) hoặc Từ chối chuyển về IN_PROGRESS kèm phản hồi.",
+                "operationId": "25754ad9c52437b57ffdfdbed16f6059",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Ticket",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xác nhận nghiệm thu thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenant/tickets/{id}/rate": {
+            "post": {
+                "tags": [
+                    "Tickets & Maintenance"
+                ],
+                "summary": "66. Khách thuê đánh giá chất lượng phục vụ (1-5 sao)",
+                "description": "Khách thuê đánh giá chất lượng phục vụ của Ban quản lý cho ticket (1 đến 5 sao và ý kiến đóng góp tenant_feedback).",
+                "operationId": "ea529fb8a9a867382b4a05d94551e064",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "UUID của Ticket",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Đánh giá chất lượng phục vụ thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSuccess"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/v1/portal/units": {
@@ -1982,6 +4817,32 @@
                 },
                 "type": "object"
             },
+            "ApiResponseValidationError": {
+                "title": "Phản hồi Lỗi Kiểm Thực Dữ Liệu (422)",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "example": "error"
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Dữ liệu gửi lên không thỏa mãn quy tắc kiểm thực."
+                    },
+                    "code": {
+                        "type": "integer",
+                        "example": 422
+                    },
+                    "errors": {
+                        "type": "object",
+                        "example": {
+                            "field_name": [
+                                "Trường dữ liệu này không hợp lệ hoặc bắt buộc."
+                            ]
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "PaginationMeta": {
                 "title": "Thông tin Phân trang",
                 "properties": {
@@ -2250,6 +5111,22 @@
             "description": "Quản trị Mặt bằng sàn, sơ đồ Layout kỹ thuật và đổi trạng thái (Admin & BQL)"
         },
         {
+            "name": "Accountants Management",
+            "description": "Accountants Management"
+        },
+        {
+            "name": "Admin Management",
+            "description": "Admin Management"
+        },
+        {
+            "name": "Authentication",
+            "description": "Authentication"
+        },
+        {
+            "name": "Building Assignments & RBAC",
+            "description": "Building Assignments & RBAC"
+        },
+        {
             "name": "Leads (Public Portal)",
             "description": "Leads (Public Portal)"
         },
@@ -2260,6 +5137,18 @@
         {
             "name": "Lead Activities",
             "description": "Lead Activities"
+        },
+        {
+            "name": "Property Managers Management",
+            "description": "Property Managers Management"
+        },
+        {
+            "name": "Sales Management",
+            "description": "Sales Management"
+        },
+        {
+            "name": "Tickets & Maintenance",
+            "description": "Tickets & Maintenance"
         }
     ]
 }

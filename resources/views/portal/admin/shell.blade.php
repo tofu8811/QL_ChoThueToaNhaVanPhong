@@ -39,6 +39,13 @@
               <span>Quản Lý Hợp Đồng Thuê</span>
             </div>
           </a>
+          <a class="filament-link" onclick="switchFilamentTab('tab-admin-tenants', this)">
+            <div class="filament-link-content">
+              <i class="fa-solid fa-building-user"></i>
+              <span>Hồ Sơ Khách Thuê</span>
+            </div>
+            <span class="filament-nav-badge" style="background:#0284c7;color:#fff;">{{ $stats['total_tenants'] ?? 10 }}</span>
+          </a>
         </div>
 
         <a class="filament-link" id="nav-item-staff" onclick="switchFilamentTab('tab-admin-staff', this)">
@@ -135,6 +142,7 @@
           @include('portal.admin.tabs.buildings')
           @include('portal.admin.tabs.tickets')
           @include('portal.admin.tabs.contracts')
+          @include('portal.admin.tabs.tenants')
           @include('portal.admin.tabs.sales')
           @include('portal.admin.tabs.tenant')
           @include('portal.admin.tabs.staff-rbac')

@@ -3,3 +3,7 @@
 @include('portal.modals.tickets')
 @include('portal.modals.staff')
 @include('portal.modals.assignments')
+@include('portal.modals.buildings')
+@include('portal.modals.crm-leads')
+@include('portal.modals.tenants')
+@include('portal.modals.contracts')

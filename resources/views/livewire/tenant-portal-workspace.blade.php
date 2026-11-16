@@ -91,7 +91,7 @@
                 <div class="filament-stat-card" style="background:#fff;padding:18px;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
                     <div class="filament-stat-label" style="font-size:12.5px;color:#64748b;margin-bottom:4px;">Thời hạn hợp đồng</div>
                     <div class="filament-stat-value" style="font-size:20px;font-weight:700;color:#0f172a;margin-bottom:4px;">
-                        {{ $activeContract?->end_date ? \Carbon\Carbon::parse($activeContract->end_date)->diffInMonths(now()) : 0 }} <span style="font-size:15px;color:#64748b;">tháng còn lại</span>
+                        {{ $activeContract?->end_date ? max(0, (int) round(abs(\Carbon\Carbon::parse($activeContract->end_date)->diffInMonths(now())))) : 0 }} <span style="font-size:15px;color:#64748b;">tháng còn lại</span>
                     </div>
                     <div style="font-size:12.5px;color:#64748b;">
                         Hết hạn: {{ $activeContract?->end_date ? \Carbon\Carbon::parse($activeContract->end_date)->format('d/m/Y') : '-' }}

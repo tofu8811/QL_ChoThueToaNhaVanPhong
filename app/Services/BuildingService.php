@@ -61,16 +61,33 @@ class BuildingService
             }
         }
 
-        // 3. Lọc theo Quận / Huyện
+        // 3. Lọc theo Quận / Huyện / Phường (Hỗ trợ địa chỉ sau sáp nhập e.g. "Phường Sài Gòn (Quận 1)")
         if (!empty($filters['district_code'])) {
             $query->where('district_code', (int) $filters['district_code']);
-        } elseif (!empty($filters['district'])) {
-            $query->where('district', $filters['district']);
+        } elseif (!empty($filters['district']) && $filters['district'] !== 'all') {
+            $distVal = trim($filters['district']);
+            if (preg_match('/^(.*?)\s*\((.*?)\)$/', $distVal, $m)) {
+                $wardPart = trim($m[1]);
+                $districtPart = trim($m[2]);
+                $query->where(function ($q) use ($districtPart, $wardPart) {
+                    $q->where('district', 'like', "%{$districtPart}%")
+                      ->orWhere('ward', 'like', "%{$wardPart}%")
+                      ->orWhere('address', 'like', "%{$wardPart}%")
+                      ->orWhere('address', 'like', "%{$districtPart}%");
+                });
+            } else {
+                $query->where(function ($q) use ($distVal) {
+                    $q->where('district', 'like', "%{$distVal}%")
+                      ->orWhere('ward', 'like', "%{$distVal}%")
+                      ->orWhere('address', 'like', "%{$distVal}%");
+                });
+            }
         }
 
         // 4. Lọc theo Phân hạng văn phòng (Grade A/B/C)
-        if (!empty($filters['grade'])) {
-            $query->where('grade', strtoupper($filters['grade']));
+        if (!empty($filters['grade']) && $filters['grade'] !== 'all') {
+            $cleanedGrade = strtoupper(trim(str_replace(['Hạng ', 'hạng ', 'Tòa nhà ', 'Văn phòng '], '', $filters['grade'])));
+            $query->where('grade', $cleanedGrade);
         }
 
         // 5. Lọc theo khoảng giá thuê (VND/m2/tháng)

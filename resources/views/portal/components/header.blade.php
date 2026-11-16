@@ -1,3 +1,35 @@
+    @php
+      $hnInfo = $headerLocations['hanoi'] ?? ['count' => 0, 'districts' => [], 'wards' => [], 'col1' => [], 'col2' => [], 'col3' => []];
+      $hnCount = $hnInfo['count'] ?? 0;
+      $hnDistricts = $hnInfo['districts'] ?? [];
+      $hnCol1 = $hnInfo['col1'] ?? [];
+      $hnCol2 = $hnInfo['col2'] ?? [];
+      $hnCol3 = $hnInfo['col3'] ?? [];
+      $isHnActive = (request('province') === '1' || request('province_code') === '1');
+
+      $hcmInfo = $headerLocations['hcm'] ?? ['count' => 0, 'districts' => [], 'wards' => [], 'col1' => [], 'col2' => [], 'col3' => []];
+      $hcmCount = $hcmInfo['count'] ?? 0;
+      $hcmDistricts = $hcmInfo['districts'] ?? [];
+      $hcmCol1 = $hcmInfo['col1'] ?? [];
+      $hcmCol2 = $hcmInfo['col2'] ?? [];
+      $hcmCol3 = $hcmInfo['col3'] ?? [];
+      $isHcmActive = (request('province') === '79' || request('province_code') === '79' || (!request()->has('province') && request()->has('district')));
+
+      $dnInfo = $headerLocations['danang'] ?? ['count' => 0, 'districts' => [], 'wards' => [], 'col1' => [], 'col2' => [], 'col3' => []];
+      $dnCount = $dnInfo['count'] ?? 0;
+      $dnDistricts = $dnInfo['districts'] ?? [];
+      $dnCol1 = $dnInfo['col1'] ?? [];
+      $dnCol2 = $dnInfo['col2'] ?? [];
+      $dnCol3 = $dnInfo['col3'] ?? [];
+      $isDnActive = (request('province') === '48' || request('province_code') === '48');
+
+      $otherProvinces = $headerLocations['other_provinces'] ?? [];
+      $otherList = is_array($otherProvinces) ? $otherProvinces : (is_iterable($otherProvinces) ? $otherProvinces : []);
+      $isOtherActive = request()->has('province') && !in_array(request('province'), ['1', '79', '48']);
+      $isGradeActive = request()->has('grade') || (request()->has('price') && request('price') === 'under20');
+      $totalNationwide = $headerLocations['total_nationwide'] ?? 22;
+    @endphp
+
     <!-- Dòng kẻ xanh dương trên cùng -->
     <div class="mo-topbar"></div>
 
@@ -20,126 +52,261 @@
              onclick="return handleHeaderFilter(event, 'reset', null, '{{ route('home') }}')"
              style="text-decoration:none;">Toàn Quốc</a>
 
-          <!-- 2. Hà Nội Dropdown (Cố định) -->
+          <!-- 2. Hà Nội Dropdown (Đọc động 100% từ Database) -->
           @php
-            $hnInfo = $headerLocations['hanoi'] ?? ['count' => 10, 'districts' => []];
+            $hnInfo = $headerLocations['hanoi'] ?? ['count' => 0, 'districts' => [], 'wards' => [], 'col1' => [], 'col2' => [], 'col3' => []];
             $hnCount = $hnInfo['count'] ?? 0;
-            $hnDistricts = is_array($hnInfo['districts'] ?? null) ? $hnInfo['districts'] : (is_iterable($hnInfo['districts'] ?? null) ? $hnInfo['districts'] : []);
+            $hnDistricts = $hnInfo['districts'] ?? [];
+            $hnCol1 = $hnInfo['col1'] ?? [];
+            $hnCol2 = $hnInfo['col2'] ?? [];
+            $hnCol3 = $hnInfo['col3'] ?? [];
+            $isHnActive = (request('province') === '1' || request('province_code') === '1');
           @endphp
           <div class="mo-nav-dropdown-wrap">
             <button type="button" 
-               class="mo-nav-item {{ (request('province') === '1' || request('province_code') === '1') ? 'active' : '' }}" 
+               class="mo-nav-item {{ $isHnActive ? 'active' : '' }}" 
                onclick="toggleNavDropdown(event, this)">
               Hà Nội <i class="fa-solid fa-chevron-down nav-caret"></i>
             </button>
-            <div class="mo-nav-dropdown">
+            <div class="mo-nav-dropdown mo-mega-dropdown">
               <a href="{{ route('home', ['province' => '1']) }}" 
-                 class="mo-dropdown-link" 
+                 class="mo-mega-header-link" 
                  onclick="return handleHeaderFilter(event, 'province', '1', '{{ route('home', ['province' => '1']) }}')">
-                <span><i class="fa-solid fa-city" style="color:#2563eb;margin-right:6px;"></i> <strong>Tất cả Hà Nội</strong></span>
-                <span class="badge-num">{{ $hnCount }} tòa</span>
+                <span><i class="fa-solid fa-city" style="color:#2563eb;margin-right:8px;"></i> <strong>Xem tất cả văn phòng cho thuê Thủ đô Hà Nội</strong></span>
+                <span class="badge-num" style="background:#dbeafe;color:#1e40af;font-weight:700;">{{ $hnCount }} cao ốc</span>
               </a>
-              <div class="mo-dropdown-divider"></div>
-              @if($hnCount > 0 && !empty($hnDistricts))
-                @foreach(array_slice((array) $hnDistricts, 0, 6) as $d)
-                  @php
-                    $dName = is_array($d) ? ($d['district'] ?? '') : ($d->district ?? '');
-                    $dNum = is_array($d) ? ($d['count'] ?? 0) : ($d->count ?? 0);
-                  @endphp
-                  <a href="{{ route('home', ['district' => $dName, 'province' => '1']) }}" 
-                     class="mo-dropdown-link" 
-                     onclick="return handleHeaderFilter(event, 'district', '{{ $dName }}', '{{ route('home', ['district' => $dName, 'province' => '1']) }}')">
-                    <span>{{ $dName }}</span> <span class="badge-num">{{ $dNum }} tòa</span>
-                  </a>
-                @endforeach
-              @else
-                <div class="mo-dropdown-empty">
-                  <i class="fa-solid fa-clock-rotate-left"></i>
-                  <span>Đang thẩm định nguồn cung mới</span>
+
+              <div class="mo-nav-mega-grid">
+                <!-- Cột 1: Phường Mới -->
+                <div class="mo-mega-col">
+                  <div class="mo-mega-col-title">Phường Mới</div>
+                  @forelse($hnCol1 as $w)
+                    <a href="{{ route('home', ['district' => $w['display_label'], 'province' => '1']) }}" class="mo-mega-item" onclick="return handleHeaderFilter(event, 'district', '{{ $w['display_label'] }}', '{{ route('home', ['district' => $w['display_label'], 'province' => '1']) }}')">
+                      <span class="mo-mega-item-text">{{ $w['display_label'] }}</span>
+                      @if(($w['count'] ?? 0) > 0)
+                        <span class="badge-num" style="background:#dbeafe;color:#1e40af;font-size:11px;">{{ $w['count'] }} tòa</span>
+                      @endif
+                    </a>
+                  @empty
+                    <div class="mo-dropdown-empty" style="padding:10px;font-size:12px;color:#94a3b8;">Đang cập nhật nguồn cung</div>
+                  @endforelse
                 </div>
-              @endif
+
+                <!-- Cột 2: Phường Mới -->
+                <div class="mo-mega-col">
+                  <div class="mo-mega-col-title">Phường Mới</div>
+                  @forelse($hnCol2 as $w)
+                    <a href="{{ route('home', ['district' => $w['display_label'], 'province' => '1']) }}" class="mo-mega-item" onclick="return handleHeaderFilter(event, 'district', '{{ $w['display_label'] }}', '{{ route('home', ['district' => $w['display_label'], 'province' => '1']) }}')">
+                      <span class="mo-mega-item-text">{{ $w['display_label'] }}</span>
+                      @if(($w['count'] ?? 0) > 0)
+                        <span class="badge-num" style="background:#dbeafe;color:#1e40af;font-size:11px;">{{ $w['count'] }} tòa</span>
+                      @endif
+                    </a>
+                  @empty
+                    <div class="mo-dropdown-empty" style="padding:10px;font-size:12px;color:#94a3b8;">Đang cập nhật nguồn cung</div>
+                  @endforelse
+                </div>
+
+                <!-- Cột 3: Phường Mới -->
+                <div class="mo-mega-col">
+                  <div class="mo-mega-col-title">Phường Mới</div>
+                  @forelse($hnCol3 as $w)
+                    <a href="{{ route('home', ['district' => $w['display_label'], 'province' => '1']) }}" class="mo-mega-item" onclick="return handleHeaderFilter(event, 'district', '{{ $w['display_label'] }}', '{{ route('home', ['district' => $w['display_label'], 'province' => '1']) }}')">
+                      <span class="mo-mega-item-text">{{ $w['display_label'] }}</span>
+                      @if(($w['count'] ?? 0) > 0)
+                        <span class="badge-num" style="background:#dbeafe;color:#1e40af;font-size:11px;">{{ $w['count'] }} tòa</span>
+                      @endif
+                    </a>
+                  @empty
+                    <div class="mo-dropdown-empty" style="padding:10px;font-size:12px;color:#94a3b8;">Đang cập nhật nguồn cung</div>
+                  @endforelse
+                </div>
+
+                <!-- Cột 4: Khu Vực -->
+                <div class="mo-mega-col">
+                  <div class="mo-mega-col-title">Khu Vực</div>
+                  @forelse($hnDistricts as $d)
+                    <a href="{{ route('home', ['district' => $d['name'], 'province' => '1']) }}" class="mo-mega-item" onclick="return handleHeaderFilter(event, 'district', '{{ $d['name'] }}', '{{ route('home', ['district' => $d['name'], 'province' => '1']) }}')">
+                      <span class="mo-mega-item-text">{{ $d['name'] }}</span>
+                      <span class="badge-num" style="background:#dbeafe;color:#1e40af;font-size:11px;">{{ $d['count'] }} tòa</span>
+                    </a>
+                  @empty
+                    <div class="mo-dropdown-empty" style="padding:10px;font-size:12px;color:#94a3b8;">Đang cập nhật nguồn cung</div>
+                  @endforelse
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- 3. TP. Hồ Chí Minh Dropdown (Cố định) -->
+          <!-- 3. TP. Hồ Chí Minh Dropdown (Đọc động 100% từ Database) -->
           @php
-            $hcmInfo = $headerLocations['hcm'] ?? ['count' => 22, 'districts' => []];
+            $hcmInfo = $headerLocations['hcm'] ?? ['count' => 0, 'districts' => [], 'wards' => [], 'col1' => [], 'col2' => [], 'col3' => []];
             $hcmCount = $hcmInfo['count'] ?? 0;
-            $hcmDistricts = is_array($hcmInfo['districts'] ?? null) ? $hcmInfo['districts'] : (is_iterable($hcmInfo['districts'] ?? null) ? $hcmInfo['districts'] : []);
+            $hcmDistricts = $hcmInfo['districts'] ?? [];
+            $hcmCol1 = $hcmInfo['col1'] ?? [];
+            $hcmCol2 = $hcmInfo['col2'] ?? [];
+            $hcmCol3 = $hcmInfo['col3'] ?? [];
+            $isHcmActive = (request('province') === '79' || request('province_code') === '79' || (!request()->has('province') && request()->has('district')));
           @endphp
           <div class="mo-nav-dropdown-wrap">
             <button type="button" 
-               class="mo-nav-item {{ (request('province') === '79' || request('province_code') === '79' || (!request()->has('province') && request()->has('district') && in_array(request('district'), ['Quận 1', 'Quận 3', 'Quận 7', 'Bình Thạnh', 'TP Thủ Đức']))) ? 'active' : '' }}" 
+               class="mo-nav-item {{ $isHcmActive ? 'active' : '' }}" 
                onclick="toggleNavDropdown(event, this)">
               TP. Hồ Chí Minh <i class="fa-solid fa-chevron-down nav-caret"></i>
             </button>
-            <div class="mo-nav-dropdown">
+            <div class="mo-nav-dropdown mo-mega-dropdown">
               <a href="{{ route('home', ['province' => '79']) }}" 
-                 class="mo-dropdown-link" 
+                 class="mo-mega-header-link" 
                  onclick="return handleHeaderFilter(event, 'province', '79', '{{ route('home', ['province' => '79']) }}')">
-                <span><i class="fa-solid fa-city" style="color:#ea580c;margin-right:6px;"></i> <strong>Tất cả TP.HCM</strong></span>
-                <span class="badge-num">{{ $hcmCount }} tòa</span>
+                <span><i class="fa-solid fa-city" style="color:#ea580c;margin-right:8px;"></i> <strong>Xem tất cả văn phòng cho thuê TP. Hồ Chí Minh</strong></span>
+                <span class="badge-num" style="background:#fed7aa;color:#c2410c;font-weight:700;">{{ $hcmCount }} cao ốc</span>
               </a>
-              <div class="mo-dropdown-divider"></div>
-              @if($hcmCount > 0 && !empty($hcmDistricts))
-                @foreach(array_slice((array) $hcmDistricts, 0, 6) as $d)
-                  @php
-                    $dName = is_array($d) ? ($d['district'] ?? '') : ($d->district ?? '');
-                    $dNum = is_array($d) ? ($d['count'] ?? 0) : ($d->count ?? 0);
-                  @endphp
-                  <a href="{{ route('home', ['district' => $dName, 'province' => '79']) }}" 
-                     class="mo-dropdown-link" 
-                     onclick="return handleHeaderFilter(event, 'district', '{{ $dName }}', '{{ route('home', ['district' => $dName, 'province' => '79']) }}')">
-                    <span>{{ $dName }}</span> <span class="badge-num">{{ $dNum }} tòa</span>
-                  </a>
-                @endforeach
-              @else
-                <div class="mo-dropdown-empty">
-                  <i class="fa-solid fa-clock-rotate-left"></i>
-                  <span>Đang thẩm định nguồn cung mới</span>
+
+              <div class="mo-nav-mega-grid">
+                <!-- Cột 1: Phường Mới -->
+                <div class="mo-mega-col">
+                  <div class="mo-mega-col-title">Phường Mới</div>
+                  @forelse($hcmCol1 as $w)
+                    <a href="{{ route('home', ['district' => $w['display_label'], 'province' => '79']) }}" class="mo-mega-item" onclick="return handleHeaderFilter(event, 'district', '{{ $w['display_label'] }}', '{{ route('home', ['district' => $w['display_label'], 'province' => '79']) }}')">
+                      <span class="mo-mega-item-text">{{ $w['display_label'] }}</span>
+                      @if(($w['count'] ?? 0) > 0)
+                        <span class="badge-num" style="background:#fed7aa;color:#c2410c;font-size:11px;">{{ $w['count'] }} tòa</span>
+                      @endif
+                    </a>
+                  @empty
+                    <div class="mo-dropdown-empty" style="padding:10px;font-size:12px;color:#94a3b8;">Đang cập nhật nguồn cung</div>
+                  @endforelse
                 </div>
-              @endif
+
+                <!-- Cột 2: Phường Mới -->
+                <div class="mo-mega-col">
+                  <div class="mo-mega-col-title">Phường Mới</div>
+                  @forelse($hcmCol2 as $w)
+                    <a href="{{ route('home', ['district' => $w['display_label'], 'province' => '79']) }}" class="mo-mega-item" onclick="return handleHeaderFilter(event, 'district', '{{ $w['display_label'] }}', '{{ route('home', ['district' => $w['display_label'], 'province' => '79']) }}')">
+                      <span class="mo-mega-item-text">{{ $w['display_label'] }}</span>
+                      @if(($w['count'] ?? 0) > 0)
+                        <span class="badge-num" style="background:#fed7aa;color:#c2410c;font-size:11px;">{{ $w['count'] }} tòa</span>
+                      @endif
+                    </a>
+                  @empty
+                    <div class="mo-dropdown-empty" style="padding:10px;font-size:12px;color:#94a3b8;">Đang cập nhật nguồn cung</div>
+                  @endforelse
+                </div>
+
+                <!-- Cột 3: Phường Mới -->
+                <div class="mo-mega-col">
+                  <div class="mo-mega-col-title">Phường Mới</div>
+                  @forelse($hcmCol3 as $w)
+                    <a href="{{ route('home', ['district' => $w['display_label'], 'province' => '79']) }}" class="mo-mega-item" onclick="return handleHeaderFilter(event, 'district', '{{ $w['display_label'] }}', '{{ route('home', ['district' => $w['display_label'], 'province' => '79']) }}')">
+                      <span class="mo-mega-item-text">{{ $w['display_label'] }}</span>
+                      @if(($w['count'] ?? 0) > 0)
+                        <span class="badge-num" style="background:#fed7aa;color:#c2410c;font-size:11px;">{{ $w['count'] }} tòa</span>
+                      @endif
+                    </a>
+                  @empty
+                    <div class="mo-dropdown-empty" style="padding:10px;font-size:12px;color:#94a3b8;">Đang cập nhật nguồn cung</div>
+                  @endforelse
+                </div>
+
+                <!-- Cột 4: Khu Vực -->
+                <div class="mo-mega-col">
+                  <div class="mo-mega-col-title">Khu Vực</div>
+                  @forelse($hcmDistricts as $d)
+                    <a href="{{ route('home', ['district' => $d['name'], 'province' => '79']) }}" class="mo-mega-item" onclick="return handleHeaderFilter(event, 'district', '{{ $d['name'] }}', '{{ route('home', ['district' => $d['name'], 'province' => '79']) }}')">
+                      <span class="mo-mega-item-text">{{ $d['name'] }}</span>
+                      <span class="badge-num" style="background:#fed7aa;color:#c2410c;font-size:11px;">{{ $d['count'] }} tòa</span>
+                    </a>
+                  @empty
+                    <div class="mo-dropdown-empty" style="padding:10px;font-size:12px;color:#94a3b8;">Đang cập nhật nguồn cung</div>
+                  @endforelse
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- 4. Đà Nẵng Dropdown (Cố định) -->
+          <!-- 4. Đà Nẵng Dropdown (Đọc động 100% từ Database) -->
           @php
-            $dnInfo = $headerLocations['danang'] ?? ['count' => 3, 'districts' => []];
+            $dnInfo = $headerLocations['danang'] ?? ['count' => 0, 'districts' => [], 'wards' => [], 'col1' => [], 'col2' => [], 'col3' => []];
             $dnCount = $dnInfo['count'] ?? 0;
-            $dnDistricts = is_array($dnInfo['districts'] ?? null) ? $dnInfo['districts'] : (is_iterable($dnInfo['districts'] ?? null) ? $dnInfo['districts'] : []);
+            $dnDistricts = $dnInfo['districts'] ?? [];
+            $dnCol1 = $dnInfo['col1'] ?? [];
+            $dnCol2 = $dnInfo['col2'] ?? [];
+            $dnCol3 = $dnInfo['col3'] ?? [];
+            $isDnActive = (request('province') === '48' || request('province_code') === '48');
           @endphp
           <div class="mo-nav-dropdown-wrap">
             <button type="button" 
-               class="mo-nav-item {{ (request('province') === '48' || request('province_code') === '48') ? 'active' : '' }}" 
+               class="mo-nav-item {{ $isDnActive ? 'active' : '' }}" 
                onclick="toggleNavDropdown(event, this)">
               Đà Nẵng <i class="fa-solid fa-chevron-down nav-caret"></i>
             </button>
-            <div class="mo-nav-dropdown">
+            <div class="mo-nav-dropdown mo-mega-dropdown mo-mega-align-right">
               <a href="{{ route('home', ['province' => '48']) }}" 
-                 class="mo-dropdown-link" 
+                 class="mo-mega-header-link" 
                  onclick="return handleHeaderFilter(event, 'province', '48', '{{ route('home', ['province' => '48']) }}')">
-                <span><i class="fa-solid fa-city" style="color:#6366f1;margin-right:6px;"></i> <strong>Tất cả Đà Nẵng</strong></span>
-                <span class="badge-num">{{ $dnCount }} tòa</span>
+                <span><i class="fa-solid fa-city" style="color:#6366f1;margin-right:8px;"></i> <strong>Xem tất cả văn phòng cho thuê Đà Nẵng</strong></span>
+                <span class="badge-num" style="background:#e0e7ff;color:#4338ca;font-weight:700;">{{ $dnCount }} cao ốc</span>
               </a>
-              <div class="mo-dropdown-divider"></div>
-              @if($dnCount > 0 && !empty($dnDistricts))
-                @foreach(array_slice((array) $dnDistricts, 0, 6) as $d)
-                  @php
-                    $dName = is_array($d) ? ($d['district'] ?? '') : ($d->district ?? '');
-                    $dNum = is_array($d) ? ($d['count'] ?? 0) : ($d->count ?? 0);
-                  @endphp
-                  <a href="{{ route('home', ['district' => $dName, 'province' => '48']) }}" 
-                     class="mo-dropdown-link" 
-                     onclick="return handleHeaderFilter(event, 'district', '{{ $dName }}', '{{ route('home', ['district' => $dName, 'province' => '48']) }}')">
-                    <span>{{ $dName }}</span> <span class="badge-num">{{ $dNum }} tòa</span>
-                  </a>
-                @endforeach
-              @else
-                <div class="mo-dropdown-empty">
-                  <i class="fa-solid fa-clock-rotate-left"></i>
-                  <span>Đang thẩm định nguồn cung mới</span>
+
+              <div class="mo-nav-mega-grid">
+                <!-- Cột 1: Phường Mới -->
+                <div class="mo-mega-col">
+                  <div class="mo-mega-col-title">Phường Mới</div>
+                  @forelse($dnCol1 as $w)
+                    <a href="{{ route('home', ['district' => $w['display_label'], 'province' => '48']) }}" class="mo-mega-item" onclick="return handleHeaderFilter(event, 'district', '{{ $w['display_label'] }}', '{{ route('home', ['district' => $w['display_label'], 'province' => '48']) }}')">
+                      <span class="mo-mega-item-text">{{ $w['display_label'] }}</span>
+                      @if(($w['count'] ?? 0) > 0)
+                        <span class="badge-num" style="background:#e0e7ff;color:#4338ca;font-size:11px;">{{ $w['count'] }} tòa</span>
+                      @endif
+                    </a>
+                  @empty
+                    <div class="mo-dropdown-empty" style="padding:10px;font-size:12px;color:#94a3b8;">Đang cập nhật nguồn cung</div>
+                  @endforelse
                 </div>
-              @endif
+
+                <!-- Cột 2: Phường Mới -->
+                <div class="mo-mega-col">
+                  <div class="mo-mega-col-title">Phường Mới</div>
+                  @forelse($dnCol2 as $w)
+                    <a href="{{ route('home', ['district' => $w['display_label'], 'province' => '48']) }}" class="mo-mega-item" onclick="return handleHeaderFilter(event, 'district', '{{ $w['display_label'] }}', '{{ route('home', ['district' => $w['display_label'], 'province' => '48']) }}')">
+                      <span class="mo-mega-item-text">{{ $w['display_label'] }}</span>
+                      @if(($w['count'] ?? 0) > 0)
+                        <span class="badge-num" style="background:#e0e7ff;color:#4338ca;font-size:11px;">{{ $w['count'] }} tòa</span>
+                      @endif
+                    </a>
+                  @empty
+                    <div class="mo-dropdown-empty" style="padding:10px;font-size:12px;color:#94a3b8;">Đang cập nhật nguồn cung</div>
+                  @endforelse
+                </div>
+
+                <!-- Cột 3: Phường Mới -->
+                <div class="mo-mega-col">
+                  <div class="mo-mega-col-title">Phường Mới</div>
+                  @forelse($dnCol3 as $w)
+                    <a href="{{ route('home', ['district' => $w['display_label'], 'province' => '48']) }}" class="mo-mega-item" onclick="return handleHeaderFilter(event, 'district', '{{ $w['display_label'] }}', '{{ route('home', ['district' => $w['display_label'], 'province' => '48']) }}')">
+                      <span class="mo-mega-item-text">{{ $w['display_label'] }}</span>
+                      @if(($w['count'] ?? 0) > 0)
+                        <span class="badge-num" style="background:#e0e7ff;color:#4338ca;font-size:11px;">{{ $w['count'] }} tòa</span>
+                      @endif
+                    </a>
+                  @empty
+                    <div class="mo-dropdown-empty" style="padding:10px;font-size:12px;color:#94a3b8;">Đang cập nhật nguồn cung</div>
+                  @endforelse
+                </div>
+
+                <!-- Cột 4: Khu Vực -->
+                <div class="mo-mega-col">
+                  <div class="mo-mega-col-title">Khu Vực</div>
+                  @forelse($dnDistricts as $d)
+                    <a href="{{ route('home', ['district' => $d['name'], 'province' => '48']) }}" class="mo-mega-item" onclick="return handleHeaderFilter(event, 'district', '{{ $d['name'] }}', '{{ route('home', ['district' => $d['name'], 'province' => '48']) }}')">
+                      <span class="mo-mega-item-text">{{ $d['name'] }}</span>
+                      <span class="badge-num" style="background:#e0e7ff;color:#4338ca;font-size:11px;">{{ $d['count'] }} tòa</span>
+                    </a>
+                  @empty
+                    <div class="mo-dropdown-empty" style="padding:10px;font-size:12px;color:#94a3b8;">Đang cập nhật nguồn cung</div>
+                  @endforelse
+                </div>
+              </div>
             </div>
           </div>
 
@@ -186,16 +353,59 @@
             </div>
           </div>
 
-          <!-- 6. Tòa Nhà Hạng A -->
-          <a href="{{ route('home', ['grade' => 'A']) }}" 
-             class="mo-nav-item {{ (request('grade') === 'A') ? 'active' : '' }}" 
-             onclick="return handleHeaderFilter(event, 'grade', 'A', '{{ route('home', ['grade' => 'A']) }}')"
-             style="text-decoration:none;">Tòa Nhà Hạng A</a>
+          <!-- 6. Văn Phòng Theo Hạng Dropdown -->
+          @php
+            $isGradeActive = request()->has('grade') || (request()->has('price') && request('price') === 'under20');
+          @endphp
+          <div class="mo-nav-dropdown-wrap">
+            <button type="button" 
+               class="mo-nav-item {{ $isGradeActive ? 'active' : '' }}" 
+               onclick="toggleNavDropdown(event, this)">
+              Văn Phòng Theo Hạng <i class="fa-solid fa-chevron-down nav-caret"></i>
+            </button>
+            <div class="mo-nav-dropdown mo-dropdown-grades" style="min-width: 250px;">
+              <a href="{{ route('home') }}" 
+                 class="mo-dropdown-link" 
+                 onclick="return handleHeaderFilter(event, 'reset', null, '{{ route('home') }}')">
+                <span><i class="fa-solid fa-layer-group" style="color:#64748b;margin-right:8px;"></i> <strong>Tất cả theo hạng</strong></span>
+              </a>
+              <div class="mo-dropdown-divider"></div>
+              <a href="{{ route('home', ['grade' => 'A']) }}" 
+                 class="mo-dropdown-link {{ request('grade') === 'A' ? 'active-link' : '' }}" 
+                 onclick="return handleHeaderFilter(event, 'grade', 'A', '{{ route('home', ['grade' => 'A']) }}')">
+                <span><i class="fa-solid fa-award" style="color:#f59e0b;margin-right:8px;"></i> Văn phòng Hạng A</span>
+                <span class="badge-num" style="background:#fef3c7;color:#d97706;font-size:11px;">Quốc tế</span>
+              </a>
+              <a href="{{ route('home', ['grade' => 'B']) }}" 
+                 class="mo-dropdown-link {{ request('grade') === 'B' ? 'active-link' : '' }}" 
+                 onclick="return handleHeaderFilter(event, 'grade', 'B', '{{ route('home', ['grade' => 'B']) }}')">
+                <span><i class="fa-solid fa-building" style="color:#3b82f6;margin-right:8px;"></i> Văn phòng Hạng B</span>
+                <span class="badge-num" style="background:#dbeafe;color:#1d4ed8;font-size:11px;">Chuyên nghiệp</span>
+              </a>
+              <a href="{{ route('home', ['grade' => 'C']) }}" 
+                 class="mo-dropdown-link {{ request('grade') === 'C' ? 'active-link' : '' }}" 
+                 onclick="return handleHeaderFilter(event, 'grade', 'C', '{{ route('home', ['grade' => 'C']) }}')">
+                <span><i class="fa-regular fa-building" style="color:#10b981;margin-right:8px;"></i> Văn phòng Hạng C</span>
+                <span class="badge-num" style="background:#d1fae5;color:#047857;font-size:11px;">Tiêu chuẩn</span>
+              </a>
+              <a href="{{ route('home', ['price' => 'under20']) }}" 
+                 class="mo-dropdown-link {{ request('price') === 'under20' ? 'active-link' : '' }}" 
+                 onclick="return handleHeaderFilter(event, 'price', 'under20', '{{ route('home', ['price' => 'under20']) }}')">
+                <span><i class="fa-solid fa-tag" style="color:#8b5cf6;margin-right:8px;"></i> Văn phòng Giá Rẻ</span>
+                <span class="badge-num" style="background:#ede9fe;color:#6d28d9;font-size:11px;">&lt; $20/m²</span>
+              </a>
+            </div>
+          </div>
 
           <!-- 7. Nhận Báo Giá -->
           <a href="{{ route('quote.page') }}" 
              class="mo-nav-item {{ request()->routeIs('quote.page') ? 'active' : '' }}" 
              style="text-decoration:none;">Nhận Báo Giá</a>
+
+          <!-- 8. Phễu CRM Sales -->
+          <a href="{{ route('leads.page') }}" 
+             class="mo-nav-item {{ request()->routeIs('leads.page') ? 'active' : '' }}" 
+             style="text-decoration:none;"><i class="fa-solid fa-bolt" style="color:#f59e0b;margin-right:4px;"></i> Phễu CRM</a>
         </nav>
 
         <div class="mo-header-actions">
@@ -252,6 +462,185 @@
               </div>
             </div>
           </div>
+
+          <!-- Nút Hamburger Menu trên Mobile / Tablet -->
+          <button type="button" class="mo-hamburger-btn" id="btn-mo-hamburger" onclick="toggleMobileMenu()" aria-label="Mở Menu Điều Hướng">
+            <i class="fa-solid fa-bars"></i>
+          </button>
         </div>
       </div>
     </header>
+
+    <!-- Off-canvas Mobile Menu Drawer Backdrop -->
+    <div id="mo-mobile-backdrop" class="mo-mobile-backdrop" onclick="closeMobileMenu()"></div>
+
+    <!-- Off-canvas Mobile Menu Drawer -->
+    <aside id="mo-mobile-drawer" class="mo-mobile-drawer" aria-label="Menu điều hướng di động">
+      <div class="mo-drawer-header">
+        <a href="{{ route('home') }}" class="mo-logo" onclick="closeMobileMenu()" style="cursor: pointer; text-decoration: none;">
+          <div class="mo-logo-icon">
+            <i class="fa-solid fa-building-wheat"></i>
+          </div>
+          <div class="mo-logo-text">
+            <h1 style="font-size: 18px;">Office</h1>
+          </div>
+        </a>
+        <button type="button" class="mo-drawer-close-btn" onclick="closeMobileMenu()" aria-label="Đóng menu">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="mo-drawer-body">
+        <!-- Quick Action Quote Button -->
+        <div class="mo-drawer-quick-actions">
+          <a href="{{ route('quote.page') }}" class="btn-mo-orange" style="width: 100%; justify-content: center; font-size: 13.5px; padding: 10px 14px; text-decoration: none;" onclick="closeMobileMenu()">
+            <i class="fa-solid fa-calculator"></i> Nhận Báo Giá Nhanh 2026
+          </a>
+        </div>
+
+        <!-- Navigation Accordion List -->
+        <div class="mo-drawer-nav">
+          <!-- 1. Toàn quốc -->
+          <a href="{{ route('home') }}" 
+             class="mo-drawer-link {{ (request()->routeIs('home') && !request()->has('province') && !request()->has('province_code') && !request()->has('district') && !request()->has('grade')) ? 'active' : '' }}"
+             onclick="closeMobileMenu(); return handleHeaderFilter(event, 'reset', null, '{{ route('home') }}')">
+            <i class="fa-solid fa-globe" style="color: #2563eb; width: 18px;"></i>
+            <span>Toàn Quốc</span>
+            <span class="badge-num" style="background:#dbeafe;color:#1e40af;margin-left:auto;font-size:11px;font-weight:700;">{{ $totalNationwide }} cao ốc</span>
+          </a>
+
+          <!-- 2. Hà Nội Accordion -->
+          <div class="mo-drawer-accordion-item">
+            <button type="button" class="mo-drawer-accordion-btn" onclick="toggleDrawerAccordion(this)">
+              <span><i class="fa-solid fa-city" style="color: #2563eb; width: 18px;"></i> Hà Nội</span>
+              <span class="badge-num" style="background:#dbeafe;color:#1e40af;font-size:11px;font-weight:700;">{{ $hnCount }} tòa</span>
+              <i class="fa-solid fa-chevron-down accordion-caret"></i>
+            </button>
+            <div class="mo-drawer-accordion-content">
+              <a href="{{ route('home', ['province' => '1']) }}" class="mo-drawer-sublink highlight" onclick="closeMobileMenu(); return handleHeaderFilter(event, 'province', '1', '{{ route('home', ['province' => '1']) }}')">
+                <span><i class="fa-solid fa-arrow-right"></i> Tất cả văn phòng Hà Nội</span>
+                <span class="badge-num" style="background:#dbeafe;color:#1e40af;font-size:10.5px;">{{ $hnCount }}</span>
+              </a>
+              @if(!empty($hnDistricts))
+                <div class="mo-drawer-subgroup-title">Khu vực / Quận trọng điểm:</div>
+                <div class="mo-drawer-tags-grid">
+                  @foreach($hnDistricts as $d)
+                    <a href="{{ route('home', ['district' => $d['name'], 'province' => '1']) }}" class="mo-drawer-tag" onclick="closeMobileMenu(); return handleHeaderFilter(event, 'district', '{{ $d['name'] }}', '{{ route('home', ['district' => $d['name'], 'province' => '1']) }}')">
+                      {{ $d['name'] }} <small>({{ $d['count'] }})</small>
+                    </a>
+                  @endforeach
+                </div>
+              @endif
+            </div>
+          </div>
+
+          <!-- 3. TP. Hồ Chí Minh Accordion -->
+          <div class="mo-drawer-accordion-item">
+            <button type="button" class="mo-drawer-accordion-btn" onclick="toggleDrawerAccordion(this)">
+              <span><i class="fa-solid fa-city" style="color: #ea580c; width: 18px;"></i> TP. Hồ Chí Minh</span>
+              <span class="badge-num" style="background:#fed7aa;color:#c2410c;font-size:11px;font-weight:700;">{{ $hcmCount }} tòa</span>
+              <i class="fa-solid fa-chevron-down accordion-caret"></i>
+            </button>
+            <div class="mo-drawer-accordion-content">
+              <a href="{{ route('home', ['province' => '79']) }}" class="mo-drawer-sublink highlight" onclick="closeMobileMenu(); return handleHeaderFilter(event, 'province', '79', '{{ route('home', ['province' => '79']) }}')">
+                <span><i class="fa-solid fa-arrow-right"></i> Tất cả văn phòng TP.HCM</span>
+                <span class="badge-num" style="background:#fed7aa;color:#c2410c;font-size:10.5px;">{{ $hcmCount }}</span>
+              </a>
+              @if(!empty($hcmDistricts))
+                <div class="mo-drawer-subgroup-title">Khu vực / Quận trọng điểm:</div>
+                <div class="mo-drawer-tags-grid">
+                  @foreach($hcmDistricts as $d)
+                    <a href="{{ route('home', ['district' => $d['name'], 'province' => '79']) }}" class="mo-drawer-tag" onclick="closeMobileMenu(); return handleHeaderFilter(event, 'district', '{{ $d['name'] }}', '{{ route('home', ['district' => $d['name'], 'province' => '79']) }}')">
+                      {{ $d['name'] }} <small>({{ $d['count'] }})</small>
+                    </a>
+                  @endforeach
+                </div>
+              @endif
+            </div>
+          </div>
+
+          <!-- 4. Đà Nẵng Accordion -->
+          <div class="mo-drawer-accordion-item">
+            <button type="button" class="mo-drawer-accordion-btn" onclick="toggleDrawerAccordion(this)">
+              <span><i class="fa-solid fa-water" style="color: #6366f1; width: 18px;"></i> Đà Nẵng</span>
+              <span class="badge-num" style="background:#e0e7ff;color:#4338ca;font-size:11px;font-weight:700;">{{ $dnCount }} tòa</span>
+              <i class="fa-solid fa-chevron-down accordion-caret"></i>
+            </button>
+            <div class="mo-drawer-accordion-content">
+              <a href="{{ route('home', ['province' => '48']) }}" class="mo-drawer-sublink highlight" onclick="closeMobileMenu(); return handleHeaderFilter(event, 'province', '48', '{{ route('home', ['province' => '48']) }}')">
+                <span><i class="fa-solid fa-arrow-right"></i> Tất cả văn phòng Đà Nẵng</span>
+                <span class="badge-num" style="background:#e0e7ff;color:#4338ca;font-size:10.5px;">{{ $dnCount }}</span>
+              </a>
+              @if(!empty($dnDistricts))
+                <div class="mo-drawer-tags-grid">
+                  @foreach($dnDistricts as $d)
+                    <a href="{{ route('home', ['district' => $d['name'], 'province' => '48']) }}" class="mo-drawer-tag" onclick="closeMobileMenu(); return handleHeaderFilter(event, 'district', '{{ $d['name'] }}', '{{ route('home', ['district' => $d['name'], 'province' => '48']) }}')">
+                      {{ $d['name'] }} <small>({{ $d['count'] }})</small>
+                    </a>
+                  @endforeach
+                </div>
+              @endif
+            </div>
+          </div>
+
+          <!-- 5. Tỉnh thành khác Accordion -->
+          <div class="mo-drawer-accordion-item">
+            <button type="button" class="mo-drawer-accordion-btn" onclick="toggleDrawerAccordion(this)">
+              <span><i class="fa-solid fa-map-location-dot" style="color: #10b981; width: 18px;"></i> Khu Vực Khác</span>
+              <i class="fa-solid fa-chevron-down accordion-caret"></i>
+            </button>
+            <div class="mo-drawer-accordion-content">
+              @forelse($otherList as $op)
+                @php
+                  $pName = is_array($op) ? ($op['province'] ?? '') : ($op->province ?? '');
+                  $pCode = is_array($op) ? ($op['province_code'] ?? $pName) : ($op->province_code ?? $pName);
+                  $pCount = is_array($op) ? ($op['count'] ?? 0) : ($op->count ?? 0);
+                  $cleanProvName = str_replace('Thành phố ', '', $pName);
+                @endphp
+                <a href="{{ route('home', ['province' => $pCode]) }}" class="mo-drawer-sublink" onclick="closeMobileMenu(); return handleHeaderFilter(event, 'province', '{{ $pCode }}', '{{ route('home', ['province' => $pCode]) }}')">
+                  <span>{{ $cleanProvName }}</span>
+                  <span class="badge-num" style="background:#f1f5f9;color:#475569;font-size:10.5px;">{{ $pCount }} tòa</span>
+                </a>
+              @empty
+                <div style="padding: 8px 12px; font-size: 12px; color: #94a3b8;">Đang mở rộng mạng lưới tỉnh thành</div>
+              @endforelse
+            </div>
+          </div>
+
+          <!-- 6. Phân Loại Hạng & Giá Accordion -->
+          <div class="mo-drawer-accordion-item">
+            <button type="button" class="mo-drawer-accordion-btn" onclick="toggleDrawerAccordion(this)">
+              <span><i class="fa-solid fa-layer-group" style="color: #8b5cf6; width: 18px;"></i> Hạng & Giá Thuê</span>
+              <i class="fa-solid fa-chevron-down accordion-caret"></i>
+            </button>
+            <div class="mo-drawer-accordion-content">
+              <a href="{{ route('home', ['grade' => 'A']) }}" class="mo-drawer-sublink" onclick="closeMobileMenu(); return handleHeaderFilter(event, 'grade', 'A', '{{ route('home', ['grade' => 'A']) }}')">
+                <span><i class="fa-solid fa-award" style="color:#eab308;margin-right:6px;"></i> Văn phòng Hạng A</span>
+              </a>
+              <a href="{{ route('home', ['grade' => 'B']) }}" class="mo-drawer-sublink" onclick="closeMobileMenu(); return handleHeaderFilter(event, 'grade', 'B', '{{ route('home', ['grade' => 'B']) }}')">
+                <span><i class="fa-solid fa-building" style="color:#3b82f6;margin-right:6px;"></i> Văn phòng Hạng B</span>
+              </a>
+              <a href="{{ route('home', ['grade' => 'C']) }}" class="mo-drawer-sublink" onclick="closeMobileMenu(); return handleHeaderFilter(event, 'grade', 'C', '{{ route('home', ['grade' => 'C']) }}')">
+                <span><i class="fa-regular fa-building" style="color:#10b981;margin-right:6px;"></i> Văn phòng Hạng C</span>
+              </a>
+              <a href="{{ route('home', ['price' => 'under20']) }}" class="mo-drawer-sublink" onclick="closeMobileMenu(); return handleHeaderFilter(event, 'price', 'under20', '{{ route('home', ['price' => 'under20']) }}')">
+                <span><i class="fa-solid fa-tag" style="color:#8b5cf6;margin-right:6px;"></i> Văn phòng Giá Rẻ (&lt; $20/m²)</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- 7. Nhận Báo Giá Link -->
+          <a href="{{ route('quote.page') }}" class="mo-drawer-link {{ request()->routeIs('quote.page') ? 'active' : '' }}" onclick="closeMobileMenu()">
+            <i class="fa-solid fa-file-invoice-dollar" style="color: #f97316; width: 18px;"></i>
+            <span>Tư Vấn Miễn Phí & Khảo Sát</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="mo-drawer-footer">
+        <div style="font-size: 11.5px; color: #64748b; margin-bottom: 4px;">Hotline tư vấn hỗ trợ khảo sát:</div>
+        <a href="tel:19006868" style="font-weight: 700; color: #0f3361; font-size: 14.5px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
+          <i class="fa-solid fa-phone-volume" style="color: #ea580c;"></i> 1900 6868 - 0903 000 888
+        </a>
+      </div>
+    </aside>

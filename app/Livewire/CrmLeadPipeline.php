@@ -78,6 +78,11 @@ class CrmLeadPipeline extends Component
     public ?string $flashSuccess = null;
     public ?string $flashError = null;
 
+    // Realtime Notification & Polling State
+    public int $previousLeadCount = 0;
+    public ?string $realtimeNotification = null;
+    public ?string $newlyAssignedSalesName = null;
+
     /**
      * Tùy chỉnh view phân trang theo phong cách Maison Office.
      */
@@ -419,6 +424,17 @@ class CrmLeadPipeline extends Component
             ->latest();
 
         $allLeads = $kanbanQuery->get();
+        $currentCount = $allLeads->count();
+
+        // Phát hiện Lead mới phân bổ để hiển thị chuông thông báo Realtime
+        if ($this->previousLeadCount > 0 && $currentCount > $this->previousLeadCount) {
+            $latestNewLead = $allLeads->first();
+            $salesName = $latestNewLead->assignedSales?->full_name ?? 'Chuyên viên Kinh doanh';
+            $buildingName = $latestNewLead->building?->name ?? 'Tòa nhà';
+            $this->newlyAssignedSalesName = $salesName;
+            $this->realtimeNotification = "THÔNG BÁO MỚI: Khách hàng [{$latestNewLead->contact_full_name}] vừa gửi yêu cầu tại [{$buildingName}]. Hệ thống đã tự động gán cho Sales [{$salesName}]!";
+        }
+        $this->previousLeadCount = $currentCount;
 
         $kanbanColumns = [
             'NEW' => [

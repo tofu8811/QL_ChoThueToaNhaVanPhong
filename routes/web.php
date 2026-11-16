@@ -8,4 +8,5 @@ Route::get('toa-nha/{slug}', [PortalWebController::class, 'showBuilding'])->name
 Route::get('nhan-bao-gia', [PortalWebController::class, 'quotePage'])->name('quote.page');
 Route::get('quan-ly-hop-dong', [PortalWebController::class, 'contractsPage'])->name('contracts.page');
 Route::get('khach-thue', [PortalWebController::class, 'tenantsPage'])->name('tenants.page');
+Route::get('quan-ly-leads', [PortalWebController::class, 'leadsPage'])->name('leads.page');
 Route::get('cong-khach-thue', [PortalWebController::class, 'tenantPortalPage'])->name('tenant-portal.page');

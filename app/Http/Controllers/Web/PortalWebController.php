@@ -228,6 +228,12 @@ class PortalWebController extends Controller
         return view('pages.tenants');
     }
 
+    // Hiển thị trang quản lý phễu khách hàng tiềm năng CRM & tiếp nhận Lead (Module 2)
+    public function leadsPage(Request $request): View
+    {
+        return view('pages.leads');
+    }
+
     // Hiển thị cổng thông tin không gian làm việc khách thuê Tenant Portal SSR (Module 3)
     public function tenantPortalPage(Request $request): View
     {

@@ -73,6 +73,8 @@
           Livewire.dispatch('filter-district', { district: value });
         } else if (type === 'grade') {
           Livewire.dispatch('filter-grade', { grade: value });
+        } else if (type === 'price') {
+          Livewire.dispatch('filter-price', { price: value });
         } else if (type === 'reset') {
           Livewire.dispatch('reset-filters');
         }
@@ -161,6 +163,56 @@
         document.querySelectorAll('.mo-nav-dropdown-wrap.open').forEach(el => {
           el.classList.remove('open');
         });
+      }
+    });
+
+    /* ==========================================================================
+       MOBILE MENU DRAWER CONTROLLER
+       ========================================================================== */
+    window.toggleMobileMenu = function() {
+      const drawer = document.getElementById('mo-mobile-drawer');
+      const backdrop = document.getElementById('mo-mobile-backdrop');
+      if (!drawer) return;
+      if (drawer.classList.contains('open')) {
+        window.closeMobileMenu();
+      } else {
+        window.openMobileMenu();
+      }
+    };
+
+    window.openMobileMenu = function() {
+      const drawer = document.getElementById('mo-mobile-drawer');
+      const backdrop = document.getElementById('mo-mobile-backdrop');
+      if (drawer) drawer.classList.add('open');
+      if (backdrop) backdrop.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.closeMobileMenu = function() {
+      const drawer = document.getElementById('mo-mobile-drawer');
+      const backdrop = document.getElementById('mo-mobile-backdrop');
+      if (drawer) drawer.classList.remove('open');
+      if (backdrop) backdrop.classList.remove('open');
+      document.body.style.overflow = '';
+    };
+
+    window.toggleDrawerAccordion = function(button) {
+      const item = button.closest('.mo-drawer-accordion-item');
+      if (!item) return;
+      const wasOpen = item.classList.contains('open');
+      document.querySelectorAll('.mo-drawer-accordion-item.open').forEach(el => {
+        if (el !== item) el.classList.remove('open');
+      });
+      if (wasOpen) {
+        item.classList.remove('open');
+      } else {
+        item.classList.add('open');
+      }
+    };
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        window.closeMobileMenu();
       }
     });
 
@@ -276,7 +328,18 @@
         lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
       }
 
+      function onResize() {
+        if (isHidden) {
+          header.classList.remove('header-hidden');
+          isHidden = false;
+        }
+        if (window.innerWidth > 1024 && typeof window.closeMobileMenu === 'function') {
+          window.closeMobileMenu();
+        }
+      }
+
       window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onResize, { passive: true });
       onScroll();
     })();
   </script>

@@ -51,9 +51,9 @@
           </div>
         </div>
         <div class="bms-kpi-main">
-          <span class="bms-kpi-number" style="color:#0f172a;">{{ $totalBlds }}</span>
-          <span style="font-size:13.5px;font-weight:600;color:#64748b;">tòa nhà</span>
-          <span class="bms-kpi-pill" style="background:#f1f5f9;color:#334155;">{{ $totalU }} mặt bằng</span>
+          <span class="bms-kpi-number" id="dashboard-total-blds" style="color:#0f172a;">{{ $totalBlds }}</span>
+          <span id="dashboard-total-blds-sub" style="font-size:13.5px;font-weight:600;color:#64748b;">tòa nhà</span>
+          <span class="bms-kpi-pill" id="dashboard-total-units-sub" style="background:#f1f5f9;color:#334155;">{{ $totalU }} mặt bằng</span>
         </div>
       </div>
       <div class="bms-kpi-foot">
@@ -175,6 +175,113 @@
     </div>
   </div>
 
+  <!-- PHÂN HỆ VẬN HÀNH DÀNH RIÊNG CHO BAN QUẢN LÝ (PM WORKFLOW THEO FEATURE/FRONTEND) -->
+  <div id="dashboard-section-pm" style="display:none;margin-top:20px;">
+    <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:24px;margin-bottom:24px;">
+      <!-- Khối trái: Biểu đồ cột Tỷ Lệ Lấp Đầy & Diện Tích Thuê 6 Tháng Gần Nhất -->
+      <div class="bms-panel-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+          <div>
+            <h3 style="font-size:16px;font-weight:800;color:#0f172a;margin:0 0 4px 0;display:flex;align-items:center;gap:8px;">
+              <i class="fa-solid fa-chart-column" style="color:#2563eb;"></i> Tỷ Lệ Lấp Đầy & Diện Tích Thuê (6 Tháng Gần Nhất)
+            </h3>
+            <p style="font-size:12px;color:#64748b;margin:0;">Thống kê tiến độ phủ đầy mặt bằng tại 8 cao ốc Ban Quản Lý phụ trách</p>
+          </div>
+          <span class="badge-filament info" style="font-weight:700;">Năm 2026</span>
+        </div>
+
+        <div style="padding:10px 0 16px;">
+          <div style="display:flex;align-items:flex-end;gap:16px;height:210px;padding-top:20px;border-bottom:1px solid #e2e8f0;">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;">
+              <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">76%</div>
+              <div style="width:100%;height:76%;background:linear-gradient(180deg,#bfdbfe,#3b82f6);border-radius:6px 6px 0 0;"></div>
+              <div style="font-size:11px;margin-top:8px;color:#64748b;font-weight:600;">T6</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;">
+              <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">78%</div>
+              <div style="width:100%;height:78%;background:linear-gradient(180deg,#bfdbfe,#3b82f6);border-radius:6px 6px 0 0;"></div>
+              <div style="font-size:11px;margin-top:8px;color:#64748b;font-weight:600;">T7</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;">
+              <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">80%</div>
+              <div style="width:100%;height:80%;background:linear-gradient(180deg,#bfdbfe,#3b82f6);border-radius:6px 6px 0 0;"></div>
+              <div style="font-size:11px;margin-top:8px;color:#64748b;font-weight:600;">T8</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;">
+              <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">81%</div>
+              <div style="width:100%;height:81%;background:linear-gradient(180deg,#bfdbfe,#3b82f6);border-radius:6px 6px 0 0;"></div>
+              <div style="font-size:11px;margin-top:8px;color:#64748b;font-weight:600;">T9</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;">
+              <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">83%</div>
+              <div style="width:100%;height:83%;background:linear-gradient(180deg,#bfdbfe,#3b82f6);border-radius:6px 6px 0 0;"></div>
+              <div style="font-size:11px;margin-top:8px;color:#64748b;font-weight:600;">T10</div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;">
+              <div style="font-size:11px;font-weight:800;color:#ea580c;margin-bottom:4px;">84.6%</div>
+              <div style="width:100%;height:84.6%;background:linear-gradient(180deg,#f59e0b,#ea580c);border-radius:6px 6px 0 0;box-shadow:0 4px 10px rgba(234,88,12,0.3);"></div>
+              <div style="font-size:11px;margin-top:8px;color:#ea580c;font-weight:700;">T11 (Nay)</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:#64748b;">
+          <span><i class="fa-solid fa-arrow-trend-up" style="color:#16a34a;"></i> Tỷ lệ lấp đầy tăng liên tục qua 6 tháng (+8,6%)</span>
+          <strong style="color:#0f172a;">8 tòa nhà phân công quản trị</strong>
+        </div>
+      </div>
+
+      <!-- Khối phải: Việc cần phê duyệt ngay (BQL & Kỹ thuật) -->
+      <div class="bms-panel-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div>
+            <h3 style="font-size:16px;font-weight:800;color:#0f172a;margin:0 0 2px 0;display:flex;align-items:center;gap:8px;">
+              <i class="fa-solid fa-list-check" style="color:#f59e0b;"></i> Việc Cần Phê Duyệt Ngay
+            </h3>
+            <p style="font-size:12px;color:#64748b;margin:0;">Yêu cầu vận hành chờ Trưởng ban duyệt</p>
+          </div>
+          <span class="badge-filament warning" style="font-weight:700;">4 mục</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="padding:10px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:700;font-size:13px;color:#0f172a;">Duyệt thi công ngoài giờ (Tầng 12)</div>
+              <div style="font-size:11.5px;color:#64748b;">Công ty ABC Tech • Vietcombank Tower</div>
+            </div>
+            <button class="btn-mo-primary" style="padding:5px 12px;font-size:12px;" onclick="alert('Đã phê duyệt giấy phép thi công ngoài giờ cho Công ty ABC Tech!')">Duyệt</button>
+          </div>
+
+          <div style="padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:700;font-size:13px;color:#92400e;">Bảo trì điều hòa trung tâm phòng Server</div>
+              <div style="font-size:11.5px;color:#b45309;">Deutsches Haus • Yêu cầu khẩn cấp trong ngày</div>
+            </div>
+            <button class="btn-mo-orange" style="padding:5px 12px;font-size:12px;" onclick="alert('Đã phân công kỹ sư BQL tới hiện trường xử lý!')">Giao việc</button>
+          </div>
+
+          <div style="padding:10px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:700;font-size:13px;color:#0f172a;">Gia hạn hợp đồng thuê thêm 2 năm</div>
+              <div style="font-size:11.5px;color:#64748b;">Tập đoàn Nova Logistics • Lim Tower</div>
+            </div>
+            <button class="btn-mo-outline" style="padding:5px 12px;font-size:12px;" onclick="alert('Đã mở hồ sơ gia hạn hợp đồng thuê!')">Xem</button>
+          </div>
+
+          <div style="padding:10px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:700;font-size:13px;color:#0f172a;">Nghiệm thu khắc phục rò rỉ nước phòng máy</div>
+              <div style="font-size:11.5px;color:#64748b;">Saigon Centre Tower 2 • Đã hoàn thành sửa chữa</div>
+            </div>
+            <button class="btn-mo-primary" style="padding:5px 12px;font-size:12px;background:#10b981;border-color:#10b981;" onclick="alert('Đã xác nhận nghiệm thu kỹ thuật!')">Nghiệm thu</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHÂN HỆ TÀI CHÍNH & TÀI SẢN DÀNH CHO QUẢN TRỊ VIÊN HỆ THỐNG (ADMIN SECTION) -->
+  <div id="dashboard-section-admin">
   <!-- HÀNG 2: PHÂN TÍCH TRẠNG THÁI MẶT BẰNG (DONUT CHART) & HIỆU SUẤT KHAI THÁC THEO TÒA NHÀ -->
   <div class="bms-analytics-grid">
     <!-- Cột trái: Phân bổ trạng thái mặt bằng (Donut Chart) -->
@@ -396,5 +503,6 @@
         </div>
       </div>
     </div>
+  </div>
   </div>
 </div>

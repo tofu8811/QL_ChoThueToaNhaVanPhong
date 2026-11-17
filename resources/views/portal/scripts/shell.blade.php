@@ -359,6 +359,18 @@
         el.style.display = isPmRole ? (el.classList.contains('bms-alert-card') ? 'flex' : 'block') : 'none';
       });
 
+      const secPm = document.getElementById('dashboard-section-pm');
+      const secAdmin = document.getElementById('dashboard-section-admin');
+      if (secPm) secPm.style.display = isPmRole ? 'block' : 'none';
+      if (secAdmin) secAdmin.style.display = isPmRole ? 'none' : 'block';
+
+      const totalBldsEl = document.getElementById('dashboard-total-blds');
+      const totalBldsSub = document.getElementById('dashboard-total-blds-sub');
+      const totalUnitsSub = document.getElementById('dashboard-total-units-sub');
+      if (totalBldsEl) totalBldsEl.innerText = isPmRole ? '8' : '22';
+      if (totalBldsSub) totalBldsSub.innerText = isPmRole ? 'tòa phụ trách' : 'tòa nhà';
+      if (totalUnitsSub) totalUnitsSub.innerText = isPmRole ? '24 mặt bằng' : '65 mặt bằng';
+
       const dashTitle = document.getElementById('dashboard-page-title');
       const dashSub = document.getElementById('dashboard-page-subtitle');
       if (dashTitle) {
@@ -382,6 +394,12 @@
         userSub.innerText = isSuper ? 'Super Admin • Toàn hệ thống' : 'Quản trị viên • Vận hành';
         userAvatar.innerText = isSuper ? 'SA' : 'AD';
         if (groupAdmin) groupAdmin.style.display = 'block';
+        if (navDashboard) navDashboard.style.display = 'flex';
+        if (navBuildings) navBuildings.style.display = 'flex';
+        if (navTenants) navTenants.style.display = 'flex';
+        if (navContracts) navContracts.style.display = 'flex';
+        if (navBilling) navBilling.style.display = 'flex';
+        if (navTickets) navTickets.style.display = 'flex';
         if (groupSales) groupSales.style.display = 'block';
         if (groupTenant) groupTenant.style.display = 'none';
 
@@ -402,7 +420,12 @@
         userSub.innerText = 'Trưởng ban Quản lý';
         userAvatar.innerText = 'QA';
         if (groupAdmin) groupAdmin.style.display = 'block';
+        if (navDashboard) navDashboard.style.display = 'flex';
+        if (navBuildings) navBuildings.style.display = 'flex';
+        if (navTenants) navTenants.style.display = 'none'; // PM không có thẩm quyền quản lý danh bạ khách thuê
+        if (navContracts) navContracts.style.display = 'flex';
         if (navBilling) navBilling.style.display = 'none'; // PM không có thẩm quyền Công nợ kế toán
+        if (navTickets) navTickets.style.display = 'flex';
         if (groupSales) groupSales.style.display = 'none';
         if (groupSystem) groupSystem.style.display = 'none';
         if (groupTenant) groupTenant.style.display = 'none';
@@ -416,11 +439,8 @@
         userName.innerText = rawName || 'Lê Hoàng Long';
         userSub.innerText = 'Chuyên viên Leasing & Báo giá';
         userAvatar.innerText = 'SL';
-        // Sales được xem Quản lý tòa nhà & sàn (chỉ đọc), Khách hàng, Hợp đồng + nhóm Kinh doanh (Leads & Báo giá)
-        if (groupAdmin) groupAdmin.style.display = 'block';
-        if (navDashboard) navDashboard.style.display = 'none'; // Ẩn Tổng quan để bảo mật doanh thu, công nợ và sự cố kỹ thuật
-        if (navBilling) navBilling.style.display = 'none'; // Ẩn Công nợ kế toán
-        if (navTickets) navTickets.style.display = 'none'; // Ẩn Bảo trì kỹ thuật
+        // Sales chỉ thấy phân hệ Kinh doanh (Leads, Báo giá, Pipeline) theo feature/frontend
+        if (groupAdmin) groupAdmin.style.display = 'none';
         if (groupSales) groupSales.style.display = 'block';
         if (groupSystem) groupSystem.style.display = 'none'; // Ẩn Nhân sự RBAC
         if (groupTenant) groupTenant.style.display = 'none';
@@ -434,8 +454,13 @@
         userName.innerText = rawName || 'Hoàng Minh Thư';
         userSub.innerText = 'Kế toán công nợ & Đối soát';
         userAvatar.innerText = 'KT';
-        // Kế toán xem Tổng quan, Công nợ & Thanh toán, Hợp đồng, Khách hàng
+        // Kế toán xem Công nợ & Thanh toán, Hợp đồng, Khách hàng, Tòa nhà
         if (groupAdmin) groupAdmin.style.display = 'block';
+        if (navDashboard) navDashboard.style.display = 'none';
+        if (navBuildings) navBuildings.style.display = 'flex';
+        if (navTenants) navTenants.style.display = 'flex';
+        if (navContracts) navContracts.style.display = 'flex';
+        if (navBilling) navBilling.style.display = 'flex';
         if (navTickets) navTickets.style.display = 'none';
         if (groupSales) groupSales.style.display = 'none';
         if (groupSystem) groupSystem.style.display = 'none';

@@ -1,16 +1,16 @@
 <!-- TAB ADMIN: QUẢN LÝ KHÁCH THUÊ DOANH NGHIỆP (RESTFUL API - MODULE 3) -->
 <div id="tab-admin-tenants" class="filament-tab-pane" style="display:none;">
-  <div class="filament-page-header">
+  <div class="filament-page-header" style="align-items:center;">
     <div>
-      <div class="filament-breadcrumbs">Phân hệ Quản trị / Khách thuê</div>
-      <h1 class="filament-page-title">Hồ Sơ Doanh Nghiệp Khách Thuê (Tenants)</h1>
+      <h1 class="filament-page-title" style="font-size:23px;margin-bottom:4px;">Quản Lý Hồ Sơ Doanh Nghiệp Khách Thuê</h1>
+      <p style="font-size:13.5px;color:#64748b;margin:0;">Quản lý thông tin pháp nhân, mã số thuế, người đại diện pháp luật và giấy phép đăng ký kinh doanh của khách thuê.</p>
     </div>
     <div style="display:flex;gap:8px;">
-      <button class="btn-mo-outline" onclick="loadTenantsList()">
-        <i class="fa-solid fa-arrows-rotate"></i> Tải Lại
+      <button class="btn-mo-outline" style="background:#fff;" onclick="loadTenantsList()">
+        <i class="fa-solid fa-arrows-rotate"></i> Làm mới
       </button>
-      <button class="btn-mo-orange" onclick="openCreateTenantModal()">
-        <i class="fa-solid fa-plus"></i> Thêm Khách Thuê Mới
+      <button class="btn-mo-primary" style="background:#2563eb;" onclick="openCreateTenantModal()">
+        <i class="fa-solid fa-plus"></i> Thêm khách thuê mới
       </button>
     </div>
   </div>

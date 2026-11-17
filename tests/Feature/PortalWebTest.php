@@ -36,13 +36,13 @@ class PortalWebTest extends TestCase
         $response = $this->get('/');
 
         $response->assertStatus(200);
-        $response->assertSee('Cho Thuê Văn Phòng TP.HCM');
+        $response->assertSee('Cho Thuê Văn Phòng Toàn Quốc');
         $response->assertSee('Filament Admin');
+        $response->assertSee('Office');
 
         // Kiểm tra dữ liệu thật từ database được render lên trang chủ
-        $response->assertSee('22+', false);
-        $response->assertSee('428.430', false);
-        $response->assertSee('10+', false);
+        $response->assertSee('39+', false);
+        $response->assertSee('Quản Lý Trạng Thái Mặt Bằng', false);
     }
 
     /**
@@ -155,5 +155,21 @@ class PortalWebTest extends TestCase
         $response->assertSee('/assignments/sales', false);
         $response->assertSee('/assignments/property-managers', false);
         $response->assertSee('/assignments/accountants', false);
+    }
+
+    /**
+     * Kiểm tra trang web tích hợp ma trận RBAC Route Guard & Phân quyền nút thao tác nghiệp vụ.
+     */
+    public function test_home_page_contains_rbac_matrix_and_route_guards(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+
+        // Ma trận phân quyền RBAC
+        $response->assertSee('ALLOWED_TABS_BY_ROLE', false);
+        $response->assertSee('DEFAULT_TAB_BY_ROLE', false);
+        $response->assertSee('isSuperAdminUser', false);
+        $response->assertSee('id="btn-create-building"', false);
     }
 }

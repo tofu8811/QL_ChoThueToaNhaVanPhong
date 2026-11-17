@@ -275,10 +275,12 @@ Route::prefix('v1')->group(function () {
         // 94. Gỡ Sales khỏi Tòa nhà
         Route::delete('sales/{saleId}', [BuildingAssignmentApiController::class, 'removeSales'])->name('v1.admin.buildings.assignments.sales.destroy');
 
-        // 95. Gán Ban Quản Lý (PM) vào Tòa nhà
+        // 95. Gán Ban Quản Lý (PM) vào Tòa nhà (hỗ trợ cả alias managers và property-managers)
         Route::post('property-managers', [BuildingAssignmentApiController::class, 'assignPropertyManager'])->name('v1.admin.buildings.assignments.pm.store');
+        Route::post('managers', [BuildingAssignmentApiController::class, 'assignPropertyManager'])->name('v1.admin.buildings.assignments.managers.store');
         // 96. Gỡ Ban Quản Lý (PM) khỏi Tòa nhà
         Route::delete('property-managers/{pmId}', [BuildingAssignmentApiController::class, 'removePropertyManager'])->name('v1.admin.buildings.assignments.pm.destroy');
+        Route::delete('managers/{pmId}', [BuildingAssignmentApiController::class, 'removePropertyManager'])->name('v1.admin.buildings.assignments.managers.destroy');
 
         // 97. Gán Kế toán vào Tòa nhà
         Route::post('accountants', [BuildingAssignmentApiController::class, 'assignAccountant'])->name('v1.admin.buildings.assignments.accountants.store');

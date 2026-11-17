@@ -37,6 +37,9 @@
       } else if (role === 'sales') {
         emailInput.value = 'sales.hoang@officeleasing.vn';
         passInput.value = 'Sales@123456';
+      } else if (role === 'accountant') {
+        emailInput.value = 'acc.thu@officeleasing.vn';
+        passInput.value = 'Accountant@123456';
       } else if (role === 'tenant') {
         emailInput.value = 'contact@vng.com.vn';
         passInput.value = 'Tenant@123456';
@@ -137,13 +140,20 @@
           
           updateAuthUI(authData.user, authData.role);
 
-          // Tự động chuyển view phù hợp
-          if (authData.role === 'ADMIN' || authData.role === 'PM') {
+          // Tự động chuyển view phù hợp theo đúng Role
+          const upperRole = String(authData.role || '').toUpperCase();
+          if (upperRole === 'ADMIN' || upperRole === 'SUPER_ADMIN') {
             handleRoleSwitch('admin');
-          } else if (authData.role === 'SALES') {
+          } else if (upperRole === 'PM' || upperRole === 'PROPERTY_MANAGER') {
+            handleRoleSwitch('pm');
+          } else if (upperRole === 'SALES') {
             handleRoleSwitch('sales');
-          } else if (authData.role === 'TENANT') {
+          } else if (upperRole === 'ACCOUNTANT') {
+            handleRoleSwitch('accountant');
+          } else if (upperRole === 'TENANT') {
             handleRoleSwitch('tenant');
+          } else {
+            handleRoleSwitch('admin');
           }
         } else {
           const msg = result.message || 'Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại.';
@@ -202,6 +212,7 @@
       const dropFilamentLink = document.getElementById("dropdown-filament-link");
 
       if (user && role) {
+        window.currentUiRole = String(role).toLowerCase();
         const rawName = user.company_name || user.full_name || user.name || 'Người dùng';
         let initials = 'US';
         if (user.company_name) {
@@ -303,10 +314,15 @@
       if (token && userStr) {
         try {
           const user = JSON.parse(userStr);
+          window.currentUiRole = String(role || 'admin').toLowerCase();
           updateAuthUI(user, role);
         } catch (e) {
-          localStorage.clear();
+          console.error('Lỗi nạp phiên người dùng:', e);
+          localStorage.removeItem('auth_user');
+          updateAuthUI(null, null);
         }
+      } else {
+        updateAuthUI(null, null);
       }
     }
 

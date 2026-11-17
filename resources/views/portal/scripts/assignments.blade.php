@@ -7,6 +7,27 @@
     let currentAssignedPmIds = new Set();
     let currentAssignedAccountantIds = new Set();
 
+    // Helper nạp danh sách tòa nhà cho dropdown Phân công RBAC
+    async function fetchStaffBuildingsList() {
+      if (Array.isArray(adminBuildingsList) && adminBuildingsList.length > 0) {
+        return adminBuildingsList;
+      }
+      try {
+        const token = getSanctumToken();
+        const res = await fetch('/api/v1/admin/buildings?per_page=100', {
+          headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token, 'X-User-Role': 'admin' }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const list = json.data?.data || json.data || [];
+          if (list && list.length > 0) return list;
+        }
+      } catch (e) {
+        console.error('fetchStaffBuildingsList error:', e);
+      }
+      return (typeof BUILDINGS_DATA !== 'undefined' && Array.isArray(BUILDINGS_DATA)) ? BUILDINGS_DATA : [];
+    }
+
     // Nạp danh sách các tòa nhà vào dropdown phân công
     async function populateBuildingAssignmentDropdown(preferredBuildingId = null) {
       const select = document.getElementById('select-assignment-building');
@@ -88,9 +109,23 @@
 
     // Mở nhanh phân công tòa nhà từ bất kỳ đâu (ví dụ bảng tòa nhà)
     function openBuildingAssignmentsFromBuilding(buildingId, buildingName) {
-      switchFilamentTab('tab-admin-staff', document.getElementById('nav-item-staff'));
-      switchStaffSubTab('assignments', document.getElementById('btn-subtab-assignments'));
-      populateBuildingAssignmentDropdown(buildingId);
+      goToBuildingAssignments(buildingId);
+    }
+
+    function goToBuildingAssignments(buildingId = null) {
+      const navItemStaff = document.getElementById('nav-item-staff');
+      if (typeof switchFilamentTab === 'function') {
+        switchFilamentTab('tab-admin-staff', navItemStaff, true);
+      }
+      const btnAssignments = document.getElementById('btn-subtab-assignments');
+      if (typeof switchStaffSubTab === 'function') {
+        switchStaffSubTab('assignments', btnAssignments, true);
+      }
+      if (buildingId) {
+        setTimeout(() => {
+          populateBuildingAssignmentDropdown(buildingId);
+        }, 120);
+      }
     }
 
     // =========================================================================
@@ -695,19 +730,4 @@
         console.error('Remove Accountant error:', err);
       }
     }
-        // Chuyển đổi giữa 4 sub-tab nhân sự
-
-    // Initialize on load
-    window.addEventListener("DOMContentLoaded", () => {
-      renderBuildings(BUILDINGS_DATA);
-      renderAdminTables();
-      calculateQuickQuote();
-      checkAuthState();
-      if (typeof preloadAllStaffData === 'function') {
-        preloadAllStaffData();
-      }
-      if (typeof handleAppRouting === 'function') {
-        handleAppRouting();
-      }
-    });
   </script>

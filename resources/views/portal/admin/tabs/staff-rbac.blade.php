@@ -46,21 +46,12 @@
 
             <!-- SUBPANEL 1: QUẢN TRỊ VIÊN (ADMINS) — API 72-76 -->
             <div id="subpanel-staff-admins" class="staff-subpanel">
-              <div class="filament-card" style="margin-bottom: 20px; border-left: 4px solid #ef4444; background: #fff5f5; padding: 14px 18px;">
-                <div style="display:flex; align-items:center; gap: 12px;">
-                  <i class="fa-solid fa-circle-exclamation" style="font-size: 20px; color: #dc2626;"></i>
-                  <div style="font-size: 13px; color: #991b1b; line-height: 1.5;">
-                    <strong>Phân quyền bảo mật cao cấp (Super Admin):</strong> Chỉ tài khoản Quản trị viên cấp cao (Super Admin) mới có thẩm quyền xem danh sách, cấp tài khoản và điều chỉnh quyền hạn của các Admin khác trong hệ thống.
-                  </div>
-                </div>
-              </div>
-
               <div class="filament-card" style="margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
                   <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                     <div style="position: relative; width: 260px;">
                       <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
-                      <input type="text" id="filter-admin-keyword" placeholder="Tìm theo tên, email, SĐT..." class="form-control" style="padding-left: 34px; height: 38px; font-size: 13px; border-radius: 6px;" onkeyup="if(event.key==='Enter') loadStaffAdmins(1)">
+                      <input type="text" id="filter-admin-keyword" placeholder="Tìm theo tên, email, SĐT..." class="form-control" style="padding-left: 34px; height: 38px; font-size: 13px; border-radius: 6px;" oninput="loadStaffAdmins(1)" onkeyup="if(event.key==='Enter') loadStaffAdmins(1)">
                     </div>
                     <select id="filter-admin-status" class="form-control" style="height: 38px; font-size: 13px; width: 150px; border-radius: 6px;" onchange="loadStaffAdmins(1)">
                       <option value="">-- Trạng thái --</option>
@@ -158,7 +149,7 @@
                   <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                     <div style="position: relative; width: 260px;">
                       <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
-                      <input type="text" id="filter-sale-keyword" placeholder="Mã NV, tên, email, SĐT..." class="form-control" style="padding-left: 34px; height: 38px; font-size: 13px; border-radius: 6px;" onkeyup="if(event.key==='Enter') loadStaffSales(1)">
+                      <input type="text" id="filter-sale-keyword" placeholder="Mã NV, tên, email, SĐT..." class="form-control" style="padding-left: 34px; height: 38px; font-size: 13px; border-radius: 6px;" oninput="loadStaffSales(1)" onkeyup="if(event.key==='Enter') loadStaffSales(1)">
                     </div>
                     <select id="filter-sale-status" class="form-control" style="height: 38px; font-size: 13px; width: 150px; border-radius: 6px;" onchange="loadStaffSales(1)">
                       <option value="">-- Trạng thái --</option>
@@ -199,29 +190,31 @@
                           $statusText = ($s->status === 'ACTIVE') ? 'Hoạt động' : 'Tạm khóa';
                         @endphp
                         <tr>
-                          <td><span style="font-family:monospace; font-weight:700; color:#0f3361;">{{ $s->employee_code ?? ('SL-' . substr($s->id, 0, 4)) }}</span></td>
-                          <td><strong>{{ $s->full_name ?? $s->name ?? '---' }}</strong></td>
+                          <td style="white-space:nowrap;"><span style="font-family:monospace; font-weight:700; color:#0f3361; background:#f1f5f9; padding:3px 8px; border-radius:6px; font-size:12px;">{{ $s->employee_code ?? ('SL-' . substr($s->id, 0, 4)) }}</span></td>
+                          <td style="white-space:nowrap;"><strong>{{ $s->full_name ?? $s->name ?? '---' }}</strong></td>
                           <td>
                             <div style="font-size:12.5px; color:#2563eb;">{{ $s->email }}</div>
                             <div style="font-size:11.5px; color:#64748b;">{{ $s->phone ?? '---' }}</div>
                           </td>
                           <td>
-                            @if(count($blds) > 0)
-                              @foreach($blds->take(2) as $b)
-                                <span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-size:11px; margin-right:4px;">{{ $b->name }}</span>
-                              @endforeach
-                              @if(count($blds) > 2)
-                                <small style="color:#64748b;">+{{ count($blds) - 2 }}</small>
+                            <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">
+                              @if(count($blds) > 0)
+                                @foreach($blds->take(2) as $b)
+                                  <span style="background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:600; white-space:nowrap;">{{ $b->name }}</span>
+                                @endforeach
+                                @if(count($blds) > 2)
+                                  <span style="background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:700;">+{{ count($blds) - 2 }} tòa</span>
+                                @endif
+                              @else
+                                <span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span>
                               @endif
-                            @else
-                              <span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span>
-                            @endif
+                            </div>
                           </td>
-                          <td>
+                          <td style="white-space:nowrap;">
                             <span style="font-weight:700; color:#0f172a;">{{ $s->active_leads_count ?? 1 }}</span> / <span style="color:#64748b;">{{ $s->max_concurrent_leads ?? 20 }} leads</span>
                           </td>
-                          <td><span style="color:#ea580c; font-weight:700;">{{ $s->commission_rate ? $s->commission_rate . '%' : '---' }}</span></td>
-                          <td><span class="badge-filament {{ $statusClass }}">{{ $statusText }}</span></td>
+                          <td style="white-space:nowrap;"><span style="color:#ea580c; font-weight:700;">{{ $s->commission_rate ? $s->commission_rate . '%' : '---' }}</span></td>
+                          <td style="white-space:nowrap;"><span class="badge-filament {{ $statusClass }}">{{ $statusText }}</span></td>
                           <td style="text-align: right; white-space: nowrap;">
                             <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffSale('{{ $s->id }}')" title="Xem chi tiết & KPI">
                               <i class="fa-regular fa-eye"></i>
@@ -258,7 +251,7 @@
                   <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                     <div style="position: relative; width: 260px;">
                       <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
-                      <input type="text" id="filter-pm-keyword" placeholder="Mã BQL, tên, email, hotline..." class="form-control" style="padding-left: 34px; height: 38px; font-size: 13px; border-radius: 6px;" onkeyup="if(event.key==='Enter') loadStaffPm(1)">
+                      <input type="text" id="filter-pm-keyword" placeholder="Mã BQL, tên, email, hotline..." class="form-control" style="padding-left: 34px; height: 38px; font-size: 13px; border-radius: 6px;" oninput="loadStaffPm(1)" onkeyup="if(event.key==='Enter') loadStaffPm(1)">
                     </div>
                     <select id="filter-pm-department" class="form-control" style="height: 38px; font-size: 13px; width: 170px; border-radius: 6px;" onchange="loadStaffPm(1)">
                       <option value="">-- Bộ phận chuyên trách --</option>
@@ -311,28 +304,30 @@
                           $deptText = $deptLabels[$p->department ?? ''] ?? ($p->department ?? 'Vận hành');
                         @endphp
                         <tr>
-                          <td><span style="font-family:monospace; font-weight:700; color:#b45309;">{{ $p->employee_code ?? ('PM-' . substr($p->id, 0, 4)) }}</span></td>
-                          <td>
+                          <td style="white-space:nowrap;"><span style="font-family:monospace; font-weight:700; color:#b45309; background:#fef3c7; padding:3px 8px; border-radius:6px; font-size:12px;">{{ $p->employee_code ?? ('PM-' . substr($p->id, 0, 4)) }}</span></td>
+                          <td style="white-space:nowrap;">
                             <strong>{{ $p->full_name ?? $p->name ?? '---' }}</strong>
                             <div style="font-size:11.5px; color:#64748b;">{{ $p->email }}</div>
                           </td>
-                          <td>
+                          <td style="white-space:nowrap;">
                             <span style="color:#dc2626; font-weight:700;"><i class="fa-solid fa-phone-volume"></i> {{ $p->emergency_hotline ?? $p->phone ?? '---' }}</span>
                           </td>
-                          <td><span style="background:#f1f5f9; color:#334155; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:600;">{{ $deptText }}</span></td>
+                          <td style="white-space:nowrap;"><span style="background:#f1f5f9; color:#334155; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:600;">{{ $deptText }}</span></td>
                           <td>
-                            @if(count($blds) > 0)
-                              @foreach($blds->take(2) as $b)
-                                <span style="background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:4px; font-size:11px; margin-right:4px;">{{ $b->name }}</span>
-                              @endforeach
-                              @if(count($blds) > 2)
-                                <small style="color:#64748b;">+{{ count($blds) - 2 }}</small>
+                            <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">
+                              @if(count($blds) > 0)
+                                @foreach($blds->take(2) as $b)
+                                  <span style="background:#fef3c7; color:#92400e; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:600; white-space:nowrap;">{{ $b->name }}</span>
+                                @endforeach
+                                @if(count($blds) > 2)
+                                  <span style="background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:700; white-space:nowrap;">+{{ count($blds) - 2 }} tòa</span>
+                                @endif
+                              @else
+                                <span style="color:#94a3b8; font-size:11.5px;">Chưa phân công</span>
                               @endif
-                            @else
-                              <span style="color:#94a3b8; font-size:11.5px;">Chưa phân công</span>
-                            @endif
+                            </div>
                           </td>
-                          <td><span class="badge-filament {{ $statusClass }}">{{ $p->status ?? 'ACTIVE' }}</span></td>
+                          <td style="white-space:nowrap;"><span class="badge-filament {{ $statusClass }}">{{ ($p->status === 'ACTIVE') ? 'Hoạt động' : 'Tạm khóa' }}</span></td>
                           <td style="text-align: right; white-space: nowrap;">
                             <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffPm('{{ $p->id }}')" title="Xem chi tiết">
                               <i class="fa-regular fa-eye"></i>
@@ -369,7 +364,7 @@
                   <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                     <div style="position: relative; width: 260px;">
                       <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
-                      <input type="text" id="filter-acc-keyword" placeholder="Mã KT, tên, email, SĐT..." class="form-control" style="padding-left: 34px; height: 38px; font-size: 13px; border-radius: 6px;" onkeyup="if(event.key==='Enter') loadStaffAccountants(1)">
+                      <input type="text" id="filter-acc-keyword" placeholder="Mã KT, tên, email, SĐT..." class="form-control" style="padding-left: 34px; height: 38px; font-size: 13px; border-radius: 6px;" oninput="loadStaffAccountants(1)" onkeyup="if(event.key==='Enter') loadStaffAccountants(1)">
                     </div>
                     <select id="filter-acc-adjustment" class="form-control" style="height: 38px; font-size: 13px; width: 170px; border-radius: 6px;" onchange="loadStaffAccountants(1)">
                       <option value="">-- Quyền duyệt cước --</option>
@@ -414,13 +409,13 @@
                           $canAdjust = (bool)($a->can_approve_adjustment ?? false);
                         @endphp
                         <tr>
-                          <td><span style="font-family:monospace; font-weight:700; color:#065f46;">{{ $a->employee_code ?? ('ACC-' . substr($a->id, 0, 4)) }}</span></td>
-                          <td><strong>{{ $a->full_name ?? $a->name ?? '---' }}</strong></td>
+                          <td style="white-space:nowrap;"><span style="font-family:monospace; font-weight:700; color:#065f46; background:#ecfdf5; padding:3px 8px; border-radius:6px; font-size:12px;">{{ $a->employee_code ?? ('ACC-' . substr($a->id, 0, 4)) }}</span></td>
+                          <td style="white-space:nowrap;"><strong>{{ $a->full_name ?? $a->name ?? '---' }}</strong></td>
                           <td>
                             <div style="font-size:12.5px; color:#2563eb;">{{ $a->email }}</div>
                             <div style="font-size:11.5px; color:#64748b;">{{ $a->phone ?? '---' }}</div>
                           </td>
-                          <td>
+                          <td style="white-space:nowrap;">
                             @if($canAdjust)
                               <span style="background:#dcfce7; color:#15803d; font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:9999px;"><i class="fa-solid fa-check"></i> Được phép</span>
                             @else
@@ -428,18 +423,20 @@
                             @endif
                           </td>
                           <td>
-                            @if(count($blds) > 0)
-                              @foreach($blds->take(2) as $b)
-                                <span style="background:#ecfdf5; color:#065f46; padding:2px 6px; border-radius:4px; font-size:11px; margin-right:4px;">{{ $b->name }}</span>
-                              @endforeach
-                              @if(count($blds) > 2)
-                                <small style="color:#64748b;">+{{ count($blds) - 2 }}</small>
+                            <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">
+                              @if(count($blds) > 0)
+                                @foreach($blds->take(2) as $b)
+                                  <span style="background:#ecfdf5; color:#065f46; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:600; white-space:nowrap;">{{ $b->name }}</span>
+                                @endforeach
+                                @if(count($blds) > 2)
+                                  <span style="background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:700; white-space:nowrap;">+{{ count($blds) - 2 }} tòa</span>
+                                @endif
+                              @else
+                                <span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span>
                               @endif
-                            @else
-                              <span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span>
-                            @endif
+                            </div>
                           </td>
-                          <td><span class="badge-filament {{ $statusClass }}">{{ $a->status ?? 'ACTIVE' }}</span></td>
+                          <td style="white-space:nowrap;"><span class="badge-filament {{ $statusClass }}">{{ ($a->status === 'ACTIVE') ? 'Hoạt động' : 'Tạm khóa' }}</span></td>
                           <td style="text-align: right; white-space: nowrap;">
                             <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffAccountant('{{ $a->id }}')" title="Xem chi tiết">
                               <i class="fa-regular fa-eye"></i>

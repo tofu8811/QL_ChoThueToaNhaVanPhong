@@ -62,14 +62,19 @@
           ? '<span class="badge-filament success"><i class="fa-solid fa-circle-check"></i> Đang Hoạt Động</span>'
           : '<span class="badge-filament danger"><i class="fa-solid fa-circle-xmark"></i> Ngừng Hoạt Động</span>';
 
-        const licenseBtn = t.license_file_url
+        const hasLicense = Boolean(t.business_license_private_path || t.license_file_url);
+        const licenseBtn = hasLicense
           ? `<button class="btn-mo-outline" style="padding:4px 8px;font-size:11px;color:#0284c7;border-color:#bae6fd;" onclick="downloadTenantLicense('${t.id}')" title="Tải GPKD Đã Upload"><i class="fa-solid fa-file-pdf"></i> Tải GPKD</button>`
           : `<button class="btn-mo-outline" style="padding:4px 8px;font-size:11px;color:#ea580c;border-color:#fed7aa;" onclick="openUploadLicenseModal('${t.id}', '${escapeHtml(t.company_name)}')" title="Tải Lên GPKD Mới"><i class="fa-solid fa-upload"></i> Upload GPKD</button>`;
+
+        const emailVal = t.login_email || t.billing_email || t.contact_email || '';
+        const addressVal = t.headquarter_address || t.business_address || '---';
+        const codeVal = t.tenant_code || (t.tax_code ? `DN-${t.tax_code.slice(-6)}` : t.id.substring(0, 8));
 
         return `
           <tr>
             <td>
-              <strong style="color:var(--mo-primary);font-family:monospace;font-size:13px;">${escapeHtml(t.tenant_code || t.id.substring(0,8))}</strong>
+              <strong style="color:var(--mo-primary);font-family:monospace;font-size:13px;">${escapeHtml(codeVal)}</strong>
               <div style="font-size:11px;color:#94a3b8;">${escapeHtml(new Date(t.created_at).toLocaleDateString('vi-VN'))}</div>
             </td>
             <td>
@@ -79,14 +84,14 @@
               </div>
             </td>
             <td>
-              <div style="font-weight:600;color:#334155;">${escapeHtml(t.representative_name || '---')}</div>
+              <div style="font-weight:600;color:#334155;">${escapeHtml(t.representative_name || '---')}${t.representative_title ? ` <span style="font-weight:400;color:#64748b;font-size:11px;">(${escapeHtml(t.representative_title)})</span>` : ''}</div>
               <div style="font-size:12px;color:#64748b;">
                 <i class="fa-solid fa-phone" style="font-size:11px;"></i> ${escapeHtml(t.contact_phone || '---')}
-                ${t.contact_email ? `| <i class="fa-solid fa-envelope" style="font-size:11px;"></i> ${escapeHtml(t.contact_email)}` : ''}
+                ${emailVal ? `| <i class="fa-solid fa-envelope" style="font-size:11px;"></i> ${escapeHtml(emailVal)}` : ''}
               </div>
             </td>
             <td>
-              <div style="font-size:12px;color:#475569;max-width:200px;">${escapeHtml(t.business_address || '---')}</div>
+              <div style="font-size:12px;color:#475569;max-width:220px;">${escapeHtml(addressVal)}</div>
             </td>
             <td>${statusBadge}</td>
             <td>${licenseBtn}</td>
@@ -178,8 +183,8 @@
         document.getElementById('edit-tenant-tax-code').value = t.tax_code || '';
         document.getElementById('edit-tenant-rep-name').value = t.representative_name || '';
         document.getElementById('edit-tenant-contact-phone').value = t.contact_phone || '';
-        document.getElementById('edit-tenant-contact-email').value = t.contact_email || '';
-        document.getElementById('edit-tenant-address').value = t.business_address || '';
+        document.getElementById('edit-tenant-contact-email').value = t.login_email || t.billing_email || t.contact_email || '';
+        document.getElementById('edit-tenant-address').value = t.headquarter_address || t.business_address || '';
         document.getElementById('edit-tenant-status').value = t.status || 'ACTIVE';
       } catch (err) {
         alert('Lỗi kết nối khi tải hồ sơ khách thuê.');

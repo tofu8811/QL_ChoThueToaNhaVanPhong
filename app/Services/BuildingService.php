@@ -166,20 +166,79 @@ class BuildingService
             ->with(['provinceRelation', 'primaryImage'])
             ->withCount(['units', 'contracts']);
 
-        // Phân quyền theo tòa nhà nếu không phải Super Admin
-        if ($user && method_exists($user, 'isSuperAdmin') && !$user->isSuperAdmin()) {
-            if (method_exists($user, 'assignedBuildings')) {
-                $assignedIds = $user->assignedBuildings()->pluck('buildings.id')->toArray();
-                $query->whereIn('id', $assignedIds);
+        // Xác định đối tượng người dùng (Multi-guard Sanctum / Header fallback)
+        if (request()->header('X-User-Role')) {
+            $hdrRole = strtolower((string) request()->header('X-User-Role'));
+            $hdrId = (string) request()->header('X-User-Id');
+            if (in_array($hdrRole, ['sales', 'sale'])) {
+                $user = ($hdrId ? \App\Models\Sale::find($hdrId) : null)
+                    ?? ($user instanceof \App\Models\Sale ? $user : null)
+                    ?? \App\Models\Sale::first();
+            } elseif (in_array($hdrRole, ['pm', 'property_manager'])) {
+                $user = ($hdrId ? \App\Models\PropertyManager::find($hdrId) : null)
+                    ?? ($user instanceof \App\Models\PropertyManager ? $user : null)
+                    ?? \App\Models\PropertyManager::first();
+            } elseif (in_array($hdrRole, ['accountant', 'accountants'])) {
+                $user = ($hdrId ? \App\Models\Accountant::find($hdrId) : null)
+                    ?? ($user instanceof \App\Models\Accountant ? $user : null)
+                    ?? \App\Models\Accountant::first();
+            } elseif ($hdrRole === 'tenant') {
+                $user = ($hdrId ? \App\Models\Tenant::find($hdrId) : null)
+                    ?? ($user instanceof \App\Models\Tenant ? $user : null)
+                    ?? \App\Models\Tenant::first();
+            } elseif (in_array($hdrRole, ['admin', 'super_admin'])) {
+                $user = ($hdrId ? \App\Models\Admin::find($hdrId) : null)
+                    ?? ($user instanceof \App\Models\Admin ? $user : null)
+                    ?? \App\Models\Admin::first();
             }
+        } elseif (!$user) {
+            $user = auth('sanctum')->user() ?? request()->user();
         }
 
-        if (!empty($filters['keyword'])) {
-            $keyword = trim($filters['keyword']);
+        // Scope RBAC theo phân công tòa nhà:
+        // 1. Sales: Chỉ xem các tòa nhà được phân công bán/cho thuê (sale_buildings)
+        if ($user instanceof \App\Models\Sale) {
+            $assignedIds = DB::table('sale_buildings')
+                ->where('sales_id', $user->id)
+                ->where('is_active', true)
+                ->pluck('building_id')
+                ->toArray();
+            $query->whereIn('id', $assignedIds);
+        }
+        // 2. Ban Quản Lý (PM): Chỉ xem các tòa nhà được phân công quản lý (manager_buildings)
+        elseif ($user instanceof \App\Models\PropertyManager) {
+            $assignedIds = DB::table('manager_buildings')
+                ->where('pm_id', $user->id)
+                ->pluck('building_id')
+                ->toArray();
+            $query->whereIn('id', $assignedIds);
+        }
+        // 3. Kế toán: Chỉ xem các tòa nhà được phân công theo dõi công nợ (account_buildings)
+        elseif ($user instanceof \App\Models\Accountant) {
+            $assignedIds = DB::table('account_buildings')
+                ->where('accountant_id', $user->id)
+                ->pluck('building_id')
+                ->toArray();
+            $query->whereIn('id', $assignedIds);
+        }
+        // 4. Doanh nghiệp khách thuê: Chỉ xem các tòa nhà có hợp đồng của doanh nghiệp mình
+        elseif ($user instanceof \App\Models\Tenant) {
+            $assignedIds = DB::table('contracts')
+                ->where('tenant_id', $user->id)
+                ->pluck('building_id')
+                ->toArray();
+            $query->whereIn('id', $assignedIds);
+        }
+        // 5. Admin: Xem toàn bộ tòa nhà hệ thống
+
+        $rawKeyword = $filters['keyword'] ?? $filters['search'] ?? '';
+        if (!empty($rawKeyword)) {
+            $keyword = trim((string) $rawKeyword);
             $query->where(function ($q) use ($keyword) {
                 $q->where('name', 'like', "%{$keyword}%")
                   ->orWhere('building_code', 'like', "%{$keyword}%")
-                  ->orWhere('address', 'like', "%{$keyword}%");
+                  ->orWhere('address', 'like', "%{$keyword}%")
+                  ->orWhere('district', 'like', "%{$keyword}%");
             });
         }
 

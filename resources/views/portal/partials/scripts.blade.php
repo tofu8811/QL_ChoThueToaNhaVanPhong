@@ -9,3 +9,4 @@
 @include('portal.scripts.crm-leads')
 @include('portal.scripts.tenants')
 @include('portal.scripts.contracts')
+@include('portal.scripts.init')

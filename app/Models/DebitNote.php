@@ -74,6 +74,87 @@ class DebitNote extends Model
         return max(0, (float) $this->total_amount - (float) $this->paid_amount);
     }
 
+    /**
+     * Tính số tiền thuế GTGT (VAT) của phiếu báo cước.
+     *
+     * @return float
+     */
+    public function getVatAmountAttribute(): float
+    {
+        $sub = (float) ($this->sub_total_amount ?? ((float) $this->total_amount / 1.1));
+
+        return round(max(0, (float) $this->total_amount - $sub));
+    }
+
+    /**
+     * Lấy giá trị chuỗi của Enum DebitNoteStatus.
+     *
+     * @return string
+     */
+    public function getStatusValueAttribute(): string
+    {
+        return $this->status instanceof DebitNoteStatus
+            ? $this->status->value
+            : (string) ($this->status ?? DebitNoteStatus::ISSUED->value);
+    }
+
+    /**
+     * Nhóm phân loại lọc nhanh trên bảng quản trị công nợ (PAID | OVERDUE | PENDING).
+     *
+     * @return string
+     */
+    public function getStatusFilterGroupAttribute(): string
+    {
+        return match ($this->status_value) {
+            DebitNoteStatus::PAID->value => DebitNoteStatus::PAID->value,
+            DebitNoteStatus::OVERDUE->value => DebitNoteStatus::OVERDUE->value,
+            default => 'PENDING',
+        };
+    }
+
+    /**
+     * Tên class CSS hiển thị màu sắc trạng thái hóa đơn trên giao diện quản trị.
+     *
+     * @return string
+     */
+    public function getStatusBadgeClassAttribute(): string
+    {
+        return match ($this->status_value) {
+            DebitNoteStatus::PAID->value => 'success',
+            DebitNoteStatus::OVERDUE->value => 'danger',
+            default => 'warning',
+        };
+    }
+
+    /**
+     * Nhãn trạng thái tiếng Việt lấy trực tiếp từ Enum DebitNoteStatus.
+     *
+     * @return string
+     */
+    public function getStatusLabelAttribute(): string
+    {
+        if ($this->status instanceof DebitNoteStatus) {
+            return $this->status->label();
+        }
+
+        return DebitNoteStatus::tryFrom($this->status_value)?->label() ?? DebitNoteStatus::ISSUED->label();
+    }
+
+    /**
+     * Tạo đường dẫn hiển thị mã QR thanh toán dựa trên chuỗi vietqr_payload của hóa đơn.
+     *
+     * @return string
+     */
+    public function getVietqrImageUrlAttribute(): string
+    {
+        $code = $this->debit_note_code ?? ('DN-' . substr((string) $this->id, 0, 6));
+        $tot = (int) round((float) $this->total_amount);
+        $rawPayload = $this->vietqr_payload ?: "VIETQR|{$code}|{$tot}";
+        $qrBaseUrl = (string) config('services.bms.qr_generator_url', 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=');
+
+        return $qrBaseUrl . rawurlencode($rawPayload);
+    }
+
     public function building(): BelongsTo
     {
         return $this->belongsTo(Building::class, 'building_id');

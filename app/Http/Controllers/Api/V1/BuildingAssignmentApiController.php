@@ -94,16 +94,18 @@ class BuildingAssignmentApiController extends BaseApiController
 
     /**
      * 96. DELETE /api/v1/admin/buildings/{buildingId}/assignments/property-managers/{pmId}
+     *     DELETE /api/v1/admin/buildings/{buildingId}/assignments/managers/{managerId}
      * Gỡ bỏ phân công Ban quản lý khỏi tòa nhà.
      */
-    public function removePropertyManager(Request $request, string $buildingId, string $pmId): JsonResponse
+    public function removePropertyManager(Request $request, string $buildingId, string $pmId = ''): JsonResponse
     {
         $user = $request->user();
         if (!($user instanceof Admin)) {
             return $this->errorResponse('Chỉ Quản trị viên mới có quyền gỡ bỏ phân công Ban quản lý khỏi tòa nhà.', 403);
         }
 
-        $this->assignmentService->removePropertyManager($buildingId, $pmId);
+        $targetId = $pmId ?: (string) ($request->route('managerId') ?? $request->route('pmId'));
+        $this->assignmentService->removePropertyManager($buildingId, $targetId);
 
         return $this->successResponse(null, 'Đã gỡ bỏ Ban quản lý khỏi danh sách phụ trách tòa nhà.');
     }

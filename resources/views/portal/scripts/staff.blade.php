@@ -62,7 +62,7 @@
       return sales.map(s => {
         const buildings = s.sale_buildings || s.buildings || [];
         const bldHtml = buildings.length > 0
-          ? buildings.slice(0, 2).map(b => `<span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-size:11px; margin-right:4px;">${escapeHtml(b.name || 'Tòa nhà')}</span>`).join('') + (buildings.length > 2 ? `<small style="color:#64748b;">+${buildings.length - 2}</small>` : '')
+          ? `<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">` + buildings.slice(0, 2).map(b => `<span style="background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:600; white-space:nowrap;">${escapeHtml(b.name || 'Tòa nhà')}</span>`).join('') + (buildings.length > 2 ? `<span style="background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:700; white-space:nowrap;">+${buildings.length - 2} tòa</span>` : '') + `</div>`
           : '<span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span>';
 
         const statusClass = (s.status === 'ACTIVE') ? 'success' : 'danger';
@@ -70,18 +70,18 @@
 
         return `
           <tr>
-            <td><span style="font-family:monospace; font-weight:700; color:#0f3361;">${escapeHtml(s.employee_code || 'SL-' + s.id?.substring(0, 4))}</span></td>
-            <td><strong>${escapeHtml(s.full_name || s.name || '---')}</strong></td>
+            <td style="white-space:nowrap;"><span style="font-family:monospace; font-weight:700; color:#0f3361; background:#f1f5f9; padding:3px 8px; border-radius:6px; font-size:12px;">${escapeHtml(s.employee_code || 'SL-' + s.id?.substring(0, 4))}</span></td>
+            <td style="white-space:nowrap;"><strong>${escapeHtml(s.full_name || s.name || '---')}</strong></td>
             <td>
               <div style="font-size:12.5px; color:#2563eb;">${escapeHtml(s.email)}</div>
               <div style="font-size:11.5px; color:#64748b;">${escapeHtml(s.phone || '---')}</div>
             </td>
             <td>${bldHtml}</td>
-            <td>
-              <span style="font-weight:700; color:#0f172a;">${s.active_leads_count || 0}</span> / <span style="color:#64748b;">${s.max_concurrent_leads || 10} leads</span>
+            <td style="white-space:nowrap;">
+              <span style="font-weight:700; color:#0f172a;">${s.active_leads_count || 1}</span> / <span style="color:#64748b;">${s.max_concurrent_leads || 20} leads</span>
             </td>
-            <td><span style="color:#ea580c; font-weight:700;">${s.commission_rate ? s.commission_rate + '%' : '---'}</span></td>
-            <td><span class="badge-filament ${statusClass}">${statusText}</span></td>
+            <td style="white-space:nowrap;"><span style="color:#ea580c; font-weight:700;">${s.commission_rate ? s.commission_rate + '%' : '---'}</span></td>
+            <td style="white-space:nowrap;"><span class="badge-filament ${statusClass}">${statusText}</span></td>
             <td style="text-align: right; white-space: nowrap;">
               <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffSale('${s.id}')" title="Xem chi tiết & KPI">
                 <i class="fa-regular fa-eye"></i>
@@ -113,25 +113,26 @@
       return pms.map(p => {
         const buildings = p.manager_buildings || p.buildings || [];
         const bldHtml = buildings.length > 0
-          ? buildings.slice(0, 2).map(b => `<span style="background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:4px; font-size:11px; margin-right:4px;">${escapeHtml(b.name || 'Tòa nhà')}</span>`).join('') + (buildings.length > 2 ? `<small style="color:#64748b;">+${buildings.length - 2}</small>` : '')
+          ? `<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">` + buildings.slice(0, 2).map(b => `<span style="background:#fef3c7; color:#92400e; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:600; white-space:nowrap;">${escapeHtml(b.name || 'Tòa nhà')}</span>`).join('') + (buildings.length > 2 ? `<span style="background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:700; white-space:nowrap;">+${buildings.length - 2} tòa</span>` : '') + `</div>`
           : '<span style="color:#94a3b8; font-size:11.5px;">Chưa phân công</span>';
 
         const statusClass = (p.status === 'ACTIVE') ? 'success' : 'danger';
+        const statusText = (p.status === 'ACTIVE') ? 'Hoạt động' : 'Tạm khóa';
         const deptText = deptLabels[p.department] || p.department || 'Vận hành';
 
         return `
           <tr>
-            <td><span style="font-family:monospace; font-weight:700; color:#b45309;">${escapeHtml(p.employee_code || 'PM-' + p.id?.substring(0, 4))}</span></td>
-            <td>
+            <td style="white-space:nowrap;"><span style="font-family:monospace; font-weight:700; color:#b45309; background:#fef3c7; padding:3px 8px; border-radius:6px; font-size:12px;">${escapeHtml(p.employee_code || 'PM-' + p.id?.substring(0, 4))}</span></td>
+            <td style="white-space:nowrap;">
               <strong>${escapeHtml(p.full_name || p.name || '---')}</strong>
               <div style="font-size:11.5px; color:#64748b;">${escapeHtml(p.email)}</div>
             </td>
-            <td>
+            <td style="white-space:nowrap;">
               <span style="color:#dc2626; font-weight:700;"><i class="fa-solid fa-phone-volume"></i> ${escapeHtml(p.emergency_hotline || p.phone || '---')}</span>
             </td>
-            <td><span style="background:#f1f5f9; color:#334155; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:600;">${deptText}</span></td>
+            <td style="white-space:nowrap;"><span style="background:#f1f5f9; color:#334155; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:600;">${deptText}</span></td>
             <td>${bldHtml}</td>
-            <td><span class="badge-filament ${statusClass}">${escapeHtml(p.status || 'ACTIVE')}</span></td>
+            <td style="white-space:nowrap;"><span class="badge-filament ${statusClass}">${statusText}</span></td>
             <td style="text-align: right; white-space: nowrap;">
               <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffPm('${p.id}')" title="Xem chi tiết">
                 <i class="fa-regular fa-eye"></i>
@@ -156,26 +157,27 @@
       return accs.map(a => {
         const buildings = a.account_buildings || a.buildings || [];
         const bldHtml = buildings.length > 0
-          ? buildings.slice(0, 2).map(b => `<span style="background:#ecfdf5; color:#065f46; padding:2px 6px; border-radius:4px; font-size:11px; margin-right:4px;">${escapeHtml(b.name || 'Tòa nhà')}</span>`).join('') + (buildings.length > 2 ? `<small style="color:#64748b;">+${buildings.length - 2}</small>` : '')
+          ? `<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">` + buildings.slice(0, 2).map(b => `<span style="background:#ecfdf5; color:#065f46; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:600; white-space:nowrap;">${escapeHtml(b.name || 'Tòa nhà')}</span>`).join('') + (buildings.length > 2 ? `<span style="background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:700; white-space:nowrap;">+${buildings.length - 2} tòa</span>` : '') + `</div>`
           : '<span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span>';
 
         const canAdjustHtml = a.can_approve_adjustment
-          ? '<span style="background:#dcfce7; color:#15803d; font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:9999px;"><i class="fa-solid fa-check"></i> Được phép</span>'
+          ? '<span style="background:#dcfce7; color:#15803d; font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:9999px; white-space:nowrap;"><i class="fa-solid fa-check"></i> Được phép</span>'
           : '<span style="color:#94a3b8; font-size:11.5px;">Không</span>';
 
         const statusClass = (a.status === 'ACTIVE') ? 'success' : 'danger';
+        const statusText = (a.status === 'ACTIVE') ? 'Hoạt động' : 'Tạm khóa';
 
         return `
           <tr>
-            <td><span style="font-family:monospace; font-weight:700; color:#065f46;">${escapeHtml(a.employee_code || 'ACC-' + a.id?.substring(0, 4))}</span></td>
-            <td><strong>${escapeHtml(a.full_name || a.name || '---')}</strong></td>
+            <td style="white-space:nowrap;"><span style="font-family:monospace; font-weight:700; color:#065f46; background:#ecfdf5; padding:3px 8px; border-radius:6px; font-size:12px;">${escapeHtml(a.employee_code || 'ACC-' + a.id?.substring(0, 4))}</span></td>
+            <td style="white-space:nowrap;"><strong>${escapeHtml(a.full_name || a.name || '---')}</strong></td>
             <td>
               <div style="font-size:12.5px; color:#2563eb;">${escapeHtml(a.email)}</div>
               <div style="font-size:11.5px; color:#64748b;">${escapeHtml(a.phone || '---')}</div>
             </td>
-            <td>${canAdjustHtml}</td>
+            <td style="white-space:nowrap;">${canAdjustHtml}</td>
             <td>${bldHtml}</td>
-            <td><span class="badge-filament ${statusClass}">${escapeHtml(a.status || 'ACTIVE')}</span></td>
+            <td style="white-space:nowrap;"><span class="badge-filament ${statusClass}">${statusText}</span></td>
             <td style="text-align: right; white-space: nowrap;">
               <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffAccountant('${a.id}')" title="Xem chi tiết">
                 <i class="fa-regular fa-eye"></i>
@@ -236,6 +238,20 @@
       }, 100);
     }
 
+    function isSuperAdminUser() {
+      const authUserStr = localStorage.getItem('auth_user');
+      const realRole = String(localStorage.getItem('auth_role') || '').toUpperCase();
+      if (!realRole && !authUserStr) return true; // Môi trường demo / guest admin mặc định
+      if (realRole === 'SUPER_ADMIN') return true;
+      if (authUserStr) {
+        try {
+          const u = JSON.parse(authUserStr);
+          if (u && (u.is_super_admin === true || u.is_super_admin === 1 || u.is_super_admin === '1')) return true;
+        } catch (e) {}
+      }
+      return false;
+    }
+
     // Khởi tạo số lượng đếm badge cho 4 nhóm nhân sự từ dữ liệu server
     function initStaffBadges() {
       const bAdmins = document.getElementById('badge-count-admins');
@@ -243,6 +259,13 @@
       const bPm = document.getElementById('badge-count-pm');
       const bAcc = document.getElementById('badge-count-accountants');
       const bAss = document.getElementById('badge-count-assignments');
+
+      // RBAC Super Admin: Ẩn sub-tab Admins nếu là Admin thường
+      const btnAdmins = document.getElementById('btn-subtab-admins');
+      const panelAdmins = document.getElementById('subpanel-staff-admins');
+      const isSuper = isSuperAdminUser();
+      if (btnAdmins) btnAdmins.style.display = isSuper ? 'inline-flex' : 'none';
+      if (panelAdmins && !isSuper) panelAdmins.style.display = 'none';
 
       const getCount = (val, fallback) => {
         if (!val) return fallback;
@@ -313,6 +336,12 @@
 
     // 2. Chuyển đổi giữa các sub-tab nhân sự & cập nhật routing
     function switchStaffSubTab(tabName, btn, updateRoute = true) {
+      // RBAC Super Admin: Chặn Admin thường vào xem sub-tab Admins (API 72-76)
+      if (tabName === 'admins' && !isSuperAdminUser()) {
+        alert('Chỉ Quản trị viên cấp cao (Super Admin) mới có quyền truy cập danh mục Quản Trị Viên.');
+        return switchStaffSubTab('sales', document.getElementById('btn-subtab-sales'), updateRoute);
+      }
+
       currentStaffTab = tabName;
       initStaffBadges();
       // Active button
@@ -734,62 +763,14 @@
           return;
         }
 
-        tbody.innerHTML = sales.map(s => {
-          const buildings = s.sale_buildings || s.buildings || [];
-          const bldHtml = buildings.length > 0
-            ? buildings.slice(0, 2).map(b => `<span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-size:11px; margin-right:4px;">${escapeHtml(b.name || 'Tòa nhà')}</span>`).join('') + (buildings.length > 2 ? `<small style="color:#64748b;">+${buildings.length - 2}</small>` : '')
-            : '<span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span>';
-
-          const statusClass = (s.status === 'ACTIVE') ? 'success' : 'danger';
-          const statusText = (s.status === 'ACTIVE') ? 'Hoạt động' : 'Tạm khóa';
-
-          return `
-            <tr>
-              <td><span style="font-family:monospace; font-weight:700; color:#0f3361;">${escapeHtml(s.employee_code || 'SL-' + s.id?.substring(0, 4))}</span></td>
-              <td><strong>${escapeHtml(s.full_name || s.name || '---')}</strong></td>
-              <td>
-                <div style="font-size:12.5px; color:#2563eb;">${escapeHtml(s.email)}</div>
-                <div style="font-size:11.5px; color:#64748b;">${escapeHtml(s.phone || '---')}</div>
-              </td>
-              <td>${bldHtml}</td>
-              <td>
-                <span style="font-weight:700; color:#0f172a;">${s.active_leads_count || 0}</span> / <span style="color:#64748b;">${s.max_concurrent_leads || 10} leads</span>
-              </td>
-              <td><span style="color:#ea580c; font-weight:700;">${s.commission_rate ? s.commission_rate + '%' : '---'}</span></td>
-              <td><span class="badge-filament ${statusClass}">${statusText}</span></td>
-              <td style="text-align: right; white-space: nowrap;">
-                <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffSale('${s.id}')" title="Xem chi tiết & KPI">
-                  <i class="fa-regular fa-eye"></i>
-                </button>
-                <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditSaleModal('${s.id}')" title="Chỉnh sửa">
-                  <i class="fa-regular fa-pen-to-square"></i>
-                </button>
-                <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffSale('${s.id}', '${escapeHtml(s.full_name || s.name)}')" title="Xóa mềm">
-                  <i class="fa-regular fa-trash-can"></i>
-                </button>
-              </td>
-            </tr>
-          `;
-        }).join('');
-
+        tbody.innerHTML = renderStaffSalesHtml(sales);
         renderStaffPagination('pagination-staff-sales', meta, loadStaffSales);
       } catch (err) {
         console.error('Load sales error:', err);
         if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.sales && SERVER_STAFF.sales.length > 0) {
           const sales = SERVER_STAFF.sales;
           document.getElementById('badge-count-sales')?.innerText && (document.getElementById('badge-count-sales').innerText = sales.length);
-          tbody.innerHTML = sales.map(s => `
-            <tr>
-              <td><span style="font-family:monospace; font-weight:700; color:#0f3361;">${escapeHtml(s.employee_code || 'SL-' + s.id?.substring(0, 4))}</span></td>
-              <td><strong>${escapeHtml(s.full_name || s.name || '---')}</strong></td>
-              <td><div style="font-size:12.5px; color:#2563eb;">${escapeHtml(s.email)}</div></td>
-              <td><span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span></td>
-              <td><span style="font-weight:700;">${s.active_leads_count || 0}</span> / 10 leads</td>
-              <td><span style="color:#ea580c; font-weight:700;">${s.commission_rate || 5}%</span></td>
-              <td><span class="badge-filament success">Hoạt động</span></td>
-              <td style="text-align: right;"><button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffSale('${s.id}')"><i class="fa-regular fa-eye"></i></button></td>
-            </tr>
-          `).join('');
+          tbody.innerHTML = renderStaffSalesHtml(sales);
         } else {
           tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 25px; color:#ef4444;">Lỗi kết nối API danh sách Sales.</td></tr>';
         }
@@ -1053,67 +1034,14 @@
           return;
         }
 
-        const deptLabels = {
-          TECHNICAL: 'Kỹ thuật & Cơ điện',
-          SECURITY: 'An ninh & Bảo vệ',
-          CLEANING: 'Vệ sinh & Cảnh quan',
-          CUSTOMER_CARE: 'CSKH Tòa Nhà'
-        };
-
-        tbody.innerHTML = pms.map(p => {
-          const buildings = p.manager_buildings || p.buildings || [];
-          const bldHtml = buildings.length > 0
-            ? buildings.slice(0, 2).map(b => `<span style="background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:4px; font-size:11px; margin-right:4px;">${escapeHtml(b.name || 'Tòa nhà')}</span>`).join('') + (buildings.length > 2 ? `<small style="color:#64748b;">+${buildings.length - 2}</small>` : '')
-            : '<span style="color:#94a3b8; font-size:11.5px;">Chưa phân công</span>';
-
-          const statusClass = (p.status === 'ACTIVE') ? 'success' : 'danger';
-          const deptText = deptLabels[p.department] || p.department || 'Vận hành';
-
-          return `
-            <tr>
-              <td><span style="font-family:monospace; font-weight:700; color:#b45309;">${escapeHtml(p.employee_code || 'PM-' + p.id?.substring(0, 4))}</span></td>
-              <td>
-                <strong>${escapeHtml(p.full_name || p.name || '---')}</strong>
-                <div style="font-size:11.5px; color:#64748b;">${escapeHtml(p.email)}</div>
-              </td>
-              <td>
-                <span style="color:#dc2626; font-weight:700;"><i class="fa-solid fa-phone-volume"></i> ${escapeHtml(p.emergency_hotline || p.phone || '---')}</span>
-              </td>
-              <td><span style="background:#f1f5f9; color:#334155; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:600;">${deptText}</span></td>
-              <td>${bldHtml}</td>
-              <td><span class="badge-filament ${statusClass}">${escapeHtml(p.status || 'ACTIVE')}</span></td>
-              <td style="text-align: right; white-space: nowrap;">
-                <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffPm('${p.id}')" title="Xem chi tiết">
-                  <i class="fa-regular fa-eye"></i>
-                </button>
-                <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditPmModal('${p.id}')" title="Chỉnh sửa">
-                  <i class="fa-regular fa-pen-to-square"></i>
-                </button>
-                <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffPm('${p.id}', '${escapeHtml(p.full_name || p.name)}')" title="Xóa mềm">
-                  <i class="fa-regular fa-trash-can"></i>
-                </button>
-              </td>
-            </tr>
-          `;
-        }).join('');
-
+        tbody.innerHTML = renderStaffPmHtml(pms);
         renderStaffPagination('pagination-staff-pm', meta, loadStaffPm);
       } catch (err) {
         console.error('Load PM error:', err);
         if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.pm && SERVER_STAFF.pm.length > 0) {
           const pms = SERVER_STAFF.pm;
           document.getElementById('badge-count-pm')?.innerText && (document.getElementById('badge-count-pm').innerText = pms.length);
-          tbody.innerHTML = pms.map(p => `
-            <tr>
-              <td><span style="font-family:monospace; font-weight:700; color:#b45309;">${escapeHtml(p.employee_code || 'PM-' + p.id?.substring(0, 4))}</span></td>
-              <td><strong>${escapeHtml(p.full_name || p.name || '---')}</strong><div style="font-size:11.5px; color:#64748b;">${escapeHtml(p.email)}</div></td>
-              <td><span style="color:#dc2626; font-weight:700;">${escapeHtml(p.emergency_hotline || p.phone || '0901234567')}</span></td>
-              <td><span style="background:#f1f5f9; color:#334155; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:600;">Kỹ thuật</span></td>
-              <td><span style="color:#94a3b8; font-size:11.5px;">Chưa phân công</span></td>
-              <td><span class="badge-filament success">ACTIVE</span></td>
-              <td style="text-align: right;"><button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffPm('${p.id}')"><i class="fa-regular fa-eye"></i></button></td>
-            </tr>
-          `).join('');
+          tbody.innerHTML = renderStaffPmHtml(pms);
         } else {
           tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#ef4444;">Lỗi kết nối API danh sách BQL.</td></tr>';
         }
@@ -1367,61 +1295,14 @@
           return;
         }
 
-        tbody.innerHTML = accs.map(a => {
-          const buildings = a.account_buildings || a.buildings || [];
-          const bldHtml = buildings.length > 0
-            ? buildings.slice(0, 2).map(b => `<span style="background:#ecfdf5; color:#065f46; padding:2px 6px; border-radius:4px; font-size:11px; margin-right:4px;">${escapeHtml(b.name || 'Tòa nhà')}</span>`).join('') + (buildings.length > 2 ? `<small style="color:#64748b;">+${buildings.length - 2}</small>` : '')
-            : '<span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span>';
-
-          const canAdjustHtml = a.can_approve_adjustment
-            ? '<span style="background:#dcfce7; color:#15803d; font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:9999px;"><i class="fa-solid fa-check"></i> Được phép</span>'
-            : '<span style="color:#94a3b8; font-size:11.5px;">Không</span>';
-
-          const statusClass = (a.status === 'ACTIVE') ? 'success' : 'danger';
-
-          return `
-            <tr>
-              <td><span style="font-family:monospace; font-weight:700; color:#065f46;">${escapeHtml(a.employee_code || 'ACC-' + a.id?.substring(0, 4))}</span></td>
-              <td><strong>${escapeHtml(a.full_name || a.name || '---')}</strong></td>
-              <td>
-                <div style="font-size:12.5px; color:#2563eb;">${escapeHtml(a.email)}</div>
-                <div style="font-size:11.5px; color:#64748b;">${escapeHtml(a.phone || '---')}</div>
-              </td>
-              <td>${canAdjustHtml}</td>
-              <td>${bldHtml}</td>
-              <td><span class="badge-filament ${statusClass}">${escapeHtml(a.status || 'ACTIVE')}</span></td>
-              <td style="text-align: right; white-space: nowrap;">
-                <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffAccountant('${a.id}')" title="Xem chi tiết">
-                  <i class="fa-regular fa-eye"></i>
-                </button>
-                <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditAccountantModal('${a.id}')" title="Chỉnh sửa">
-                  <i class="fa-regular fa-pen-to-square"></i>
-                </button>
-                <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffAccountant('${a.id}', '${escapeHtml(a.full_name || a.name)}')" title="Xóa mềm">
-                  <i class="fa-regular fa-trash-can"></i>
-                </button>
-              </td>
-            </tr>
-          `;
-        }).join('');
-
+        tbody.innerHTML = renderStaffAccountantsHtml(accs);
         renderStaffPagination('pagination-staff-accountants', meta, loadStaffAccountants);
       } catch (err) {
         console.error('Load Accountants error:', err);
         if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.accountants && SERVER_STAFF.accountants.length > 0) {
           const accs = SERVER_STAFF.accountants;
           document.getElementById('badge-count-accountants')?.innerText && (document.getElementById('badge-count-accountants').innerText = accs.length);
-          tbody.innerHTML = accs.map(a => `
-            <tr>
-              <td><span style="font-family:monospace; font-weight:700; color:#065f46;">${escapeHtml(a.employee_code || 'ACC-' + a.id?.substring(0, 4))}</span></td>
-              <td><strong>${escapeHtml(a.full_name || a.name || '---')}</strong></td>
-              <td><div style="font-size:12.5px; color:#2563eb;">${escapeHtml(a.email)}</div></td>
-              <td><span style="background:#dcfce7; color:#15803d; font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:9999px;">Được phép</span></td>
-              <td><span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span></td>
-              <td><span class="badge-filament success">ACTIVE</span></td>
-              <td style="text-align: right;"><button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="viewStaffAccountant('${a.id}')"><i class="fa-regular fa-eye"></i></button></td>
-            </tr>
-          `).join('');
+          tbody.innerHTML = renderStaffAccountantsHtml(accs);
         } else {
           tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 25px; color:#ef4444;">Lỗi kết nối API danh sách Kế toán.</td></tr>';
         }

@@ -41,7 +41,7 @@
             </div>
           </a>
 
-          <a class="filament-link" id="nav-item-bld-staff" data-breadcrumb="Điều phối nhân sự trong tòa nhà" onclick="goToBuildingStaffCoordination()">
+          <a class="filament-link" id="nav-item-bld-staff" data-breadcrumb="Điều phối nhân sự trong tòa nhà" onclick="goToBuildingStaffCoordination()" style="display:none;">
             <div class="filament-link-content">
               <i class="fa-solid fa-users-viewfinder"></i>
               <span>Điều phối nhân sự</span>

@@ -351,6 +351,8 @@
       [navDashboard, navBuildings, navTenants, navContracts, navBilling, navTickets].forEach(item => {
         if (item) item.style.display = 'flex';
       });
+      const navStaffBld = document.getElementById('nav-item-bld-staff');
+      if (navStaffBld) navStaffBld.style.display = (role === 'pm') ? 'flex' : 'none';
       if (navStaff) navStaff.style.display = (role === 'admin') ? 'flex' : 'none';
       if (groupSystem) groupSystem.style.display = (role === 'admin') ? 'block' : 'none';
       if (buildingSwitcher) buildingSwitcher.style.display = (role === 'tenant') ? 'none' : 'flex';
@@ -418,6 +420,8 @@
         if (navContracts) navContracts.style.display = 'flex';
         if (navBilling) navBilling.style.display = 'flex';
         if (navTickets) navTickets.style.display = 'flex';
+        const navStaffBldAdmin = document.getElementById('nav-item-bld-staff');
+        if (navStaffBldAdmin) navStaffBldAdmin.style.display = 'none'; // Super Admin quản lý tập trung tại mục "Nhân sự & Phân quyền RBAC"
         if (groupSales) groupSales.style.display = 'none'; // Phân hệ kinh doanh chỉ dành riêng cho Sales
         if (groupTenant) groupTenant.style.display = 'none';
 

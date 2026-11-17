@@ -8,15 +8,19 @@
    1. BAN QUẢN LÝ TÒA NHÀ (BUILDING MANAGEMENT - BQL)
    ========================================================================== */
 
-// Điều phối nhân sự phụ trách tòa nhà
+// Điều phối nhân sự phụ trách tòa nhà (Dành cho Ban Quản Lý)
 function goToBuildingStaffCoordination() {
-  if (typeof goToBuildingAssignments === 'function') {
-    goToBuildingAssignments();
-  } else if (typeof openBuildingAssignmentsModal === 'function') {
-    const bldSelect = document.getElementById('sidebar-building-select');
-    const bldId = bldSelect ? bldSelect.value : '';
-    const bldName = bldSelect ? bldSelect.options[bldSelect.selectedIndex]?.text : '';
+  const bldSelect = document.getElementById('sidebar-building-select');
+  let bldId = bldSelect ? bldSelect.value : '';
+  let bldName = bldSelect ? bldSelect.options[bldSelect.selectedIndex]?.text : '';
+  if (!bldId && typeof adminBuildingsList !== 'undefined' && Array.isArray(adminBuildingsList) && adminBuildingsList.length > 0) {
+    bldId = adminBuildingsList[0].id;
+    bldName = adminBuildingsList[0].name;
+  }
+  if (typeof openBuildingAssignmentsModal === 'function') {
     openBuildingAssignmentsModal(bldId, bldName);
+  } else if (typeof goToBuildingAssignments === 'function') {
+    goToBuildingAssignments(bldId);
   }
 }
 

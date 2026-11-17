@@ -140,15 +140,15 @@
     <div class="bms-kpi-card" style="cursor:pointer;" onclick="switchFilamentTab('tab-admin-tickets', document.getElementById('nav-item-tickets'))">
       <div class="kpi-admin-content">
         <div class="bms-kpi-top">
-          <div class="bms-kpi-title">BẢO TRÌ & LEADS MỚI</div>
+          <div class="bms-kpi-title">SỰ CỐ & BẢO TRÌ KỸ THUẬT</div>
           <div class="bms-kpi-icon" style="background:#fef2f2;color:#e11d48;">
             <i class="fa-solid fa-screwdriver-wrench"></i>
           </div>
         </div>
         <div class="bms-kpi-main">
           <span class="bms-kpi-number" style="color:#e11d48;">{{ sprintf('%02d', $stats['open_tickets'] ?? 1) }}</span>
-          <span style="font-size:13.5px;font-weight:600;color:#64748b;">ticket mở</span>
-          <span class="bms-kpi-pill" style="background:#fef3c7;color:#b45309;">{{ count($leads ?? []) }} leads CRM</span>
+          <span style="font-size:13.5px;font-weight:600;color:#64748b;">phiếu sự cố</span>
+          <span class="bms-kpi-pill" style="background:#fef2f2;color:#b91c1c;">Cần xử lý</span>
         </div>
         <div class="bms-kpi-foot">
           <span>Mặt bằng cần chú ý:</span>

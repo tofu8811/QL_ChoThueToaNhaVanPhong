@@ -72,8 +72,8 @@
           </a>
         </div>
 
-        <!-- Section 2: PHÂN HỆ KINH DOANH & SALES (Sales / Admin) -->
-        <div class="filament-nav-section" id="nav-group-sales" style="padding-top:8px;">
+        <!-- Section 2: PHÂN HỆ KINH DOANH & SALES (Dành riêng cho Chuyên viên Sales) -->
+        <div class="filament-nav-section" id="nav-group-sales" style="padding-top:8px;display:none;">
           <div class="filament-section-heading">PHÂN HỆ KINH DOANH (SALES)</div>
 
           <a class="filament-link" id="nav-sales-performance" data-breadcrumb="Báo cáo hiệu suất kinh doanh cá nhân" onclick="switchFilamentTab('tab-sales-performance', this)">

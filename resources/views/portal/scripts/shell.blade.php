@@ -418,7 +418,7 @@
         if (navContracts) navContracts.style.display = 'flex';
         if (navBilling) navBilling.style.display = 'flex';
         if (navTickets) navTickets.style.display = 'flex';
-        if (groupSales) groupSales.style.display = 'block';
+        if (groupSales) groupSales.style.display = 'none'; // Phân hệ kinh doanh chỉ dành riêng cho Sales
         if (groupTenant) groupTenant.style.display = 'none';
 
         // Ẩn sub-tab Admins nếu không phải Super Admin

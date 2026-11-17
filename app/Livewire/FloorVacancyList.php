@@ -14,6 +14,10 @@ class FloorVacancyList extends Component
     public string $buildingId = '';
     public ?Building $building = null;
 
+    // Xem chi tiết & album ảnh mặt bằng
+    public bool $showUnitModal = false;
+    public ?Unit $selectedUnit = null;
+
     protected $listeners = [
         'refreshVacancyList' => '$refresh',
         'unitStatusUpdated'  => '$refresh',
@@ -23,6 +27,18 @@ class FloorVacancyList extends Component
     {
         $this->buildingId = $buildingId;
         $this->building = Building::find($buildingId);
+    }
+
+    public function viewUnitDetail(string $unitId): void
+    {
+        $this->selectedUnit = Unit::with(['images', 'building'])->find($unitId);
+        $this->showUnitModal = true;
+    }
+
+    public function closeUnitModal(): void
+    {
+        $this->showUnitModal = false;
+        $this->selectedUnit = null;
     }
 
     public function bookFloor(string $floor, string $area): void
@@ -37,6 +53,7 @@ class FloorVacancyList extends Component
 
         if ($this->buildingId) {
             $units = Unit::query()
+                ->with('images')
                 ->where('building_id', $this->buildingId)
                 ->whereIn('status', ['AVAILABLE', 'EXPIRING_SOON'])
                 ->orderBy('floor_number')

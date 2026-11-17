@@ -121,7 +121,7 @@ class Contract extends Model
      */
     public function images(): HasMany
     {
-        return $this->hasMany(ContractImage::class, 'contract_id')->orderBy('display_order');
+        return $this->hasMany(ContractImage::class, 'contract_id')->orderBy('id');
     }
 
     /**

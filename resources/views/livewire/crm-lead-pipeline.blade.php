@@ -1,4 +1,24 @@
-<div>
+<div wire:poll.3s>
+  <!-- Realtime Notification Banner khi có Lead mới tự động phân bổ -->
+  @if($realtimeNotification)
+    <div style="background: linear-gradient(135deg, #1e3a8a, #2563eb); color: #fff; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 14px rgba(37,99,235,0.3); border-left: 5px solid #facc15;">
+      <div style="display:flex; align-items:center; gap: 14px;">
+        <div style="width:38px; height:38px; border-radius:50%; background:rgba(250,204,21,0.2); display:flex; align-items:center; justify-content:center; color:#facc15; font-size:18px;">
+          <i class="fa-solid fa-bell"></i>
+        </div>
+        <div>
+          <div style="font-weight:700; font-size:14.5px;">{{ $realtimeNotification }}</div>
+          <div style="font-size:12px; color:#bfdbfe; margin-top:2px;">
+            <i class="fa-solid fa-bolt" style="color:#facc15;"></i> Phân bổ tức thì qua giải thuật Least-Active-Leads. Hãy liên hệ khách theo chuẩn SLA 24h!
+          </div>
+        </div>
+      </div>
+      <button type="button" wire:click="$set('realtimeNotification', null)" style="background:rgba(255,255,255,0.2); border:none; color:#fff; border-radius:6px; padding:6px 12px; cursor:pointer; font-size:12px; font-weight:600;">
+        <i class="fa-solid fa-check"></i> Đã xem
+      </button>
+    </div>
+  @endif
+
   <!-- Header Bar -->
   <div class="filament-page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
     <div>

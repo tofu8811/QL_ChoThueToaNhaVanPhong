@@ -233,7 +233,8 @@ class Module3TenantAndContractApiTest extends TestCase
             ->assertJsonPath('status', 'success');
 
         $storedPath = $uploadResponse->json('data.path');
-        Storage::disk('local')->assertExists($storedPath);
+        $disk = config('filesystems.disks.supabase_private.key') ? 'supabase_private' : 'local';
+        Storage::disk($disk)->assertExists($storedPath);
 
         // Lấy Signed URL tải file
         $downloadResponse = $this->getJson("/api/v1/admin/tenants/{$this->tenant->id}/download-license");

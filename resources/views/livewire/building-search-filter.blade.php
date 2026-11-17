@@ -1,7 +1,65 @@
 <div>
   <!-- Advanced Filter Floating Box -->
   <div class="container mo-filter-container" id="mo-building-filter-section">
-    <div class="mo-filter-box">
+    <div class="mo-filter-box" x-data="{
+      keyword: $wire.entangle('keyword'),
+      province: $wire.entangle('province'),
+      district: $wire.entangle('district'),
+      grade: $wire.entangle('grade'),
+      price: $wire.entangle('price'),
+      area: $wire.entangle('area'),
+
+      provinceMap: {
+        '1': 'Hà Nội',
+        '79': 'TP. Hồ Chí Minh',
+        '75': 'Đồng Nai',
+        '48': 'Đà Nẵng'
+      },
+      gradeMap: {
+        'A': 'Tòa nhà Hạng A',
+        'B': 'Tòa nhà Hạng B',
+        'C': 'Tòa nhà Hạng C'
+      },
+      priceMap: {
+        'under20': 'Dưới $20 / m²',
+        '20to35': '$20 - $35 / m²',
+        'over35': 'Trên $35 / m²'
+      },
+      areaMap: {
+        'under150': 'Dưới 150 m²',
+        '150to500': '150 - 500 m²',
+        'over500': 'Trên 500 m²'
+      },
+
+      get hasActive() {
+        return (Boolean(this.keyword) && String(this.keyword).trim() !== '') ||
+               (Boolean(this.province) && this.province !== 'all') ||
+               (Boolean(this.district) && this.district !== 'all') ||
+               (Boolean(this.grade) && this.grade !== 'all') ||
+               (Boolean(this.price) && this.price !== 'all') ||
+               (Boolean(this.area) && this.area !== 'all');
+      },
+
+      remove(type) {
+        if (type === 'keyword') { this.keyword = ''; }
+        else if (type === 'province') { this.province = 'all'; this.district = 'all'; }
+        else if (type === 'district') { this.district = 'all'; }
+        else if (type === 'grade') { this.grade = 'all'; }
+        else if (type === 'price') { this.price = 'all'; }
+        else if (type === 'area') { this.area = 'all'; }
+        $wire.removeFilter(type);
+      },
+
+      resetAll() {
+        this.keyword = '';
+        this.province = 'all';
+        this.district = 'all';
+        this.grade = 'all';
+        this.price = 'all';
+        this.area = 'all';
+        $wire.resetFilters();
+      }
+    }">
       <div class="mo-filter-tabs">
         <div class="mo-filter-tab active"><i class="fa-solid fa-building"></i> Cho Thuê Văn Phòng</div>
         <div class="mo-filter-tab" onclick="alert('Đã chọn phân hệ Văn Phòng Trọn Gói / Coworking Space!')"><i class="fa-solid fa-briefcase"></i> Văn Phòng Trọn Gói</div>
@@ -14,14 +72,14 @@
           <label class="mo-filter-label"><i class="fa-solid fa-magnifying-glass"></i> Tên tòa nhà hoặc đường</label>
           <div class="mo-input-wrap">
             <i class="fa-solid fa-search"></i>
-            <input type="text" wire:model.live.debounce.350ms="keyword" placeholder="Ví dụ: Capital Place, Keangnam, Nexus, Pegasus...">
+            <input type="text" x-model="keyword" wire:keydown.enter="applySearch" placeholder="Ví dụ: Capital Place, Keangnam, Nexus, Pegasus...">
           </div>
         </div>
 
         <!-- Province / Thành phố -->
         <div class="mo-filter-group">
           <label class="mo-filter-label"><i class="fa-solid fa-map-location-dot"></i> Tỉnh / Thành phố</label>
-          <select wire:model.live="province" class="mo-filter-select">
+          <select x-model="province" @change="$wire.set('province', province); $wire.set('district', 'all')" class="mo-filter-select">
             <option value="all">Toàn quốc (Tất cả khu vực)</option>
             <option value="1">Thành phố Hà Nội</option>
             <option value="79">TP. Hồ Chí Minh</option>
@@ -30,70 +88,65 @@
           </select>
         </div>
 
-        <!-- District / Quận Huyện -->
+        <!-- District / Quận Huyện (Đọc ĐỘNG 100% từ Database) -->
         <div class="mo-filter-group">
           <label class="mo-filter-label"><i class="fa-solid fa-location-dot"></i> Quận / Huyện / Khu vực</label>
-          <select wire:model.live="district" class="mo-filter-select">
+          <select x-model="district" class="mo-filter-select">
             <option value="all">Tất cả Quận / Huyện</option>
 
-            @if($province === '1')
-              <!-- Chỉ hiển thị quận tại Hà Nội -->
-              <optgroup label="Thành phố Hà Nội">
-                <option value="Quận Ba Đình">Quận Ba Đình (3 tòa)</option>
-                <option value="Quận Cầu Giấy">Quận Cầu Giấy (2 tòa)</option>
-                <option value="Quận Hoàn Kiếm">Quận Hoàn Kiếm (2 tòa)</option>
-                <option value="Quận Nam Từ Liêm">Quận Nam Từ Liêm (1 tòa)</option>
-                <option value="Quận Hai Bà Trưng">Quận Hai Bà Trưng (1 tòa)</option>
-                <option value="Huyện Gia Lâm">Huyện Gia Lâm (1 tòa)</option>
-              </optgroup>
-            @elseif($province === '79')
-              <!-- Chỉ hiển thị quận tại TP.HCM -->
-              <optgroup label="TP. Hồ Chí Minh">
-                <option value="Quận 1">Quận 1 (Trung tâm) (7 tòa)</option>
-                <option value="Quận 3">Quận 3 (3 tòa)</option>
-                <option value="Bình Thạnh">Quận Bình Thạnh (3 tòa)</option>
-                <option value="Quận 7">Quận 7 (2 tòa)</option>
-                <option value="Quận 10">Quận 10 (2 tòa)</option>
-                <option value="Phú Nhuận">Quận Phú Nhuận (2 tòa)</option>
-                <option value="TP Thủ Đức">TP. Thủ Đức (1 tòa)</option>
-                <option value="Tân Bình">Quận Tân Bình (1 tòa)</option>
-                <option value="Quận 4">Quận 4 (1 tòa)</option>
-              </optgroup>
-            @elseif($province === '75')
-              <!-- Chỉ hiển thị Đồng Nai -->
-              <optgroup label="Thành phố Đồng Nai">
-                <option value="Thành phố Biên Hòa">TP. Biên Hòa (4 tòa)</option>
-              </optgroup>
-            @elseif($province === '48')
-              <!-- Chỉ hiển thị Đà Nẵng -->
-              <optgroup label="Thành phố Đà Nẵng">
-                <option value="Quận Hải Châu">Quận Hải Châu (3 tòa)</option>
-              </optgroup>
+            @if($province === 'all')
+              {{-- Toàn quốc: Nhóm động theo từng Tỉnh/Thành trực tiếp từ DB --}}
+              @php
+                $grouped = collect($dbDistricts)->groupBy('province');
+              @endphp
+              @foreach($grouped as $provName => $dList)
+                <optgroup label="{{ $provName }}">
+                  @foreach($dList as $d)
+                    <option value="{{ $d['name'] }}">{{ $d['name'] }} ({{ $d['count'] }} tòa)</option>
+                  @endforeach
+                </optgroup>
+              @endforeach
+
+              @if(!empty($dbWards))
+                <optgroup label="Phường / Xã có văn phòng cho thuê">
+                  @foreach($dbWards as $w)
+                    <option value="{{ $w['display_label'] }}">{{ $w['display_label'] }} ({{ $w['count'] }} tòa)</option>
+                  @endforeach
+                </optgroup>
+              @endif
             @else
-              <!-- Hiển thị toàn bộ nhóm quận theo từng Tỉnh/Thành -->
-              <optgroup label="Thủ đô Hà Nội">
-                <option value="Quận Ba Đình">Ba Đình</option>
-                <option value="Quận Cầu Giấy">Cầu Giấy</option>
-                <option value="Quận Hoàn Kiếm">Hoàn Kiếm</option>
-                <option value="Quận Nam Từ Liêm">Nam Từ Liêm</option>
-                <option value="Quận Hai Bà Trưng">Hai Bà Trưng</option>
-                <option value="Huyện Gia Lâm">Gia Lâm</option>
-              </optgroup>
-              <optgroup label="TP. Hồ Chí Minh">
-                <option value="Quận 1">Quận 1</option>
-                <option value="Quận 3">Quận 3</option>
-                <option value="Quận 7">Quận 7</option>
-                <option value="Bình Thạnh">Bình Thạnh</option>
-                <option value="TP Thủ Đức">TP. Thủ Đức</option>
-                <option value="Quận 10">Quận 10</option>
-                <option value="Phú Nhuận">Phú Nhuận</option>
-              </optgroup>
-              <optgroup label="Đồng Nai">
-                <option value="Thành phố Biên Hòa">TP. Biên Hòa</option>
-              </optgroup>
-              <optgroup label="Đà Nẵng">
-                <option value="Quận Hải Châu">Quận Hải Châu</option>
-              </optgroup>
+              {{-- Tỉnh/Thành cụ thể: Liệt kê động từ DB --}}
+              @if(!empty($dbDistricts))
+                <optgroup label="Khu Vực (Quận / Huyện có văn phòng)">
+                  @foreach($dbDistricts as $d)
+                    <option value="{{ $d['name'] }}">{{ $d['name'] }} ({{ $d['count'] }} tòa)</option>
+                  @endforeach
+                </optgroup>
+              @endif
+
+              @if(!empty($dbWards))
+                <optgroup label="Phường / Xã (Có văn phòng cho thuê)">
+                  @foreach($dbWards as $w)
+                    <option value="{{ $w['display_label'] }}">{{ $w['display_label'] }} ({{ $w['count'] }} tòa)</option>
+                  @endforeach
+                </optgroup>
+              @endif
+
+              {{-- Bổ sung các phường mới từ file địa giới hành chính nếu chưa có trong DB --}}
+              @if(!empty($geoData['wards']))
+                <optgroup label="Địa chỉ sau sáp nhập (Phường Mới)">
+                  @foreach($geoData['wards'] as $ward)
+                    @php $wLabel = $ward['display_label'] ?? $ward['name']; @endphp
+                    @if(!empty($ward['district_hint']) && !collect($dbWards)->contains('display_label', $wLabel))
+                      <option value="{{ $wLabel }}">{{ $wLabel }}</option>
+                    @endif
+                  @endforeach
+                </optgroup>
+              @endif
+            @endif
+
+            @if(!empty($district) && $district !== 'all' && !collect($dbDistricts)->contains('name', $district) && !collect($dbWards)->contains('display_label', $district))
+              <option value="{{ $district }}" selected>{{ $district }}</option>
             @endif
           </select>
         </div>
@@ -101,7 +154,7 @@
         <!-- Grade -->
         <div class="mo-filter-group">
           <label class="mo-filter-label"><i class="fa-solid fa-medal"></i> Hạng văn phòng</label>
-          <select wire:model.live="grade" class="mo-filter-select">
+          <select x-model="grade" class="mo-filter-select">
             <option value="all">Tất cả hạng</option>
             <option value="A">Hạng A / A+ (Quốc tế & Xanh)</option>
             <option value="B">Hạng B / B+ (Hiện đại)</option>
@@ -112,7 +165,7 @@
         <!-- Price Range -->
         <div class="mo-filter-group">
           <label class="mo-filter-label"><i class="fa-solid fa-dollar-sign"></i> Khoảng giá ($/m²)</label>
-          <select wire:model.live="price" class="mo-filter-select">
+          <select x-model="price" class="mo-filter-select">
             <option value="all">Tất cả mức giá</option>
             <option value="under20">Dưới $20 / m² (Kinh tế)</option>
             <option value="20to35">$20 - $35 / m² (Phổ biến)</option>
@@ -123,7 +176,7 @@
         <!-- Area Range -->
         <div class="mo-filter-group">
           <label class="mo-filter-label"><i class="fa-solid fa-vector-square"></i> Diện tích</label>
-          <select wire:model.live="area" class="mo-filter-select">
+          <select x-model="area" class="mo-filter-select">
             <option value="all">Tất cả diện tích</option>
             <option value="under150">Dưới 150 m²</option>
             <option value="150to500">150 - 500 m²</option>
@@ -131,46 +184,80 @@
           </select>
         </div>
 
-        <!-- Reset Button -->
+        <!-- Search Submit Button -->
         <div>
-          <button class="btn-filter-submit" type="button" wire:click="resetFilters">
-            <i class="fa-solid fa-rotate-left"></i> Đặt Lại
+          <button class="btn-filter-submit" type="button" wire:click="applySearch" id="btn-filter-search" title="Tìm kiếm theo các tiêu chí đã chọn">
+            <i class="fa-solid fa-magnifying-glass"></i> Tìm
           </button>
         </div>
       </div>
 
-      <!-- Quick Filter Chips -->
-      <div class="mo-quick-tags">
-        <span class="mo-quick-tag-label"><i class="fa-solid fa-tags"></i> Gợi ý nhanh:</span>
-        <button class="mo-chip {{ $province === '1' ? 'active' : '' }}" type="button" wire:click="setProvince('1')">
-          <i class="fa-solid fa-city" style="color:#2563eb;"></i> Hà Nội
-        </button>
-        <button class="mo-chip {{ $province === '79' ? 'active' : '' }}" type="button" wire:click="setProvince('79')">
-          <i class="fa-solid fa-city" style="color:#ea580c;"></i> TP.HCM
-        </button>
-        <button class="mo-chip {{ $province === '75' ? 'active' : '' }}" type="button" wire:click="setProvince('75')">
-          <i class="fa-solid fa-industry" style="color:#10b981;"></i> Đồng Nai
-        </button>
-        <button class="mo-chip {{ $province === '48' ? 'active' : '' }}" type="button" wire:click="setProvince('48')">
-          <i class="fa-solid fa-water" style="color:#6366f1;"></i> Đà Nẵng
-        </button>
-        <button class="mo-chip {{ $grade === 'A' ? 'active' : '' }}" type="button" wire:click="setGrade('A')">
-          <i class="fa-solid fa-award" style="color:#f59e0b;"></i> Tòa nhà Hạng A
-        </button>
-        <button class="mo-chip {{ $district === 'Quận 1' ? 'active' : '' }}" type="button" wire:click="setDistrict('Quận 1')">
-          Quận 1
-        </button>
-        <button class="mo-chip {{ $district === 'Quận Ba Đình' ? 'active' : '' }}" type="button" wire:click="setDistrict('Quận Ba Đình')">
-          Ba Đình
-        </button>
-        <button class="mo-chip {{ $district === 'Thành phố Biên Hòa' ? 'active' : '' }}" type="button" wire:click="setDistrict('Thành phố Biên Hòa')">
-          Biên Hòa
-        </button>
-        @if($keyword || $province !== 'all' || $district !== 'all' || $grade !== 'all' || $price !== 'all' || $area !== 'all')
-          <button class="mo-chip" type="button" wire:click="resetFilters" style="color:#ef4444;font-weight:700;">
-            <i class="fa-solid fa-xmark"></i> Xóa tất cả bộ lọc
+      <!-- Active Applied Filters Chips (Hiển thị các bộ lọc đang chọn - Phản hồi 0ms bằng Alpine.js) -->
+      <div class="mo-active-filters-bar" x-show="hasActive" x-cloak style="display: none;">
+        <span class="mo-active-filters-label">
+          <i class="fa-solid fa-filter" style="color: var(--mo-orange);"></i> Đang lọc theo:
+        </span>
+
+        <div class="mo-active-chips-wrap">
+          {{-- 1. Từ khóa --}}
+          <span class="mo-active-filter-chip" x-show="Boolean(keyword) && String(keyword).trim() !== ''" style="display: none;">
+            <i class="fa-solid fa-magnifying-glass" style="color:#2563eb;font-size:11px;"></i>
+            <span>Từ khóa: <strong x-text="'&quot;' + String(keyword).trim() + '&quot;'"></strong></span>
+            <button type="button" class="chip-remove-btn" @click="remove('keyword')" title="Xóa từ khóa">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </span>
+
+          {{-- 2. Tỉnh / Thành phố --}}
+          <span class="mo-active-filter-chip" x-show="Boolean(province) && province !== 'all'" style="display: none;">
+            <i class="fa-solid fa-city" style="color:#ea580c;font-size:11px;"></i>
+            <span x-text="provinceMap[province] || province"></span>
+            <button type="button" class="chip-remove-btn" @click="remove('province')" title="Bỏ chọn tỉnh thành">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </span>
+
+          {{-- 3. Quận / Huyện / Khu vực --}}
+          <span class="mo-active-filter-chip" x-show="Boolean(district) && district !== 'all'" style="display: none;">
+            <i class="fa-solid fa-location-dot" style="color:#10b981;font-size:11px;"></i>
+            <span x-text="district"></span>
+            <button type="button" class="chip-remove-btn" @click="remove('district')" title="Bỏ chọn khu vực">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </span>
+
+          {{-- 4. Hạng văn phòng --}}
+          <span class="mo-active-filter-chip" x-show="Boolean(grade) && grade !== 'all'" style="display: none;">
+            <i class="fa-solid fa-award" style="color:#f59e0b;font-size:11px;"></i>
+            <span x-text="gradeMap[grade] || ('Hạng ' + grade)"></span>
+            <button type="button" class="chip-remove-btn" @click="remove('grade')" title="Bỏ chọn hạng">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </span>
+
+          {{-- 5. Khoảng giá --}}
+          <span class="mo-active-filter-chip" x-show="Boolean(price) && price !== 'all'" style="display: none;">
+            <i class="fa-solid fa-dollar-sign" style="color:#8b5cf6;font-size:11px;"></i>
+            <span x-text="priceMap[price] || price"></span>
+            <button type="button" class="chip-remove-btn" @click="remove('price')" title="Bỏ chọn mức giá">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </span>
+
+          {{-- 6. Diện tích --}}
+          <span class="mo-active-filter-chip" x-show="Boolean(area) && area !== 'all'" style="display: none;">
+            <i class="fa-solid fa-vector-square" style="color:#0284c7;font-size:11px;"></i>
+            <span x-text="areaMap[area] || area"></span>
+            <button type="button" class="chip-remove-btn" @click="remove('area')" title="Bỏ chọn diện tích">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </span>
+
+          {{-- Nút Xóa tất cả bộ lọc --}}
+          <button class="mo-chip-clear-all" type="button" @click="resetAll()" title="Đặt lại toàn bộ tiêu chí tìm kiếm">
+            <i class="fa-solid fa-rotate-left"></i> Xóa tất cả bộ lọc
           </button>
-        @endif
+        </div>
       </div>
     </div>
   </div>
@@ -289,13 +376,13 @@
       </aside>
 
       <!-- Right Content: Building Listings -->
-      <div class="mo-listings-wrapper">
+      <div class="mo-listings-wrapper" id="mo-building-listings" style="scroll-margin-top: 90px;">
         <div class="mo-listings-header">
           <div class="mo-listings-title">
             <h2>Danh sách tòa nhà văn phòng cho thuê</h2>
             <p>
               Hiển thị {{ $buildings->total() }} tòa nhà văn phòng phù hợp với bộ lọc
-              <span wire:loading style="color:#ea580c;margin-left:8px;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải...</span>
+              <span wire:loading wire:target="applySearch, sortBy" style="color:#ea580c;margin-left:8px;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải...</span>
             </p>
           </div>
           <div class="mo-sort-controls">
@@ -428,4 +515,17 @@
       </div>
     </div>
   </div>
+
+  @script
+  <script>
+    $wire.on('scroll-to-listings', () => {
+      setTimeout(() => {
+        const el = document.getElementById('mo-building-listings');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    });
+  </script>
+  @endscript
 </div>

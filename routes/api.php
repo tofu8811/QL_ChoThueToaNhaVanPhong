@@ -140,6 +140,7 @@ Route::prefix('v1')->group(function () {
         Route::put('profile', [TenantPortalApiController::class, 'updateProfile'])->name('v1.tenant.profile.update');
         Route::get('contracts', [TenantPortalApiController::class, 'getContracts'])->name('v1.tenant.contracts.index');
         Route::get('contracts/{id}', [TenantPortalApiController::class, 'getContractDetail'])->name('v1.tenant.contracts.show');
+        Route::get('contracts/{id}/files/{fileId}/download', [TenantPortalApiController::class, 'downloadContractFile'])->name('v1.tenant.contracts.downloadFile');
     });
 
     // =========================================================================

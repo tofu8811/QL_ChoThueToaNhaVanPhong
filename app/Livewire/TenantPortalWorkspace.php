@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Contract;
 use App\Models\DebitNote;
 use App\Models\Tenant;
+use App\Models\Unit;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -21,6 +22,10 @@ class TenantPortalWorkspace extends Component
     // Modal chi tiết phiếu cước (Debit Note Detail)
     public bool $showDebitModal = false;
     public ?DebitNote $selectedDebitNote = null;
+
+    // Modal xem chi tiết & sơ đồ mặt bằng
+    public bool $showUnitModal = false;
+    public ?Unit $selectedUnit = null;
 
     public function mount(?string $tenantId = null): void
     {
@@ -55,6 +60,18 @@ class TenantPortalWorkspace extends Component
     {
         $this->showDebitModal = false;
         $this->selectedDebitNote = null;
+    }
+
+    public function viewUnitDetail(string $unitId): void
+    {
+        $this->selectedUnit = Unit::with(['images', 'building'])->find($unitId);
+        $this->showUnitModal = true;
+    }
+
+    public function closeUnitModal(): void
+    {
+        $this->showUnitModal = false;
+        $this->selectedUnit = null;
     }
 
     public function render()

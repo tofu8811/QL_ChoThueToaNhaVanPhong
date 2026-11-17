@@ -74,6 +74,17 @@
                     <div style="font-size:12.5px;color:#64748b;">
                         <i class="fa-solid fa-building" style="color:var(--mo-primary);"></i> {{ $activeContract?->building?->name ?? 'Tòa nhà văn phòng' }}
                     </div>
+                    @if($activeContract?->contractUnits && $activeContract->contractUnits->isNotEmpty())
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+                            @foreach($activeContract->contractUnits as $cu)
+                                @if($cu->unit_id)
+                                    <button wire:click="viewUnitDetail('{{ $cu->unit_id }}')" type="button" class="btn-mo-outline" style="padding:2px 8px;font-size:11.5px;color:#0284c7;border-color:#bae6fd;cursor:pointer;">
+                                        <i class="fa-solid fa-map-location-dot"></i> Sơ đồ {{ $cu->unit?->unit_code }}
+                                    </button>
+                                @endif
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
 
                 <!-- Stat 2: Diện tích -->
@@ -91,7 +102,7 @@
                 <div class="filament-stat-card" style="background:#fff;padding:18px;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
                     <div class="filament-stat-label" style="font-size:12.5px;color:#64748b;margin-bottom:4px;">Thời hạn hợp đồng</div>
                     <div class="filament-stat-value" style="font-size:20px;font-weight:700;color:#0f172a;margin-bottom:4px;">
-                        {{ $activeContract?->end_date ? \Carbon\Carbon::parse($activeContract->end_date)->diffInMonths(now()) : 0 }} <span style="font-size:15px;color:#64748b;">tháng còn lại</span>
+                        {{ $activeContract?->end_date ? max(0, (int) round(abs(\Carbon\Carbon::parse($activeContract->end_date)->diffInMonths(now())))) : 0 }} <span style="font-size:15px;color:#64748b;">tháng còn lại</span>
                     </div>
                     <div style="font-size:12.5px;color:#64748b;">
                         Hết hạn: {{ $activeContract?->end_date ? \Carbon\Carbon::parse($activeContract->end_date)->format('d/m/Y') : '-' }}
@@ -129,6 +140,25 @@
                             <tr style="border-bottom:1px solid #f1f5f9;">
                                 <td style="padding:10px 0;color:#64748b;width:180px;">Mã Hợp Đồng:</td>
                                 <td style="padding:10px 0;"><strong style="color:var(--mo-primary);font-family:monospace;">{{ $activeContract?->contract_number ?? 'Chưa có' }}</strong></td>
+                            </tr>
+                            <tr style="border-bottom:1px solid #f1f5f9;">
+                                <td style="padding:10px 0;color:#64748b;">Mặt Bằng Đang Thuê:</td>
+                                <td style="padding:10px 0;">
+                                    @if($activeContract?->contractUnits && $activeContract->contractUnits->isNotEmpty())
+                                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                            @foreach($activeContract->contractUnits as $cu)
+                                                <span style="font-weight:600;color:#1e293b;">{{ $cu->unit?->unit_code }} ({{ number_format($cu->leased_area_sqm, 0) }} m²)</span>
+                                                @if($cu->unit_id)
+                                                    <button wire:click="viewUnitDetail('{{ $cu->unit_id }}')" type="button" class="btn-mo-outline" style="padding:2px 8px;font-size:11px;color:#0284c7;border-color:#bae6fd;cursor:pointer;">
+                                                        <i class="fa-solid fa-eye"></i> Xem sơ đồ & ảnh
+                                                    </button>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span>-</span>
+                                    @endif
+                                </td>
                             </tr>
                             <tr style="border-bottom:1px solid #f1f5f9;">
                                 <td style="padding:10px 0;color:#64748b;">Đại diện ký kết:</td>
@@ -328,6 +358,66 @@
 
                 <div style="padding:16px 24px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;">
                     <button wire:click="closeDebitModal" class="btn-mo-outline" style="padding:8px 18px;">Đóng</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- MODAL XEM CHI TIẾT & SƠ ĐỒ MẶT BẰNG VĂN PHÒNG KHÁCH THUÊ -->
+    @if($showUnitModal && $selectedUnit)
+        <div style="position:fixed;inset:0;background:rgba(15,23,42,0.65);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;">
+            <div style="background:#ffffff;border-radius:12px;width:100%;max-width:720px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.25);overflow:hidden;border:1px solid #e2e8f0;max-height:92vh;display:flex;flex-direction:column;">
+                <div style="background:var(--mo-primary);color:#ffffff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
+                    <h3 style="margin:0;font-size:16px;font-weight:700;">
+                        <i class="fa-solid fa-map-location-dot"></i> Mặt Bằng Văn Phòng: {{ $selectedUnit->unit_code }} (Tầng {{ $selectedUnit->floor_number }})
+                    </h3>
+                    <button wire:click="closeUnitModal" type="button" style="background:none;border:none;color:#ffffff;font-size:18px;cursor:pointer;">&times;</button>
+                </div>
+                <div style="padding:20px;overflow-y:auto;flex:1;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;">
+                        <div style="background:#f8fafc;padding:12px 16px;border-radius:8px;border:1px solid #e2e8f0;">
+                            <div style="font-size:12px;color:#64748b;">Tòa nhà:</div>
+                            <div style="font-size:14px;font-weight:700;color:var(--mo-primary);">{{ $selectedUnit->building?->name ?? 'Tòa nhà văn phòng' }}</div>
+                            <div style="font-size:12px;color:#64748b;margin-top:8px;">Diện tích mặt bằng:</div>
+                            <div style="font-size:16px;font-weight:700;color:#0284c7;">{{ number_format($selectedUnit->area_sqm, 1) }} m²</div>
+                        </div>
+                        <div style="background:#f8fafc;padding:12px 16px;border-radius:8px;border:1px solid #e2e8f0;">
+                            <div style="font-size:12px;color:#64748b;">Mã sàn:</div>
+                            <div style="font-size:15px;font-weight:700;color:#1e293b;">{{ $selectedUnit->unit_code }} - Tầng {{ $selectedUnit->floor_number }}</div>
+                            <div style="font-size:12px;color:#64748b;margin-top:8px;">Hiện trạng bàn giao:</div>
+                            <div style="font-size:13px;font-weight:600;color:#1e293b;">
+                                @if($selectedUnit->handover_condition === 'RAW') Trần sàn thô
+                                @elseif($selectedUnit->handover_condition === 'BASIC') Hoàn thiện cơ bản
+                                @elseif($selectedUnit->handover_condition === 'FULL_FURNISHED') Đầy đủ nội thất cao cấp
+                                @else {{ $selectedUnit->handover_condition ?: 'Hoàn thiện tiêu chuẩn' }}
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Album ảnh & Sơ đồ mặt bằng -->
+                    <div style="margin-bottom:16px;">
+                        <div style="font-size:13px;font-weight:700;color:#334155;margin-bottom:8px;">
+                            <i class="fa-solid fa-images"></i> Sơ Đồ Thiết Kế & Hình Ảnh Bàn Giao Văn Phòng:
+                        </div>
+                        @if($selectedUnit->images && $selectedUnit->images->count() > 0)
+                            <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:10px;">
+                                @foreach($selectedUnit->images as $img)
+                                    <div style="border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;background:#f8fafc;">
+                                        <img src="{{ $img->image_url }}" alt="Ảnh mặt bằng {{ $selectedUnit->unit_code }}" style="width:100%;height:130px;object-fit:cover;display:block;">
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div style="padding:24px;border:1px dashed #cbd5e1;border-radius:8px;text-align:center;color:#64748b;background:#f8fafc;">
+                                <i class="fa-regular fa-image" style="font-size:24px;margin-bottom:6px;display:block;color:#94a3b8;"></i>
+                                Chưa có bản vẽ sơ đồ hoặc ảnh mặt bằng được tải lên cho gian phòng này.
+                            </div>
+                        @endif
+                    </div>
+                </div>
+                <div style="padding:14px 20px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;background:#f8fafc;">
+                    <button wire:click="closeUnitModal" type="button" class="btn-mo-outline" style="padding:6px 16px;">Đóng</button>
                 </div>
             </div>
         </div>

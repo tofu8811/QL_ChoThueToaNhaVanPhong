@@ -22,8 +22,6 @@ class ContractImage extends Model
         'image_url',
         'document_type',
         'file_name',
-        'display_order',
-        'description',
         'created_at',
     ];
 
@@ -33,7 +31,6 @@ class ContractImage extends Model
     protected function casts(): array
     {
         return [
-            'display_order' => 'integer',
             'created_at' => 'datetime',
         ];
     }

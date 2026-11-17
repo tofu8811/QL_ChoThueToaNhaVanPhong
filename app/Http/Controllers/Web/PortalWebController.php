@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Building;
 use App\Models\Province;
 use App\Services\BuildingService;
+use App\Services\ContractService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -222,10 +223,23 @@ class PortalWebController extends Controller
         return view('pages.contracts');
     }
 
+    // Hiển thị bản in / xuất PDF Hợp đồng thuê văn phòng chuẩn A4 (Module 3)
+    public function printContract(string $id, ContractService $contractService): View
+    {
+        $data = $contractService->getContractPrintData($id);
+        return view('contracts.print-template', $data);
+    }
+
     // Hiển thị trang quản lý hồ sơ khách thuê doanh nghiệp chuẩn SEO SSR (Module 3)
     public function tenantsPage(Request $request): View
     {
         return view('pages.tenants');
+    }
+
+    // Hiển thị trang quản lý phễu khách hàng tiềm năng CRM & tiếp nhận Lead (Module 2)
+    public function leadsPage(Request $request): View
+    {
+        return view('pages.leads');
     }
 
     // Hiển thị cổng thông tin không gian làm việc khách thuê Tenant Portal SSR (Module 3)

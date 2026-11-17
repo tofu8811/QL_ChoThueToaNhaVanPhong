@@ -10,9 +10,12 @@
       'tab-admin-billing': 'admin/billing',
       'tab-admin-tickets': 'admin/tickets',
       'tab-admin-staff': 'admin/staff',
+      'tab-sales-performance': 'admin/sales-performance',
       'tab-sales-leads': 'admin/sales-leads',
+      'tab-sales-appointments': 'admin/sales-appointments',
       'tab-sales-quotes': 'admin/sales-quotes',
       'tab-sales-pipeline': 'admin/sales-pipeline',
+      'tab-tenant-profile': 'tenant/profile',
       'tab-tenant-workspace': 'tenant/workspace',
       'tab-tenant-tickets': 'tenant/tickets',
       'tab-tenant-bills': 'tenant/bills',
@@ -27,29 +30,35 @@
       'admin/billing': 'tab-admin-billing',
       'admin/tickets': 'tab-admin-tickets',
       'admin/staff': 'tab-admin-staff',
+      'admin/sales-performance': 'tab-sales-performance',
       'admin/sales-leads': 'tab-sales-leads',
+      'admin/sales-appointments': 'tab-sales-appointments',
       'admin/sales-quotes': 'tab-sales-quotes',
       'admin/sales-pipeline': 'tab-sales-pipeline',
+      'tenant/profile': 'tab-tenant-profile',
       'tenant/workspace': 'tab-tenant-workspace',
-      'tenant': 'tab-tenant-workspace',
+      'tenant': 'tab-tenant-profile',
       'tenant/tickets': 'tab-tenant-tickets',
       'tenant/bills': 'tab-tenant-bills',
     };
 
     const TAB_BREADCRUMB_MAP = {
-      'tab-admin-dashboard': 'Tổng quan hệ thống',
-      'tab-admin-buildings': 'Quản lý tòa nhà & diện tích sàn',
+      'tab-admin-dashboard': 'Tổng quan vận hành tòa nhà',
+      'tab-admin-buildings': 'Quản lý tài nguyên mặt bằng tòa nhà',
       'tab-admin-tenants': 'Quản lý khách hàng thuê',
-      'tab-admin-contracts': 'Quản lý hợp đồng thuê',
-      'tab-admin-billing': 'Quản lý công nợ & thanh toán',
-      'tab-admin-tickets': 'Quản lý bảo trì & sửa chữa',
+      'tab-admin-contracts': 'Hợp đồng thuê & Biên bản bàn giao',
+      'tab-admin-billing': 'Kế toán, nhập chỉ số & công nợ tòa nhà',
+      'tab-admin-tickets': 'Tiếp nhận & Xử lý Ticket sự cố, thi công',
       'tab-admin-staff': 'Quản trị nhân sự & phân quyền RBAC',
-      'tab-sales-leads': 'Quản lý Leads & Pipeline CRM',
-      'tab-sales-quotes': 'Lập & Quản lý báo giá',
+      'tab-sales-performance': 'Báo cáo hiệu suất kinh doanh cá nhân',
+      'tab-sales-leads': 'Quản lý Leads Khách hàng & Pipeline CRM',
+      'tab-sales-appointments': 'Quản lý lịch hẹn khảo sát thực tế',
+      'tab-sales-quotes': 'Lập báo giá & Thư ngỏ (LOI)',
       'tab-sales-pipeline': 'Bảng Kanban Pipeline CRM',
-      'tab-tenant-workspace': 'Văn phòng & hợp đồng của tôi',
-      'tab-tenant-tickets': 'Yêu cầu hỗ trợ & đăng ký thi công',
-      'tab-tenant-bills': 'Hóa đơn & thanh toán trực tuyến',
+      'tab-tenant-profile': 'Hồ sơ doanh nghiệp, pháp lý & nhân viên',
+      'tab-tenant-workspace': 'Hợp đồng thuê, lịch tăng giá & bàn giao',
+      'tab-tenant-tickets': 'Yêu cầu hỗ trợ kỹ thuật & đăng ký thi công',
+      'tab-tenant-bills': 'Cước phí hàng tháng & tải lên ủy nhiệm chi',
     };
 
     // Hàm cập nhật URL hash & đẩy vào ngăn xếp lịch sử trình duyệt (Hỗ trợ nút Back / Forward của Chrome)
@@ -272,31 +281,33 @@
       admin: [
         'tab-admin-dashboard', 'tab-admin-buildings', 'tab-admin-tenants',
         'tab-admin-contracts', 'tab-admin-billing', 'tab-admin-tickets',
-        'tab-sales-leads', 'tab-sales-pipeline', 'tab-sales-quotes', 'tab-admin-staff'
+        'tab-sales-performance', 'tab-sales-leads', 'tab-sales-appointments',
+        'tab-sales-quotes', 'tab-sales-pipeline', 'tab-admin-staff',
+        'tab-tenant-profile', 'tab-tenant-workspace', 'tab-tenant-tickets', 'tab-tenant-bills'
       ],
       pm: [
         'tab-admin-dashboard', 'tab-admin-buildings',
-        'tab-admin-contracts', 'tab-admin-tickets'
+        'tab-admin-contracts', 'tab-admin-tickets', 'tab-admin-billing', 'tab-admin-staff'
       ],
       sales: [
-        'tab-sales-leads', 'tab-sales-pipeline', 'tab-sales-quotes',
-        'tab-admin-buildings', 'tab-admin-tenants', 'tab-admin-contracts'
+        'tab-sales-performance', 'tab-sales-leads', 'tab-sales-appointments',
+        'tab-sales-quotes', 'tab-sales-pipeline', 'tab-admin-buildings'
       ],
       accountant: [
         'tab-admin-billing', 'tab-admin-buildings', 'tab-admin-tenants',
         'tab-admin-contracts'
       ],
       tenant: [
-        'tab-tenant-workspace', 'tab-tenant-tickets', 'tab-tenant-bills'
+        'tab-tenant-profile', 'tab-tenant-workspace', 'tab-tenant-tickets', 'tab-tenant-bills'
       ]
     };
 
     const DEFAULT_TAB_BY_ROLE = {
       admin: 'tab-admin-dashboard',
       pm: 'tab-admin-dashboard',
-      sales: 'tab-sales-leads',
+      sales: 'tab-sales-performance',
       accountant: 'tab-admin-billing',
-      tenant: 'tab-tenant-workspace'
+      tenant: 'tab-tenant-profile'
     };
 
     function handleRoleSwitch(role, updateRoute = true) {
@@ -429,10 +440,12 @@
         if (groupAdmin) groupAdmin.style.display = 'block';
         if (navDashboard) navDashboard.style.display = 'flex';
         if (navBuildings) navBuildings.style.display = 'flex';
-        if (navTenants) navTenants.style.display = 'none'; // PM không có thẩm quyền quản lý danh bạ khách thuê
+        if (navTenants) navTenants.style.display = 'none'; // PM không có thẩm quyền quản lý danh bạ khách thuê toàn hệ thống
         if (navContracts) navContracts.style.display = 'flex';
-        if (navBilling) navBilling.style.display = 'none'; // PM không có thẩm quyền Công nợ kế toán
-        if (navTickets) navTickets.style.display = 'flex';
+        const navStaffBld = document.getElementById('nav-item-bld-staff');
+        if (navStaffBld) navStaffBld.style.display = 'flex'; // Điều phối nhân sự trong tòa nhà
+        if (navBilling) navBilling.style.display = 'flex'; // PM nhập chỉ số, đối soát UNC và quản lý công nợ
+        if (navTickets) navTickets.style.display = 'flex'; // Tiếp nhận và xử lý sự cố, duyệt thi công ngoài giờ
         if (groupSales) groupSales.style.display = 'none';
         if (groupSystem) groupSystem.style.display = 'none';
         if (groupTenant) groupTenant.style.display = 'none';
@@ -446,12 +459,13 @@
         userName.innerText = rawName || 'Lê Hoàng Long';
         userSub.innerText = 'Chuyên viên Leasing & Báo giá';
         userAvatar.innerText = 'SL';
-        // Sales chỉ thấy phân hệ Kinh doanh (Leads, Báo giá, Pipeline) theo feature/frontend
+        // Sales chỉ thấy phân hệ Kinh doanh (Báo cáo cá nhân, Leads, Lịch hẹn, Báo giá & LOI, Mặt bằng chào thuê)
         if (groupAdmin) groupAdmin.style.display = 'none';
         if (groupSales) groupSales.style.display = 'block';
         if (groupSystem) groupSystem.style.display = 'none'; // Ẩn Nhân sự RBAC
         if (groupTenant) groupTenant.style.display = 'none';
-        if (updateRoute) switchFilamentTab('tab-sales-leads', document.getElementById('nav-item-leads'), true);
+        const navSalesPerf = document.getElementById('nav-sales-performance') || document.getElementById('nav-item-leads');
+        if (updateRoute) switchFilamentTab('tab-sales-performance', navSalesPerf, true);
       } else if (role === 'accountant') {
         window.currentStaffUser = (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.accountants) ? SERVER_STAFF.accountants[0] : null;
         if (roleSwitcherContainer) roleSwitcherContainer.style.display = (realRole === 'ADMIN' || realRole === 'SUPER_ADMIN') ? 'inline-flex' : 'none';
@@ -495,7 +509,8 @@
           contractRep.innerText = realUser.representative_name + (realUser.representative_position ? ` (${realUser.representative_position})` : ' (Đại diện pháp luật)');
         }
 
-        if (updateRoute) switchFilamentTab('tab-tenant-workspace', document.querySelector('#nav-group-tenant .filament-link'), true);
+        const navTenantProfile = document.getElementById('nav-tenant-profile') || document.querySelector('#nav-group-tenant .filament-link');
+        if (updateRoute) switchFilamentTab('tab-tenant-profile', navTenantProfile, true);
       } else if (role === 'portal') {
         switchView('portal-view', updateRoute);
       }

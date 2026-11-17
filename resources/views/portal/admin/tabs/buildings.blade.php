@@ -9,6 +9,9 @@
       <button class="btn-mo-outline" style="background:#fff;" onclick="loadAdminBuildingsList()">
         <i class="fa-solid fa-arrows-rotate"></i> Làm mới
       </button>
+      <button class="btn-mo-outline" style="background:#fff;color:#d97706;border-color:#fcd34d;font-weight:600;" onclick="openModal('modal-split-merge-unit')">
+        <i class="fa-solid fa-scissors"></i> Cắt / Gộp diện tích sàn
+      </button>
       <button class="btn-mo-outline" id="btn-top-building-assignments" style="background:#fff;color:#2563eb;border-color:#93c5fd;font-weight:600;" onclick="goToBuildingAssignments()">
         <i class="fa-solid fa-users-gear"></i> Phân công nhân sự (RBAC)
       </button>

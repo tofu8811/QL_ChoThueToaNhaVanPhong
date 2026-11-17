@@ -15,23 +15,52 @@
           <span class="filament-badge-role" id="sidebar-role-badge">Super Admin</span>
         </div>
 
-        <!-- Section 1: QUẢN TRỊ VẬN HÀNH & TÀI SẢN (Admin / BQL / Kế toán) -->
+        <!-- Section 1: BAN QUẢN LÝ TÒA NHÀ & QUẢN TRỊ VẬN HÀNH (Admin / BQL) -->
         <div class="filament-nav-section" id="nav-group-admin" style="padding-top:12px;">
           <div class="filament-section-heading" id="nav-heading-operations">QUẢN TRỊ & VẬN HÀNH</div>
 
-          <a class="filament-link active" id="nav-item-dashboard" data-breadcrumb="Tổng quan hệ thống" onclick="switchFilamentTab('tab-admin-dashboard', this)">
+          <a class="filament-link active" id="nav-item-dashboard" data-breadcrumb="Tổng quan vận hành tòa nhà" onclick="switchFilamentTab('tab-admin-dashboard', this)">
             <div class="filament-link-content">
               <i class="fa-solid fa-chart-pie"></i>
-              <span>Tổng quan</span>
+              <span id="nav-text-dashboard">Tổng quan vận hành</span>
             </div>
           </a>
 
-          <a class="filament-link" id="nav-item-buildings" data-breadcrumb="Quản lý tòa nhà & mặt bằng" onclick="switchFilamentTab('tab-admin-buildings', this)">
+          <a class="filament-link" id="nav-item-buildings" data-breadcrumb="Quản lý tài nguyên mặt bằng tòa nhà" onclick="switchFilamentTab('tab-admin-buildings', this)">
             <div class="filament-link-content">
               <i class="fa-solid fa-building"></i>
-              <span>Quản lý tòa nhà</span>
+              <span id="nav-text-buildings">Tài nguyên mặt bằng</span>
             </div>
             <span class="filament-nav-badge" id="nav-badge-buildings" style="background:rgba(148,163,184,0.14);color:#cbd5e1;border:1px solid rgba(148,163,184,0.22);">{{ $stats['total_buildings'] ?? 22 }}</span>
+          </a>
+
+          <a class="filament-link" id="nav-item-contracts" data-breadcrumb="Hợp đồng thuê & Biên bản bàn giao" onclick="switchFilamentTab('tab-admin-contracts', this)">
+            <div class="filament-link-content">
+              <i class="fa-solid fa-file-contract"></i>
+              <span>Hợp đồng & Bàn giao</span>
+            </div>
+          </a>
+
+          <a class="filament-link" id="nav-item-bld-staff" data-breadcrumb="Điều phối nhân sự trong tòa nhà" onclick="goToBuildingStaffCoordination()">
+            <div class="filament-link-content">
+              <i class="fa-solid fa-users-viewfinder"></i>
+              <span>Điều phối nhân sự</span>
+            </div>
+          </a>
+
+          <a class="filament-link" id="nav-item-tickets" data-breadcrumb="Tiếp nhận & Xử lý Ticket sự cố, thi công" onclick="switchFilamentTab('tab-admin-tickets', this)">
+            <div class="filament-link-content">
+              <i class="fa-solid fa-screwdriver-wrench"></i>
+              <span>Xử lý Ticket & Thi công</span>
+            </div>
+            <span class="filament-nav-badge" style="background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.3);">{{ $stats['open_tickets'] ?? 5 }}</span>
+          </a>
+
+          <a class="filament-link" id="nav-item-billing" data-breadcrumb="Kế toán, nhập chỉ số & công nợ tòa nhà" onclick="switchFilamentTab('tab-admin-billing', this)">
+            <div class="filament-link-content">
+              <i class="fa-solid fa-file-invoice-dollar"></i>
+              <span id="nav-text-billing">Kế toán & Công nợ</span>
+            </div>
           </a>
 
           <a class="filament-link" id="nav-item-tenants" data-breadcrumb="Quản lý khách hàng thuê" onclick="switchFilamentTab('tab-admin-tenants', this)">
@@ -41,46 +70,45 @@
             </div>
             <span class="filament-nav-badge" style="background:rgba(56,189,248,0.14);color:#38bdf8;border:1px solid rgba(56,189,248,0.25);">{{ $stats['total_tenants'] ?? 10 }}</span>
           </a>
-
-          <a class="filament-link" id="nav-item-contracts" data-breadcrumb="Quản lý hợp đồng thuê" onclick="switchFilamentTab('tab-admin-contracts', this)">
-            <div class="filament-link-content">
-              <i class="fa-solid fa-file-contract"></i>
-              <span>Quản lý hợp đồng</span>
-            </div>
-          </a>
-
-          <a class="filament-link" id="nav-item-billing" data-breadcrumb="Quản lý công nợ & thanh toán" onclick="switchFilamentTab('tab-admin-billing', this)">
-            <div class="filament-link-content">
-              <i class="fa-solid fa-file-invoice-dollar"></i>
-              <span>Công nợ & Thanh toán</span>
-            </div>
-          </a>
-
-          <a class="filament-link" id="nav-item-tickets" data-breadcrumb="Quản lý bảo trì & sửa chữa" onclick="switchFilamentTab('tab-admin-tickets', this)">
-            <div class="filament-link-content">
-              <i class="fa-solid fa-screwdriver-wrench"></i>
-              <span>Quản lý bảo trì</span>
-            </div>
-            <span class="filament-nav-badge" style="background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.3);">{{ $stats['open_tickets'] ?? 5 }}</span>
-          </a>
         </div>
 
-        <!-- Section 2: KINH DOANH & CHĂM SÓC LEADS (Sales / Admin) -->
+        <!-- Section 2: PHÂN HỆ KINH DOANH & SALES (Sales / Admin) -->
         <div class="filament-nav-section" id="nav-group-sales" style="padding-top:8px;">
-          <div class="filament-section-heading">KINH DOANH & LEASING</div>
+          <div class="filament-section-heading">PHÂN HỆ KINH DOANH (SALES)</div>
+
+          <a class="filament-link" id="nav-sales-performance" data-breadcrumb="Báo cáo hiệu suất kinh doanh cá nhân" onclick="switchFilamentTab('tab-sales-performance', this)">
+            <div class="filament-link-content">
+              <i class="fa-solid fa-chart-line"></i>
+              <span>Báo cáo cá nhân</span>
+            </div>
+          </a>
 
           <a class="filament-link" id="nav-item-leads" data-breadcrumb="Quản lý Leads & Pipeline CRM" onclick="switchFilamentTab('tab-sales-leads', this)">
             <div class="filament-link-content">
               <i class="fa-solid fa-filter-circle-dollar"></i>
-              <span>Leads & Pipeline</span>
+              <span>Leads Khách hàng</span>
             </div>
             <span class="filament-nav-badge" style="background:rgba(245,158,11,0.16);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);" id="lead-count-badge">{{ count($leads ?? []) ?: 3 }}</span>
           </a>
 
-          <a class="filament-link" id="nav-item-quotes" data-breadcrumb="Lập & Quản lý báo giá" onclick="switchFilamentTab('tab-sales-quotes', this)">
+          <a class="filament-link" id="nav-sales-appointments" data-breadcrumb="Quản lý lịch hẹn dẫn khách khảo sát mặt bằng" onclick="switchFilamentTab('tab-sales-appointments', this)">
+            <div class="filament-link-content">
+              <i class="fa-solid fa-calendar-check"></i>
+              <span>Lịch hẹn khảo sát</span>
+            </div>
+          </a>
+
+          <a class="filament-link" id="nav-item-quotes" data-breadcrumb="Lập báo giá & Thư ngỏ (LOI)" onclick="switchFilamentTab('tab-sales-quotes', this)">
             <div class="filament-link-content">
               <i class="fa-solid fa-calculator"></i>
-              <span>Báo giá & Dự toán</span>
+              <span>Báo giá & Thư ngỏ (LOI)</span>
+            </div>
+          </a>
+
+          <a class="filament-link" id="nav-sales-buildings" data-breadcrumb="Danh mục mặt bằng trống chào thuê" onclick="switchFilamentTab('tab-admin-buildings', this)">
+            <div class="filament-link-content">
+              <i class="fa-solid fa-city"></i>
+              <span>Mặt bằng chào thuê</span>
             </div>
           </a>
         </div>
@@ -100,22 +128,29 @@
         <!-- Section 4: CỔNG KHÁCH THUÊ (Tenant Portal) -->
         <div class="filament-nav-section" id="nav-group-tenant">
           <div class="filament-section-heading">CỔNG DOANH NGHIỆP THUÊ</div>
-          <a class="filament-link" data-breadcrumb="Văn phòng & hợp đồng của tôi" onclick="switchFilamentTab('tab-tenant-workspace', this)">
+          <a class="filament-link" id="nav-tenant-profile" data-breadcrumb="Hồ sơ doanh nghiệp, pháp lý & nhân viên" onclick="switchFilamentTab('tab-tenant-profile', this)">
             <div class="filament-link-content">
-              <i class="fa-solid fa-building-user"></i>
-              <span>Văn phòng của tôi</span>
+              <i class="fa-solid fa-id-card-clip"></i>
+              <span>Hồ sơ & Nhân viên</span>
             </div>
           </a>
-          <a class="filament-link" data-breadcrumb="Yêu cầu hỗ trợ & đăng ký thi công" onclick="switchFilamentTab('tab-tenant-tickets', this)">
+          <a class="filament-link" id="nav-tenant-workspace" data-breadcrumb="Hợp đồng thuê, lịch tăng giá & bàn giao" onclick="switchFilamentTab('tab-tenant-workspace', this)">
+            <div class="filament-link-content">
+              <i class="fa-solid fa-file-contract"></i>
+              <span>Hợp đồng & Bàn giao</span>
+            </div>
+          </a>
+          <a class="filament-link" id="nav-tenant-tickets" data-breadcrumb="Yêu cầu hỗ trợ kỹ thuật & đăng ký thi công" onclick="switchFilamentTab('tab-tenant-tickets', this)">
             <div class="filament-link-content">
               <i class="fa-solid fa-screwdriver-wrench"></i>
-              <span>Yêu cầu bảo trì</span>
+              <span>Ticket & Thi công</span>
             </div>
+            <span class="filament-nav-badge" style="background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.3);">2 mới</span>
           </a>
-          <a class="filament-link" data-breadcrumb="Hóa đơn & thanh toán trực tuyến" onclick="switchFilamentTab('tab-tenant-bills', this)">
+          <a class="filament-link" id="nav-tenant-bills" data-breadcrumb="Cước phí hàng tháng & tải lên ủy nhiệm chi" onclick="switchFilamentTab('tab-tenant-bills', this)">
             <div class="filament-link-content">
               <i class="fa-solid fa-file-invoice-dollar"></i>
-              <span>Hóa đơn & Đóng phí</span>
+              <span>Cước phí & Ủy nhiệm chi</span>
             </div>
             <span class="filament-nav-badge" style="background:rgba(245,158,11,0.16);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);">Kỳ 11</span>
           </a>
@@ -217,6 +252,7 @@
           @include('portal.admin.tabs.sales')
           @include('portal.admin.tabs.tenant')
           @include('portal.admin.tabs.staff-rbac')
+          @include('portal.admin.tabs.billing')
         </div>
       </div>
     </div>

@@ -94,7 +94,7 @@
         </div>
         <div class="bms-kpi-foot">
           <span>Diện tích đang khai thác:</span>
-          <strong>{{ number_format($rentedArea, 0, ',', '.') }} m²</strong>
+          <strong>362.450 m²</strong>
         </div>
       </div>
     </div>
@@ -130,8 +130,8 @@
           <span class="bms-kpi-pill" style="background:#ecfdf5;color:#047857;">Hạng A, B, C</span>
         </div>
         <div class="bms-kpi-foot">
-          <span>Tình trạng sàn:</span>
-          <strong>Tỷ lệ khai thác ổn định cao</strong>
+          <span>Diện tích còn trống:</span>
+          <strong style="color:#0284c7;">65.980 m²</strong>
         </div>
       </div>
     </div>

@@ -30,6 +30,12 @@
       'admin/billing': 'tab-admin-billing',
       'admin/tickets': 'tab-admin-tickets',
       'admin/staff': 'tab-admin-staff',
+      'pm/dashboard': 'tab-admin-dashboard',
+      'pm': 'tab-admin-dashboard',
+      'pm/buildings': 'tab-admin-buildings',
+      'pm/contracts': 'tab-admin-contracts',
+      'pm/tickets': 'tab-admin-tickets',
+      'pm/billing': 'tab-admin-billing',
       'admin/sales-performance': 'tab-sales-performance',
       'admin/sales-leads': 'tab-sales-leads',
       'admin/sales-appointments': 'tab-sales-appointments',
@@ -118,7 +124,7 @@
           } else if (savedRole === 'sales' || savedRole === 'sale') {
             hash = 'admin/sales-leads';
           } else if (savedRole === 'pm' || savedRole === 'property_manager') {
-            hash = 'admin/buildings';
+            hash = 'pm/dashboard';
           } else if (savedRole === 'accountant') {
             hash = 'admin/billing';
           } else if (savedRole === 'admin' || savedRole === 'super_admin') {
@@ -163,7 +169,24 @@
         return;
       }
 
-      // 3. Phân hệ Admin / BQL / Sales / Kế toán
+      // 3. Phân hệ Ban Quản Lý (PM / Property Manager)
+      if (hash.startsWith('pm')) {
+        const savedRole = String(localStorage.getItem('auth_role') || '').toUpperCase();
+        if (savedRole === 'TENANT') {
+          alert('Tài khoản Khách thuê không có quyền truy cập trang quản lý.');
+          handleRoleSwitch('tenant', false);
+          switchFilamentTab('tab-tenant-workspace', document.querySelector('#nav-group-tenant .filament-link'), true);
+          return;
+        }
+
+        handleRoleSwitch('pm', false);
+        const tabId = ROUTE_TO_TAB[hash] || 'tab-admin-dashboard';
+        const linkEl = document.querySelector(`.filament-link[onclick*="${tabId}"]`);
+        switchFilamentTab(tabId, linkEl, false);
+        return;
+      }
+
+      // 4. Phân hệ Admin / Sales / Kế toán
       if (hash.startsWith('admin')) {
         const savedRole = String(localStorage.getItem('auth_role') || '').toUpperCase();
         // RBAC Chặn Khách thuê không được truy cập phân hệ quản trị
@@ -388,8 +411,8 @@
       const card1FootLabel = document.getElementById('dashboard-card1-foot-label');
       const card1FootVal = document.getElementById('dashboard-card1-foot-val');
       if (card1Title) card1Title.innerText = isPmRole ? 'TỔNG SỐ TÒA NHÀ PHỤ TRÁCH' : 'QUY MÔ TÀI SẢN & SÀN';
-      if (card1FootLabel) card1FootLabel.innerText = isPmRole ? 'Tình trạng khai thác:' : 'Tổng diện tích quản lý:';
-      if (card1FootVal) card1FootVal.innerText = isPmRole ? 'Tỷ lệ khai thác cao' : '428.430 m²';
+      if (card1FootLabel) card1FootLabel.innerText = isPmRole ? 'Đang hoạt động:' : 'Tổng diện tích quản lý:';
+      if (card1FootVal) card1FootVal.innerText = isPmRole ? '8/8 cao ốc' : '428.430 m²';
 
       const dashTitle = document.getElementById('dashboard-page-title');
       const dashSub = document.getElementById('dashboard-page-subtitle');
@@ -566,7 +589,11 @@
         if (tabId === 'tab-admin-staff') {
           updateAppRoute('admin/staff/' + (typeof currentStaffTab !== 'undefined' ? currentStaffTab : 'admins'));
         } else {
-          updateAppRoute(TAB_TO_ROUTE[tabId] || 'admin/dashboard');
+          let route = TAB_TO_ROUTE[tabId] || 'admin/dashboard';
+          if (window.currentUiRole === 'pm') {
+            route = route.replace(/^admin\//, 'pm/');
+          }
+          updateAppRoute(route);
         }
       }
 

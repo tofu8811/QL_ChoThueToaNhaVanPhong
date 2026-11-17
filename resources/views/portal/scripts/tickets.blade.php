@@ -91,6 +91,18 @@
       }
 
       const listToRender = fetchedList || CURRENT_TICKETS_CACHE;
+      
+      // Cập nhật số lượng Badge trên Sidebar theo đúng phạm vi phân quyền của User đang đăng nhập
+      const openTicketsCount = (listToRender || []).filter(t => {
+        const s = String(t.status?.value || t.status).toUpperCase();
+        return s === 'NEW' || s === 'OPEN' || s === 'IN_PROGRESS';
+      }).length;
+      const badgeTicketEl = document.getElementById('nav-badge-tickets');
+      if (badgeTicketEl) {
+        badgeTicketEl.innerText = openTicketsCount;
+        badgeTicketEl.style.display = openTicketsCount > 0 ? 'inline-flex' : 'none';
+      }
+
       renderAdminTicketsTable(listToRender);
       renderTenantTicketsTable(listToRender);
     }

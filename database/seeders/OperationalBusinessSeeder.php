@@ -87,6 +87,19 @@ class OperationalBusinessSeeder extends Seeder
 
             $idx++;
         }
+
+        // Đảm bảo Trưởng Ban Quản Lý (NV-BQL-001 - Đỗ Minh Quang) luôn phụ trách các tòa nhà trọng điểm phát sinh sự cố & hợp đồng
+        if (isset($pmList['NV-BQL-001'])) {
+            $primeBuildingCodes = ['BLD-001', 'BLD-002'];
+            foreach ($primeBuildingCodes as $pCode) {
+                if (isset($buildings[$pCode])) {
+                    DB::table('manager_buildings')->updateOrInsert(
+                        ['pm_id' => $pmList['NV-BQL-001'], 'building_id' => $buildings[$pCode]],
+                        ['is_primary' => true, 'assigned_by_admin_id' => $adminId, 'assigned_at' => now()]
+                    );
+                }
+            }
+        }
     }
 
     private function seedTenants(array $salesList): array

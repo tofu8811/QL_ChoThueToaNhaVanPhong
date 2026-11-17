@@ -53,7 +53,7 @@
               <i class="fa-solid fa-screwdriver-wrench"></i>
               <span>Xử lý Ticket & Thi công</span>
             </div>
-            <span class="filament-nav-badge" style="background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.3);">{{ $stats['open_tickets'] ?? 5 }}</span>
+            <span class="filament-nav-badge" id="nav-badge-tickets" style="background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.3);">{{ $stats['open_tickets'] ?? 1 }}</span>
           </a>
 
           <a class="filament-link" id="nav-item-billing" data-breadcrumb="Kế toán, nhập chỉ số & công nợ tòa nhà" onclick="switchFilamentTab('tab-admin-billing', this)">

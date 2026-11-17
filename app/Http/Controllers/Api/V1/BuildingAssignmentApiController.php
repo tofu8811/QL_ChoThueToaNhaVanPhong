@@ -27,8 +27,20 @@ class BuildingAssignmentApiController extends BaseApiController
     public function getAssignments(Request $request, string $buildingId): JsonResponse
     {
         $user = $request->user();
-        if (!($user instanceof Admin)) {
-            return $this->errorResponse('Chỉ Quản trị viên mới có quyền xem danh sách nhân sự phụ trách tòa nhà.', 403);
+        $isAuthorized = ($user instanceof Admin);
+
+        if (!$isAuthorized && $user instanceof \App\Models\PropertyManager) {
+            $isAssigned = \Illuminate\Support\Facades\DB::table('manager_buildings')
+                ->where('pm_id', $user->id)
+                ->where('building_id', $buildingId)
+                ->exists();
+            if ($isAssigned) {
+                $isAuthorized = true;
+            }
+        }
+
+        if (!$isAuthorized) {
+            return $this->errorResponse('Chỉ Quản trị viên hoặc Ban Quản Lý phụ trách tòa nhà mới có quyền xem danh sách nhân sự phụ trách tòa nhà.', 403);
         }
 
         $data = $this->assignmentService->getAssignments($buildingId);
@@ -42,14 +54,29 @@ class BuildingAssignmentApiController extends BaseApiController
      */
     public function assignSales(AssignSalesRequest $request, string $buildingId): JsonResponse
     {
-        /** @var Admin $admin */
-        $admin = $request->user();
-        if (!($admin instanceof Admin)) {
-            return $this->errorResponse('Chỉ Quản trị viên mới có quyền phân công Sales vào tòa nhà.', 403);
+        /** @var Admin|\App\Models\PropertyManager $user */
+        $user = $request->user();
+        $isAuthorized = ($user instanceof Admin);
+
+        if (!$isAuthorized && $user instanceof \App\Models\PropertyManager) {
+            $isAssigned = \Illuminate\Support\Facades\DB::table('manager_buildings')
+                ->where('pm_id', $user->id)
+                ->where('building_id', $buildingId)
+                ->exists();
+            if ($isAssigned) {
+                $isAuthorized = true;
+            }
+        }
+
+        if (!$isAuthorized) {
+            return $this->errorResponse('Chỉ Quản trị viên hoặc Ban Quản Lý phụ trách tòa nhà mới có quyền phân công Sales vào tòa nhà.', 403);
         }
 
         $salesIds = (array) $request->input('sales_ids', []);
         $isActive = $request->has('is_active') ? $request->boolean('is_active') : true;
+
+        $adminId = ($user instanceof Admin) ? $user->id : ($user->created_by_admin_id ?? null);
+        $admin = $user instanceof Admin ? $user : (Admin::find($adminId) ?? Admin::first());
 
         $result = $this->assignmentService->assignSales($buildingId, $salesIds, $isActive, $admin);
 
@@ -63,8 +90,20 @@ class BuildingAssignmentApiController extends BaseApiController
     public function removeSales(Request $request, string $buildingId, string $saleId): JsonResponse
     {
         $user = $request->user();
-        if (!($user instanceof Admin)) {
-            return $this->errorResponse('Chỉ Quản trị viên mới có quyền gỡ bỏ phân công Sales khỏi tòa nhà.', 403);
+        $isAuthorized = ($user instanceof Admin);
+
+        if (!$isAuthorized && $user instanceof \App\Models\PropertyManager) {
+            $isAssigned = \Illuminate\Support\Facades\DB::table('manager_buildings')
+                ->where('pm_id', $user->id)
+                ->where('building_id', $buildingId)
+                ->exists();
+            if ($isAssigned) {
+                $isAuthorized = true;
+            }
+        }
+
+        if (!$isAuthorized) {
+            return $this->errorResponse('Chỉ Quản trị viên hoặc Ban Quản Lý phụ trách tòa nhà mới có quyền gỡ bỏ phân công Sales khỏi tòa nhà.', 403);
         }
 
         $this->assignmentService->removeSales($buildingId, $saleId);

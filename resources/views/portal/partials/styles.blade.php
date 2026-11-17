@@ -202,11 +202,16 @@
       box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.12), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
     }
     .mo-header .container {
-      gap: 16px;
+      gap: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       height: 74px;
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 24px;
+      box-sizing: border-box;
     }
     .mo-logo {
       flex-shrink: 0;
@@ -244,27 +249,30 @@
     }
 
     .mo-nav {
-      flex-shrink: 0;
+      flex: 1;
+      min-width: 0;
       display: flex;
       align-items: center;
-      gap: 16px;
+      justify-content: space-evenly;
+      margin: 0 clamp(8px, 1.5vw, 24px);
     }
     .mo-nav-item {
       white-space: nowrap !important;
       flex-shrink: 0;
-      letter-spacing: 0.15px;
+      letter-spacing: 0.1px;
       font-size: 13.5px;
       font-weight: 600;
       color: #334155;
-      padding: 8px 4px;
+      padding: 8px 6px;
       position: relative;
       cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 4px;
       background: none;
       border: none;
       font-family: inherit;
+      transition: color 0.15s ease;
     }
     .mo-nav-item:hover, .mo-nav-item.active {
       color: var(--mo-orange);
@@ -626,6 +634,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      padding-right: 2px;
     }
 
     /* Mobile Hamburger Menu Toggle Button */
@@ -2526,20 +2535,24 @@
     }
 
     /* Responsive */
-    @media (max-width: 1200px) and (min-width: 1025px) {
+    @media (max-width: 1366px) and (min-width: 1025px) {
       .mo-header .container {
         padding: 0 16px;
         gap: 8px;
       }
       .mo-nav {
-        gap: 6px;
+        margin: 0 8px;
+        justify-content: space-evenly;
       }
       .mo-nav-item {
-        font-size: 13px;
-        padding: 6px 6px;
+        font-size: 12.5px;
+        padding: 6px 3px;
       }
       .mo-logo-text h1 {
         font-size: 18px;
+      }
+      .user-name-label {
+        max-width: 95px;
       }
     }
     @media (max-width: 1200px) {
@@ -2663,16 +2676,19 @@
       border-radius: 24px;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
       cursor: pointer;
       transition: all 0.2s ease;
       white-space: nowrap !important;
       flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+      box-sizing: border-box;
+      max-width: 175px;
     }
     .user-profile-pill:hover {
       background: #eff6ff;
       border-color: #93c5fd;
-      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
     }
     .user-avatar-circle {
       width: 30px;
@@ -2681,38 +2697,47 @@
       background: linear-gradient(135deg, #0f3361, #2563eb);
       color: #ffffff;
       font-weight: 700;
-      font-size: 11.5px;
+      font-size: 11px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 6px rgba(15, 51, 97, 0.25);
+      box-shadow: 0 2px 5px rgba(15, 51, 97, 0.2);
+      flex-shrink: 0;
     }
     .user-info-text {
       display: flex;
       flex-direction: column;
       text-align: left;
       line-height: 1.2;
+      min-width: 0;
     }
     .user-name-label {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
       color: #0f3361;
-      max-width: 110px;
+      max-width: 105px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      display: block;
     }
     .user-role-tag {
-      font-size: 10px;
+      font-size: 9.5px;
       font-weight: 600;
       color: #2563eb;
       text-transform: uppercase;
       letter-spacing: 0.3px;
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .user-dropdown-caret {
-      font-size: 10px;
+      font-size: 9.5px;
       color: #64748b;
       transition: transform 0.2s;
+      flex-shrink: 0;
+      margin-left: 1px;
     }
     .user-profile-pill.active .user-dropdown-caret {
       transform: rotate(180deg);
@@ -2722,7 +2747,7 @@
       position: absolute;
       top: calc(100% + 8px);
       right: 0;
-      width: 240px;
+      width: 250px;
       background: #ffffff;
       border-radius: 12px;
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);

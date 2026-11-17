@@ -176,6 +176,216 @@ function handleSaveReconcileStatus(e) {
    2. KHÁCH HÀNG / DOANH NGHIỆP ĐI THUÊ (TENANT)
    ========================================================================== */
 
+function syncTenantPortalData() {
+  const authUserStr = localStorage.getItem('auth_user');
+  if (!authUserStr) return;
+  let user = null;
+  try { user = JSON.parse(authUserStr); } catch (e) { return; }
+  const role = String(localStorage.getItem('auth_role') || '').toLowerCase();
+  if (role !== 'tenant') return;
+
+  // 1. Điền thông tin Profile Doanh Nghiệp
+  const nameInput = document.getElementById('tp-company-name');
+  const taxInput = document.getElementById('tp-tax-code');
+  const addrInput = document.getElementById('tp-address');
+  const repNameInput = document.getElementById('tp-rep-name');
+  const repTitleInput = document.getElementById('tp-rep-title');
+  const emailInput = document.getElementById('tp-email');
+  const phoneInput = document.getElementById('tp-phone');
+  const gpkdEl = document.getElementById('gpkd-file-name');
+
+  if (nameInput && user.company_name) nameInput.value = user.company_name;
+  if (taxInput && user.tax_code) taxInput.value = user.tax_code;
+  if (addrInput && (user.headquarter_address || user.address)) addrInput.value = user.headquarter_address || user.address;
+  if (repNameInput && user.representative_name) repNameInput.value = user.representative_name;
+  if (repTitleInput && user.representative_position) repTitleInput.value = user.representative_position;
+  if (emailInput && (user.login_email || user.email)) emailInput.value = user.login_email || user.email;
+  if (phoneInput && user.contact_phone) phoneInput.value = user.contact_phone;
+  if (gpkdEl && user.company_name) {
+    gpkdEl.innerText = (user.tenant_code || 'GPKD') + '_' + (user.company_name.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20)) + '_Signed.pdf';
+  }
+
+  // 2. Điền KPI Cards của Hợp Đồng
+  const kpiContract = document.getElementById('tenant-kpi-contract-code');
+  const kpiArea = document.getElementById('tenant-kpi-leased-area');
+  const kpiBld = document.getElementById('tenant-kpi-building-name');
+  const kpiBill = document.getElementById('tenant-kpi-bill-amount');
+  if (user.login_email === 'tenant.demo@officeleasing.vn' || user.tenant_code === 'TN-DEMO-2026') {
+    if (kpiContract) kpiContract.innerText = 'HD-2026/DEMO-NEXUS';
+    if (kpiArea) kpiArea.innerText = '250 m²';
+    if (kpiBld) kpiBld.innerText = 'The Nexus Tower';
+    if (kpiBill) kpiBill.innerText = '231,0 Tr';
+  }
+
+  // 3. Điền Danh Sách Hóa Đơn & Cước Phí
+  const tbodyBills = document.getElementById('tbody-tenant-bills');
+  if (tbodyBills && (user.login_email === 'tenant.demo@officeleasing.vn' || user.tenant_code === 'TN-DEMO-2026')) {
+    tbodyBills.innerHTML = `
+      <tr>
+        <td><strong style="font-family:monospace;color:#1d4ed8;">DN-202611-DEMO</strong></td>
+        <td><strong>The Nexus Tower - Tầng 10 (250 m²)</strong></td>
+        <td><span class="badge-filament info">Kỳ 11/2026</span></td>
+        <td><strong style="color:#ea580c;">231.000.000 đ</strong></td>
+        <td>15/11/2026</td>
+        <td><span style="color:#64748b;font-size:12px;"><i class="fa-solid fa-circle-xmark" style="color:#f59e0b;"></i> Chưa tải lên</span></td>
+        <td><span class="badge-filament warning">Chờ thanh toán</span></td>
+        <td style="text-align:right;">
+          <button type="button" class="btn-mo-primary" style="padding:4px 10px;font-size:12px;background:#16a34a;" onclick="openUploadUncModal('DN-202611-DEMO')">
+            <i class="fa-solid fa-upload"></i> Tải UNC
+          </button>
+        </td>
+      </tr>
+      <tr>
+        <td><strong style="font-family:monospace;color:#1d4ed8;">DN-202610-DEMO</strong></td>
+        <td><strong>The Nexus Tower - Tầng 10 (250 m²)</strong></td>
+        <td><span class="badge-filament info">Kỳ 10/2026</span></td>
+        <td><strong style="color:#0f172a;">231.000.000 đ</strong></td>
+        <td>15/10/2026</td>
+        <td><a href="javascript:void(0)" onclick="alert('Xem ảnh UNC_DEMOTECH_Oct2026.png đã đối soát hợp lệ')" style="color:#2563eb;font-size:12px;font-weight:700;"><i class="fa-solid fa-paperclip"></i> UNC_Oct2026.png</a></td>
+        <td><span class="badge-filament success">Hoàn tất</span></td>
+        <td style="text-align:right;">
+          <span class="badge-filament success"><i class="fa-solid fa-check"></i> Đã đối soát</span>
+        </td>
+      </tr>
+    `;
+
+    const totalEl = document.getElementById('tenant-bill-total-cost');
+    if (totalEl) totalEl.innerText = '231.000.000 đ';
+
+    // Cập nhật chi tiết 5 cấu phần cước phí khớp với số liệu The Nexus Tower (Tầng 10 - 250 m²)
+    const breakdownTbody = document.querySelector('#tab-tenant-bills .filament-card table tbody');
+    if (breakdownTbody) {
+      breakdownTbody.innerHTML = `
+        <tr>
+          <td><strong>1. Tiền thuê sàn văn phòng (Tầng 10)</strong></td>
+          <td>250 m²</td>
+          <td>700.000 đ / m²</td>
+          <td>175.000.000 đ</td>
+          <td>17.500.000 đ</td>
+          <td style="text-align:right;font-weight:700;color:#0f172a;">192.500.000 đ</td>
+        </tr>
+        <tr>
+          <td><strong>2. Phí quản lý vận hành tòa nhà</strong></td>
+          <td>250 m²</td>
+          <td>100.000 đ / m²</td>
+          <td>25.000.000 đ</td>
+          <td>2.500.000 đ</td>
+          <td style="text-align:right;font-weight:700;color:#0f172a;">27.500.000 đ</td>
+        </tr>
+        <tr>
+          <td><strong>3. Tiền điện sử dụng & điều hòa</strong></td>
+          <td>1.500 kWh (Chỉ số: 5120 - 6620)</td>
+          <td>3.500 đ / kWh</td>
+          <td>5.250.000 đ</td>
+          <td>525.000 đ</td>
+          <td style="text-align:right;font-weight:700;color:#0f172a;">5.775.000 đ</td>
+        </tr>
+        <tr>
+          <td><strong>4. Tiền nước sinh hoạt</strong></td>
+          <td>25 m³ (Chỉ số: 110 - 135)</td>
+          <td>18.000 đ / m³</td>
+          <td>450.000 đ</td>
+          <td>45.000 đ</td>
+          <td style="text-align:right;font-weight:700;color:#0f172a;">495.000 đ</td>
+        </tr>
+        <tr>
+          <td><strong>5. Phí gửi xe nhân viên</strong></td>
+          <td>1 Ô tô + 15 Xe máy</td>
+          <td>Ô tô: 2.2Tr • Xe máy: 180k</td>
+          <td>4.300.000 đ</td>
+          <td>430.000 đ</td>
+          <td style="text-align:right;font-weight:700;color:#0f172a;">4.730.000 đ</td>
+        </tr>
+        <tr style="background:#f8fafc;font-size:14px;">
+          <td colspan="5"><strong style="color:#0f172a;">TỔNG CỘNG CƯỚC PHÍ PHẢI THANH TOÁN (GỒM THUẾ GTGT)</strong></td>
+          <td style="text-align:right;"><strong style="font-size:17px;color:#dc2626;" id="tenant-bill-total-cost">231.000.000 đ</strong></td>
+        </tr>
+      `;
+    }
+
+    // Cập nhật danh sách nhân sự của Demo Tech
+    const empTbody = document.getElementById('tbody-tenant-employees');
+    const empCount = document.getElementById('tenant-emp-count');
+    if (empTbody) {
+      empTbody.innerHTML = `
+        <tr>
+          <td><strong>Trần Công Nghệ</strong></td>
+          <td>Tổng Giám Đốc</td>
+          <td style="font-family:monospace;">079088001234</td>
+          <td><span class="badge-filament info">Ô tô (51K-888.99)</span></td>
+          <td><span class="badge-filament success"><i class="fa-solid fa-check"></i> Hoạt động</span></td>
+          <td style="text-align:right;">
+            <button type="button" class="btn-mo-outline" style="padding:2px 8px;font-size:11px;color:#ef4444;" onclick="deleteTenantEmployee(this)">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Lê Thị Kim Ngân</strong></td>
+          <td>Giám đốc Tài chính</td>
+          <td style="font-family:monospace;">079090005678</td>
+          <td><span class="badge-filament info">Xe máy (59C1-123.45)</span></td>
+          <td><span class="badge-filament success"><i class="fa-solid fa-check"></i> Hoạt động</span></td>
+          <td style="text-align:right;">
+            <button type="button" class="btn-mo-outline" style="padding:2px 8px;font-size:11px;color:#ef4444;" onclick="deleteTenantEmployee(this)">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Nguyễn Văn Thành</strong></td>
+          <td>Trưởng phòng IT</td>
+          <td style="font-family:monospace;">079095009876</td>
+          <td><span class="badge-filament info">Xe máy (59B2-987.65)</span></td>
+          <td><span class="badge-filament success"><i class="fa-solid fa-check"></i> Hoạt động</span></td>
+          <td style="text-align:right;">
+            <button type="button" class="btn-mo-outline" style="padding:2px 8px;font-size:11px;color:#ef4444;" onclick="deleteTenantEmployee(this)">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+      if (empCount) empCount.innerText = '3';
+    }
+
+    // Cập nhật Lịch trình tăng giá tự động 3 năm khớp hợp đồng HD-2026/DEMO-NEXUS
+    const escTbody = document.querySelector('#tab-tenant-workspace .filament-card table tbody');
+    if (escTbody) {
+      escTbody.innerHTML = `
+        <tr style="background:#eff6ff;">
+          <td><strong style="color:#1d4ed8;">Năm thứ 1 (Hiện tại)</strong></td>
+          <td>01/01/2026 - 31/12/2026</td>
+          <td><strong>$28.00 / m²</strong> (~700.000 đ)</td>
+          <td><span class="badge-filament success">Giá khởi điểm hợp đồng</span></td>
+          <td><strong>175.000.000 đ</strong></td>
+          <td><span class="badge-filament success">Đang áp dụng</span></td>
+        </tr>
+        <tr>
+          <td><strong style="color:#334155;">Năm thứ 2</strong></td>
+          <td>01/01/2027 - 31/12/2027</td>
+          <td><strong>$29.40 / m²</strong> (~735.000 đ)</td>
+          <td><span class="badge-filament info">+5.0% theo hợp đồng</span></td>
+          <td><strong>183.750.000 đ</strong></td>
+          <td><span class="badge-filament warning">Dự kiến</span></td>
+        </tr>
+        <tr>
+          <td><strong style="color:#64748b;">Năm thứ 3</strong></td>
+          <td>01/01/2028 - 31/12/2028</td>
+          <td><strong>$30.87 / m²</strong> (~771.750 đ)</td>
+          <td><span class="badge-filament info">+5.0% theo hợp đồng</span></td>
+          <td><strong>192.937.500 đ</strong></td>
+          <td><span class="badge-filament warning">Dự kiến</span></td>
+        </tr>
+      `;
+    }
+  }
+}
+
+// Khởi chạy tự động khi nạp trang
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof syncTenantPortalData === 'function') syncTenantPortalData();
+});
+
 function handleSaveTenantProfile(e) {
   if (e) e.preventDefault();
   alert('Đã lưu thông tin hồ sơ doanh nghiệp & người đại diện pháp luật thành công!');
@@ -219,6 +429,11 @@ function handleSaveNewEmployee(e) {
       </td>
     `;
     tbody.appendChild(tr);
+    const empCount = document.getElementById('tenant-emp-count');
+    if (empCount) {
+      const cur = parseInt(empCount.innerText || '0', 10);
+      empCount.innerText = cur + 1;
+    }
   }
   
   alert(`Đã thêm nhân viên [${name}] vào danh sách làm việc tại tòa nhà và đăng ký thẻ ra vào thành công!`);
@@ -228,7 +443,14 @@ function handleSaveNewEmployee(e) {
 function deleteTenantEmployee(btn) {
   if (confirm('Bạn có chắc muốn hủy đăng ký thẻ ra vào của nhân viên này?')) {
     const tr = btn.closest('tr');
-    if (tr) tr.remove();
+    if (tr) {
+      tr.remove();
+      const empCount = document.getElementById('tenant-emp-count');
+      if (empCount) {
+        const cur = Math.max(0, parseInt(empCount.innerText || '0', 10) - 1);
+        empCount.innerText = cur;
+      }
+    }
   }
 }
 

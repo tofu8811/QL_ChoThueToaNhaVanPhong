@@ -105,33 +105,29 @@ class UnitService
         $query = Unit::query()
             ->with(['building.provinceRelation', 'primaryImage', 'updatedByPropertyManager']);
 
-        // Xác định đối tượng người dùng (Multi-guard Sanctum / Header fallback)
-        if (request()->header('X-User-Role')) {
+        // Xác định đối tượng người dùng (Ưu tiên Sanctum Auth; Fallback sang Header / Demo khi chưa đăng nhập)
+        if (!$user) {
+            $user = auth('sanctum')->user() ?? request()->user();
+        }
+        if (!$user && request()->header('X-User-Role')) {
             $hdrRole = strtolower((string) request()->header('X-User-Role'));
             $hdrId = (string) request()->header('X-User-Id');
             if (in_array($hdrRole, ['sales', 'sale'])) {
                 $user = ($hdrId ? \App\Models\Sale::find($hdrId) : null)
-                    ?? ($user instanceof \App\Models\Sale ? $user : null)
                     ?? \App\Models\Sale::first();
             } elseif (in_array($hdrRole, ['pm', 'property_manager'])) {
                 $user = ($hdrId ? \App\Models\PropertyManager::find($hdrId) : null)
-                    ?? ($user instanceof \App\Models\PropertyManager ? $user : null)
                     ?? \App\Models\PropertyManager::first();
             } elseif (in_array($hdrRole, ['accountant', 'accountants'])) {
                 $user = ($hdrId ? \App\Models\Accountant::find($hdrId) : null)
-                    ?? ($user instanceof \App\Models\Accountant ? $user : null)
                     ?? \App\Models\Accountant::first();
             } elseif ($hdrRole === 'tenant') {
                 $user = ($hdrId ? \App\Models\Tenant::find($hdrId) : null)
-                    ?? ($user instanceof \App\Models\Tenant ? $user : null)
                     ?? \App\Models\Tenant::first();
             } elseif (in_array($hdrRole, ['admin', 'super_admin'])) {
                 $user = ($hdrId ? \App\Models\Admin::find($hdrId) : null)
-                    ?? ($user instanceof \App\Models\Admin ? $user : null)
                     ?? \App\Models\Admin::first();
             }
-        } elseif (!$user) {
-            $user = auth('sanctum')->user() ?? request()->user();
         }
 
         // Phân quyền theo tòa nhà cho từng vai trò:

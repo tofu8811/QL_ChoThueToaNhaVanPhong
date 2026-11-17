@@ -1,11 +1,11 @@
 <!-- TAB 2: QUẢN LÝ TÒA NHÀ & MẶT BẰNG (RESTFUL API - MODULE 1) -->
 <div id="tab-admin-buildings" class="filament-tab-pane" style="display:none;">
-  <div class="filament-page-header" style="align-items:center;">
+  <div class="filament-page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
     <div>
       <h1 class="filament-page-title" style="font-size:23px;margin-bottom:4px;">Quản Lý Tòa Nhà & Diện Tích Sàn Cắt Thuê</h1>
       <p style="font-size:13.5px;color:#64748b;margin:0;">Quản lý danh mục cao ốc văn phòng, biểu phí vận hành, cấu hình thanh toán và trạng thái sàn trống.</p>
     </div>
-    <div style="display:flex;gap:8px;">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn-mo-outline" style="background:#fff;" onclick="loadAdminBuildingsList()">
         <i class="fa-solid fa-arrows-rotate"></i> Làm mới
       </button>
@@ -13,7 +13,7 @@
         <i class="fa-solid fa-scissors"></i> Cắt / Gộp diện tích sàn
       </button>
       <button class="btn-mo-outline" id="btn-top-building-assignments" style="background:#fff;color:#2563eb;border-color:#93c5fd;font-weight:600;" onclick="goToBuildingAssignments()">
-        <i class="fa-solid fa-users-gear"></i> Phân công nhân sự (RBAC)
+        <i class="fa-solid fa-users-gear"></i> Phân công nhân sự
       </button>
       <button class="btn-mo-primary" id="btn-create-building" style="background:#2563eb;" onclick="openCreateBuildingModal()">
         <i class="fa-solid fa-plus"></i> Thêm tòa nhà mới

@@ -48,15 +48,17 @@
       if (role) {
         headers['X-User-Role'] = role;
       }
-      if (window.currentStaffUser && window.currentStaffUser.id) {
+      // Luôn ưu tiên ID người dùng thực tế đang đăng nhập
+      let authedUserId = null;
+      try {
+        const u = JSON.parse(localStorage.getItem('auth_user') || '{}');
+        if (u && u.id) authedUserId = u.id;
+      } catch (e) {}
+
+      if (authedUserId) {
+        headers['X-User-Id'] = authedUserId;
+      } else if (window.currentStaffUser && window.currentStaffUser.id) {
         headers['X-User-Id'] = window.currentStaffUser.id;
-      } else {
-        try {
-          const u = JSON.parse(localStorage.getItem('auth_user') || '{}');
-          if (u && u.id) {
-            headers['X-User-Id'] = u.id;
-          }
-        } catch (e) {}
       }
       return headers;
     }

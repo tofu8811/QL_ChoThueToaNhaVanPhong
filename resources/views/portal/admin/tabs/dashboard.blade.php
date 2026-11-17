@@ -89,12 +89,12 @@
           </div>
         </div>
         <div class="bms-kpi-main">
-          <span class="bms-kpi-number" style="color:#2563eb;">84,6%</span>
+          <span class="bms-kpi-number" id="pm-kpi-occupancy-rate" style="color:#2563eb;">84,6%</span>
           <span class="bms-kpi-pill" style="background:#ecfdf5;color:#047857;">+4,2% so tháng trước</span>
         </div>
         <div class="bms-kpi-foot">
           <span>Diện tích đang khai thác:</span>
-          <strong>362.450 m²</strong>
+          <strong id="pm-kpi-exploiting-area">168.549 m²</strong>
         </div>
       </div>
     </div>
@@ -125,13 +125,13 @@
           </div>
         </div>
         <div class="bms-kpi-main">
-          <span class="bms-kpi-number" style="color:#10b981;font-size:26px;">{{ number_format($stats['total_leasable_area'] ?? 428430, 0, ',', '.') }}</span>
+          <span class="bms-kpi-number" id="pm-kpi-total-area" style="color:#10b981;font-size:26px;">199.230</span>
           <span style="font-size:13.5px;font-weight:600;color:#64748b;">m²</span>
           <span class="bms-kpi-pill" style="background:#ecfdf5;color:#047857;">Hạng A, B, C</span>
         </div>
         <div class="bms-kpi-foot">
           <span>Diện tích còn trống:</span>
-          <strong style="color:#0284c7;">65.980 m²</strong>
+          <strong id="pm-kpi-vacant-area" style="color:#0284c7;">30.681 m²</strong>
         </div>
       </div>
     </div>
@@ -185,49 +185,28 @@
             <h3 style="font-size:16px;font-weight:800;color:#0f172a;margin:0 0 4px 0;display:flex;align-items:center;gap:8px;">
               <i class="fa-solid fa-chart-column" style="color:#2563eb;"></i> Tỷ Lệ Lấp Đầy & Diện Tích Thuê (6 Tháng Gần Nhất)
             </h3>
-            <p style="font-size:12px;color:#64748b;margin:0;">Thống kê tiến độ phủ đầy mặt bằng tại 8 cao ốc Ban Quản Lý phụ trách</p>
+            <p id="dashboard-pm-chart-sub" style="font-size:12px;color:#64748b;margin:0;">Thống kê tiến độ phủ đầy mặt bằng tại 10 cao ốc Ban Quản Lý phụ trách</p>
           </div>
           <span class="badge-filament info" style="font-weight:700;">Năm 2026</span>
         </div>
 
         <div style="padding:10px 0 16px;">
           <div style="display:flex;align-items:flex-end;gap:16px;height:210px;padding-top:20px;border-bottom:1px solid #e2e8f0;">
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;">
-              <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">76%</div>
-              <div style="width:100%;height:76%;background:linear-gradient(180deg,#bfdbfe,#3b82f6);border-radius:6px 6px 0 0;"></div>
-              <div style="font-size:11px;margin-top:8px;color:#64748b;font-weight:600;">T6</div>
-            </div>
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;">
-              <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">78%</div>
-              <div style="width:100%;height:78%;background:linear-gradient(180deg,#bfdbfe,#3b82f6);border-radius:6px 6px 0 0;"></div>
-              <div style="font-size:11px;margin-top:8px;color:#64748b;font-weight:600;">T7</div>
-            </div>
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;">
-              <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">80%</div>
-              <div style="width:100%;height:80%;background:linear-gradient(180deg,#bfdbfe,#3b82f6);border-radius:6px 6px 0 0;"></div>
-              <div style="font-size:11px;margin-top:8px;color:#64748b;font-weight:600;">T8</div>
-            </div>
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;">
-              <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">81%</div>
-              <div style="width:100%;height:81%;background:linear-gradient(180deg,#bfdbfe,#3b82f6);border-radius:6px 6px 0 0;"></div>
-              <div style="font-size:11px;margin-top:8px;color:#64748b;font-weight:600;">T9</div>
-            </div>
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;">
-              <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">83%</div>
-              <div style="width:100%;height:83%;background:linear-gradient(180deg,#bfdbfe,#3b82f6);border-radius:6px 6px 0 0;"></div>
-              <div style="font-size:11px;margin-top:8px;color:#64748b;font-weight:600;">T10</div>
-            </div>
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;">
-              <div style="font-size:11px;font-weight:800;color:#ea580c;margin-bottom:4px;">84.6%</div>
-              <div style="width:100%;height:84.6%;background:linear-gradient(180deg,#f59e0b,#ea580c);border-radius:6px 6px 0 0;box-shadow:0 4px 10px rgba(234,88,12,0.3);"></div>
-              <div style="font-size:11px;margin-top:8px;color:#ea580c;font-weight:700;">T11 (Nay)</div>
-            </div>
+            @forelse($stats['building_performances'] ?? [] as $bp)
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;">
+                <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">{{ $bp['occupancy_pct'] }}%</div>
+                <div style="width:100%;height:{{ max(12, $bp['occupancy_pct']) }}%;background:linear-gradient(180deg,#bfdbfe,{{ $bp['bar_color'] }});border-radius:6px 6px 0 0;"></div>
+                <div style="font-size:11px;margin-top:8px;color:#0f172a;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px;" title="{{ $bp['name'] }}">{{ Str::limit($bp['name'], 10) }}</div>
+              </div>
+            @empty
+              <div style="width:100%;text-align:center;color:#94a3b8;padding:40px 0;">Chưa có dữ liệu thống kê lấp đầy.</div>
+            @endforelse
           </div>
         </div>
 
         <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:#64748b;">
-          <span><i class="fa-solid fa-arrow-trend-up" style="color:#16a34a;"></i> Tỷ lệ lấp đầy tăng liên tục qua 6 tháng (+8,6%)</span>
-          <strong style="color:#0f172a;">8 tòa nhà phân công quản trị</strong>
+          <span><i class="fa-solid fa-chart-simple" style="color:#16a34a;"></i> Tỷ lệ lấp đầy theo từng tòa nhà</span>
+          <strong style="color:#0f172a;">{{ count($serverBuildings ?? []) }} tòa nhà đang quản trị</strong>
         </div>
       </div>
 
@@ -236,45 +215,31 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
           <div>
             <h3 style="font-size:16px;font-weight:800;color:#0f172a;margin:0 0 2px 0;display:flex;align-items:center;gap:8px;">
-              <i class="fa-solid fa-list-check" style="color:#f59e0b;"></i> Việc Cần Phê Duyệt Ngay
+              <i class="fa-solid fa-list-check" style="color:#f59e0b;"></i> Yêu Cầu Vận Hành Cần Xử Lý
             </h3>
-            <p style="font-size:12px;color:#64748b;margin:0;">Yêu cầu vận hành chờ Trưởng ban duyệt</p>
+            <p style="font-size:12px;color:#64748b;margin:0;">Yêu cầu sự cố kỹ thuật chờ xử lý</p>
           </div>
-          <span class="badge-filament warning" style="font-weight:700;">4 mục</span>
+          <span class="badge-filament warning" style="font-weight:700;">{{ count(($recentTickets ?? collect())->filter(fn($t) => in_array($t->status?->value ?? (string)$t->status, ['NEW', 'OPEN', 'IN_PROGRESS']))) }} mục</span>
         </div>
 
         <div style="display:flex;flex-direction:column;gap:10px;">
-          <div style="padding:10px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
-            <div>
-              <div style="font-weight:700;font-size:13px;color:#0f172a;">Duyệt thi công ngoài giờ (Tầng 12)</div>
-              <div style="font-size:11.5px;color:#64748b;">Công ty ABC Tech • Vietcombank Tower</div>
+          @forelse(($recentTickets ?? collect())->filter(fn($t) => in_array($t->status?->value ?? (string)$t->status, ['NEW', 'OPEN', 'IN_PROGRESS']))->take(4) as $tk)
+            @php
+              $isUrgent = in_array($tk->priority?->value ?? (string)$tk->priority, ['URGENT', 'HIGH']);
+            @endphp
+            <div style="padding:10px 12px;background:{{ $isUrgent ? '#fffbeb' : '#f8fafc' }};border:1px solid {{ $isUrgent ? '#fde68a' : '#e2e8f0' }};border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+              <div style="overflow:hidden;padding-right:8px;">
+                <div style="font-weight:700;font-size:13px;color:{{ $isUrgent ? '#92400e' : '#0f172a' }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $tk->title }}</div>
+                <div style="font-size:11.5px;color:{{ $isUrgent ? '#b45309' : '#64748b' }};">{{ $tk->tenant?->company_name ?? 'Khách thuê' }} • {{ $tk->building?->name ?? 'Tòa nhà' }}</div>
+              </div>
+              <button class="btn-mo-primary" style="padding:5px 12px;font-size:12px;flex-shrink:0;" onclick="switchFilamentTab('tab-admin-tickets', document.getElementById('nav-item-tickets')); openTicketDetail('{{ $tk->id }}');">Xử lý</button>
             </div>
-            <button class="btn-mo-primary" style="padding:5px 12px;font-size:12px;" onclick="alert('Đã phê duyệt giấy phép thi công ngoài giờ cho Công ty ABC Tech!')">Duyệt</button>
-          </div>
-
-          <div style="padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
-            <div>
-              <div style="font-weight:700;font-size:13px;color:#92400e;">Bảo trì điều hòa trung tâm phòng Server</div>
-              <div style="font-size:11.5px;color:#b45309;">Deutsches Haus • Yêu cầu khẩn cấp trong ngày</div>
+          @empty
+            <div style="padding:20px;text-align:center;color:#94a3b8;font-size:13px;">
+              <i class="fa-solid fa-circle-check" style="color:#10b981;font-size:20px;margin-bottom:6px;display:block;"></i>
+              Hiện không có yêu cầu sự cố khẩn cấp nào cần phê duyệt.
             </div>
-            <button class="btn-mo-orange" style="padding:5px 12px;font-size:12px;" onclick="alert('Đã phân công kỹ sư BQL tới hiện trường xử lý!')">Giao việc</button>
-          </div>
-
-          <div style="padding:10px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
-            <div>
-              <div style="font-weight:700;font-size:13px;color:#0f172a;">Gia hạn hợp đồng thuê thêm 2 năm</div>
-              <div style="font-size:11.5px;color:#64748b;">Tập đoàn Nova Logistics • Lim Tower</div>
-            </div>
-            <button class="btn-mo-outline" style="padding:5px 12px;font-size:12px;" onclick="alert('Đã mở hồ sơ gia hạn hợp đồng thuê!')">Xem</button>
-          </div>
-
-          <div style="padding:10px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
-            <div>
-              <div style="font-weight:700;font-size:13px;color:#0f172a;">Nghiệm thu khắc phục rò rỉ nước phòng máy</div>
-              <div style="font-size:11.5px;color:#64748b;">Saigon Centre Tower 2 • Đã hoàn thành sửa chữa</div>
-            </div>
-            <button class="btn-mo-primary" style="padding:5px 12px;font-size:12px;background:#10b981;border-color:#10b981;" onclick="alert('Đã xác nhận nghiệm thu kỹ thuật!')">Nghiệm thu</button>
-          </div>
+          @endforelse
         </div>
       </div>
     </div>
@@ -291,7 +256,7 @@
         <p style="font-size:12px;color:#64748b;margin:0;line-height:1.4;">Phân bổ {{ $totalU }} mặt bằng ({{ number_format($totalUnitsArea, 0, ',', '.') }} m²) trên {{ $totalBlds }} tòa nhà</p>
       </div>
 
-      <!-- Biểu đồ Donut SVG động 100% theo dữ liệu CSDL -->
+      <!-- Biểu đồ Donut tỷ lệ lấp đầy mặt bằng -->
       <div style="display:flex;justify-content:center;align-items:center;padding:10px 0 18px;">
         <div style="position:relative;width:168px;height:168px;display:flex;align-items:center;justify-content:center;">
           <svg width="168" height="168" viewBox="0 0 42 42" style="transform:rotate(-90deg);">
@@ -310,7 +275,7 @@
         </div>
       </div>
 
-      <!-- Chú thích 3 trạng thái mặt bằng thực tế (kèm cả số căn và diện tích m²) -->
+      <!-- Chú thích 3 trạng thái mặt bằng (kèm số căn và diện tích m²) -->
       <div style="border-top:1px solid #f1f5f9;padding-top:14px;display:flex;flex-direction:column;gap:10px;font-size:12.5px;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <span style="display:flex;align-items:center;gap:8px;color:#475569;">
@@ -336,13 +301,13 @@
       </div>
     </div>
 
-    <!-- Cột phải: Hiệu Suất Lấp Đầy Theo Tòa Nhà (Truy vấn trực tiếp từ CSDL) -->
+    <!-- Cột phải: Hiệu Suất Lấp Đầy Theo Tòa Nhà -->
     <div class="bms-panel-card">
       <div>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
           <div>
             <h3 style="font-size:16px;font-weight:800;color:#0f172a;margin:0 0 4px 0;">Hiệu Suất Lấp Đầy Theo Tòa Nhà</h3>
-            <p style="font-size:12px;color:#64748b;margin:0;">Thống kê mặt bằng đang cho thuê thực tế tại các tòa nhà trọng điểm</p>
+            <p style="font-size:12px;color:#64748b;margin:0;">Thống kê mặt bằng đang cho thuê tại các tòa nhà trọng điểm</p>
           </div>
           <div style="display:flex;align-items:center;gap:12px;font-size:11.5px;color:#64748b;">
             <span style="display:inline-flex;align-items:center;gap:5px;">
@@ -387,7 +352,7 @@
             @if(!empty($buildingPerfs))
               <strong>{{ $buildingPerfs[0]['name'] }}</strong> dẫn đầu tỷ lệ khai thác ({{ $buildingPerfs[0]['leased_units'] }}/{{ $buildingPerfs[0]['total_units'] }} mặt bằng), toàn hệ thống hiện có <strong>{{ $availU }} mặt bằng trống</strong> ({{ number_format($availArea, 0, ',', '.') }} m²) sẵn sàng chào thuê.
             @else
-              Thống kê hiệu suất lấp đầy thực tế tại các tòa nhà trọng điểm.
+              Thống kê hiệu suất lấp đầy tại các tòa nhà trọng điểm.
             @endif
           </span>
         </div>
@@ -417,65 +382,51 @@
             <span style="background:#ecfdf5;color:#047857;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;">
               ● Hợp đồng đang hiệu lực
             </span>
-            <span style="font-family:monospace;font-size:11.5px;color:#64748b;font-weight:700;">{{ $firstContract?->contract_number ?? $firstContract?->contract_code ?? 'HD-2026/01' }}</span>
+            <span style="font-family:monospace;font-size:11.5px;color:#64748b;font-weight:700;">{{ $firstContract?->contract_number ?? $firstContract?->contract_code ?? '---' }}</span>
           </div>
-          <h4 style="font-size:14.5px;font-weight:800;color:#0f172a;margin:0 0 4px 0;">{{ $firstContract?->tenant?->company_name ?? 'Chưa có khách thuê' }}</h4>
+          <h4 style="font-size:14.5px;font-weight:800;color:#0f172a;margin:0 0 4px 0;">{{ $firstContract?->tenant?->company_name ?? 'Chưa có hợp đồng nào' }}</h4>
           <p style="font-size:12.5px;color:#64748b;margin:0;">
-            Mã sàn: <strong>{{ $firstContract?->units?->first()?->unit_code ?? 'NEX-0801' }}</strong>
-            • {{ number_format($firstContract?->total_leased_area_sqm ?? 200, 0, ',', '.') }} m²
-            • {{ $firstContract?->building?->name ?? 'Tòa Nhà The Nexus Tower' }}
+            @if($firstContract)
+              Mã sàn: <strong>{{ $firstContract->units?->first()?->unit_code ?? 'Mặt bằng' }}</strong>
+              • {{ number_format($firstContract->total_leased_area_sqm ?? 0, 0, ',', '.') }} m²
+              • {{ $firstContract->building?->name ?? 'Tòa nhà' }}
+            @else
+              Hệ thống chưa ghi nhận hợp đồng thuê đang hoạt động.
+            @endif
           </p>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid #f1f5f9;font-size:12px;">
-          <span style="color:#64748b;">Hiệu lực đến: <strong style="color:#0f172a;">{{ $firstContract?->end_date ? \Carbon\Carbon::parse($firstContract->end_date)->format('d/m/Y') : '31/12/2028' }}</strong></span>
+          <span style="color:#64748b;">Hiệu lực đến: <strong style="color:#0f172a;">{{ $firstContract?->end_date ? \Carbon\Carbon::parse($firstContract->end_date)->format('d/m/Y') : '---' }}</strong></span>
           <button type="button" class="btn-mo-outline" style="padding:5px 12px;font-size:12px;border-radius:7px;" onclick="switchFilamentTab('tab-admin-contracts', document.getElementById('nav-item-contracts'))">
             Chi tiết HĐ
           </button>
         </div>
       </div>
 
-      <!-- Card 2: Thông báo phí chờ thanh toán (Admin) / Việc cần phê duyệt ngay (PM theo feature/frontend) -->
-      <div class="bms-alert-card kpi-admin-content">
+      <!-- Card 2: Thông báo phí chờ thanh toán (Từ bảng debitnotes) -->
+      <div class="bms-alert-card">
         <div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
             <span style="background:#fef3c7;color:#b45309;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;">
               ● Công nợ chờ thanh toán
             </span>
-            <span style="font-family:monospace;font-size:11.5px;color:#64748b;font-weight:700;">{{ $pendingDebit?->debit_note_code ?? 'DN-202611-0001' }}</span>
+            <span style="font-family:monospace;font-size:11.5px;color:#64748b;font-weight:700;">{{ $pendingDebit?->debit_note_code ?? '---' }}</span>
           </div>
-          <h4 style="font-size:14.5px;font-weight:800;color:#0f172a;margin:0 0 4px 0;">{{ $pendingDebit?->tenant?->company_name ?? 'CÔNG TY CỔ PHẦN VNG' }}</h4>
+          <h4 style="font-size:14.5px;font-weight:800;color:#0f172a;margin:0 0 4px 0;">{{ $pendingDebit?->tenant?->company_name ?? 'Không có công nợ tồn đọng' }}</h4>
           <p style="font-size:12.5px;color:#64748b;margin:0;">
-            Cần thu: <strong style="color:#ea580c;">{{ number_format($pendingDebit?->total_amount ?? 442667500, 0, ',', '.') }} đ</strong>
-            • Kỳ {{ $pendingDebit?->billing_month ?? 11 }}/{{ $pendingDebit?->billing_year ?? 2026 }}
-            • {{ $pendingDebit?->building?->name ?? 'Tòa Nhà The Nexus Tower' }}
+            @if($pendingDebit)
+              Cần thu: <strong style="color:#ea580c;">{{ number_format($pendingDebit->total_amount ?? 0, 0, ',', '.') }} đ</strong>
+              • Kỳ {{ $pendingDebit->billing_period ?? 'Hiện tại' }}
+              • {{ $pendingDebit->building?->name ?? 'Tòa nhà' }}
+            @else
+              Tất cả các khoản phí kỳ này đã được thanh toán đối soát hoàn tất.
+            @endif
           </p>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid #f1f5f9;font-size:12px;">
-          <span style="color:#64748b;">Hạn đóng: <strong style="color:#d97706;">{{ $pendingDebit?->due_date ? \Carbon\Carbon::parse($pendingDebit->due_date)->format('d/m/Y') : '15/11/2026' }}</strong></span>
+          <span style="color:#64748b;">Hạn đóng: <strong style="color:#d97706;">{{ $pendingDebit?->due_date ? \Carbon\Carbon::parse($pendingDebit->due_date)->format('d/m/Y') : 'Trong kỳ' }}</strong></span>
           <button type="button" style="background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;font-weight:700;padding:5px 12px;font-size:12px;border-radius:7px;cursor:pointer;" onclick="switchFilamentTab('tab-admin-billing', document.getElementById('nav-item-billing'))">
             Đối soát thu
-          </button>
-        </div>
-      </div>
-
-      <!-- Card 2 (PM view theo feature/frontend): Việc cần phê duyệt ngay -->
-      <div class="bms-alert-card kpi-pm-content" style="display:none;">
-        <div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-            <span style="background:#fef3c7;color:#b45309;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;">
-              ● Việc Cần Phê Duyệt Ngay (BQL)
-            </span>
-            <span style="background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Khẩn cấp</span>
-          </div>
-          <h4 style="font-size:14.5px;font-weight:800;color:#0f172a;margin:0 0 4px 0;">Duyệt thi công ngoài giờ (Tầng 12)</h4>
-          <p style="font-size:12.5px;color:#64748b;margin:0;">
-            Công ty ABC Tech • Tòa nhà Vietcombank Tower • Đăng ký lắp đặt mạng cáp
-          </p>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid #f1f5f9;font-size:12px;">
-          <span style="color:#64748b;">Thời hạn: <strong style="color:#d97706;">Hôm nay 18:00</strong></span>
-          <button type="button" class="btn-mo-primary" style="padding:5px 12px;font-size:12px;border-radius:7px;" onclick="alert('Đã phê duyệt giấy phép thi công ngoài giờ thành công!')">
-            Duyệt thi công
           </button>
         </div>
       </div>

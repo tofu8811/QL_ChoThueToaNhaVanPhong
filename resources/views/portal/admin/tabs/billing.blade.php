@@ -28,11 +28,11 @@
           <div class="bms-kpi-icon" style="background:#eff6ff;color:#2563eb;"><i class="fa-solid fa-file-invoice-dollar"></i></div>
         </div>
         <div class="bms-kpi-main">
-          <span class="bms-kpi-number" style="color:#0f172a;font-size:26px;">4.280 Tr</span>
-          <span class="bms-kpi-pill" style="background:#eff6ff;color:#1d4ed8;">Kỳ 11/2026</span>
+          <span class="bms-kpi-number" style="color:#0f172a;font-size:26px;">{{ number_format(($stats['billing_total'] ?? 0) / 1000000, 1, ',', '.') }} Tr</span>
+          <span class="bms-kpi-pill" style="background:#eff6ff;color:#1d4ed8;">Kỳ hiện tại</span>
         </div>
       </div>
-      <div class="bms-kpi-foot"><span>Tổng số thông báo phí:</span><strong>10 hóa đơn</strong></div>
+      <div class="bms-kpi-foot"><span>Tổng số thông báo phí:</span><strong>{{ count($recentDebitNotes ?? []) }} hóa đơn</strong></div>
     </div>
 
     <div class="bms-kpi-card">
@@ -42,11 +42,11 @@
           <div class="bms-kpi-icon" style="background:#ecfdf5;color:#10b981;"><i class="fa-solid fa-circle-check"></i></div>
         </div>
         <div class="bms-kpi-main">
-          <span class="bms-kpi-number" style="color:#10b981;font-size:26px;">3.424 Tr</span>
-          <span class="bms-kpi-pill" style="background:#ecfdf5;color:#047857;">8 / 10 khách đã nộp</span>
+          <span class="bms-kpi-number" style="color:#10b981;font-size:26px;">{{ number_format(($stats['billing_paid'] ?? 0) / 1000000, 1, ',', '.') }} Tr</span>
+          <span class="bms-kpi-pill" style="background:#ecfdf5;color:#047857;">{{ $stats['billing_paid_count'] ?? 0 }} hóa đơn đã nộp</span>
         </div>
       </div>
-      <div class="bms-kpi-foot"><span>Tỷ lệ hoàn thành:</span><strong>80.0% tổng doanh thu</strong></div>
+      <div class="bms-kpi-foot"><span>Tỷ lệ thu hồi:</span><strong>{{ $stats['billing_paid_pct'] ?? 0 }}% tổng doanh thu</strong></div>
     </div>
 
     <div class="bms-kpi-card">
@@ -56,25 +56,25 @@
           <div class="bms-kpi-icon" style="background:#fef3c7;color:#d97706;"><i class="fa-solid fa-clock-rotate-left"></i></div>
         </div>
         <div class="bms-kpi-main">
-          <span class="bms-kpi-number" style="color:#d97706;font-size:26px;">856 Tr</span>
-          <span class="bms-kpi-pill" style="background:#fef3c7;color:#b45309;">2 khách chờ đối soát</span>
+          <span class="bms-kpi-number" style="color:#d97706;font-size:26px;">{{ number_format(($stats['billing_pending'] ?? 0) / 1000000, 1, ',', '.') }} Tr</span>
+          <span class="bms-kpi-pill" style="background:#fef3c7;color:#b45309;">Chờ thanh toán / xác nhận</span>
         </div>
       </div>
-      <div class="bms-kpi-foot"><span>Hạn chót thanh toán:</span><strong>05/12/2026</strong></div>
+      <div class="bms-kpi-foot"><span>Theo dõi kỳ thu:</span><strong>Hàng tháng</strong></div>
     </div>
 
     <div class="bms-kpi-card">
       <div>
         <div class="bms-kpi-top">
-          <div class="bms-kpi-title">CHỈ SỐ TIÊU THỤ NĂNG LƯỢNG</div>
-          <div class="bms-kpi-icon" style="background:#f3e8ff;color:#7e22ce;"><i class="fa-solid fa-bolt"></i></div>
+          <div class="bms-kpi-title">CÔNG NỢ QUÁ HẠN</div>
+          <div class="bms-kpi-icon" style="background:#fef2f2;color:#ef4444;"><i class="fa-solid fa-triangle-exclamation"></i></div>
         </div>
         <div class="bms-kpi-main">
-          <span class="bms-kpi-number" style="color:#7e22ce;font-size:26px;">32.500 kWh</span>
-          <span class="bms-kpi-pill" style="background:#f3e8ff;color:#6d28d9;">Đã chốt công tơ</span>
+          <span class="bms-kpi-number" style="color:#ef4444;font-size:26px;">{{ number_format(($stats['billing_overdue'] ?? 0) / 1000000, 1, ',', '.') }} Tr</span>
+          <span class="bms-kpi-pill" style="background:#fef2f2;color:#b91c1c;">{{ $stats['billing_overdue_count'] ?? 0 }} hóa đơn trễ</span>
         </div>
       </div>
-      <div class="bms-kpi-foot"><span>Nước tiêu thụ:</span><strong>450 m³ sinh hoạt</strong></div>
+      <div class="bms-kpi-foot"><span>Cảnh báo kế toán:</span><strong>Cần đôn đốc thanh toán</strong></div>
     </div>
   </div>
 
@@ -104,70 +104,64 @@
         </tr>
       </thead>
       <tbody id="tbody-admin-billing">
-        <tr>
-          <td><strong style="font-family:monospace;color:#1d4ed8;">DN-202611-001</strong></td>
-          <td>
-            <strong>Công ty Cổ phần VNG</strong>
-            <div style="font-size:12px;color:#64748b;">Vietcombank Tower - Tầng 12 (350 m²)</div>
-          </td>
-          <td><span class="badge-filament info">11/2026</span></td>
-          <td>404.394.375 đ</td>
-          <td>23.193.500 đ</td>
-          <td><strong style="color:#ea580c;font-size:14px;">427.587.875 đ</strong></td>
-          <td>
-            <button class="btn-mo-outline" style="padding:3px 8px;font-size:11.5px;color:#2563eb;font-weight:700;" onclick="openReconcileUncModal('DN-202611-001', 'Công ty Cổ phần VNG', '427.587.875 đ', 'UNC_VNG_Nov2026.png', 'PENDING')">
-              <i class="fa-solid fa-paperclip"></i> UNC_Nov2026.png
-            </button>
-          </td>
-          <td><span class="badge-filament warning" id="badge-dn-status-DN-202611-001">Chờ thanh toán</span></td>
-          <td style="text-align:right;">
-            <button class="btn-mo-primary" style="padding:4px 10px;font-size:12px;background:#059669;" onclick="openReconcileUncModal('DN-202611-001', 'Công ty Cổ phần VNG', '427.587.875 đ', 'UNC_VNG_Nov2026.png', 'PENDING')">
-              <i class="fa-solid fa-check-double"></i> Đối soát UNC
-            </button>
-          </td>
-        </tr>
-        <tr>
-          <td><strong style="font-family:monospace;color:#1d4ed8;">DN-202611-002</strong></td>
-          <td>
-            <strong>Tập đoàn FPT Software</strong>
-            <div style="font-size:12px;color:#64748b;">The Nexus Tower - Tầng 15 (500 m²)</div>
-          </td>
-          <td><span class="badge-filament info">11/2026</span></td>
-          <td>580.000.000 đ</td>
-          <td>35.400.000 đ</td>
-          <td><strong style="color:#0f172a;font-size:14px;">615.400.000 đ</strong></td>
-          <td>
-            <button class="btn-mo-outline" style="padding:3px 8px;font-size:11.5px;color:#16a34a;font-weight:700;" onclick="openReconcileUncModal('DN-202611-002', 'FPT Software', '615.400.000 đ', 'UNC_FPT_VCB_Passed.pdf', 'PAID')">
-              <i class="fa-solid fa-file-pdf"></i> UNC_FPT_VCB.pdf
-            </button>
-          </td>
-          <td><span class="badge-filament success" id="badge-dn-status-DN-202611-002">Hoàn tất</span></td>
-          <td style="text-align:right;">
-            <span class="badge-filament success"><i class="fa-solid fa-check"></i> Đã thanh toán</span>
-          </td>
-        </tr>
-        <tr>
-          <td><strong style="font-family:monospace;color:#1d4ed8;">DN-202611-003</strong></td>
-          <td>
-            <strong>Shopee Express Vietnam</strong>
-            <div style="font-size:12px;color:#64748b;">Saigon Centre Tower 2 - Tầng 6 (280 m²)</div>
-          </td>
-          <td><span class="badge-filament info">11/2026</span></td>
-          <td>320.000.000 đ</td>
-          <td>18.500.000 đ</td>
-          <td><strong style="color:#0f172a;font-size:14px;">338.500.000 đ</strong></td>
-          <td>
-            <button class="btn-mo-outline" style="padding:3px 8px;font-size:11.5px;color:#d97706;font-weight:700;" onclick="openReconcileUncModal('DN-202611-003', 'Shopee Express', '338.500.000 đ', 'UNC_Shopee_Dot1.png', 'PARTIAL')">
-              <i class="fa-solid fa-paperclip"></i> UNC_Dot1.png
-            </button>
-          </td>
-          <td><span class="badge-filament purple" style="background:#f3e8ff;color:#7e22ce;" id="badge-dn-status-DN-202611-003">Thanh toán một phần</span></td>
-          <td style="text-align:right;">
-            <button class="btn-mo-primary" style="padding:4px 10px;font-size:12px;background:#059669;" onclick="openReconcileUncModal('DN-202611-003', 'Shopee Express', '338.500.000 đ', 'UNC_Shopee_Dot1.png', 'PARTIAL')">
-              <i class="fa-solid fa-check-double"></i> Đối soát UNC
-            </button>
-          </td>
-        </tr>
+        @forelse($recentDebitNotes ?? [] as $dn)
+          @php
+            $stRaw = $dn->status?->value ?? (string) $dn->status;
+            $stBadge = 'warning';
+            $stLabel = 'Chờ thanh toán';
+            if ($stRaw === 'PAID') { $stBadge = 'success'; $stLabel = 'Đã thanh toán'; }
+            elseif ($stRaw === 'PARTIALLY_PAID') { $stBadge = 'purple'; $stLabel = 'Thanh toán một phần'; }
+            elseif ($stRaw === 'OVERDUE') { $stBadge = 'danger'; $stLabel = 'Quá hạn'; }
+            elseif ($stRaw === 'CANCELLED') { $stBadge = 'secondary'; $stLabel = 'Đã hủy'; }
+
+            $tenantName = $dn->tenant->company_name ?? 'Khách thuê';
+            $bldName = $dn->building->name ?? 'Tòa nhà';
+            $period = $dn->billing_period ?? ($dn->created_at ? $dn->created_at->format('m/Y') : '11/2026');
+            $rentAmount = $dn->rent_amount ?? ($dn->total_amount * 0.9);
+            $utilAmount = $dn->service_fee ?? ($dn->total_amount - $rentAmount);
+            $totalAmount = (float) ($dn->total_amount ?? 0);
+            $uncFile = $dn->proof_payment_url ? basename($dn->proof_payment_url) : ($stRaw === 'PAID' ? 'UNC_XacNhan.pdf' : null);
+          @endphp
+          <tr>
+            <td><strong style="font-family:monospace;color:#1d4ed8;">{{ $dn->debit_note_code }}</strong></td>
+            <td>
+              <strong>{{ $tenantName }}</strong>
+              <div style="font-size:12px;color:#64748b;">{{ $bldName }}</div>
+            </td>
+            <td><span class="badge-filament info">{{ $period }}</span></td>
+            <td>{{ number_format($rentAmount, 0, ',', '.') }} đ</td>
+            <td>{{ number_format($utilAmount, 0, ',', '.') }} đ</td>
+            <td><strong style="color:{{ $stRaw === 'PAID' ? '#0f172a' : '#ea580c' }};font-size:14px;">{{ number_format($totalAmount, 0, ',', '.') }} đ</strong></td>
+            <td>
+              @if($uncFile)
+                <button class="btn-mo-outline" style="padding:3px 8px;font-size:11.5px;color:#2563eb;font-weight:700;" onclick="openReconcileUncModal('{{ $dn->debit_note_code }}', '{{ addslashes($tenantName) }}', '{{ number_format($totalAmount, 0, ',', '.') }} đ', '{{ $uncFile }}', '{{ $stRaw }}')">
+                  <i class="fa-solid fa-paperclip"></i> {{ $uncFile }}
+                </button>
+              @else
+                <span style="color:#94a3b8;font-size:11.5px;"><em>Chưa có UNC</em></span>
+              @endif
+            </td>
+            <td>
+              <span class="badge-filament {{ $stBadge }}" id="badge-dn-status-{{ $dn->debit_note_code }}">{{ $stLabel }}</span>
+            </td>
+            <td style="text-align:right;">
+              @if($stRaw !== 'PAID')
+                <button class="btn-mo-primary" style="padding:4px 10px;font-size:12px;background:#059669;" onclick="openReconcileUncModal('{{ $dn->debit_note_code }}', '{{ addslashes($tenantName) }}', '{{ number_format($totalAmount, 0, ',', '.') }} đ', '{{ $uncFile ?? 'UNC_' . $dn->debit_note_code . '.png' }}', '{{ $stRaw }}')">
+                  <i class="fa-solid fa-check-double"></i> Đối soát UNC
+                </button>
+              @else
+                <span class="badge-filament success"><i class="fa-solid fa-check"></i> Đã hoàn tất</span>
+              @endif
+            </td>
+          </tr>
+        @empty
+          <tr>
+            <td colspan="9" style="text-align:center;padding:32px;color:#94a3b8;">
+              <i class="fa-solid fa-file-invoice" style="font-size:26px;display:block;margin-bottom:8px;"></i>
+              Chưa có thông báo phí nào trong hệ thống.
+            </td>
+          </tr>
+        @endforelse
       </tbody>
     </table>
   </div>
@@ -185,9 +179,11 @@
         <div>
           <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">KHÁCH THUÊ DOANH NGHIỆP <span style="color:#ef4444;">*</span></label>
           <select id="util-tenant" class="filament-input" style="width:100%;">
-            <option value="Công ty Cổ phần VNG">Công ty Cổ phần VNG - Tầng 12 (Vietcombank Tower)</option>
-            <option value="Tập đoàn FPT Software">Tập đoàn FPT Software - Tầng 15 (The Nexus Tower)</option>
-            <option value="Shopee Express Vietnam">Shopee Express Vietnam - Tầng 6 (Saigon Centre)</option>
+            @forelse($recentContracts ?? [] as $c)
+              <option value="{{ $c->tenant?->company_name }}">{{ $c->tenant?->company_name ?? 'Khách thuê' }} - {{ $c->building?->name ?? 'Tòa nhà' }}</option>
+            @empty
+              <option value="">Chưa có khách thuê nào có hợp đồng trong hệ thống</option>
+            @endforelse
           </select>
         </div>
         <div>

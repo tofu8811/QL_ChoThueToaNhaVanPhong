@@ -1,13 +1,13 @@
-<!-- TAB 10: QUẢN TRỊ NHÂN SỰ & PHÂN QUYỀN ĐA TÁC NHÂN (MODULE 5 - ENDPOINTS 72-91) -->
+<!-- TAB: QUẢN TRỊ NHÂN SỰ & PHÂN QUYỀN -->
           <div id="tab-admin-staff" class="filament-tab-pane" style="display:none;">
             <div class="filament-card" style="margin-bottom: 20px;">
               <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
                 <div>
                   <h3 style="font-size: 19px; font-weight: 800; color: #0f172a; margin-bottom: 6px; display: flex; align-items: center; gap: 10px;">
-                    <i class="fa-solid fa-users-gear" style="color: #2563eb;"></i> Quản Trị Nhân Sự & Phân Quyền Đa Tác Nhân (RBAC)
+                    <i class="fa-solid fa-users-gear" style="color: #2563eb;"></i> Quản Trị Danh Mục Nhân Sự & Phân Quyền
                   </h3>
                   <p style="font-size: 13.5px; color: #64748b; margin: 0;">
-                    Hệ thống xác thực và phân quyền 4 nhóm tác nhân: Quản trị viên (Admins), Nhân viên Sales, Ban Quản lý (PM) và Kế toán công nợ.
+                    Quản lý danh sách tài khoản và phân công nhiệm vụ: Quản trị viên, Nhân viên Sales, Ban Quản lý và Kế toán công nợ.
                   </p>
                 </div>
                 <div>
@@ -37,14 +37,14 @@
                 </button>
 
                 <button class="staff-subtab-btn" id="btn-subtab-assignments" onclick="switchStaffSubTab('assignments', this)">
-                  <i class="fa-solid fa-building-user" style="color:#6366f1;"></i> Phân Công Tòa Nhà (RBAC)
-                  <span class="badge-pill" id="badge-count-assignments">3 NV</span>
+                  <i class="fa-solid fa-building-user" style="color:#6366f1;"></i> Phân Công Theo Tòa Nhà
+                  <span class="badge-pill" id="badge-count-assignments"><i class="fa-solid fa-building" style="font-size:11px;"></i></span>
                 </button>
 
               </div>
             </div>
 
-            <!-- SUBPANEL 1: QUẢN TRỊ VIÊN (ADMINS) — API 72-76 -->
+            <!-- SUBPANEL 1: QUẢN TRỊ VIÊN (ADMINS) -->
             <div id="subpanel-staff-admins" class="staff-subpanel">
               <div class="filament-card" style="margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
@@ -142,7 +142,7 @@
               </div>
             </div>
 
-            <!-- SUBPANEL 2: NHÂN VIÊN SALES — API 77-81 -->
+            <!-- SUBPANEL 2: NHÂN VIÊN SALES -->
             <div id="subpanel-staff-sales" class="staff-subpanel" style="display:none;">
               <div class="filament-card" style="margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
@@ -244,7 +244,7 @@
               </div>
             </div>
 
-            <!-- SUBPANEL 3: BAN QUẢN LÝ (PM) — API 82-86 -->
+            <!-- SUBPANEL 3: BAN QUẢN LÝ (PM) -->
             <div id="subpanel-staff-pm" class="staff-subpanel" style="display:none;">
               <div class="filament-card" style="margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
@@ -357,7 +357,7 @@
               </div>
             </div>
 
-            <!-- SUBPANEL 4: KẾ TOÁN (ACCOUNTANTS) — API 87-91 -->
+            <!-- SUBPANEL 4: KẾ TOÁN (ACCOUNTANTS) -->
             <div id="subpanel-staff-accountants" class="staff-subpanel" style="display:none;">
               <div class="filament-card" style="margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
@@ -467,7 +467,7 @@
             </div>
 
           
-<!-- SUBPANEL 5: PHÂN CÔNG TÒA NHÀ & RBAC (ENDPOINTS 92 - 98) -->
+<!-- SUBPANEL 5: PHÂN CÔNG TÒA NHÀ -->
             <div id="subpanel-staff-assignments" class="staff-subpanel" style="display:none;">
               <!-- Card chọn tòa nhà -->
               <div class="filament-card" style="margin-bottom: 20px; background: linear-gradient(135deg, #f8fafc, #eff6ff); border: 1px solid #bfdbfe;">
@@ -478,7 +478,7 @@
                     </div>
                     <div>
                       <label style="display:block; font-size:12px; font-weight:700; color:#1e40af; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">
-                        Chọn Tòa Nhà Để Phân Công Nhân Sự (RBAC)
+                        Chọn Tòa Nhà Để Phân Công Nhân Sự
                       </label>
                       <select id="select-assignment-building" class="form-control" style="min-width:320px; height:42px; font-weight:700; font-size:14px; color:#0f3361; border:2px solid #93c5fd; border-radius:8px;" onchange="onBuildingAssignmentChange(this.value)">
                         <option value="">-- Đang tải danh sách tòa nhà... --</option>
@@ -501,7 +501,7 @@
                 </div>
               </div>
 
-              <!-- KHỐI 1: SALES PHỤ TRÁCH TÒA NHÀ (API 92, 93, 94) -->
+              <!-- KHỐI 1: SALES PHỤ TRÁCH TÒA NHÀ -->
               <div class="filament-card" style="margin-bottom: 24px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
                   <div>
@@ -537,7 +537,7 @@
                 </div>
               </div>
 
-              <!-- KHỐI 2: BAN QUẢN LÝ TÒA NHÀ (PM - API 92, 95, 96) -->
+              <!-- KHỐI 2: BAN QUẢN LÝ TÒA NHÀ -->
               <div class="filament-card" style="margin-bottom: 24px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
                   <div>
@@ -573,7 +573,7 @@
                 </div>
               </div>
 
-              <!-- KHỐI 3: KẾ TOÁN CÔNG NỢ TÒA NHÀ (API 92, 97, 98) -->
+              <!-- KHỐI 3: KẾ TOÁN CÔNG NỢ TÒA NHÀ -->
               <div class="filament-card" style="margin-bottom: 24px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
                   <div>

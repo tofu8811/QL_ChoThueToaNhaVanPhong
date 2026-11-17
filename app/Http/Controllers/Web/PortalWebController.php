@@ -98,10 +98,15 @@ class PortalWebController extends Controller
     /**
      * Kết xuất file CSV Báo cáo Tổng quan Vận hành & Kinh doanh từ PortalDashboardService.
      *
-     * @return StreamedResponse
+     * @param  Request  $request
+     * @return mixed
      */
-    public function exportDashboardCsv(): StreamedResponse
+    public function exportDashboardCsv(Request $request): mixed
     {
+        if (!$this->checkWebAuth($request)) {
+            return redirect('/#portal');
+        }
+
         $rows = $this->portalDashboardService->getDashboardCsvRows();
         $fileName = 'Bao_Cao_Van_Hanh_Office_' . now()->format('Y-m-d') . '.csv';
 
@@ -123,18 +128,26 @@ class PortalWebController extends Controller
      * Hiển thị trang quản lý hợp đồng thuê văn phòng chuẩn SEO SSR (Module 3).
      *
      * @param  Request  $request
-     * @return View
+     * @return mixed
      */
-    public function contractsPage(Request $request): View
+    public function contractsPage(Request $request): mixed
     {
+        if (!$this->checkWebAuth($request)) {
+            return redirect('/#portal');
+        }
+
         return view('pages.contracts');
     }
 
     /**
      * Hiển thị bản in / xuất PDF Hợp đồng thuê văn phòng chuẩn A4 (Module 3).
      */
-    public function printContract(string $id, ContractService $contractService): View
+    public function printContract(string $id, ContractService $contractService, Request $request): mixed
     {
+        if (!$this->checkWebAuth($request)) {
+            return redirect('/#portal');
+        }
+
         $data = $contractService->getContractPrintData($id);
         return view('contracts.print-template', $data);
     }
@@ -143,10 +156,14 @@ class PortalWebController extends Controller
      * Hiển thị trang quản lý hồ sơ khách thuê doanh nghiệp chuẩn SEO SSR (Module 3).
      *
      * @param  Request  $request
-     * @return View
+     * @return mixed
      */
-    public function tenantsPage(Request $request): View
+    public function tenantsPage(Request $request): mixed
     {
+        if (!$this->checkWebAuth($request)) {
+            return redirect('/#portal');
+        }
+
         return view('pages.tenants');
     }
 
@@ -154,10 +171,14 @@ class PortalWebController extends Controller
      * Hiển thị trang quản lý phễu khách hàng tiềm năng CRM & tiếp nhận Lead (Module 2).
      *
      * @param  Request  $request
-     * @return View
+     * @return mixed
      */
-    public function leadsPage(Request $request): View
+    public function leadsPage(Request $request): mixed
     {
+        if (!$this->checkWebAuth($request)) {
+            return redirect('/#portal');
+        }
+
         return view('pages.leads');
     }
 
@@ -165,11 +186,35 @@ class PortalWebController extends Controller
      * Hiển thị cổng thông tin không gian làm việc khách thuê Tenant Portal SSR (Module 3).
      *
      * @param  Request  $request
-     * @return View
+     * @return mixed
      */
-    public function tenantPortalPage(Request $request): View
+    public function tenantPortalPage(Request $request): mixed
     {
+        if (!$this->checkWebAuth($request)) {
+            return redirect('/#portal');
+        }
+
         return view('pages.tenant-portal');
+    }
+
+    /**
+     * Kiểm tra phiên xác thực người dùng cho các trang Web SSR nội bộ.
+     */
+    protected function checkWebAuth(Request $request): bool
+    {
+        if (auth()->check() || auth('sanctum')->check()) {
+            return true;
+        }
+
+        $token = $request->bearerToken() ?? $request->cookie('auth_token');
+        if ($token) {
+            $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
+            if ($accessToken && $accessToken->tokenable) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

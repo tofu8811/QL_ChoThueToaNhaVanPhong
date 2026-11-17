@@ -4,9 +4,9 @@
         <!-- Header Sang Trọng -->
         <div class="login-modal-header">
           <div class="login-header-badge">
-            <i class="fa-solid fa-shield-halved"></i> Hệ Thống Xác Thực Đa Tác Nhân
+            <i class="fa-solid fa-shield-halved"></i> Cổng Đăng Nhập Hệ Thống
           </div>
-          <h3 class="login-modal-title">Đăng Nhập Hệ Thống Đa Tác Nhân</h3>
+          <h3 class="login-modal-title">Đăng Nhập Hệ Thống Quản Trị</h3>
           <p class="login-modal-sub">Truy cập không gian làm việc số theo vai trò của bạn</p>
           <div class="login-modal-close" onclick="closeLoginModal()">
             <i class="fa-solid fa-xmark"></i>
@@ -76,7 +76,7 @@
                 </div>
                 <div class="sample-role-meta">
                   <strong>Khách Thuê Doanh Nghiệp (Tenant)</strong>
-                  <small>Công ty Cổ phần VNG — Hợp đồng, Ticket & Hóa đơn</small>
+                  <small>Cty Cổ Phần Công Nghệ Demo Tech — Hợp đồng, Ticket & Hóa đơn</small>
                 </div>
               </div>
             </div>

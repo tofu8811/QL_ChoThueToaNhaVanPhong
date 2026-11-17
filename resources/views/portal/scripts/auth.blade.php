@@ -29,20 +29,20 @@
       if (navStaff) navStaff.style.display = (role === 'admin') ? 'flex' : 'none';
 
       if (role === 'admin') {
-        emailInput.value = 'admin@officeleasing.vn';
-        passInput.value = 'Admin@123456';
+        emailInput.value = 'admin.demo@officeleasing.vn';
+        passInput.value = 'Password@123';
       } else if (role === 'pm') {
-        emailInput.value = 'pm.quang@officeleasing.vn';
-        passInput.value = 'Pm@123456';
+        emailInput.value = 'pm.demo@officeleasing.vn';
+        passInput.value = 'Password@123';
       } else if (role === 'sales') {
-        emailInput.value = 'sales.hoang@officeleasing.vn';
-        passInput.value = 'Sales@123456';
+        emailInput.value = 'sales.demo@officeleasing.vn';
+        passInput.value = 'Password@123';
       } else if (role === 'accountant') {
-        emailInput.value = 'acc.thu@officeleasing.vn';
-        passInput.value = 'Accountant@123456';
+        emailInput.value = 'acc.demo@officeleasing.vn';
+        passInput.value = 'Password@123';
       } else if (role === 'tenant') {
-        emailInput.value = 'contact@vng.com.vn';
-        passInput.value = 'Tenant@123456';
+        emailInput.value = 'tenant.demo@officeleasing.vn';
+        passInput.value = 'Password@123';
       }
     }
 
@@ -219,7 +219,8 @@
           const words = user.company_name.replace(/^(CÔNG TY|TNHH|CP|CỔ PHẦN)\s+/gi, '').trim().split(' ');
           initials = words.map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'DN';
         } else {
-          initials = rawName.split(' ').map(n => n[0]).filter(Boolean).slice(-2).join('').toUpperCase() || 'US';
+          const cleanName = rawName.replace(/\(.*?\)/g, '').trim();
+          initials = cleanName.split(' ').map(n => n[0]).filter(Boolean).slice(-2).join('').toUpperCase() || 'US';
         }
 
         const roleLabels = {
@@ -247,29 +248,12 @@
           dropFilamentLink.style.display = (role === 'ADMIN' || role === 'SUPER_ADMIN') ? 'flex' : 'none';
         }
 
-        // Nút Workspace trên Top Header
-        const btnWorkspace = document.getElementById("btn-workspace-nav");
         const dropWorkspaceTxt = document.getElementById("dropdown-workspace-text");
         const dropSessionLink = document.getElementById("dropdown-session-link");
         const btnTabSession = document.getElementById("btn-tab-profile-session");
 
         const normalizedRole = String(role || '').toUpperCase();
         const isAdmin = (normalizedRole === 'ADMIN' || normalizedRole === 'SUPER_ADMIN');
-
-        if (btnWorkspace) {
-          btnWorkspace.style.display = "inline-flex";
-          if (isAdmin) {
-            btnWorkspace.innerHTML = `<i class="fa-solid fa-shield-halved" style="color:#2563eb;"></i> <span>Portal Quản Trị</span>`;
-          } else if (normalizedRole === 'PM' || normalizedRole === 'PROPERTY_MANAGER') {
-            btnWorkspace.innerHTML = `<i class="fa-solid fa-building-user" style="color:#059669;"></i> <span>Vận Hành Tòa Nhà</span>`;
-          } else if (normalizedRole === 'SALES') {
-            btnWorkspace.innerHTML = `<i class="fa-solid fa-briefcase" style="color:#ea580c;"></i> <span>Không Gian Sales</span>`;
-          } else if (normalizedRole === 'TENANT') {
-            btnWorkspace.innerHTML = `<i class="fa-solid fa-building" style="color:#8b5cf6;"></i> <span>Cổng Khách Thuê</span>`;
-          } else {
-            btnWorkspace.innerHTML = `<i class="fa-solid fa-desktop"></i> <span>Không Gian Làm Việc</span>`;
-          }
-        }
 
         if (dropWorkspaceTxt) {
           if (isAdmin) dropWorkspaceTxt.innerText = "Portal Quản Trị Hệ Thống";
@@ -294,6 +278,8 @@
         if (sideName) sideName.innerText = rawName;
         if (sideSub) sideSub.innerText = `${prettyRole} • ${user.login_email || user.email || ''}`;
         if (sideAvatar) sideAvatar.innerText = initials;
+
+        if (typeof syncTenantPortalData === 'function') syncTenantPortalData();
       } else {
         if (btnLogin) btnLogin.style.display = "inline-flex";
         if (loggedBox) loggedBox.style.display = "none";

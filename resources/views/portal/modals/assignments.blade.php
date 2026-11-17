@@ -9,7 +9,7 @@
     <div style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); color: #fff; padding: 20px 24px; border-radius: 14px 14px 0 0; display:flex; justify-content:space-between; align-items:center;">
       <div>
         <div style="display:flex; align-items:center; gap:10px;">
-          <span style="background:rgba(59,130,246,0.25); border:1px solid rgba(147,197,253,0.3); padding:3px 9px; border-radius:6px; font-size:11px; font-weight:700; color:#93c5fd; letter-spacing:0.5px;">MOD-05 • RBAC TÒA NHÀ</span>
+          <span style="background:rgba(59,130,246,0.25); border:1px solid rgba(147,197,253,0.3); padding:3px 9px; border-radius:6px; font-size:11px; font-weight:700; color:#93c5fd; letter-spacing:0.5px;">PHÂN CÔNG VẬN HÀNH</span>
           <h3 style="margin:0; font-size:18px; font-weight:800; color:#fff; display:flex; align-items:center; gap:8px;">
             <i class="fa-solid fa-users-gear" style="color:#60a5fa;"></i> Phân Công Đội Ngũ Nhân Sự Phụ Trách
           </h3>
@@ -39,11 +39,11 @@
         </button>
       </div>
 
-      <!-- TAB PANEL 1: SALES NHẬN LEAD (API 92, 93, 94) -->
+      <!-- TAB PANEL 1: SALES NHẬN LEAD -->
       <div id="mba-panel-sales" class="mba-panel">
         <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
           <div>
-            <h4 style="margin:0 0 4px 0; font-size:14.5px; font-weight:700; color:#0f172a;">Gán Thêm Nhân Viên Sales Vào Tòa Nhà (API 93)</h4>
+            <h4 style="margin:0 0 4px 0; font-size:14.5px; font-weight:700; color:#0f172a;">Gán Thêm Nhân Viên Sales Vào Tòa Nhà</h4>
             <p style="margin:0; font-size:12px; color:#64748b;">Sales được gán sẽ có quyền xem tòa nhà này và tự động nhận Lead khách có nhu cầu thuê.</p>
           </div>
           <button type="button" class="btn-mo-primary" style="background:#2563eb; padding:8px 16px; font-size:13px; font-weight:700;" onclick="openAssignSalesModal()">
@@ -61,7 +61,7 @@
                 <th style="padding:10px 14px;">Hạn Mức Lead</th>
                 <th style="padding:10px 14px;">Trạng Thái Nhận Lead</th>
                 <th style="padding:10px 14px;">Thời Điểm Gán</th>
-                <th style="text-align:right; padding:10px 14px;">Thao Tác (API 94)</th>
+                <th style="text-align:right; padding:10px 14px;">Thao Tác</th>
               </tr>
             </thead>
             <tbody id="mba-tbody-sales">
@@ -71,14 +71,14 @@
         </div>
       </div>
 
-      <!-- TAB PANEL 2: BAN QUẢN LÝ (PM) (API 92, 95, 96) -->
+      <!-- TAB PANEL 2: BAN QUẢN LÝ (PM) -->
       <div id="mba-panel-pm" class="mba-panel" style="display:none;">
         <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:16px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
           <div>
-            <h4 style="margin:0 0 4px 0; font-size:14.5px; font-weight:700; color:#92400e;">Gán Ban Quản Lý (PM) Vào Tòa Nhà (API 95)</h4>
-            <p style="margin:0; font-size:12px; color:#b45309;">Nhân viên BQL phụ trách trực tiếp xử lý sự cố kỹ thuật, phê duyệt thi công và nghiệm thu bảo trì.</p>
+            <h4 id="mba-title-pm" style="margin:0 0 4px 0; font-size:14.5px; font-weight:700; color:#92400e;">Gán Ban Quản Lý (PM) Vào Tòa Nhà</h4>
+            <p id="mba-sub-pm" style="margin:0; font-size:12px; color:#b45309;">Nhân viên BQL phụ trách trực tiếp xử lý sự cố kỹ thuật, phê duyệt thi công và nghiệm thu bảo trì.</p>
           </div>
-          <button type="button" class="btn-mo-orange" style="background:#d97706; border-color:#d97706; padding:8px 16px; font-size:13px; font-weight:700;" onclick="openAssignPmModal()">
+          <button type="button" id="mba-btn-add-pm" class="btn-mo-orange" style="background:#d97706; border-color:#d97706; padding:8px 16px; font-size:13px; font-weight:700;" onclick="openAssignPmModal()">
             <i class="fa-solid fa-helmet-safety"></i> + Thêm Nhân Sự BQL
           </button>
         </div>
@@ -93,7 +93,7 @@
                 <th style="padding:10px 14px;">Bộ Phận</th>
                 <th style="padding:10px 14px;">Vai Trò Phụ Trách</th>
                 <th style="padding:10px 14px;">Thời Điểm Gán</th>
-                <th style="text-align:right; padding:10px 14px;">Thao Tác (API 96)</th>
+                <th id="mba-th-pm-action" style="text-align:right; padding:10px 14px;">Thao Tác</th>
               </tr>
             </thead>
             <tbody id="mba-tbody-pm">
@@ -103,14 +103,14 @@
         </div>
       </div>
 
-      <!-- TAB PANEL 3: KẾ TOÁN CÔNG NỢ (API 92, 97, 98) -->
+      <!-- TAB PANEL 3: KẾ TOÁN CÔNG NỢ -->
       <div id="mba-panel-acc" class="mba-panel" style="display:none;">
         <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:10px; padding:16px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
           <div>
-            <h4 style="margin:0 0 4px 0; font-size:14.5px; font-weight:700; color:#065f46;">Gán Kế Toán Theo Dõi Công Nợ (API 97)</h4>
-            <p style="margin:0; font-size:12px; color:#047857;">Kế toán phụ trách lập phiếu thu (Debit Note), gửi thông báo thanh toán và đối soát tiền thuê hàng tháng.</p>
+            <h4 id="mba-title-acc" style="margin:0 0 4px 0; font-size:14.5px; font-weight:700; color:#065f46;">Gán Kế Toán Theo Dõi Công Nợ</h4>
+            <p id="mba-sub-acc" style="margin:0; font-size:12px; color:#047857;">Kế toán phụ trách lập phiếu thu (Debit Note), gửi thông báo thanh toán và đối soát tiền thuê hàng tháng.</p>
           </div>
-          <button type="button" class="btn-mo-primary" style="background:#059669; border-color:#059669; padding:8px 16px; font-size:13px; font-weight:700;" onclick="openAssignAccountantModal()">
+          <button type="button" id="mba-btn-add-acc" class="btn-mo-primary" style="background:#059669; border-color:#059669; padding:8px 16px; font-size:13px; font-weight:700;" onclick="openAssignAccountantModal()">
             <i class="fa-solid fa-calculator"></i> + Thêm Kế Toán Phụ Trách
           </button>
         </div>
@@ -125,7 +125,7 @@
                 <th style="padding:10px 14px;">Quyền Duyệt Điều Chỉnh</th>
                 <th style="padding:10px 14px;">Trạng Thái</th>
                 <th style="padding:10px 14px;">Thời Điểm Gán</th>
-                <th style="text-align:right; padding:10px 14px;">Thao Tác (API 98)</th>
+                <th id="mba-th-acc-action" style="text-align:right; padding:10px 14px;">Thao Tác</th>
               </tr>
             </thead>
             <tbody id="mba-tbody-acc">
@@ -139,7 +139,7 @@
     <!-- Footer Modal -->
     <div style="background:#f8fafc; border-top:1px solid #e2e8f0; padding:14px 24px; display:flex; justify-content:space-between; align-items:center; border-radius:0 0 14px 14px;">
       <span style="font-size:12px; color:#64748b;">
-        <i class="fa-solid fa-shield-halved" style="color:#2563eb;"></i> Phân quyền RBAC trực tiếp vào các bảng pivot: <code>sale_buildings</code>, <code>manager_buildings</code>, <code>account_buildings</code>.
+        <i class="fa-solid fa-shield-halved" style="color:#2563eb;"></i> Phân công nhân sự chịu trách nhiệm trực tiếp theo từng tòa nhà văn phòng.
       </span>
       <button type="button" class="btn-mo-outline" style="background:#fff; padding:7px 18px; font-size:13px;" onclick="closeModal('modal-building-assignments')">
         Đóng Cửa Sổ

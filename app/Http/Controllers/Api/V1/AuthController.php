@@ -43,7 +43,12 @@ class AuthController extends BaseApiController
                 $request->input('role')
             );
 
-            return $this->successResponse($result, 'Đăng nhập thành công.', Response::HTTP_OK);
+            $response = $this->successResponse($result, 'Đăng nhập thành công.', Response::HTTP_OK);
+            if (!empty($result['access_token'])) {
+                $response->withCookie(cookie('auth_token', $result['access_token'], 1440, '/', null, false, false));
+            }
+
+            return $response;
         } catch (ValidationException $e) {
             throw $e;
         } catch (\Throwable $e) {
@@ -67,7 +72,8 @@ class AuthController extends BaseApiController
         try {
             $this->authService->logout($request->user());
 
-            return $this->successResponse(null, 'Đăng xuất tài khoản và thu hồi phiên làm việc thành công.');
+            return $this->successResponse(null, 'Đăng xuất tài khoản và thu hồi phiên làm việc thành công.')
+                ->withoutCookie('auth_token');
         } catch (\Throwable $e) {
             Log::error('Lỗi khi đăng xuất: ' . $e->getMessage());
 

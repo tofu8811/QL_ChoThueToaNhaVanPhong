@@ -729,8 +729,9 @@
         try { if (authUserStr) authUser = JSON.parse(authUserStr); } catch (e) {}
 
         const headers = getAuthHeaders();
-        const tenantId = authUser?.id || '0192e220-0030-7000-8000-000000000001';
-        headers['X-Tenant-Id'] = tenantId;
+        if (authUser?.id) {
+          headers['X-Tenant-Id'] = authUser.id;
+        }
 
         const res = await fetch('/api/v1/tenant/contracts', {
           method: 'GET',

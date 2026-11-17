@@ -4,7 +4,7 @@
       <aside class="filament-sidebar" id="bms-main-sidebar">
         <!-- Brand Header -->
         <div class="bms-brand-header" style="border-bottom:1px solid #1e293b;padding-bottom:16px;">
-          <div class="bms-brand-left" style="cursor:pointer;" title="Về trang Tổng quan (Dashboard)" onclick="const r = String(localStorage.getItem('auth_role')||'').toUpperCase(); if(r==='TENANT'){ switchFilamentTab('tab-tenant-workspace', document.querySelector('#nav-group-tenant .filament-link')); } else { switchFilamentTab('tab-admin-dashboard', document.getElementById('nav-item-dashboard')); }">
+          <div class="bms-brand-left" style="cursor:pointer;" title="Về trang Tổng quan (Dashboard)" onclick="handleDashboardLogoClick(event)">
             <div class="bms-brand-icon">
               <i class="fa-solid fa-building"></i>
             </div>
@@ -91,13 +91,6 @@
             <span class="filament-nav-badge" style="background:rgba(245,158,11,0.16);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);" id="lead-count-badge">{{ count($leads ?? []) ?: 3 }}</span>
           </a>
 
-          <a class="filament-link" id="nav-sales-appointments" data-breadcrumb="Quản lý lịch hẹn dẫn khách khảo sát mặt bằng" onclick="switchFilamentTab('tab-sales-appointments', this)">
-            <div class="filament-link-content">
-              <i class="fa-solid fa-calendar-check"></i>
-              <span>Lịch hẹn khảo sát</span>
-            </div>
-          </a>
-
           <a class="filament-link" id="nav-item-quotes" data-breadcrumb="Lập báo giá & Thư ngỏ (LOI)" onclick="switchFilamentTab('tab-sales-quotes', this)">
             <div class="filament-link-content">
               <i class="fa-solid fa-calculator"></i>
@@ -116,12 +109,11 @@
         <!-- Section 3: HỆ THỐNG & PHÂN QUYỀN (Super Admin) -->
         <div class="filament-nav-section" id="nav-group-system" style="padding-top:8px;">
           <div class="filament-section-heading">HỆ THỐNG & CÀI ĐẶT</div>
-          <a class="filament-link" id="nav-item-staff" data-breadcrumb="Quản trị nhân sự & phân quyền RBAC" onclick="switchFilamentTab('tab-admin-staff', this)">
+          <a class="filament-link" id="nav-item-staff" data-breadcrumb="Quản trị nhân sự & phân quyền" onclick="switchFilamentTab('tab-admin-staff', this)">
             <div class="filament-link-content">
               <i class="fa-solid fa-sliders"></i>
               <span>Nhân sự & Phân quyền</span>
             </div>
-            <span class="filament-nav-badge" style="background:rgba(16,185,129,0.14);color:#34d399;border:1px solid rgba(16,185,129,0.25);">RBAC</span>
           </a>
         </div>
 
@@ -145,7 +137,7 @@
               <i class="fa-solid fa-screwdriver-wrench"></i>
               <span>Ticket & Thi công</span>
             </div>
-            <span class="filament-nav-badge" style="background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.3);">2 mới</span>
+            <span class="filament-nav-badge" id="nav-tenant-badge-tickets" style="background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.3);">1</span>
           </a>
           <a class="filament-link" id="nav-tenant-bills" data-breadcrumb="Cước phí hàng tháng & tải lên ủy nhiệm chi" onclick="switchFilamentTab('tab-tenant-bills', this)">
             <div class="filament-link-content">
@@ -169,7 +161,7 @@
         <!-- Topbar (Breadcrumb động bên trái + Tìm kiếm + Thông báo + Hồ sơ User bên phải) -->
         <header class="filament-topbar">
           <div class="bms-topbar-left">
-            <span style="cursor:pointer;" onclick="switchFilamentTab('tab-admin-dashboard', document.getElementById('nav-item-dashboard'))">Trang chủ</span>
+            <span style="cursor:pointer;" title="Về trang Tổng quan (Dashboard)" onclick="handleDashboardLogoClick(event)">Trang chủ</span>
             <i class="fa-solid fa-chevron-right" style="font-size:9px;color:#cbd5e1;"></i>
             <span class="bms-bc-current" id="topbar-current-breadcrumb">Tổng quan hệ thống</span>
           </div>
@@ -198,13 +190,13 @@
               <div id="bms-notif-dropdown" style="display:none;position:absolute;top:calc(100% + 8px);right:0;width:360px;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 14px 34px rgba(15,23,42,0.15);z-index:1000;overflow:hidden;">
                 <div style="padding:12px 16px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;">
                   <div style="display:flex;align-items:center;gap:8px;">
-                    <strong style="font-size:13.5px;color:#0f172a;">Thông báo vận hành</strong>
-                    <span style="background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;">{{ count($notifications ?? []) }} việc cần chú ý</span>
+                    <strong style="font-size:13.5px;color:#0f172a;" id="bms-notif-title">Thông báo vận hành</strong>
+                    <span id="bms-notif-count-badge" style="background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;">{{ count($notifications ?? []) }} việc cần chú ý</span>
                   </div>
                   <button type="button" onclick="markAllBmsNotificationsRead()" style="border:none;background:transparent;color:#2563eb;font-size:11.5px;font-weight:600;cursor:pointer;padding:0;">Đã xem</button>
                 </div>
 
-                <div style="max-height:340px;overflow-y:auto;">
+                <div id="bms-notif-list-container" style="max-height:340px;overflow-y:auto;">
                   @forelse($notifications ?? [] as $notif)
                     <div onclick="handleBmsNotificationClick('{{ $notif['target_tab'] }}', '{{ $notif['nav_id'] }}')"
                       style="padding:12px 16px;border-bottom:1px solid #f8fafc;display:flex;gap:12px;align-items:flex-start;cursor:pointer;transition:background 0.15s;"

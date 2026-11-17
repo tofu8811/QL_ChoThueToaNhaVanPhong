@@ -36,7 +36,7 @@
     <!-- Main Header -->
     <header class="mo-header">
       <div class="container">
-        <a href="{{ route('home') }}" class="mo-logo" style="cursor: pointer; text-decoration: none;">
+        <a href="{{ route('home') }}" class="mo-logo" onclick="return handlePublicLogoClick(event);" title="Về trang chủ Cổng thông tin" style="cursor: pointer; text-decoration: none;">
           <div class="mo-logo-icon">
             <i class="fa-solid fa-building-wheat"></i>
           </div>
@@ -404,10 +404,6 @@
         </nav>
 
         <div class="mo-header-actions">
-          <button class="btn-mo-outline" id="btn-workspace-nav" style="display:none;" onclick="handleGoToWorkspace()">
-            <i class="fa-solid fa-desktop"></i> <span id="btn-workspace-text">Không Gian Làm Việc</span>
-          </button>
-
           <!-- Nút Đăng Nhập / Thông tin User Auth -->
           <div id="auth-actions-container" style="display: inline-flex; align-items: center; position: relative;">
             <!-- Chưa đăng nhập: Nút mở Modal Login -->
@@ -472,7 +468,7 @@
     <!-- Off-canvas Mobile Menu Drawer -->
     <aside id="mo-mobile-drawer" class="mo-mobile-drawer" aria-label="Menu điều hướng di động">
       <div class="mo-drawer-header">
-        <a href="{{ route('home') }}" class="mo-logo" onclick="closeMobileMenu()" style="cursor: pointer; text-decoration: none;">
+        <a href="{{ route('home') }}" class="mo-logo" onclick="closeMobileMenu(); return handlePublicLogoClick(event);" title="Về trang chủ Cổng thông tin" style="cursor: pointer; text-decoration: none;">
           <div class="mo-logo-icon">
             <i class="fa-solid fa-building-wheat"></i>
           </div>

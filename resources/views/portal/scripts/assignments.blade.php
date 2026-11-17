@@ -30,6 +30,9 @@
 
     // Nạp danh sách các tòa nhà vào dropdown phân công
     async function populateBuildingAssignmentDropdown(preferredBuildingId = null) {
+      const curRole = String(localStorage.getItem('auth_role') || '').toLowerCase();
+      if (curRole !== 'admin' && curRole !== 'super_admin' && curRole !== 'pm' && curRole !== 'property_manager') return;
+
       const select = document.getElementById('select-assignment-building');
       if (!select) return;
 
@@ -122,6 +125,38 @@
       if (nameEl) nameEl.innerText = buildingName || 'Tòa nhà';
       if (codeEl) codeEl.innerText = buildingCode || '---';
 
+      // Phân định thẩm quyền RBAC: Ban Quản Lý KHÔNG được gán/gỡ BQL hoặc Kế toán (quyền thuộc Super Admin)
+      const curRole = String(localStorage.getItem('auth_role') || '').toLowerCase();
+      const isAdmin = (curRole === 'admin' || curRole === 'super_admin');
+
+      const btnAddPm = document.getElementById('mba-btn-add-pm');
+      const btnAddAcc = document.getElementById('mba-btn-add-acc');
+      const pmTitle = document.getElementById('mba-title-pm');
+      const pmSub = document.getElementById('mba-sub-pm');
+      const accTitle = document.getElementById('mba-title-acc');
+      const accSub = document.getElementById('mba-sub-acc');
+      const thPmAction = document.getElementById('mba-th-pm-action');
+      const thAccAction = document.getElementById('mba-th-acc-action');
+
+      if (btnAddPm) btnAddPm.style.display = isAdmin ? 'inline-flex' : 'none';
+      if (btnAddAcc) btnAddAcc.style.display = isAdmin ? 'inline-flex' : 'none';
+
+      if (!isAdmin) {
+        if (pmTitle) pmTitle.innerText = 'Đội Ngũ Ban Quản Lý & Kỹ Thuật Tòa Nhà';
+        if (pmSub) pmSub.innerText = 'Danh sách nhân sự BQL do Super Admin phân công phụ trách vận hành và kỹ thuật tại cao ốc.';
+        if (accTitle) accTitle.innerText = 'Kế Toán Phụ Trách Công Nợ Tòa Nhà';
+        if (accSub) accSub.innerText = 'Nhân sự kế toán do Super Admin phân công theo dõi công nợ, xuất Debit Note và đối soát cước.';
+        if (thPmAction) thPmAction.innerText = 'Thẩm Quyền';
+        if (thAccAction) thAccAction.innerText = 'Thẩm Quyền';
+      } else {
+        if (pmTitle) pmTitle.innerText = 'Gán Ban Quản Lý (PM) Vào Tòa Nhà';
+        if (pmSub) pmSub.innerText = 'Nhân viên BQL phụ trách trực tiếp xử lý sự cố kỹ thuật, phê duyệt thi công và nghiệm thu bảo trì.';
+        if (accTitle) accTitle.innerText = 'Gán Kế Toán Theo Dõi Công Nợ';
+        if (accSub) accSub.innerText = 'Kế toán phụ trách lập phiếu thu (Debit Note), gửi thông báo thanh toán và đối soát tiền thuê hàng tháng.';
+        if (thPmAction) thPmAction.innerText = 'Thao Tác';
+        if (thAccAction) thAccAction.innerText = 'Thao Tác';
+      }
+
       switchMbaTab('sales');
       loadBuildingAssignments(buildingId);
     }
@@ -166,14 +201,26 @@
     // =========================================================================
     async function loadBuildingAssignments(buildingId) {
       if (!buildingId) return;
+      const curRole = String(localStorage.getItem('auth_role') || '').toLowerCase();
+      if (curRole !== 'admin' && curRole !== 'super_admin' && curRole !== 'pm' && curRole !== 'property_manager') return;
+      const isAdmin = (curRole === 'admin' || curRole === 'super_admin');
 
       const tbSales = document.getElementById('tbody-building-assigned-sales');
       const tbPm = document.getElementById('tbody-building-assigned-pm');
       const tbAcc = document.getElementById('tbody-building-assigned-accountants');
 
-      if (tbSales) tbSales.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải dữ liệu Sales...</td></tr>';
-      if (tbPm) tbPm.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải dữ liệu BQL...</td></tr>';
-      if (tbAcc) tbAcc.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải dữ liệu Kế toán...</td></tr>';
+      const mbaTbSales = document.getElementById('mba-tbody-sales');
+      const mbaTbPm = document.getElementById('mba-tbody-pm');
+      const mbaTbAcc = document.getElementById('mba-tbody-acc');
+
+      const loadingHtml = (role) => `<tr><td colspan="7" style="text-align:center; padding:20px; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải dữ liệu ${role}...</td></tr>`;
+      if (tbSales) tbSales.innerHTML = loadingHtml('Sales');
+      if (tbPm) tbPm.innerHTML = loadingHtml('BQL');
+      if (tbAcc) tbAcc.innerHTML = loadingHtml('Kế toán');
+
+      if (mbaTbSales) mbaTbSales.innerHTML = loadingHtml('Sales');
+      if (mbaTbPm) mbaTbPm.innerHTML = loadingHtml('BQL');
+      if (mbaTbAcc) mbaTbAcc.innerHTML = loadingHtml('Kế toán');
 
       const token = getSanctumToken();
       try {
@@ -183,13 +230,17 @@
         const json = await res.json();
         if (!res.ok) {
           if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF) {
-            renderFallbackAssignments(buildingId, tbSales, tbPm, tbAcc);
+            renderFallbackAssignments(buildingId, tbSales, tbPm, tbAcc, mbaTbSales, mbaTbPm, mbaTbAcc);
             return;
           }
           const errMsg = json.message || 'Không thể tải phân công nhân sự.';
-          if (tbSales) tbSales.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#ef4444; padding:20px;">${escapeHtml(errMsg)}</td></tr>`;
-          if (tbPm) tbPm.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#ef4444; padding:20px;">${escapeHtml(errMsg)}</td></tr>`;
-          if (tbAcc) tbAcc.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#ef4444; padding:20px;">${escapeHtml(errMsg)}</td></tr>`;
+          const errHtml = `<tr><td colspan="7" style="text-align:center; color:#ef4444; padding:20px;">${escapeHtml(errMsg)}</td></tr>`;
+          if (tbSales) tbSales.innerHTML = errHtml;
+          if (tbPm) tbPm.innerHTML = errHtml;
+          if (tbAcc) tbAcc.innerHTML = errHtml;
+          if (mbaTbSales) mbaTbSales.innerHTML = errHtml;
+          if (mbaTbPm) mbaTbPm.innerHTML = errHtml;
+          if (mbaTbAcc) mbaTbAcc.innerHTML = errHtml;
           return;
         }
 
@@ -208,10 +259,14 @@
         const boxInfo = document.getElementById('box-assignment-building-info');
         if (boxInfo) {
           boxInfo.style.display = 'flex';
-          document.getElementById('info-bld-code').innerText = bld.code || '---';
-          document.getElementById('info-bld-name').innerText = bld.name || '---';
-          document.getElementById('info-bld-address').innerText = bld.address || (bld.district ? bld.district + ', TP.HCM' : 'TP.HCM');
-          document.getElementById('info-bld-grade').innerText = bld.grade || 'Tiêu chuẩn';
+          const cEl = document.getElementById('info-bld-code');
+          const nEl = document.getElementById('info-bld-name');
+          const aEl = document.getElementById('info-bld-address');
+          const gEl = document.getElementById('info-bld-grade');
+          if (cEl) cEl.innerText = bld.code || bld.building_code || '---';
+          if (nEl) nEl.innerText = bld.name || '---';
+          if (aEl) aEl.innerText = bld.address || (bld.district ? bld.district + ', TP.HCM' : 'TP.HCM');
+          if (gEl) gEl.innerText = bld.grade || 'Tiêu chuẩn';
         }
 
         const badgeAssignments = document.getElementById('badge-count-assignments');
@@ -230,10 +285,6 @@
         const mbaBldCode = document.getElementById('mba-bld-code');
         if (mbaBldName && bld.name) mbaBldName.innerText = bld.name;
         if (mbaBldCode && (bld.building_code || bld.code)) mbaBldCode.innerText = bld.building_code || bld.code;
-
-        const mbaTbSales = document.getElementById('mba-tbody-sales');
-        const mbaTbPm = document.getElementById('mba-tbody-pm');
-        const mbaTbAcc = document.getElementById('mba-tbody-acc');
 
         // Render Sales Table (API 92)
         if (sales.length === 0) {
@@ -260,7 +311,7 @@
                 </td>
                 <td><span style="font-size:12px; color:#64748b;">${assignedAt}</span></td>
                 <td style="text-align:right;">
-                  <button class="btn-mo-outline" style="padding:4px 10px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="removeSalesAssignment('${s.id}', '${escapeHtml(s.full_name)}')" title="Gỡ Sales khỏi tòa nhà (API 94)">
+                  <button class="btn-mo-outline" style="padding:4px 10px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="removeSalesAssignment('${s.id}', '${escapeHtml(s.full_name)}')" title="Gỡ Sales khỏi tòa nhà">
                     <i class="fa-solid fa-user-minus"></i> Gỡ Bỏ
                   </button>
                 </td>
@@ -297,9 +348,15 @@
                 </td>
                 <td><span style="font-size:12px; color:#64748b;">${assignedAt}</span></td>
                 <td style="text-align:right;">
-                  <button class="btn-mo-outline" style="padding:4px 10px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="removePmAssignment('${p.id}', '${escapeHtml(p.full_name)}')" title="Gỡ BQL khỏi tòa nhà (API 96)">
+                  ${isAdmin ? `
+                  <button class="btn-mo-outline" style="padding:4px 10px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="removePmAssignment('${p.id}', '${escapeHtml(p.full_name)}')" title="Gỡ BQL khỏi tòa nhà">
                     <i class="fa-solid fa-user-minus"></i> Gỡ Bỏ
                   </button>
+                  ` : `
+                  <span class="badge-filament info" style="font-size:11px; background:#eff6ff; color:#1d4ed8; padding:3px 8px; border-radius:6px; font-weight:600;">
+                    <i class="fa-solid fa-shield-halved"></i> Phân công quản trị
+                  </span>
+                  `}
                 </td>
               </tr>
             `;
@@ -308,7 +365,7 @@
           if (mbaTbPm) mbaTbPm.innerHTML = pmHtml;
         }
 
-        // Render Accountants Table (API 92)
+        // Render Accountants Table
         if (accountants.length === 0) {
           const emptyAcc = '<tr><td colspan="7" style="text-align:center; padding:25px; color:#94a3b8;">Chưa có Kế toán được phân công theo dõi công nợ cho tòa nhà này.</td></tr>';
           if (tbAcc) tbAcc.innerHTML = emptyAcc;
@@ -333,9 +390,15 @@
                 <td><span class="badge-filament ${(a.status === 'ACTIVE') ? 'success' : 'danger'}">${escapeHtml(a.status || 'ACTIVE')}</span></td>
                 <td><span style="font-size:12px; color:#64748b;">${assignedAt}</span></td>
                 <td style="text-align:right;">
-                  <button class="btn-mo-outline" style="padding:4px 10px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="removeAccountantAssignment('${a.id}', '${escapeHtml(a.full_name)}')" title="Gỡ Kế toán khỏi tòa nhà (API 98)">
+                  ${isAdmin ? `
+                  <button class="btn-mo-outline" style="padding:4px 10px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="removeAccountantAssignment('${a.id}', '${escapeHtml(a.full_name)}')" title="Gỡ Kế toán khỏi tòa nhà">
                     <i class="fa-solid fa-user-minus"></i> Gỡ Bỏ
                   </button>
+                  ` : `
+                  <span class="badge-filament info" style="font-size:11px; background:#eff6ff; color:#1d4ed8; padding:3px 8px; border-radius:6px; font-weight:600;">
+                    <i class="fa-solid fa-shield-halved"></i> Phân công quản trị
+                  </span>
+                  `}
                 </td>
               </tr>
             `;
@@ -347,18 +410,28 @@
       } catch (err) {
         console.error('Load building assignments error:', err);
         if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF) {
-          renderFallbackAssignments(buildingId, tbSales, tbPm, tbAcc);
+          renderFallbackAssignments(buildingId, tbSales, tbPm, tbAcc, mbaTbSales, mbaTbPm, mbaTbAcc);
         } else {
-          if (tbSales) tbSales.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#ef4444; padding:20px;">Lỗi kết nối máy chủ phân công.</td></tr>';
-          if (tbPm) tbPm.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#ef4444; padding:20px;">Lỗi kết nối máy chủ phân công.</td></tr>';
-          if (tbAcc) tbAcc.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#ef4444; padding:20px;">Lỗi kết nối máy chủ phân công.</td></tr>';
+          const errHtml = '<tr><td colspan="7" style="text-align:center; color:#ef4444; padding:20px;">Lỗi kết nối máy chủ phân công.</td></tr>';
+          if (tbSales) tbSales.innerHTML = errHtml;
+          if (tbPm) tbPm.innerHTML = errHtml;
+          if (tbAcc) tbAcc.innerHTML = errHtml;
+          if (mbaTbSales) mbaTbSales.innerHTML = errHtml;
+          if (mbaTbPm) mbaTbPm.innerHTML = errHtml;
+          if (mbaTbAcc) mbaTbAcc.innerHTML = errHtml;
         }
       }
     }
 
     // Render dự phòng khi chưa tải được API phân công
-    function renderFallbackAssignments(buildingId, tbSales, tbPm, tbAcc) {
+    function renderFallbackAssignments(buildingId, tbSales, tbPm, tbAcc, mbaTbSales = null, mbaTbPm = null, mbaTbAcc = null) {
+      if (!mbaTbSales) mbaTbSales = document.getElementById('mba-tbody-sales');
+      if (!mbaTbPm) mbaTbPm = document.getElementById('mba-tbody-pm');
+      if (!mbaTbAcc) mbaTbAcc = document.getElementById('mba-tbody-acc');
+
       if (typeof SERVER_STAFF === 'undefined' || !SERVER_STAFF) return;
+      const curRole = String(localStorage.getItem('auth_role') || '').toLowerCase();
+      const isAdmin = (curRole === 'admin' || curRole === 'super_admin');
       const filterAssigned = (list) => (list || []).filter(item => {
         const blds = item.buildings || item.assigned_buildings || [];
         return blds.some(b => String(b.id) === String(buildingId));
@@ -374,20 +447,33 @@
       const badgeAssignments = document.getElementById('badge-count-assignments');
       if (badgeAssignments) badgeAssignments.innerText = `${sales.length + managers.length + accountants.length} NV`;
 
-      if (tbSales) {
-        if (sales.length === 0) tbSales.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:25px; color:#94a3b8;">Chưa có nhân viên Sales nào được phân công phụ trách tòa nhà này.</td></tr>';
-        else tbSales.innerHTML = sales.map(s => `<tr><td><span style="font-family:monospace; font-weight:700; color:#0f3361;">${escapeHtml(s.employee_code || 'SL')}</span></td><td><strong>${escapeHtml(s.full_name || s.name || '---')}</strong></td><td><div style="font-size:12px; color:#2563eb;">${escapeHtml(s.email)}</div></td><td><span style="font-weight:700;">${s.max_concurrent_leads || 10}</span> leads</td><td><span class="badge-filament success">Đang nhận Lead</span></td><td><span style="font-size:12px; color:#64748b;">Mặc định</span></td><td style="text-align:right;"><button class="btn-mo-outline" style="padding:4px 10px; font-size:12px; color:#dc2626;" onclick="removeSalesAssignment('${s.id}', '${escapeHtml(s.full_name || s.name)}')"><i class="fa-solid fa-user-minus"></i> Gỡ Bỏ</button></td></tr>`).join('');
-      }
+      const mbaBadgeSales = document.getElementById('mba-badge-sales');
+      const mbaBadgePm = document.getElementById('mba-badge-pm');
+      const mbaBadgeAcc = document.getElementById('mba-badge-acc');
+      if (mbaBadgeSales) mbaBadgeSales.innerText = sales.length;
+      if (mbaBadgePm) mbaBadgePm.innerText = managers.length;
+      if (mbaBadgeAcc) mbaBadgeAcc.innerText = accountants.length;
 
-      if (tbPm) {
-        if (managers.length === 0) tbPm.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:25px; color:#94a3b8;">Chưa có Ban Quản Lý được phân công phụ trách tòa nhà này.</td></tr>';
-        else tbPm.innerHTML = managers.map(p => `<tr><td><span style="font-family:monospace; font-weight:700; color:#b45309;">${escapeHtml(p.employee_code || 'PM')}</span></td><td><strong>${escapeHtml(p.full_name || p.name || '---')}</strong></td><td><span style="color:#dc2626; font-weight:700;">${escapeHtml(p.emergency_hotline || p.phone || '0901234567')}</span></td><td><span style="background:#f1f5f9; padding:2px 8px; border-radius:4px; font-size:11.5px;">Kỹ thuật</span></td><td><span style="color:#64748b; font-size:11.5px;">Thành viên BQL</span></td><td><span style="font-size:12px; color:#64748b;">Mặc định</span></td><td style="text-align:right;"><button class="btn-mo-outline" style="padding:4px 10px; font-size:12px; color:#dc2626;" onclick="removePmAssignment('${p.id}', '${escapeHtml(p.full_name || p.name)}')"><i class="fa-solid fa-user-minus"></i> Gỡ Bỏ</button></td></tr>`).join('');
-      }
+      const salesHtml = sales.length === 0
+        ? '<tr><td colspan="7" style="text-align:center; padding:25px; color:#94a3b8;">Chưa có nhân viên Sales nào được phân công phụ trách tòa nhà này.</td></tr>'
+        : sales.map(s => `<tr><td><span style="font-family:monospace; font-weight:700; color:#0f3361;">${escapeHtml(s.employee_code || 'SL')}</span></td><td><strong>${escapeHtml(s.full_name || s.name || '---')}</strong></td><td><div style="font-size:12px; color:#2563eb;">${escapeHtml(s.email)}</div></td><td><span style="font-weight:700;">${s.max_concurrent_leads || 10}</span> leads</td><td><span class="badge-filament success">Đang nhận Lead</span></td><td><span style="font-size:12px; color:#64748b;">Mặc định</span></td><td style="text-align:right;"><button class="btn-mo-outline" style="padding:4px 10px; font-size:12px; color:#dc2626;" onclick="removeSalesAssignment('${s.id}', '${escapeHtml(s.full_name || s.name)}')"><i class="fa-solid fa-user-minus"></i> Gỡ Bỏ</button></td></tr>`).join('');
 
-      if (tbAcc) {
-        if (accountants.length === 0) tbAcc.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:25px; color:#94a3b8;">Chưa có Kế toán được phân công theo dõi công nợ cho tòa nhà này.</td></tr>';
-        else tbAcc.innerHTML = accountants.map(a => `<tr><td><span style="font-family:monospace; font-weight:700; color:#065f46;">${escapeHtml(a.employee_code || 'ACC')}</span></td><td><strong>${escapeHtml(a.full_name || a.name || '---')}</strong></td><td><div style="font-size:12px; color:#2563eb;">${escapeHtml(a.email)}</div></td><td><span style="color:#15803d; font-weight:700; font-size:11.5px;">Được phép duyệt cước</span></td><td><span class="badge-filament success">ACTIVE</span></td><td><span style="font-size:12px; color:#64748b;">Mặc định</span></td><td style="text-align:right;"><button class="btn-mo-outline" style="padding:4px 10px; font-size:12px; color:#dc2626;" onclick="removeAccountantAssignment('${a.id}', '${escapeHtml(a.full_name || a.name)}')"><i class="fa-solid fa-user-minus"></i> Gỡ Bỏ</button></td></tr>`).join('');
-      }
+      if (tbSales) tbSales.innerHTML = salesHtml;
+      if (mbaTbSales) mbaTbSales.innerHTML = salesHtml;
+
+      const pmHtml = managers.length === 0
+        ? '<tr><td colspan="7" style="text-align:center; padding:25px; color:#94a3b8;">Chưa có Ban Quản Lý được phân công phụ trách tòa nhà này.</td></tr>'
+        : managers.map(p => `<tr><td><span style="font-family:monospace; font-weight:700; color:#b45309;">${escapeHtml(p.employee_code || 'PM')}</span></td><td><strong>${escapeHtml(p.full_name || p.name || '---')}</strong></td><td><span style="color:#dc2626; font-weight:700;">${escapeHtml(p.emergency_hotline || p.phone || '0901234567')}</span></td><td><span style="background:#f1f5f9; padding:2px 8px; border-radius:4px; font-size:11.5px;">Kỹ thuật</span></td><td><span style="color:#64748b; font-size:11.5px;">Thành viên BQL</span></td><td><span style="font-size:12px; color:#64748b;">Mặc định</span></td><td style="text-align:right;">${isAdmin ? `<button class="btn-mo-outline" style="padding:4px 10px; font-size:12px; color:#dc2626;" onclick="removePmAssignment('${p.id}', '${escapeHtml(p.full_name || p.name)}')"><i class="fa-solid fa-user-minus"></i> Gỡ Bỏ</button>` : `<span class="badge-filament info" style="font-size:11px; background:#eff6ff; color:#1d4ed8; padding:3px 8px; border-radius:6px; font-weight:600;"><i class="fa-solid fa-shield-halved"></i> Super Admin phân công</span>`}</td></tr>`).join('');
+
+      if (tbPm) tbPm.innerHTML = pmHtml;
+      if (mbaTbPm) mbaTbPm.innerHTML = pmHtml;
+
+      const accHtml = accountants.length === 0
+        ? '<tr><td colspan="7" style="text-align:center; padding:25px; color:#94a3b8;">Chưa có Kế toán được phân công theo dõi công nợ cho tòa nhà này.</td></tr>'
+        : accountants.map(a => `<tr><td><span style="font-family:monospace; font-weight:700; color:#065f46;">${escapeHtml(a.employee_code || 'ACC')}</span></td><td><strong>${escapeHtml(a.full_name || a.name || '---')}</strong></td><td><div style="font-size:12px; color:#2563eb;">${escapeHtml(a.email)}</div></td><td><span style="color:#15803d; font-weight:700; font-size:11.5px;">Được phép duyệt cước</span></td><td><span class="badge-filament success">ACTIVE</span></td><td><span style="font-size:12px; color:#64748b;">Mặc định</span></td><td style="text-align:right;">${isAdmin ? `<button class="btn-mo-outline" style="padding:4px 10px; font-size:12px; color:#dc2626;" onclick="removeAccountantAssignment('${a.id}', '${escapeHtml(a.full_name || a.name)}')"><i class="fa-solid fa-user-minus"></i> Gỡ Bỏ</button>` : `<span class="badge-filament info" style="font-size:11px; background:#eff6ff; color:#1d4ed8; padding:3px 8px; border-radius:6px; font-weight:600;"><i class="fa-solid fa-shield-halved"></i> Super Admin phân công</span>`}</td></tr>`).join('');
+
+      if (tbAcc) tbAcc.innerHTML = accHtml;
+      if (mbaTbAcc) mbaTbAcc.innerHTML = accHtml;
     }
 
     // =========================================================================
@@ -530,6 +616,11 @@
     // Gán Ban Quản Lý (PM) vào Tòa nhà
     // =========================================================================
     async function openAssignPmModal() {
+      const curRole = String(localStorage.getItem('auth_role') || '').toLowerCase();
+      if (curRole !== 'admin' && curRole !== 'super_admin') {
+        alert('Chức năng phân công Ban Quản Lý thuộc thẩm quyền riêng của Super Admin.');
+        return;
+      }
       if (!currentAssignmentBuildingId) {
         alert('Vui lòng chọn một tòa nhà trước khi gán BQL.');
         return;
@@ -637,6 +728,11 @@
     // Gỡ Ban Quản Lý khỏi Tòa nhà
     // =========================================================================
     async function removePmAssignment(pmId, pmName) {
+      const curRole = String(localStorage.getItem('auth_role') || '').toLowerCase();
+      if (curRole !== 'admin' && curRole !== 'super_admin') {
+        alert('Chức năng gỡ phân công Ban Quản Lý thuộc thẩm quyền riêng của Super Admin.');
+        return;
+      }
       if (!confirm(`Bạn có chắc muốn gỡ Ban Quản Lý [${pmName}] khỏi danh sách phụ trách tòa nhà này?`)) return;
 
       const token = getSanctumToken();
@@ -662,6 +758,11 @@
     // Gán Kế toán vào Tòa nhà
     // =========================================================================
     async function openAssignAccountantModal() {
+      const curRole = String(localStorage.getItem('auth_role') || '').toLowerCase();
+      if (curRole !== 'admin' && curRole !== 'super_admin') {
+        alert('Chức năng phân công Kế toán thuộc thẩm quyền riêng của Super Admin.');
+        return;
+      }
       if (!currentAssignmentBuildingId) {
         alert('Vui lòng chọn một tòa nhà trước khi gán Kế toán.');
         return;
@@ -771,6 +872,11 @@
     // Gỡ Kế toán khỏi Tòa nhà
     // =========================================================================
     async function removeAccountantAssignment(accountantId, accountantName) {
+      const curRole = String(localStorage.getItem('auth_role') || '').toLowerCase();
+      if (curRole !== 'admin' && curRole !== 'super_admin') {
+        alert('Chức năng gỡ phân công Kế toán thuộc thẩm quyền riêng của Super Admin.');
+        return;
+      }
       if (!confirm(`Bạn có chắc muốn gỡ Kế toán [${accountantName}] khỏi danh sách theo dõi tòa nhà này?`)) return;
 
       const token = getSanctumToken();

@@ -267,13 +267,13 @@
 </div>
 
 <!-- MODAL 6: CẮT NHỎ / GỘP DIỆN TÍCH SÀN & CẬP NHẬT TRẠNG THÁI LẤP ĐẦY (ROLE 4: BQL) -->
-<div id="modal-split-merge-unit" class="mo-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.65);backdrop-filter:blur(3px);z-index:10002;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:#fff;border-radius:12px;width:100%;max-width:620px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);overflow:hidden;border:1px solid #cbd5e1;">
+<div id="modal-split-merge-unit" class="mo-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.75);backdrop-filter:blur(4px);z-index:10002;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#ffffff !important;border-radius:12px;width:100%;max-width:620px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.3);overflow:hidden;border:1px solid #cbd5e1;position:relative;z-index:10003;">
     <div style="background:linear-gradient(135deg,#0f172a,#2563eb);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
       <h3 style="margin:0;font-size:16px;font-weight:700;"><i class="fa-solid fa-scissors"></i> Cắt Nhỏ / Gộp Diện Tích Sàn & Điều Chỉnh Trạng Thái</h3>
       <button type="button" onclick="closeModal('modal-split-merge-unit')" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">&times;</button>
     </div>
-    <form onsubmit="handleSplitMergeSubmit(event)" style="padding:20px;">
+    <form onsubmit="handleSplitMergeSubmit(event)" style="padding:20px;background:#ffffff !important;">
       <div style="display:flex;gap:10px;margin-bottom:16px;">
         <button type="button" id="btn-mode-split" class="btn-mo-primary" style="flex:1;justify-content:center;" onclick="switchSplitMergeMode('split')">
           <i class="fa-solid fa-scissors"></i> 1. Cắt nhỏ mặt bằng

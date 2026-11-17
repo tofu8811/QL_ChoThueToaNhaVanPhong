@@ -29,8 +29,8 @@
           <div class="bms-kpi-icon" style="background:#eff6ff;color:#2563eb;"><i class="fa-solid fa-users"></i></div>
         </div>
         <div class="bms-kpi-main">
-          <span class="bms-kpi-number" style="color:#0f172a;font-size:26px;">12</span>
-          <span class="bms-kpi-pill" style="background:#eff6ff;color:#1d4ed8;">Đang chăm sóc</span>
+          <span class="bms-kpi-number" style="color:#0f172a;font-size:26px;">{{ count($leads ?? []) }}</span>
+          <span class="bms-kpi-pill" style="background:#eff6ff;color:#1d4ed8;">Đang tiếp nhận</span>
         </div>
       </div>
       <div class="bms-kpi-foot"><span>Hạn mức nhận khách:</span><strong>15 leads tối đa</strong></div>
@@ -39,43 +39,43 @@
     <div class="bms-kpi-card">
       <div>
         <div class="bms-kpi-top">
-          <div class="bms-kpi-title">TỶ LỆ CHUYỂN ĐỔI DEAL</div>
+          <div class="bms-kpi-title">DEAL ĐANG TIẾN TRIỂN</div>
           <div class="bms-kpi-icon" style="background:#ecfdf5;color:#10b981;"><i class="fa-solid fa-chart-pie"></i></div>
         </div>
         <div class="bms-kpi-main">
-          <span class="bms-kpi-number" style="color:#10b981;font-size:26px;">33.3%</span>
-          <span class="bms-kpi-pill" style="background:#ecfdf5;color:#047857;">4 deal chốt / 12 lead</span>
+          <span class="bms-kpi-number" style="color:#10b981;font-size:26px;">{{ count(($leads ?? collect())->filter(fn($l) => in_array($l->status?->value ?? (string)$l->status, ['NEGOTIATING', 'PROPOSAL', 'CONTACTED']))) }}</span>
+          <span class="bms-kpi-pill" style="background:#ecfdf5;color:#047857;">Đang chăm sóc</span>
         </div>
       </div>
-      <div class="bms-kpi-foot"><span>Mục tiêu đội ngũ:</span><strong>Vượt chỉ tiêu +8.3%</strong></div>
+      <div class="bms-kpi-foot"><span>Tỷ lệ tiếp cận:</span><strong>Đạt tiến độ phễu</strong></div>
     </div>
 
     <div class="bms-kpi-card">
       <div>
         <div class="bms-kpi-top">
-          <div class="bms-kpi-title">DOANH SỐ CHỐT HỢP ĐỒNG</div>
+          <div class="bms-kpi-title">DOANH SỐ HỢP ĐỒNG THEO DÕI</div>
           <div class="bms-kpi-icon" style="background:#fef3c7;color:#d97706;"><i class="fa-solid fa-file-invoice-dollar"></i></div>
         </div>
         <div class="bms-kpi-main">
-          <span class="bms-kpi-number" style="color:#d97706;font-size:24px;">4.850.000.000 đ</span>
-          <span class="bms-kpi-pill" style="background:#fef3c7;color:#b45309;">Năm 2026</span>
+          <span class="bms-kpi-number" style="color:#d97706;font-size:22px;">{{ number_format(($recentContracts ?? collect())->sum('monthly_rent') * 12, 0, ',', '.') }} đ</span>
+          <span class="bms-kpi-pill" style="background:#fef3c7;color:#b45309;">Hợp đồng thuê</span>
         </div>
       </div>
-      <div class="bms-kpi-foot"><span>Diện tích chốt thành công:</span><strong>1.450 m² sàn</strong></div>
+      <div class="bms-kpi-foot"><span>Tổng giá trị quy năm:</span><strong>Năm 2026</strong></div>
     </div>
 
     <div class="bms-kpi-card">
       <div>
         <div class="bms-kpi-top">
-          <div class="bms-kpi-title">HOA HỒNG TẠM TÍNH</div>
-          <div class="bms-kpi-icon" style="background:#f3e8ff;color:#7e22ce;"><i class="fa-solid fa-sack-dollar"></i></div>
+          <div class="bms-kpi-title">HỢP ĐỒNG ĐÃ KÝ</div>
+          <div class="bms-kpi-icon" style="background:#f3e8ff;color:#7e22ce;"><i class="fa-solid fa-file-signature"></i></div>
         </div>
         <div class="bms-kpi-main">
-          <span class="bms-kpi-number" style="color:#7e22ce;font-size:24px;">97.000.000 đ</span>
-          <span class="bms-kpi-pill" style="background:#f3e8ff;color:#6d28d9;">Đã quyết toán 70%</span>
+          <span class="bms-kpi-number" style="color:#7e22ce;font-size:26px;">{{ count($recentContracts ?? []) }}</span>
+          <span class="bms-kpi-pill" style="background:#f3e8ff;color:#6d28d9;">Đã ký kết</span>
         </div>
       </div>
-      <div class="bms-kpi-foot"><span>Kỳ tính thưởng:</span><strong>Tháng 11/2026</strong></div>
+      <div class="bms-kpi-foot"><span>Trạng thái:</span><strong>Hợp đồng có hiệu lực</strong></div>
     </div>
   </div>
 
@@ -97,37 +97,40 @@
           <th>Tòa Nhà & Diện Tích Dự Kiến</th>
           <th>Đơn Giá Đàm Phán</th>
           <th>Tiến Độ Pipeline</th>
-          <th>Khả Năng Chốt</th>
+          <th>Trạng Thái</th>
           <th style="text-align:right;">Thao Tác</th>
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>
-            <strong>Công ty Fintech NextGen</strong>
-            <div style="font-size:12px;color:#64748b;">Đại diện: Mr. Hoàng Nam • 0918.777.888</div>
-          </td>
-          <td><strong>The Nexus Tower</strong> - 250 m² (Tầng 16)</td>
-          <td><strong style="color:#2563eb;">$46.00 / m²</strong> (Fit-out 45 ngày)</td>
-          <td><span class="badge-filament purple" style="background:#f3e8ff;color:#7e22ce;"><i class="fa-solid fa-handshake"></i> Đang đàm phán LOI</span></td>
-          <td><span class="badge-filament success">85% chắc chắn</span></td>
-          <td style="text-align:right;">
-            <button class="btn-mo-primary" style="padding:4px 10px;font-size:12px;" onclick="switchFilamentTab('tab-sales-quotes', document.getElementById('nav-item-quotes'))">Gửi LOI</button>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <strong>Tập đoàn Logistics Á Châu</strong>
-            <div style="font-size:12px;color:#64748b;">Đại diện: Ms. Bích Thảo • 0909.112.233</div>
-          </td>
-          <td><strong>Saigon Centre Tower 2</strong> - 400 m² (Tầng 8)</td>
-          <td><strong style="color:#2563eb;">$52.00 / m²</strong> (Fit-out 30 ngày)</td>
-          <td><span class="badge-filament purple" style="background:#f3e8ff;color:#7e22ce;"><i class="fa-solid fa-handshake"></i> Đang duyệt hợp đồng</span></td>
-          <td><span class="badge-filament success">90% chốt tuần này</span></td>
-          <td style="text-align:right;">
-            <button class="btn-mo-primary" style="padding:4px 10px;font-size:12px;" onclick="switchFilamentTab('tab-sales-leads', document.getElementById('nav-item-leads'))">Xem Deal</button>
-          </td>
-        </tr>
+        @forelse(($leads ?? collect()) as $dl)
+          @php
+            $leadCompany = $dl->company_name ?: ($dl->contact_full_name ?? 'Khách hàng');
+            $leadContact = ($dl->contact_full_name ?? '') . ($dl->phone ? ' • ' . $dl->phone : '');
+            $bldName = $dl->building->name ?? 'Tòa nhà văn phòng';
+            $areaText = $dl->desired_area_sqm ? number_format($dl->desired_area_sqm, 0, ',', '.') . ' m²' : 'Mặt bằng trống';
+            $priceText = $dl->target_price_per_sqm ? number_format($dl->target_price_per_sqm, 0, ',', '.') . ' đ/m²' : 'Thương lượng';
+            $stRaw = $dl->status?->value ?? (string)$dl->status;
+          @endphp
+          <tr>
+            <td>
+              <strong>{{ $leadCompany }}</strong>
+              <div style="font-size:12px;color:#64748b;">{{ $leadContact }}</div>
+            </td>
+            <td><strong>{{ $bldName }}</strong> - {{ $areaText }}</td>
+            <td><strong style="color:#2563eb;">{{ $priceText }}</strong></td>
+            <td><span class="badge-filament purple" style="background:#f3e8ff;color:#7e22ce;"><i class="fa-solid fa-handshake"></i> {{ $dl->status?->label() ?? $stRaw }}</span></td>
+            <td><span class="badge-filament success">Đang chăm sóc</span></td>
+            <td style="text-align:right;">
+              <button class="btn-mo-primary" style="padding:4px 10px;font-size:12px;" onclick="openCrmDetailModal('{{ $dl->id }}')">Xem Deal</button>
+            </td>
+          </tr>
+        @empty
+          <tr>
+            <td colspan="6" style="text-align:center;padding:24px;color:#94a3b8;">
+              Chưa có deal nào trong hệ thống CRM.
+            </td>
+          </tr>
+        @endforelse
       </tbody>
     </table>
   </div>
@@ -177,8 +180,8 @@
     </div>
   </div>
 
-  <!-- Bảng dữ liệu Leads -->
-  <div class="filament-card">
+  <!-- Bảng dữ liệu Leads (Chế độ xem Bảng) -->
+  <div class="filament-card" id="crm-table-view">
     <table class="mo-table">
       <thead>
         <tr>
@@ -196,73 +199,68 @@
       </tbody>
     </table>
   </div>
-</div>
 
-<!-- TAB 3: QUẢN LÝ LỊCH HẸN DẪN KHÁCH KHẢO SÁT MẶT BẰNG THỰC TẾ -->
-<div id="tab-sales-appointments" class="filament-tab-pane" style="display:none;">
-  <div class="filament-page-header" style="align-items:center;">
-    <div>
-      <h1 class="filament-page-title" style="font-size:23px;margin-bottom:4px;">Quản Lý Lịch Hẹn Khảo Sát Mặt Bằng Thực Tế</h1>
-      <p style="font-size:13.5px;color:#64748b;margin:0;">Lên lịch hẹn dẫn khách đi xem mặt bằng văn phòng, điều phối bảo vệ mở cửa sàn và ghi chú phản hồi sau buổi khảo sát.</p>
-    </div>
-    <div style="display:flex;gap:8px;">
-      <button class="btn-mo-primary" style="background:#2563eb;" onclick="openCreateAppointmentModal()">
-        <i class="fa-solid fa-calendar-plus"></i> Đặt lịch hẹn khảo sát mới
-      </button>
-    </div>
-  </div>
+  <!-- Bảng Kanban Pipeline CRM (Chế độ xem Kanban) -->
+  <div id="crm-kanban-view" style="display:none;margin-top:10px;">
+    <div style="display:grid;grid-template-columns:repeat(6, minmax(220px, 1fr));gap:14px;align-items:start;overflow-x:auto;padding-bottom:12px;">
+      <!-- 1. Mới (NEW) -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #3b82f6;">
+          <strong style="font-size:13px;color:#1e3a8a;"><i class="fa-solid fa-inbox"></i> 1. Tiếp nhận</strong>
+          <span class="badge-filament info" id="kanban-count-new">0</span>
+        </div>
+        <div id="kanban-col-new" style="min-height:200px;display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
 
-  <div class="filament-card">
-    <table class="mo-table">
-      <thead>
-        <tr>
-          <th>Mã Lịch Hẹn</th>
-          <th>Khách Hàng & Doanh Nghiệp</th>
-          <th>Tòa Nhà & Sàn Khảo Sát</th>
-          <th>Thời Gian Hẹn</th>
-          <th>Sales Dẫn Đi</th>
-          <th>Trạng Thái</th>
-          <th>Phản Hồi Sau Khảo Sát</th>
-          <th style="text-align:right;">Thao Tác</th>
-        </tr>
-      </thead>
-      <tbody id="tbody-sales-appointments">
-        <tr>
-          <td><strong style="font-family:monospace;color:#2563eb;">APT-2026-001</strong></td>
-          <td>
-            <strong>Mr. Hoàng Nam</strong>
-            <div style="font-size:12px;color:#64748b;">Fintech NextGen • 0918.777.888</div>
-          </td>
-          <td><strong>The Nexus Tower</strong> - Tầng 16 (250 m²)</td>
-          <td><strong style="color:#d97706;">14:30 - Ngày 18/11/2026</strong></td>
-          <td>Lê Hoàng Long</td>
-          <td><span class="badge-filament warning">Sắp diễn ra</span></td>
-          <td><em>Chưa khảo sát</em></td>
-          <td style="text-align:right;">
-            <button class="btn-mo-outline" style="padding:4px 8px;font-size:11.5px;color:#2563eb;" onclick="openFeedbackAppointmentModal('APT-2026-001', 'Mr. Hoàng Nam - The Nexus Tower')">Ghi chú phản hồi</button>
-          </td>
-        </tr>
-        <tr>
-          <td><strong style="font-family:monospace;color:#2563eb;">APT-2026-002</strong></td>
-          <td>
-            <strong>Ms. Bích Thảo</strong>
-            <div style="font-size:12px;color:#64748b;">Logistics Á Châu • 0909.112.233</div>
-          </td>
-          <td><strong>Saigon Centre Tower 2</strong> - Tầng 8 (400 m²)</td>
-          <td>10:00 - Ngày 16/11/2026</td>
-          <td>Lê Hoàng Long</td>
-          <td><span class="badge-filament success">Đã khảo sát</span></td>
-          <td><span style="font-size:12px;color:#15803d;font-weight:600;">Khách ưng view bờ sông, yêu cầu gửi LOI miễn phí fit-out 30 ngày.</span></td>
-          <td style="text-align:right;">
-            <button class="btn-mo-outline" style="padding:4px 8px;font-size:11.5px;color:#64748b;" onclick="openFeedbackAppointmentModal('APT-2026-002', 'Ms. Bích Thảo')">Sửa phản hồi</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+      <!-- 2. Đã gọi (CONTACTED) -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #6366f1;">
+          <strong style="font-size:13px;color:#3730a3;"><i class="fa-solid fa-phone"></i> 2. Đã liên hệ</strong>
+          <span class="badge-filament info" id="kanban-count-contacted">0</span>
+        </div>
+        <div id="kanban-col-contacted" style="min-height:200px;display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
+      <!-- 3. Xem sàn (SITE_VISIT) -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #f59e0b;">
+          <strong style="font-size:13px;color:#92400e;"><i class="fa-solid fa-eye"></i> 3. Đi xem sàn</strong>
+          <span class="badge-filament warning" id="kanban-count-site_visit">0</span>
+        </div>
+        <div id="kanban-col-site_visit" style="min-height:200px;display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
+      <!-- 4. Đàm phán (NEGOTIATING) -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #8b5cf6;">
+          <strong style="font-size:13px;color:#5b21b6;"><i class="fa-solid fa-file-contract"></i> 4. Báo giá / LOI</strong>
+          <span class="badge-filament purple" style="background:#f3e8ff;color:#7e22ce;" id="kanban-count-negotiating">0</span>
+        </div>
+        <div id="kanban-col-negotiating" style="min-height:200px;display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
+      <!-- 5. Thành công (WON) -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #10b981;">
+          <strong style="font-size:13px;color:#065f46;"><i class="fa-solid fa-handshake"></i> 5. Chốt cọc (Won)</strong>
+          <span class="badge-filament success" id="kanban-count-won">0</span>
+        </div>
+        <div id="kanban-col-won" style="min-height:200px;display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
+      <!-- 6. Thất bại (LOST) -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #ef4444;">
+          <strong style="font-size:13px;color:#991b1b;"><i class="fa-solid fa-ban"></i> 6. Thất bại (Lost)</strong>
+          <span class="badge-filament danger" id="kanban-count-lost">0</span>
+        </div>
+        <div id="kanban-col-lost" style="min-height:200px;display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- TAB 4: LẬP BÁO GIÁ & THƯ NGỎ (QUOTATION / LOI) -->
+<!-- TAB 3: LẬP BÁO GIÁ & THƯ NGỎ (QUOTATION / LOI) -->
 <div id="tab-sales-quotes" class="filament-tab-pane" style="display:none;">
   <div class="filament-page-header" style="align-items:center;">
     <div>
@@ -368,11 +366,8 @@
         Báo giá kèm điều khoản ưu đãi miễn phí thi công Fit-out, bảo vệ 24/7 và điều hòa trung tâm.
       </div>
       <div style="display:flex;gap:10px;">
-        <button class="btn-mo-outline" type="button" onclick="alert('Đã xuất bản Thư Ngỏ Thuê (LOI - Letter of Intent) chính thức!')">
-          <i class="fa-solid fa-file-contract"></i> Xuất Thư Ngỏ (LOI)
-        </button>
         <button class="btn-mo-primary" type="button" style="background:#2563eb;" onclick="exportQuickQuoteCsv()">
-          <i class="fa-solid fa-file-arrow-down"></i> Tải Bảng Báo Giá (CSV)
+          <i class="fa-solid fa-file-arrow-down"></i> Tải Bảng Báo Giá & Dự Toán (CSV)
         </button>
       </div>
     </div>

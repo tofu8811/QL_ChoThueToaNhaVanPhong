@@ -44,17 +44,18 @@ class TicketService
             'assignedPm:id,full_name,employee_code,phone',
         ]);
 
-        // Phân quyền dữ liệu (Multi-guard scope)
-        if (request()->header('X-User-Role')) {
+        // Phân quyền dữ liệu (Multi-guard scope: ưu tiên user xác thực Sanctum)
+        if (!$user) {
+            $user = auth('sanctum')->user() ?? request()->user();
+        }
+        if (!$user && request()->header('X-User-Role')) {
             $hdrRole = strtolower((string) request()->header('X-User-Role'));
             $hdrId = (string) request()->header('X-User-Id');
             if ($hdrRole === 'tenant') {
                 $user = ($hdrId ? Tenant::find($hdrId) : null)
-                    ?? ($user instanceof Tenant ? $user : null)
                     ?? Tenant::first();
             } elseif (in_array($hdrRole, ['pm', 'property_manager'])) {
                 $user = ($hdrId ? PropertyManager::find($hdrId) : null)
-                    ?? ($user instanceof PropertyManager ? $user : null)
                     ?? PropertyManager::first();
             }
         }

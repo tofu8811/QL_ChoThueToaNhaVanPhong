@@ -196,6 +196,9 @@
 
     // Tải trước dữ liệu cho TẤT CẢ các sub-tab nhân sự để bấm vào là có ngay dữ liệu tức thì
     function preloadAllStaffData() {
+      const curRole = String(localStorage.getItem('auth_role') || '').toLowerCase();
+      if (curRole !== 'admin' && curRole !== 'super_admin') return;
+
       initStaffBadges();
 
       if (typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF) {

@@ -93,14 +93,31 @@
       const listToRender = fetchedList || CURRENT_TICKETS_CACHE;
       
       // Cập nhật số lượng Badge trên Sidebar theo đúng phạm vi phân quyền của User đang đăng nhập
+      const effectiveRole = window.currentUiRole || String(localStorage.getItem('auth_role') || 'admin').toLowerCase();
       const openTicketsCount = (listToRender || []).filter(t => {
         const s = String(t.status?.value || t.status).toUpperCase();
-        return s === 'NEW' || s === 'OPEN' || s === 'IN_PROGRESS';
+        return s === 'NEW' || s === 'OPEN' || s === 'IN_PROGRESS' || s === 'WAITING_CONFIRMATION';
       }).length;
+
       const badgeTicketEl = document.getElementById('nav-badge-tickets');
       if (badgeTicketEl) {
         badgeTicketEl.innerText = openTicketsCount;
         badgeTicketEl.style.display = openTicketsCount > 0 ? 'inline-flex' : 'none';
+      }
+
+      const badgeTenantTicketEl = document.getElementById('nav-tenant-badge-tickets');
+      if (badgeTenantTicketEl) {
+        badgeTenantTicketEl.innerText = openTicketsCount;
+        badgeTenantTicketEl.style.display = openTicketsCount > 0 ? 'inline-flex' : 'none';
+      }
+
+      const kpiTicketEl = document.getElementById('tenant-kpi-ticket-count');
+      if (kpiTicketEl) {
+        kpiTicketEl.innerText = String(openTicketsCount).padStart(2, '0');
+      }
+
+      if (typeof updateTenantTopbarNotifications === 'function') {
+        updateTenantTopbarNotifications(effectiveRole, listToRender);
       }
 
       renderAdminTicketsTable(listToRender);
@@ -518,7 +535,7 @@
     async function handleDeleteTicket(ticketId) {
       const effectiveRole = window.currentUiRole || String(localStorage.getItem('auth_role') || 'admin').toLowerCase();
       if (effectiveRole !== 'admin' && effectiveRole !== 'super_admin') {
-        alert("Chỉ Quản trị viên (Admin) mới có quyền xóa ticket sự cố theo đặc tả MOD-04.");
+        alert("Chỉ Quản trị viên (Admin) mới có quyền xóa phiếu yêu cầu này.");
         return;
       }
       if (!confirm("Bạn có chắc chắn muốn xóa mềm phiếu yêu cầu hỗ trợ này khỏi hệ thống?")) return;

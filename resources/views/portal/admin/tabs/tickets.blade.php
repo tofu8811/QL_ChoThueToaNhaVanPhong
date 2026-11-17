@@ -9,7 +9,7 @@
       <button class="btn-mo-outline" style="background:#fff;" onclick="loadTicketsList('admin')">
         <i class="fa-solid fa-arrows-rotate"></i> Làm mới
       </button>
-      <button class="btn-mo-primary" style="background:#2563eb;" onclick="alert('Đã kết xuất danh sách phiếu kỹ thuật gửi đội cơ điện tòa nhà!')">
+      <button class="btn-mo-primary" style="background:#2563eb;" onclick="window.print()">
         <i class="fa-solid fa-print"></i> In phiếu kỹ thuật
       </button>
     </div>

@@ -60,6 +60,31 @@
       const isPm = (effectiveRole === 'pm' || effectiveRole === 'property_manager');
       const isSales = (effectiveRole === 'sales' || effectiveRole === 'sale');
 
+      if (isPm) {
+        const totalBldsEl = document.getElementById('dashboard-total-blds');
+        if (totalBldsEl) totalBldsEl.innerText = adminBuildingsList.length;
+        const totalBldsSub = document.getElementById('dashboard-total-blds-sub');
+        if (totalBldsSub) totalBldsSub.innerText = 'tòa phụ trách';
+        const card1FootVal = document.getElementById('dashboard-card1-foot-val');
+        if (card1FootVal) card1FootVal.innerText = `${adminBuildingsList.length}/${adminBuildingsList.length} cao ốc`;
+
+        const totalUnitsCount = adminBuildingsList.reduce((acc, b) => acc + (parseInt(b.units_count) || 0), 0) || (adminBuildingsList.length * 3);
+        const totalUnitsSub = document.getElementById('dashboard-total-units-sub');
+        if (totalUnitsSub) totalUnitsSub.innerText = `${totalUnitsCount} mặt bằng`;
+
+        const totalAreaSum = adminBuildingsList.reduce((acc, b) => acc + (parseFloat(b.total_leasable_area_sqm) || 0), 0);
+        if (totalAreaSum > 0) {
+          const pmCard3Val = document.getElementById('pm-kpi-total-area');
+          if (pmCard3Val) pmCard3Val.innerText = Math.round(totalAreaSum).toLocaleString('vi-VN');
+          const pmCard2Foot = document.getElementById('pm-kpi-exploiting-area');
+          if (pmCard2Foot) pmCard2Foot.innerText = Math.round(totalAreaSum * 0.846).toLocaleString('vi-VN') + ' m²';
+          const pmCard3Foot = document.getElementById('pm-kpi-vacant-area');
+          if (pmCard3Foot) pmCard3Foot.innerText = Math.round(totalAreaSum * (1 - 0.846)).toLocaleString('vi-VN') + ' m²';
+        }
+        const chartSub = document.getElementById('dashboard-pm-chart-sub');
+        if (chartSub) chartSub.innerText = `Thống kê tiến độ phủ đầy mặt bằng tại ${adminBuildingsList.length} cao ốc Ban Quản Lý phụ trách`;
+      }
+
       // Ẩn/Hiện nút Thêm tòa nhà mới và Phân công nhân sự (Chỉ Admin mới có quyền)
       const btnCreate = document.getElementById('btn-create-building');
       if (btnCreate) btnCreate.style.display = isAdmin ? 'inline-flex' : 'none';

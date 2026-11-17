@@ -45,7 +45,7 @@
     <div class="bms-kpi-card" style="cursor:pointer;" onclick="switchFilamentTab('tab-admin-buildings', document.getElementById('nav-item-buildings'))">
       <div>
         <div class="bms-kpi-top">
-          <div class="bms-kpi-title">QUY MÔ TÀI SẢN & SÀN</div>
+          <div class="bms-kpi-title" id="dashboard-card1-title">QUY MÔ TÀI SẢN & SÀN</div>
           <div class="bms-kpi-icon" style="background:#f1f5f9;color:#334155;">
             <i class="fa-solid fa-city"></i>
           </div>
@@ -57,8 +57,8 @@
         </div>
       </div>
       <div class="bms-kpi-foot">
-        <span>Tổng diện tích quản lý:</span>
-        <strong>{{ number_format($stats['total_leasable_area'] ?? 428430, 0, ',', '.') }} m²</strong>
+        <span id="dashboard-card1-foot-label">Tổng diện tích quản lý:</span>
+        <strong id="dashboard-card1-foot-val">{{ number_format($stats['total_leasable_area'] ?? 428430, 0, ',', '.') }} m²</strong>
       </div>
     </div>
 

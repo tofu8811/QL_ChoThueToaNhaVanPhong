@@ -114,7 +114,7 @@
                 <i class="fa-solid fa-images"></i> Ảnh
               </button>
               ${isAdmin ? `
-              <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#2563eb;border-color:#93c5fd;background:#eff6ff;margin-left:4px;font-weight:600;" onclick="openBuildingAssignmentsFromBuilding('${b.id}', '${escapeHtml(b.name)}')" title="Phân công nhân sự phụ trách tòa nhà (Sales, BQL, Kế toán)">
+              <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#2563eb;border-color:#93c5fd;background:#eff6ff;margin-left:4px;font-weight:600;" onclick="openBuildingAssignmentsFromBuilding('${b.id}', '${escapeHtml(b.name)}', '${escapeHtml(b.building_code || b.code || '')}')" title="Phân công nhân sự phụ trách tòa nhà (Sales, BQL, Kế toán)">
                 <i class="fa-solid fa-user-gear"></i> Gán nhân sự
               </button>` : ''}
               ${(isAdmin || isPm) ? `

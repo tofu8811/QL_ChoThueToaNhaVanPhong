@@ -107,12 +107,49 @@
       }
     }
 
-    // Mở nhanh phân công tòa nhà từ bất kỳ đâu (ví dụ bảng tòa nhà)
-    function openBuildingAssignmentsFromBuilding(buildingId, buildingName) {
-      goToBuildingAssignments(buildingId);
+    // Mở nhanh modal phân công tòa nhà từ bất kỳ đâu (ví dụ nút trên bảng tòa nhà)
+    function openBuildingAssignmentsFromBuilding(buildingId, buildingName, buildingCode = '') {
+      openBuildingAssignmentsModal(buildingId, buildingName, buildingCode);
+    }
+
+    function openBuildingAssignmentsModal(buildingId, buildingName = '', buildingCode = '') {
+      currentAssignmentBuildingId = buildingId;
+      const modal = document.getElementById('modal-building-assignments');
+      if (modal) modal.style.display = 'flex';
+
+      const nameEl = document.getElementById('mba-bld-name');
+      const codeEl = document.getElementById('mba-bld-code');
+      if (nameEl) nameEl.innerText = buildingName || 'Tòa nhà';
+      if (codeEl) codeEl.innerText = buildingCode || '---';
+
+      switchMbaTab('sales');
+      loadBuildingAssignments(buildingId);
+    }
+
+    function switchMbaTab(tabName) {
+      document.querySelectorAll('.mba-panel').forEach(p => p.style.display = 'none');
+      document.querySelectorAll('.mba-tab-btn').forEach(b => {
+        b.classList.remove('active');
+        b.style.color = '#64748b';
+        b.style.borderBottomColor = 'transparent';
+      });
+
+      const panel = document.getElementById('mba-panel-' + tabName);
+      if (panel) panel.style.display = 'block';
+
+      const btn = document.getElementById('mba-tab-btn-' + tabName);
+      if (btn) {
+        btn.classList.add('active');
+        btn.style.color = '#2563eb';
+        btn.style.borderBottomColor = '#2563eb';
+      }
     }
 
     function goToBuildingAssignments(buildingId = null) {
+      if (buildingId) {
+        openBuildingAssignmentsModal(buildingId);
+        return;
+      }
       const navItemStaff = document.getElementById('nav-item-staff');
       if (typeof switchFilamentTab === 'function') {
         switchFilamentTab('tab-admin-staff', navItemStaff, true);
@@ -120,11 +157,6 @@
       const btnAssignments = document.getElementById('btn-subtab-assignments');
       if (typeof switchStaffSubTab === 'function') {
         switchStaffSubTab('assignments', btnAssignments, true);
-      }
-      if (buildingId) {
-        setTimeout(() => {
-          populateBuildingAssignmentDropdown(buildingId);
-        }, 120);
       }
     }
 
@@ -187,11 +219,29 @@
           badgeAssignments.innerText = `${sales.length + managers.length + accountants.length} NV`;
         }
 
+        const mbaBadgeSales = document.getElementById('mba-badge-sales');
+        const mbaBadgePm = document.getElementById('mba-badge-pm');
+        const mbaBadgeAcc = document.getElementById('mba-badge-acc');
+        if (mbaBadgeSales) mbaBadgeSales.innerText = sales.length;
+        if (mbaBadgePm) mbaBadgePm.innerText = managers.length;
+        if (mbaBadgeAcc) mbaBadgeAcc.innerText = accountants.length;
+
+        const mbaBldName = document.getElementById('mba-bld-name');
+        const mbaBldCode = document.getElementById('mba-bld-code');
+        if (mbaBldName && bld.name) mbaBldName.innerText = bld.name;
+        if (mbaBldCode && (bld.building_code || bld.code)) mbaBldCode.innerText = bld.building_code || bld.code;
+
+        const mbaTbSales = document.getElementById('mba-tbody-sales');
+        const mbaTbPm = document.getElementById('mba-tbody-pm');
+        const mbaTbAcc = document.getElementById('mba-tbody-acc');
+
         // Render Sales Table (API 92)
         if (sales.length === 0) {
-          tbSales.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:25px; color:#94a3b8;">Chưa có nhân viên Sales nào được phân công phụ trách tòa nhà này.</td></tr>';
+          const emptySales = '<tr><td colspan="7" style="text-align:center; padding:25px; color:#94a3b8;">Chưa có nhân viên Sales nào được phân công phụ trách tòa nhà này.</td></tr>';
+          if (tbSales) tbSales.innerHTML = emptySales;
+          if (mbaTbSales) mbaTbSales.innerHTML = emptySales;
         } else {
-          tbSales.innerHTML = sales.map(s => {
+          const salesHtml = sales.map(s => {
             const assignedAt = s.assigned_at ? new Date(s.assigned_at).toLocaleString('vi-VN') : 'Mặc định';
             const isActive = (s.is_active !== false);
             return `
@@ -217,14 +267,18 @@
               </tr>
             `;
           }).join('');
+          if (tbSales) tbSales.innerHTML = salesHtml;
+          if (mbaTbSales) mbaTbSales.innerHTML = salesHtml;
         }
 
         // Render Property Managers Table (API 92)
         if (managers.length === 0) {
-          tbPm.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:25px; color:#94a3b8;">Chưa có Ban Quản Lý được phân công phụ trách tòa nhà này.</td></tr>';
+          const emptyPm = '<tr><td colspan="7" style="text-align:center; padding:25px; color:#94a3b8;">Chưa có Ban Quản Lý được phân công phụ trách tòa nhà này.</td></tr>';
+          if (tbPm) tbPm.innerHTML = emptyPm;
+          if (mbaTbPm) mbaTbPm.innerHTML = emptyPm;
         } else {
           const deptLabels = { TECHNICAL: 'Kỹ thuật', SECURITY: 'An ninh', CLEANING: 'Vệ sinh', CUSTOMER_CARE: 'CSKH' };
-          tbPm.innerHTML = managers.map(p => {
+          const pmHtml = managers.map(p => {
             const assignedAt = p.assigned_at ? new Date(p.assigned_at).toLocaleString('vi-VN') : 'Mặc định';
             const isHead = !!(p.is_primary || p.is_head_manager);
             return `
@@ -250,13 +304,17 @@
               </tr>
             `;
           }).join('');
+          if (tbPm) tbPm.innerHTML = pmHtml;
+          if (mbaTbPm) mbaTbPm.innerHTML = pmHtml;
         }
 
         // Render Accountants Table (API 92)
         if (accountants.length === 0) {
-          tbAcc.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:25px; color:#94a3b8;">Chưa có Kế toán được phân công theo dõi công nợ cho tòa nhà này.</td></tr>';
+          const emptyAcc = '<tr><td colspan="7" style="text-align:center; padding:25px; color:#94a3b8;">Chưa có Kế toán được phân công theo dõi công nợ cho tòa nhà này.</td></tr>';
+          if (tbAcc) tbAcc.innerHTML = emptyAcc;
+          if (mbaTbAcc) mbaTbAcc.innerHTML = emptyAcc;
         } else {
-          tbAcc.innerHTML = accountants.map(a => {
+          const accHtml = accountants.map(a => {
             const assignedAt = a.assigned_at ? new Date(a.assigned_at).toLocaleString('vi-VN') : 'Mặc định';
             const canAdjust = !!a.can_approve_adjustment;
             return `
@@ -282,6 +340,8 @@
               </tr>
             `;
           }).join('');
+          if (tbAcc) tbAcc.innerHTML = accHtml;
+          if (mbaTbAcc) mbaTbAcc.innerHTML = accHtml;
         }
 
       } catch (err) {
@@ -340,7 +400,7 @@
         return;
       }
 
-      const bldName = document.getElementById('info-bld-name')?.innerText || 'Tòa nhà';
+      const bldName = document.getElementById('mba-bld-name')?.innerText || document.getElementById('info-bld-name')?.innerText || 'Tòa nhà';
       document.getElementById('assign-sales-modal-building-name').innerText = 'Tòa nhà: ' + bldName;
       document.getElementById('assign-sales-building-id').value = currentAssignmentBuildingId;
 
@@ -475,7 +535,7 @@
         return;
       }
 
-      const bldName = document.getElementById('info-bld-name')?.innerText || 'Tòa nhà';
+      const bldName = document.getElementById('mba-bld-name')?.innerText || document.getElementById('info-bld-name')?.innerText || 'Tòa nhà';
       document.getElementById('assign-pm-modal-building-name').innerText = 'Tòa nhà: ' + bldName;
       document.getElementById('assign-pm-building-id').value = currentAssignmentBuildingId;
 
@@ -607,7 +667,7 @@
         return;
       }
 
-      const bldName = document.getElementById('info-bld-name')?.innerText || 'Tòa nhà';
+      const bldName = document.getElementById('mba-bld-name')?.innerText || document.getElementById('info-bld-name')?.innerText || 'Tòa nhà';
       document.getElementById('assign-acc-modal-building-name').innerText = 'Tòa nhà: ' + bldName;
       document.getElementById('assign-acc-building-id').value = currentAssignmentBuildingId;
 

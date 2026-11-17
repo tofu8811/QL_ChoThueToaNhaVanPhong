@@ -275,7 +275,7 @@
         'tab-sales-leads', 'tab-sales-pipeline', 'tab-sales-quotes', 'tab-admin-staff'
       ],
       pm: [
-        'tab-admin-dashboard', 'tab-admin-buildings', 'tab-admin-tenants',
+        'tab-admin-dashboard', 'tab-admin-buildings',
         'tab-admin-contracts', 'tab-admin-tickets'
       ],
       sales: [
@@ -370,6 +370,13 @@
       if (totalBldsEl) totalBldsEl.innerText = isPmRole ? '8' : '22';
       if (totalBldsSub) totalBldsSub.innerText = isPmRole ? 'tòa phụ trách' : 'tòa nhà';
       if (totalUnitsSub) totalUnitsSub.innerText = isPmRole ? '24 mặt bằng' : '65 mặt bằng';
+
+      const card1Title = document.getElementById('dashboard-card1-title');
+      const card1FootLabel = document.getElementById('dashboard-card1-foot-label');
+      const card1FootVal = document.getElementById('dashboard-card1-foot-val');
+      if (card1Title) card1Title.innerText = isPmRole ? 'TỔNG SỐ TÒA NHÀ PHỤ TRÁCH' : 'QUY MÔ TÀI SẢN & SÀN';
+      if (card1FootLabel) card1FootLabel.innerText = isPmRole ? 'Tình trạng khai thác:' : 'Tổng diện tích quản lý:';
+      if (card1FootVal) card1FootVal.innerText = isPmRole ? 'Tỷ lệ khai thác cao' : '428.430 m²';
 
       const dashTitle = document.getElementById('dashboard-page-title');
       const dashSub = document.getElementById('dashboard-page-subtitle');

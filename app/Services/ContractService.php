@@ -6,6 +6,7 @@ use App\Enums\ContractStatus;
 use App\Enums\UnitStatus;
 use App\Exceptions\BusinessException;
 use App\Exceptions\LeaseOverlapException;
+use App\Helpers\NumberToWordsHelper;
 use App\Models\Admin;
 use App\Models\Building;
 use App\Models\Contract;
@@ -18,6 +19,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
@@ -99,6 +101,17 @@ class ContractService
             $building = Building::findOrFail($data['building_id']);
             $contractNumber = $data['contract_number'] ?? $this->generateContractNumber($building->building_code);
 
+            // Tính tổng diện tích ban đầu để thỏa mãn constraint chk_contracts_area (total_leased_area_sqm > 0)
+            $initialTotalArea = 0.0;
+            if (!empty($data['units']) && is_array($data['units'])) {
+                foreach ($data['units'] as $unitItem) {
+                    $initialTotalArea += (float) ($unitItem['leased_area_sqm'] ?? 0.0);
+                }
+            }
+            if ($initialTotalArea <= 0.0) {
+                $initialTotalArea = 1.0;
+            }
+
             $contract = Contract::create([
                 'contract_number' => $contractNumber,
                 'building_id' => $data['building_id'],
@@ -106,7 +119,7 @@ class ContractService
                 'created_by_sales_id' => $salesId ?? $data['created_by_sales_id'] ?? null,
                 'start_date' => $data['start_date'],
                 'end_date' => $data['end_date'],
-                'total_leased_area_sqm' => 0.00,
+                'total_leased_area_sqm' => $initialTotalArea,
                 'deposit_amount' => $data['deposit_amount'],
                 'booking_deposit_amount' => 0.00,
                 'payment_cycle_months' => $data['payment_cycle_months'] ?? 1,
@@ -142,6 +155,17 @@ class ContractService
             $building = Building::findOrFail($data['building_id']);
             $contractNumber = $data['contract_number'] ?? $this->generateContractNumber($building->building_code, 'BOOKING');
 
+            // Tính tổng diện tích ban đầu để thỏa mãn constraint chk_contracts_area (total_leased_area_sqm > 0)
+            $initialTotalArea = 0.0;
+            if (!empty($data['units']) && is_array($data['units'])) {
+                foreach ($data['units'] as $unitItem) {
+                    $initialTotalArea += (float) ($unitItem['leased_area_sqm'] ?? 0.0);
+                }
+            }
+            if ($initialTotalArea <= 0.0) {
+                $initialTotalArea = 1.0;
+            }
+
             $contract = Contract::create([
                 'contract_number' => $contractNumber,
                 'building_id' => $data['building_id'],
@@ -149,7 +173,7 @@ class ContractService
                 'created_by_sales_id' => $salesId ?? $data['created_by_sales_id'] ?? null,
                 'start_date' => $data['start_date'],
                 'end_date' => $data['end_date'],
-                'total_leased_area_sqm' => 0.00,
+                'total_leased_area_sqm' => $initialTotalArea,
                 'deposit_amount' => $data['deposit_amount'] ?? $data['booking_deposit_amount'],
                 'booking_deposit_amount' => $data['booking_deposit_amount'],
                 'reservation_expires_at' => $data['reservation_expires_at'],
@@ -483,16 +507,33 @@ class ContractService
     /**
      * Tải lên các tệp scan hợp đồng, biên bản bàn giao, phụ lục vào Private Bucket.
      */
-    public function uploadContractFiles(Contract $contract, array $files, string $documentType = 'SIGNED_CONTRACT_SCAN'): array
+    public function uploadContractFiles(Contract $contract, mixed $files, string $documentType = 'SIGNED_CONTRACT_SCAN'): array
     {
         $uploadedRecords = [];
+        $files = is_array($files) ? $files : [$files];
+        $hasSupabase = !empty(config('filesystems.disks.supabase_private.key'));
 
         foreach ($files as $file) {
             if ($file instanceof UploadedFile) {
                 $fileName = $file->getClientOriginalName();
                 $extension = $file->getClientOriginalExtension();
                 $storedName = 'contract_' . $contract->id . '_' . time() . '_' . Str::random(6) . '.' . $extension;
-                $path = $file->storeAs('contracts', $storedName, 'local');
+                $objectPath = "contracts/{$contract->id}/{$storedName}";
+
+                // Thử upload lên Supabase Private Storage, nếu lỗi hoặc chưa cấu hình sẽ fallback về local storage
+                try {
+                    if ($hasSupabase) {
+                        $path = $file->storeAs("contracts/{$contract->id}", $storedName, [
+                            'disk' => 'supabase_private',
+                            'visibility' => 'private',
+                        ]);
+                    } else {
+                        $path = $file->storeAs("contracts/{$contract->id}", $storedName, 'local');
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning("Supabase private upload failed, fallback to local storage: " . $e->getMessage());
+                    $path = $file->storeAs("contracts/{$contract->id}", $storedName, 'local');
+                }
 
                 $imageRecord = ContractImage::create([
                     'contract_id' => $contract->id,
@@ -516,19 +557,34 @@ class ContractService
     /**
      * Sinh Signed URL tạm thời tải file scan hợp đồng.
      */
-    public function generateFileDownloadUrl(Contract $contract, int $fileId, int $expirationMinutes = 10): string
+    public function generateFileDownloadUrl(Contract $contract, int $fileId, ?int $expirationMinutes = null): string
     {
         $file = $contract->images()->findOrFail($fileId);
+        $ttl = $expirationMinutes ?? (int) env('SUPABASE_SIGNED_URL_EXPIRATION', 10);
+        $path = $file->image_url;
 
+        // Ưu tiên sinh Temporary URL từ Supabase Private Storage nếu có cấu hình
+        if (!empty(config('filesystems.disks.supabase_private.key'))) {
+            try {
+                return Storage::disk('supabase_private')->temporaryUrl(
+                    $path,
+                    now()->addMinutes($ttl)
+                );
+            } catch (\Throwable $e) {
+                Log::warning("Supabase temporaryUrl failed, fallback to local/signed route: " . $e->getMessage());
+            }
+        }
+
+        // Fallback cho môi trường local storage hoặc route ký số
         try {
             return Storage::disk('local')->temporaryUrl(
-                $file->image_url,
-                now()->addMinutes($expirationMinutes)
+                $path,
+                now()->addMinutes($ttl)
             );
         } catch (\Throwable $e) {
             return URL::temporarySignedRoute(
                 'v1.admin.contracts.downloadFile',
-                now()->addMinutes($expirationMinutes),
+                now()->addMinutes($ttl),
                 ['id' => $contract->id, 'fileId' => $file->id]
             );
         }
@@ -605,5 +661,92 @@ class ContractService
         $month = date('m');
         $count = Contract::withTrashed()->whereYear('created_at', $year)->count() + 1;
         return sprintf('%s-%s/%s-%s-%04d', $prefix, $year, $month, strtoupper($buildingCode), $count);
+    }
+
+    /**
+     * Chuẩn bị dữ liệu pháp lý & tài chính đầy đủ để phục vụ Xem trước và Xuất PDF Hợp đồng thuê.
+     *
+     * @return array<string, mixed>
+     */
+    public function getContractPrintData(string $contractId): array
+    {
+        $contract = Contract::with([
+            'building',
+            'tenant',
+            'contractUnits.unit',
+            'createdBySales',
+            'approvedByAdmin',
+            'approvedByPm',
+        ])->findOrFail($contractId);
+
+        // Tính toán tổng tiền thuê và phí dịch vụ hàng tháng
+        $monthlyRent = 0.0;
+        $monthlyServiceFee = 0.0;
+
+        foreach ($contract->contractUnits as $cu) {
+            $area = (float) $cu->leased_area_sqm;
+            $rentPrice = (float) $cu->agreed_rental_price_per_sqm;
+            $serviceFee = (float) $cu->agreed_service_fee_per_sqm;
+
+            $monthlyRent += $area * $rentPrice;
+            $monthlyServiceFee += $area * $serviceFee;
+        }
+
+        $monthlyTotal = $monthlyRent + $monthlyServiceFee;
+        $depositAmount = (float) $contract->deposit_amount;
+
+        // Tính số tháng thuê thực tế
+        $start = Carbon::parse($contract->start_date);
+        $end = Carbon::parse($contract->end_date);
+        $leaseDurationMonths = max(1, (int) round($start->diffInMonths($end)));
+
+        // Thông tin Bên A (Chủ sở hữu / Đơn vị quản lý tòa nhà)
+        $building = $contract->building;
+        $buildingAddress = $building ? "{$building->address}, {$building->ward}, {$building->district}, {$building->province}" : 'Địa chỉ tòa nhà';
+        $representativeA = $contract->approvedByAdmin?->full_name 
+            ?? $contract->approvedByPm?->full_name 
+            ?? $contract->createdBySales?->full_name 
+            ?? 'Ban Quản Lý Tòa Nhà';
+
+        $partyA = [
+            'company_name' => "BAN QUẢN LÝ / CHỦ ĐẦU TƯ TÒA NHÀ " . mb_strtoupper($building?->name ?? 'VĂN PHÒNG'),
+            'address' => $buildingAddress,
+            'tax_code' => '0301234567-001',
+            'representative' => $representativeA,
+            'position' => 'Đại Diện Ban Quản Lý Tòa Nhà',
+            'phone' => $contract->approvedByPm?->phone ?? '028.7300.8888',
+            'bank_account' => '1903.8888.9999 - Ngân hàng TMCP Ngoại Thương Việt Nam (Vietcombank) - CN TP.HCM',
+        ];
+
+        // Thông tin Bên B (Doanh nghiệp thuê)
+        $tenant = $contract->tenant;
+        $partyB = [
+            'company_name' => mb_strtoupper($tenant?->company_name ?? 'CÔNG TY KHÁCH THUÊ'),
+            'address' => $tenant?->headquarter_address ?? 'Trụ sở chính khách thuê',
+            'tax_code' => $tenant?->tax_code ?? 'Đang cập nhật',
+            'representative' => $tenant?->representative_name ?? 'Đại diện theo pháp luật',
+            'position' => $tenant?->representative_position ?? 'Tổng Giám Đốc',
+            'phone' => $tenant?->contact_phone ?? 'Đang cập nhật',
+            'email' => $tenant?->billing_email ?? $tenant?->login_email ?? 'Đang cập nhật',
+        ];
+
+        return [
+            'contract' => $contract,
+            'party_a' => $partyA,
+            'party_b' => $partyB,
+            'monthly_rent' => $monthlyRent,
+            'monthly_rent_words' => NumberToWordsHelper::toVietnameseWords($monthlyRent),
+            'monthly_service_fee' => $monthlyServiceFee,
+            'monthly_service_fee_words' => NumberToWordsHelper::toVietnameseWords($monthlyServiceFee),
+            'monthly_total' => $monthlyTotal,
+            'monthly_total_words' => NumberToWordsHelper::toVietnameseWords($monthlyTotal),
+            'deposit_amount' => $depositAmount,
+            'deposit_amount_words' => NumberToWordsHelper::toVietnameseWords($depositAmount),
+            'lease_duration_months' => $leaseDurationMonths,
+            'contract_units' => $contract->contractUnits,
+            'signed_day' => Carbon::now()->format('d'),
+            'signed_month' => Carbon::now()->format('m'),
+            'signed_year' => Carbon::now()->format('Y'),
+        ];
     }
 }

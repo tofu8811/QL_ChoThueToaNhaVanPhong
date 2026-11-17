@@ -40,6 +40,12 @@
 
     // Hàm điều hướng tuyến SPA khi nạp trang (F5) hoặc hash thay đổi
     function handleAppRouting() {
+      // Nếu đang ở các trang SSR độc lập (ví dụ /quan-ly-hop-dong, /cong-khach-thue, /quan-ly-leads, /toa-nha/...)
+      // thì không can thiệp điều hướng SPA của trang chủ
+      if (window.location.pathname !== '/' && window.location.pathname !== '') {
+        return;
+      }
+
       let hash = window.location.hash ? window.location.hash.replace(/^#\/?/, '').trim() : '';
       if (!hash) {
         hash = localStorage.getItem('last_active_route') || '';
@@ -116,6 +122,17 @@
     function switchView(viewType, updateRoute = true) {
       const portal = document.getElementById("portal-wrapper");
       const admin = document.getElementById("admin-wrapper");
+
+      if (!admin && !portal) return;
+
+      if (!admin) {
+        if (portal) portal.style.display = 'block';
+        return;
+      }
+      if (!portal) {
+        if (admin) admin.style.display = 'block';
+        return;
+      }
 
       if (viewType === 'admin-view') {
         portal.style.display = 'none';

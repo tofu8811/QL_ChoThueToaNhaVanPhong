@@ -17,6 +17,7 @@ use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 /**
@@ -26,7 +27,13 @@ use Livewire\WithPagination;
  */
 class ContractManager extends Component
 {
-    use WithPagination;
+    use WithPagination, WithFileUploads;
+
+    // Upload tài liệu / bản scan hợp đồng (Supabase Private Storage)
+    public $newContractFiles = [];
+    public $uploadContractScans = [];
+    public string $documentType = 'SIGNED_CONTRACT_SCAN';
+    public array $generatedSignedUrls = [];
 
     // Bộ lọc & Tìm kiếm
     public string $searchKeyword = '';
@@ -43,6 +50,10 @@ class ContractManager extends Component
     public bool $showDetailModal = false;
     public ?string $selectedContractId = null;
     public ?Contract $contractDetail = null;
+
+    // Modal Xem chi tiết mặt bằng (Unit Detail Modal)
+    public bool $showUnitDetailModal = false;
+    public ?Unit $selectedUnitDetail = null;
 
     // Modal Tạo mới hợp đồng
     public bool $showCreateModal = false;
@@ -122,6 +133,7 @@ class ContractManager extends Component
         $this->contract_number = '';
         $this->deposit_amount = 0;
         $this->booking_deposit_amount = 0;
+        $this->newContractFiles = [];
         $this->createType = 'DRAFT';
         $this->start_date = Carbon::now()->addDays(7)->toDateString();
         $this->end_date = Carbon::now()->addDays(7)->addYears(2)->toDateString();
@@ -304,10 +316,55 @@ class ContractManager extends Component
                 $this->flashMessage = "Đã tạo bản nháp Hợp đồng thuê thành công: {$newContract->contract_number}!";
             }
 
+            // Nếu người dùng có chọn tệp scan / ảnh hợp đồng khi tạo mới
+            if (!empty($this->newContractFiles)) {
+                $files = is_array($this->newContractFiles) ? $this->newContractFiles : [$this->newContractFiles];
+                $contractService->uploadContractFiles($newContract, $files, 'SIGNED_CONTRACT_SCAN');
+                $this->newContractFiles = [];
+            }
+
             $this->flashType = 'success';
             $this->closeCreateModal();
         } catch (\Throwable $e) {
             $this->overlapWarning = $e->getMessage();
+        }
+    }
+
+    // Tải lên tệp scan / tài liệu cho hợp đồng đang xem chi tiết
+    public function uploadScans(ContractService $contractService): void
+    {
+        if (empty($this->uploadContractScans) || empty($this->selectedContractId)) {
+            $this->flashMessage = 'Vui lòng chọn ít nhất 1 tệp tin scan/ảnh để tải lên.';
+            $this->flashType = 'warning';
+            return;
+        }
+
+        try {
+            $contract = Contract::findOrFail($this->selectedContractId);
+            $files = is_array($this->uploadContractScans) ? $this->uploadContractScans : [$this->uploadContractScans];
+            $contractService->uploadContractFiles($contract, $files, $this->documentType);
+            $this->uploadContractScans = [];
+            $this->contractDetail = $contractService->getContractDetail($this->selectedContractId);
+            $this->flashMessage = 'Đã tải lên tài liệu hợp đồng vào Supabase Private Storage thành công!';
+            $this->flashType = 'success';
+        } catch (\Throwable $e) {
+            $this->flashMessage = 'Lỗi tải tệp: ' . $e->getMessage();
+            $this->flashType = 'danger';
+        }
+    }
+
+    // Sinh link ký số tải file tạm thời (10 phút)
+    public function generateDownloadUrl(int $fileId, ContractService $contractService): void
+    {
+        if (empty($this->selectedContractId)) return;
+
+        try {
+            $contract = Contract::findOrFail($this->selectedContractId);
+            $url = $contractService->generateFileDownloadUrl($contract, $fileId, 10);
+            $this->generatedSignedUrls[$fileId] = $url;
+        } catch (\Throwable $e) {
+            $this->flashMessage = 'Không thể tạo liên kết tải: ' . $e->getMessage();
+            $this->flashType = 'danger';
         }
     }
 
@@ -324,6 +381,18 @@ class ContractManager extends Component
         $this->showDetailModal = false;
         $this->selectedContractId = null;
         $this->contractDetail = null;
+    }
+
+    public function viewUnitDetail(string $unitId): void
+    {
+        $this->selectedUnitDetail = Unit::with(['images', 'building'])->find($unitId);
+        $this->showUnitDetailModal = true;
+    }
+
+    public function closeUnitDetailModal(): void
+    {
+        $this->showUnitDetailModal = false;
+        $this->selectedUnitDetail = null;
     }
 
     // Ký duyệt & kích hoạt hợp đồng (Sign)

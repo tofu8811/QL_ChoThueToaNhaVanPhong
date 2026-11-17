@@ -8,6 +8,7 @@ use App\Models\Tenant;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
@@ -121,7 +122,22 @@ class TenantService
     {
         $extension = $file->getClientOriginalExtension();
         $fileName = 'license_' . $tenant->id . '_' . time() . '.' . $extension;
-        $path = $file->storeAs('licenses', $fileName, 'local');
+        $objectPath = "licenses/{$fileName}";
+        $hasSupabase = !empty(config('filesystems.disks.supabase_private.key'));
+
+        try {
+            if ($hasSupabase) {
+                $path = $file->storeAs('licenses', $fileName, [
+                    'disk' => 'supabase_private',
+                    'visibility' => 'private',
+                ]);
+            } else {
+                $path = $file->storeAs('licenses', $fileName, 'local');
+            }
+        } catch (\Throwable $e) {
+            Log::warning("Supabase license upload failed, fallback to local storage: " . $e->getMessage());
+            $path = $file->storeAs('licenses', $fileName, 'local');
+        }
 
         $tenant->update([
             'business_license_private_path' => $path,
@@ -133,7 +149,7 @@ class TenantService
     /**
      * Sinh đường dẫn ký số tạm thời (Signed URL) để tải hoặc xem Giấy phép ĐKKD.
      */
-    public function getLicenseDownloadUrl(Tenant $tenant, int $expirationMinutes = 10): string
+    public function getLicenseDownloadUrl(Tenant $tenant, ?int $expirationMinutes = null): string
     {
         $path = $tenant->business_license_private_path;
 
@@ -141,16 +157,29 @@ class TenantService
             throw new BusinessException('Doanh nghiệp này chưa cập nhật Giấy chứng nhận ĐKKD.', 404);
         }
 
+        $ttl = $expirationMinutes ?? (int) env('SUPABASE_SIGNED_URL_EXPIRATION', 10);
+
+        if (!empty(config('filesystems.disks.supabase_private.key'))) {
+            try {
+                return Storage::disk('supabase_private')->temporaryUrl(
+                    $path,
+                    now()->addMinutes($ttl)
+                );
+            } catch (\Throwable $e) {
+                Log::warning("Supabase license temporaryUrl failed, fallback to local/signed route: " . $e->getMessage());
+            }
+        }
+
         try {
             return Storage::disk('local')->temporaryUrl(
                 $path,
-                now()->addMinutes($expirationMinutes)
+                now()->addMinutes($ttl)
             );
         } catch (\Throwable $e) {
             // Fallback an toàn nếu disk không hỗ trợ driver temporaryUrl trực tiếp
             return URL::temporarySignedRoute(
                 'v1.admin.tenants.downloadLicense',
-                now()->addMinutes($expirationMinutes),
+                now()->addMinutes($ttl),
                 ['id' => $tenant->id]
             );
         }

@@ -447,6 +447,9 @@
                 ` : (u.status === 'MAINTENANCE' ? `
                   <button class="btn-mo-outline" style="padding:2px 6px;font-size:11px;color:#16a34a;" onclick="changeUnitStatus('${u.id}', 'AVAILABLE')">Chuyển Trống</button>
                 ` : '<span style="font-size:11px;color:#94a3b8;">Đã gắn HĐ</span>')}
+                <button class="btn-mo-outline" style="padding:2px 8px;font-size:11px;color:#0284c7;border-color:#bae6fd;margin-left:4px;" onclick="openUnitMediaModal('${u.id}', '${escapeHtml(u.unit_code)}')" title="Album ảnh & Layout sàn">
+                  <i class="fa-solid fa-camera"></i> Ảnh (${u.images ? u.images.length : (u.images_count || '0')})
+                </button>
                 <button class="btn-mo-outline" style="padding:2px 6px;font-size:11px;color:#ef4444;margin-left:4px;" onclick="deleteUnit('${u.id}')" title="Xóa sàn">
                   <i class="fa-solid fa-trash"></i>
                 </button>
@@ -536,32 +539,95 @@
       }
     }
 
-    // 8. Tải lên và Xóa ảnh mặt bằng: POST & DELETE /api/v1/admin/units/{id}/images
-    async function uploadUnitImages(unitId, fileInput) {
-      if (!fileInput || !fileInput.files || fileInput.files.length === 0) return;
+    // 8. Quản lý Album ảnh Mặt Bằng (Unit Images): GET /admin/units/{id}, POST /images, DELETE /images/{imgId}
+    let currentActiveUnitId = null;
+
+    async function openUnitMediaModal(unitId, unitCode) {
+      currentActiveUnitId = unitId;
+      const modal = document.getElementById('modal-unit-media');
+      if (!modal) return;
+      const codeEl = document.getElementById('media-unit-code');
+      if (codeEl) codeEl.innerText = unitCode;
+      modal.style.display = 'flex';
+      loadUnitMedia(unitId);
+    }
+
+    function closeUnitMediaModal() {
+      const modal = document.getElementById('modal-unit-media');
+      if (modal) modal.style.display = 'none';
+      currentActiveUnitId = null;
+    }
+
+    async function loadUnitMedia(unitId) {
+      const container = document.getElementById('unit-images-grid');
+      if (!container) return;
+      container.innerHTML = '<div style="text-align:center;padding:24px;color:#94a3b8;grid-column:1/-1;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải album ảnh mặt bằng...</div>';
+
+      try {
+        const res = await fetch(`/api/v1/admin/units/${unitId}`, {
+          method: 'GET',
+          headers: getAuthHeaders()
+        });
+        const json = await res.json();
+        const images = json.data?.images || [];
+        if (images.length === 0) {
+          container.innerHTML = '<div style="text-align:center;padding:32px;color:#94a3b8;grid-column:1/-1;">Mặt bằng chưa có ảnh thực tế hoặc sơ đồ 2D. Hãy tải lên ảnh bên trên.</div>';
+          return;
+        }
+
+        container.innerHTML = images.map(img => `
+          <div style="position:relative;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;background:#f8fafc;">
+            <img src="${escapeHtml(img.image_url)}" style="width:100%;height:130px;object-fit:cover;display:block;">
+            <div style="padding:6px;display:flex;justify-content:space-between;align-items:center;background:#fff;border-top:1px solid #e2e8f0;">
+              <span style="font-size:11px;color:#64748b;">${img.is_primary ? '<span class="badge-filament success" style="font-size:10px;"><i class="fa-solid fa-star"></i> Ảnh Chính</span>' : 'Ảnh sàn'}</span>
+              <button class="btn-mo-outline" style="padding:2px 6px;font-size:10px;color:#ef4444;border-color:#fecaca;" onclick="deleteUnitImageAction('${unitId}', '${img.id}')">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        container.innerHTML = '<div style="color:#ef4444;text-align:center;grid-column:1/-1;">Lỗi kết nối tải album ảnh mặt bằng.</div>';
+      }
+    }
+
+    async function submitUploadUnitImages(e) {
+      if (e) e.preventDefault();
+      if (!currentActiveUnitId) return;
+
+      const fileInput = document.getElementById('unit-images-input');
+      if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        alert('Vui lòng chọn ít nhất 1 ảnh (PNG, JPG).');
+        return;
+      }
+
       const formData = new FormData();
       for (let i = 0; i < fileInput.files.length; i++) {
         formData.append('images[]', fileInput.files[i]);
       }
+
       try {
-        const res = await fetch(`/api/v1/admin/units/${unitId}/images`, {
+        const res = await fetch(`/api/v1/admin/units/${currentActiveUnitId}/images`, {
           method: 'POST',
           headers: getAuthHeaders(true),
           body: formData
         });
+
         const json = await res.json();
         if (res.ok) {
           alert('Tải lên ảnh mặt bằng thành công!');
+          fileInput.value = '';
+          loadUnitMedia(currentActiveUnitId);
           if (currentActiveUnitBuildingId) loadBuildingUnits(currentActiveUnitBuildingId);
         } else {
-          alert('Lỗi upload ảnh mặt bằng: ' + (json.message || ''));
+          alert('Lỗi tải ảnh: ' + (json.message || ''));
         }
-      } catch (e) {
-        alert('Lỗi kết nối upload ảnh mặt bằng.');
+      } catch (err) {
+        alert('Lỗi kết nối tải ảnh mặt bằng.');
       }
     }
 
-    async function deleteUnitImage(unitId, imageId) {
+    async function deleteUnitImageAction(unitId, imageId) {
       if (!confirm('Xóa ảnh sơ đồ mặt bằng này?')) return;
       try {
         const res = await fetch(`/api/v1/admin/units/${unitId}/images/${imageId}`, {
@@ -570,9 +636,10 @@
         });
         const json = await res.json();
         if (res.ok) {
+          loadUnitMedia(unitId);
           if (currentActiveUnitBuildingId) loadBuildingUnits(currentActiveUnitBuildingId);
         } else {
-          alert('Lỗi xóa ảnh mặt bằng: ' + (json.message || ''));
+          alert('Lỗi xóa ảnh: ' + (json.message || ''));
         }
       } catch (e) {
         alert('Lỗi kết nối khi xóa ảnh sàn.');

@@ -6,6 +6,7 @@ use App\Exceptions\BusinessException;
 use App\Http\Requests\V1\Tenant\UpdateTenantProfileRequest;
 use App\Models\Contract;
 use App\Models\Tenant;
+use App\Services\ContractService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -82,12 +83,33 @@ class TenantPortalApiController extends BaseApiController
         return $this->successResponse($contract, 'Lấy chi tiết hợp đồng thành công.');
     }
 
+    // Lấy Signed URL tạm thời để tải file scan hợp đồng dành cho Khách thuê
+    public function downloadContractFile(string $id, int $fileId, Request $request, ContractService $contractService): JsonResponse
+    {
+        $tenant = $this->resolveTenant($request);
+
+        $contract = Contract::where('id', $id)
+            ->where('tenant_id', $tenant->id)
+            ->first();
+
+        if (!$contract) {
+            throw new BusinessException('Hợp đồng không tồn tại hoặc bạn không có quyền truy cập.', 403);
+        }
+
+        $url = $contractService->generateFileDownloadUrl($contract, $fileId);
+
+        return $this->successResponse([
+            'download_url' => $url,
+            'expires_in_minutes' => (int) env('SUPABASE_SIGNED_URL_EXPIRATION', 10),
+        ], 'Tạo liên kết tải file hợp đồng thành công.');
+    }
+
     /**
      * Giải quyết đối tượng Tenant từ Request (Sanctum User hoặc Header ID dùng cho testing).
      */
     protected function resolveTenant(Request $request): Tenant
     {
-        $user = $request->user();
+        $user = $request->user() ?? \Illuminate\Support\Facades\Auth::guard('tenant')->user();
 
         if ($user instanceof Tenant) {
             return $user;
@@ -97,6 +119,16 @@ class TenantPortalApiController extends BaseApiController
         $tenantId = $request->header('X-Tenant-Id') ?? $request->input('mock_tenant_id');
         if ($tenantId) {
             return Tenant::findOrFail($tenantId);
+        }
+
+        // Fallback demo tenant cho môi trường local/testing để trải nghiệm liền mạch
+        if (app()->environment('local', 'testing')) {
+            $fallback = Tenant::where('login_email', 'contact@vng.com.vn')->first()
+                ?? Tenant::has('contracts')->first()
+                ?? Tenant::first();
+            if ($fallback) {
+                return $fallback;
+            }
         }
 
         throw new BusinessException('Yêu cầu xác thực tài khoản Khách thuê (Tenant).', 401);

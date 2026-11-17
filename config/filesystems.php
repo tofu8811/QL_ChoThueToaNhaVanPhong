@@ -76,6 +76,22 @@ return [
             ],
         ],
 
+        'supabase_private' => [
+            'driver' => 's3',
+            'key' => env('SUPABASE_ACCESS_KEY_ID'),
+            'secret' => env('SUPABASE_SECRET_ACCESS_KEY'),
+            'region' => env('SUPABASE_DEFAULT_REGION', 'ap-southeast-1'),
+            'bucket' => env('SUPABASE_PRIVATE_BUCKET', 'contract-documents'),
+            'endpoint' => env('SUPABASE_ENDPOINT'),
+            'use_path_style_endpoint' => true,
+            'throw' => true,
+            'report' => false,
+            'visibility' => 'private',
+            'http' => [
+                'verify' => env('SUPABASE_SSL_VERIFY', false),
+            ],
+        ],
+
     ],
 
     /*

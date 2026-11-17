@@ -244,3 +244,24 @@
     </div>
   </div>
 </div>
+
+<!-- MODAL 5: QUẢN LÝ ALBUM ẢNH MẶT BẰNG (Unit Images - Supabase / Local Storage) -->
+<div id="modal-unit-media" class="mo-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.6);backdrop-filter:blur(3px);z-index:10001;align-items:center;justify-content:center;">
+  <div style="background:#ffffff;border-radius:12px;width:100%;max-width:760px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.15);overflow:hidden;border:1px solid #e2e8f0;max-height:90vh;display:flex;flex-direction:column;">
+    <div style="background:var(--mo-primary);color:#ffffff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="margin:0;font-size:15px;font-weight:700;"><i class="fa-solid fa-camera"></i> Thư Viện Ảnh & Sơ Đồ Mặt Bằng: <span id="media-unit-code"></span></h3>
+      <button type="button" onclick="closeUnitMediaModal()" style="background:none;border:none;color:#ffffff;font-size:18px;cursor:pointer;">&times;</button>
+    </div>
+    <div style="padding:18px;overflow-y:auto;flex:1;">
+      <!-- Form Upload ảnh mới cho sàn -->
+      <form onsubmit="submitUploadUnitImages(event)" style="background:#f8fafc;padding:12px;border:1px dashed #cbd5e1;border-radius:8px;margin-bottom:16px;display:flex;gap:10px;align-items:center;">
+        <input type="file" id="unit-images-input" accept="image/*" multiple required style="font-size:12px;flex:1;">
+        <button type="submit" class="btn-mo-orange" style="padding:6px 14px;font-size:12px;white-space:nowrap;">
+          <i class="fa-solid fa-cloud-arrow-up"></i> Upload Ảnh Sàn
+        </button>
+      </form>
+      <!-- Grid hiển thị ảnh mặt bằng -->
+      <div id="unit-images-grid" style="display:grid;grid-template-columns:repeat(3, 1fr);gap:12px;"></div>
+    </div>
+  </div>
+</div>

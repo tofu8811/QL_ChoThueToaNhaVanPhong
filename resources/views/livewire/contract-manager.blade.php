@@ -152,6 +152,11 @@
                             </td>
                             <td style="padding:14px 16px;text-align:right;">
                                 <div style="display:inline-flex;gap:6px;">
+                                    <!-- Xuất PDF hợp đồng chuẩn -->
+                                    <a href="{{ route('contracts.print', $c->id) }}" target="_blank" class="btn-mo-outline" style="padding:5px 8px;font-size:12px;color:#ea580c;border-color:#fdba74;text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="Xuất PDF Hợp Đồng">
+                                        <i class="fa-solid fa-file-pdf"></i> Xuất PDF
+                                    </a>
+
                                     <!-- Xem chi tiết -->
                                     <button wire:click="openDetailModal('{{ $c->id }}')" class="btn-mo-outline" style="padding:5px 8px;font-size:12px;" title="Xem chi tiết">
                                         <i class="fa-solid fa-eye"></i>
@@ -364,6 +369,20 @@
                             </div>
                         @endif
                     </div>
+
+                    <!-- Đính kèm file scan hợp đồng / ảnh hợp đồng (Supabase Private Storage) -->
+                    <div style="margin-top:16px;padding:14px;background:#f8fafc;border-radius:8px;border:1px dashed #cbd5e1;">
+                        <label style="display:block;font-size:13px;font-weight:700;color:var(--mo-primary);margin-bottom:6px;">
+                            <i class="fa-solid fa-file-shield" style="color:#0284c7;"></i> Đính Kèm File Scan / Ảnh Hợp Đồng (Private Bucket):
+                        </label>
+                        <input type="file" wire:model="newContractFiles" multiple accept="image/*,application/pdf" style="font-size:13px;color:#334155;width:100%;">
+                        <div wire:loading wire:target="newContractFiles" style="font-size:12px;color:#0284c7;margin-top:4px;">
+                            <i class="fa-solid fa-spinner fa-spin"></i> Đang tải tệp lên tạm thời...
+                        </div>
+                        <div style="font-size:11.5px;color:#64748b;margin-top:4px;">
+                            Hỗ trợ PDF, PNG, JPG. Tệp được mã hóa và bảo mật tại <strong>Supabase Private Storage</strong>, chỉ xem được qua Signed URL có thời hạn.
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Modal Footer -->
@@ -390,9 +409,14 @@
                             Tòa nhà: {{ $contractDetail->building?->name }} | Bên thuê: {{ $contractDetail->tenant?->company_name }}
                         </div>
                     </div>
-                    <button wire:click="closeDetailModal" style="background:none;border:none;font-size:18px;cursor:pointer;color:#64748b;">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <a href="{{ route('contracts.print', $contractDetail->id) }}" target="_blank" class="btn-mo-orange" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;font-size:12.5px;font-weight:600;" title="Mở trang in và Xuất PDF khổ A4">
+                            <i class="fa-solid fa-file-pdf"></i> Xuất PDF
+                        </a>
+                        <button wire:click="closeDetailModal" style="background:none;border:none;font-size:18px;cursor:pointer;color:#64748b;">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div style="padding:20px 24px;">
@@ -422,6 +446,7 @@
                                 <th style="padding:8px 12px;">Diện Tích</th>
                                 <th style="padding:8px 12px;">Giá Thuê Đã Chốt</th>
                                 <th style="padding:8px 12px;">Phí Quản Lý DV</th>
+                                <th style="padding:8px 12px;text-align:center;">Thao Tác</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -432,18 +457,154 @@
                                     <td style="padding:8px 12px;">{{ number_format($cu->leased_area_sqm, 0) }} m²</td>
                                     <td style="padding:8px 12px;">{{ number_format($cu->agreed_rental_price_per_sqm, 0, ',', '.') }} đ/m²</td>
                                     <td style="padding:8px 12px;">{{ number_format($cu->agreed_service_fee_per_sqm, 0, ',', '.') }} đ/m²</td>
+                                    <td style="padding:8px 12px;text-align:center;">
+                                        @if($cu->unit_id)
+                                            <button wire:click="viewUnitDetail('{{ $cu->unit_id }}')" type="button" class="btn-mo-outline" style="padding:3px 8px;font-size:11.5px;color:#0284c7;border-color:#bae6fd;cursor:pointer;">
+                                                <i class="fa-solid fa-eye"></i> Xem Mặt Bằng
+                                            </button>
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" style="text-align:center;padding:16px;color:#94a3b8;">Không có mặt bằng nào.</td>
+                                    <td colspan="6" style="text-align:center;padding:16px;color:#94a3b8;">Không có mặt bằng nào.</td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
+
+                    <!-- Tài liệu & File scan hợp đồng (Supabase Private Storage) -->
+                    <div style="margin-top:16px;padding:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+                        <h4 style="margin:0 0 12px 0;font-size:14px;font-weight:700;color:var(--mo-primary);display:flex;align-items:center;gap:8px;">
+                            <i class="fa-solid fa-folder-closed" style="color:#0284c7;"></i> Tài Liệu & Bản Scan Hợp Đồng (Bảo Mật Private Bucket):
+                        </h4>
+
+                        <!-- Danh sách tệp đã tải lên -->
+                        @if($contractDetail->images && $contractDetail->images->count() > 0)
+                            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+                                @foreach($contractDetail->images as $img)
+                                    <div style="display:flex;justify-content:space-between;align-items:center;background:#fff;padding:10px 14px;border-radius:6px;border:1px solid #e2e8f0;">
+                                        <div style="display:flex;align-items:center;gap:10px;">
+                                            <i class="fa-solid fa-file-pdf" style="font-size:20px;color:#ef4444;"></i>
+                                            <div>
+                                                <div style="font-size:13px;font-weight:600;color:#1e293b;">
+                                                    {{ $img->file_name ?? basename($img->image_url) }}
+                                                </div>
+                                                <div style="font-size:11.5px;color:#64748b;">
+                                                    Loại: <span class="badge-filament info" style="font-size:10.5px;">{{ $img->document_type }}</span>
+                                                    &bull; Đường dẫn: <code style="font-size:11px;background:#f1f5f9;padding:1px 4px;border-radius:3px;">{{ $img->image_url }}</code>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            @if(!empty($generatedSignedUrls[$img->id]))
+                                                <a href="{{ $generatedSignedUrls[$img->id] }}" target="_blank" class="btn-mo-orange" style="padding:4px 10px;font-size:12px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+                                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Mở File (10 phút)
+                                                </a>
+                                            @else
+                                                <button type="button" wire:click="generateDownloadUrl({{ $img->id }})" class="btn-mo-primary" style="padding:4px 10px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                                                    <i class="fa-solid fa-key"></i> Lấy Link Tải
+                                                </button>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div style="padding:16px;border:1px dashed #cbd5e1;border-radius:6px;text-align:center;color:#64748b;font-size:13px;margin-bottom:14px;background:#fff;">
+                                <i class="fa-regular fa-folder-open" style="font-size:24px;color:#94a3b8;margin-bottom:6px;display:block;"></i>
+                                Chưa có tệp scan hoặc ảnh hợp đồng nào được tải lên.
+                            </div>
+                        @endif
+
+                        <!-- Form tải thêm tệp scan -->
+                        <div style="display:flex;gap:10px;align-items:flex-end;background:#fff;padding:12px;border-radius:6px;border:1px solid #e2e8f0;">
+                            <div style="flex:1;">
+                                <label style="display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:4px;">Thêm File Scan / Ảnh Mới:</label>
+                                <input type="file" wire:model="uploadContractScans" multiple accept="image/*,application/pdf" style="font-size:12.5px;color:#334155;width:100%;">
+                            </div>
+                            <div style="width:200px;">
+                                <label style="display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:4px;">Phân Loại Tài Liệu:</label>
+                                <select wire:model="documentType" style="width:100%;padding:6px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12.5px;">
+                                    <option value="SIGNED_CONTRACT_SCAN">Bản Scan Hợp Đồng</option>
+                                    <option value="HANDOVER_MINUTES">Biên Bản Bàn Giao</option>
+                                    <option value="ANNEX">Phụ Lục Hợp Đồng</option>
+                                </select>
+                            </div>
+                            <div>
+                                <button type="button" wire:click="uploadScans" class="btn-mo-orange" style="padding:7px 14px;font-size:12.5px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> Tải Lên Supabase
+                                </button>
+                            </div>
+                        </div>
+                        <div wire:loading wire:target="uploadContractScans" style="font-size:12px;color:#0284c7;margin-top:6px;">
+                            <i class="fa-solid fa-spinner fa-spin"></i> Đang tải tệp lên... Vui lòng đợi!
+                        </div>
+                    </div>
                 </div>
 
                 <div style="padding:16px 24px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;">
                     <button wire:click="closeDetailModal" class="btn-mo-outline" style="padding:8px 18px;">Đóng</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- MODAL XEM CHI TIẾT SÀN / ẢNH MẶT BẰNG TRONG HỢP ĐỒNG -->
+    @if($showUnitDetailModal && $selectedUnitDetail)
+        <div style="position:fixed;inset:0;background:rgba(15,23,42,0.65);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:10002;padding:16px;">
+            <div style="background:#ffffff;border-radius:12px;width:100%;max-width:720px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.25);overflow:hidden;border:1px solid #e2e8f0;max-height:92vh;display:flex;flex-direction:column;">
+                <div style="background:var(--mo-primary);color:#ffffff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
+                    <h3 style="margin:0;font-size:16px;font-weight:700;">
+                        <i class="fa-solid fa-layer-group"></i> Chi Tiết Mặt Bằng: {{ $selectedUnitDetail->unit_code }} (Tầng {{ $selectedUnitDetail->floor_number }})
+                    </h3>
+                    <button wire:click="closeUnitDetailModal" type="button" style="background:none;border:none;color:#ffffff;font-size:18px;cursor:pointer;">&times;</button>
+                </div>
+                <div style="padding:20px;overflow-y:auto;flex:1;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;">
+                        <div style="background:#f8fafc;padding:12px 16px;border-radius:8px;border:1px solid #e2e8f0;">
+                            <div style="font-size:12px;color:#64748b;">Tòa nhà:</div>
+                            <div style="font-size:14px;font-weight:700;color:var(--mo-primary);">{{ $selectedUnitDetail->building?->name ?? 'Tòa nhà văn phòng' }}</div>
+                            <div style="font-size:12px;color:#64748b;margin-top:8px;">Diện tích thông thủy:</div>
+                            <div style="font-size:16px;font-weight:700;color:#0284c7;">{{ number_format($selectedUnitDetail->area_sqm, 1) }} m²</div>
+                        </div>
+                        <div style="background:#f8fafc;padding:12px 16px;border-radius:8px;border:1px solid #e2e8f0;">
+                            <div style="font-size:12px;color:#64748b;">Giá niêm yết gốc:</div>
+                            <div style="font-size:16px;font-weight:700;color:#ea580c;">{{ number_format($selectedUnitDetail->base_rental_price ?: 0, 0, ',', '.') }} đ/m²</div>
+                            <div style="font-size:12px;color:#64748b;margin-top:8px;">Hiện trạng bàn giao:</div>
+                            <div style="font-size:13px;font-weight:600;color:#1e293b;">
+                                @if($selectedUnitDetail->handover_condition === 'RAW') Trần sàn thô
+                                @elseif($selectedUnitDetail->handover_condition === 'BASIC') Hoàn thiện cơ bản
+                                @elseif($selectedUnitDetail->handover_condition === 'FULL_FURNISHED') Đầy đủ nội thất cao cấp
+                                @else {{ $selectedUnitDetail->handover_condition ?: 'Hoàn thiện tiêu chuẩn' }}
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Album ảnh & Sơ đồ mặt bằng -->
+                    <div style="margin-bottom:16px;">
+                        <div style="font-size:13px;font-weight:700;color:#334155;margin-bottom:8px;">
+                            <i class="fa-solid fa-images"></i> Album Ảnh Thực Tế & Sơ Đồ Thiết Kế Mặt Bằng:
+                        </div>
+                        @if($selectedUnitDetail->images && $selectedUnitDetail->images->count() > 0)
+                            <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:10px;">
+                                @foreach($selectedUnitDetail->images as $img)
+                                    <div style="border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;background:#f8fafc;">
+                                        <img src="{{ $img->image_url }}" alt="Ảnh mặt bằng {{ $selectedUnitDetail->unit_code }}" style="width:100%;height:130px;object-fit:cover;display:block;">
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div style="padding:24px;border:1px dashed #cbd5e1;border-radius:8px;text-align:center;color:#64748b;background:#f8fafc;">
+                                <i class="fa-regular fa-image" style="font-size:24px;margin-bottom:6px;display:block;color:#94a3b8;"></i>
+                                Chưa có ảnh thực tế hoặc bản vẽ sơ đồ được tải lên cho mặt bằng này.
+                            </div>
+                        @endif
+                    </div>
+                </div>
+                <div style="padding:14px 20px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;background:#f8fafc;">
+                    <button wire:click="closeUnitDetailModal" type="button" class="btn-mo-outline" style="padding:6px 16px;">Đóng</button>
                 </div>
             </div>
         </div>

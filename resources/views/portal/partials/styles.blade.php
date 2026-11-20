@@ -300,12 +300,13 @@
       visibility: visible;
       transform: translateY(0);
       pointer-events: auto;
+      transition-delay: 0s;
     }
     .mo-nav-dropdown {
       position: absolute;
       top: 100%;
       left: 0;
-      margin-top: 4px;
+      margin-top: 2px;
       min-width: 280px;
       background: #ffffff;
       border: 1px solid #e2e8f0;
@@ -315,19 +316,21 @@
       z-index: 1050;
       opacity: 0;
       visibility: hidden;
-      transform: translateY(6px);
-      transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: translateY(3px);
+      transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1), transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.18s;
+      transition-delay: 0.15s;
       pointer-events: none;
     }
-    /* Cầu đệm tàng hình giúp rê chuột xuống dropdown không bao giờ bị mất */
+    /* Cầu đệm tàng hình rộng bao trọn vùng di chuột từ nút xuống menu */
     .mo-nav-dropdown::before {
       content: '';
       position: absolute;
-      top: -16px;
-      left: 0;
-      right: 0;
-      height: 16px;
+      top: -26px;
+      left: -20px;
+      right: -20px;
+      height: 28px;
       background: transparent;
+      z-index: 1040;
     }
     .mo-nav-dropdown-wrap:hover .nav-caret,
     .mo-nav-dropdown-wrap.open .nav-caret {
@@ -346,7 +349,8 @@
       overscroll-behavior: contain;
       padding: 18px 22px;
       left: 0;
-      transform: translateY(6px);
+      margin-top: 2px;
+      transform: translateY(3px);
       box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.18), 0 10px 20px -5px rgba(0, 0, 0, 0.08);
       border-radius: 12px;
       scrollbar-width: thin;

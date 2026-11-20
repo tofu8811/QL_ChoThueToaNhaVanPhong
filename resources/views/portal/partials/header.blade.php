@@ -654,25 +654,68 @@
     </aside>
 
     <script>
-      window.toggleNavDropdown = function(event, btn) {
-        if (event) {
-          event.preventDefault();
-          event.stopPropagation();
-        }
-        const wrap = btn.closest('.mo-nav-dropdown-wrap');
-        if (!wrap) return;
-        const isOpen = wrap.classList.contains('open');
-        document.querySelectorAll('.mo-nav-dropdown-wrap.open').forEach(el => el.classList.remove('open'));
-        if (!isOpen) {
+      /* Hover & Click Manager cho thanh điều hướng Header (Tránh mất hover khi rê chuột chéo) */
+      (function initNavHoverManager() {
+        let closeTimeout = null;
+        let activeWrap = null;
+        const CLOSE_DELAY = 260; // 260ms grace period giúp rê chuột xuống danh sách mượt mà không bị mất
+
+        function openDropdown(wrap) {
+          if (closeTimeout) {
+            clearTimeout(closeTimeout);
+            closeTimeout = null;
+          }
+          if (activeWrap && activeWrap !== wrap) {
+            activeWrap.classList.remove('open');
+          }
+          activeWrap = wrap;
           wrap.classList.add('open');
         }
-      };
 
-      document.addEventListener('click', function(e) {
-        if (!e.target.closest('.mo-nav-dropdown-wrap')) {
-          document.querySelectorAll('.mo-nav-dropdown-wrap.open').forEach(el => el.classList.remove('open'));
+        function scheduleClose(wrap) {
+          if (closeTimeout) clearTimeout(closeTimeout);
+          closeTimeout = setTimeout(() => {
+            if (activeWrap === wrap) {
+              wrap.classList.remove('open');
+              activeWrap = null;
+            }
+          }, CLOSE_DELAY);
         }
-      });
+
+        document.querySelectorAll('.mo-nav-dropdown-wrap').forEach(wrap => {
+          wrap.addEventListener('mouseenter', () => openDropdown(wrap));
+          wrap.addEventListener('mouseleave', () => scheduleClose(wrap));
+        });
+
+        window.toggleNavDropdown = function(event, btn) {
+          if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          const wrap = btn.closest('.mo-nav-dropdown-wrap');
+          if (!wrap) return;
+          if (closeTimeout) {
+            clearTimeout(closeTimeout);
+            closeTimeout = null;
+          }
+          const isOpen = wrap.classList.contains('open');
+          document.querySelectorAll('.mo-nav-dropdown-wrap.open').forEach(el => el.classList.remove('open'));
+          if (!isOpen) {
+            wrap.classList.add('open');
+            activeWrap = wrap;
+          } else {
+            activeWrap = null;
+          }
+        };
+
+        document.addEventListener('click', function(e) {
+          if (!e.target.closest('.mo-nav-dropdown-wrap')) {
+            if (closeTimeout) clearTimeout(closeTimeout);
+            document.querySelectorAll('.mo-nav-dropdown-wrap.open').forEach(el => el.classList.remove('open'));
+            activeWrap = null;
+          }
+        });
+      })();
 
       window.openMobileMenu = function() {
         const drawer = document.getElementById('mo-mobile-drawer');

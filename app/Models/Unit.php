@@ -20,6 +20,18 @@ class Unit extends Model
     protected $table = 'units';
 
     /**
+     * Thuộc tính tính toán sẵn từ Backend.
+     *
+     * @var list<string>
+     */
+    protected $appends = [
+        'area',
+        'rent_price_per_sqm',
+        'formatted_area',
+        'formatted_rent_price',
+    ];
+
+    /**
      * @var list<string>
      */
     protected $fillable = [
@@ -169,4 +181,47 @@ class Unit extends Model
         return $this->hasMany(Ticket::class, 'unit_id');
     }
 
+    /**
+     * Lấy diện tích thông thủy của mặt bằng (m2).
+     *
+     * @return float
+     */
+    public function getAreaAttribute(): float
+    {
+        return (float) ($this->attributes['area_sqm'] ?? 0);
+    }
+
+    /**
+     * Lấy đơn giá thuê cơ sở trên mỗi m2.
+     *
+     * @return float
+     */
+    public function getRentPricePerSqmAttribute(): float
+    {
+        return (float) ($this->attributes['base_rental_price'] ?? 0);
+    }
+
+    /**
+     * Định dạng diện tích mặt bằng kèm đơn vị m².
+     *
+     * @return string
+     */
+    public function getFormattedAreaAttribute(): string
+    {
+        return number_format((float) ($this->attributes['area_sqm'] ?? 0), 0, ',', '.') . ' m²';
+    }
+
+    /**
+     * Định dạng đơn giá thuê mặt bằng theo tiền tệ chuẩn.
+     *
+     * @return string
+     */
+    public function getFormattedRentPriceAttribute(): string
+    {
+        $raw = (float) ($this->attributes['base_rental_price'] ?? 0);
+
+        return $raw > 1000
+            ? number_format($raw, 0, ',', '.') . ' đ/m²'
+            : '$' . number_format($raw, 0) . '/m²';
+    }
 }

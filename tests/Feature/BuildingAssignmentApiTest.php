@@ -269,4 +269,70 @@ class BuildingAssignmentApiTest extends TestCase
             ]);
         $resAcc->assertStatus(422);
     }
+
+    /**
+     * RBAC Scope: Nhân viên Sales và Ban Quản Lý chỉ được xem các tòa nhà được phân công phụ trách.
+     */
+    public function test_building_list_is_scoped_strictly_by_role_assignments(): void
+    {
+        // 1. Sales chỉ xem các tòa nhà mà mình được phân công trong sale_buildings
+        $saleToken = $this->sale->createToken('sale_token')->plainTextToken;
+        $expectedSaleBuildingIds = \Illuminate\Support\Facades\DB::table('sale_buildings')
+            ->where('sales_id', $this->sale->id)
+            ->where('is_active', true)
+            ->pluck('building_id')
+            ->toArray();
+
+        $resSale = $this->withHeader('Authorization', "Bearer {$saleToken}")
+            ->getJson('/api/v1/admin/buildings?per_page=100');
+
+        $resSale->assertStatus(200);
+        $saleBuildings = $resSale->json('data.data') ?? $resSale->json('data') ?? [];
+        $returnedSaleBuildingIds = array_column($saleBuildings, 'id');
+
+        $this->assertNotEmpty($returnedSaleBuildingIds);
+        $this->assertEquals(count($expectedSaleBuildingIds), count($returnedSaleBuildingIds));
+        foreach ($returnedSaleBuildingIds as $bId) {
+            $this->assertContains($bId, $expectedSaleBuildingIds);
+        }
+
+        // 2. Ban Quản Lý (PM) chỉ xem các tòa nhà mà mình được phân công trong manager_buildings
+        app('auth')->forgetGuards();
+        $pmToken = $this->pm->createToken('pm_token')->plainTextToken;
+        $expectedPmBuildingIds = \Illuminate\Support\Facades\DB::table('manager_buildings')
+            ->where('pm_id', $this->pm->id)
+            ->pluck('building_id')
+            ->toArray();
+
+        $resPm = $this->withHeader('Authorization', "Bearer {$pmToken}")
+            ->getJson('/api/v1/admin/buildings?per_page=100');
+
+        $resPm->assertStatus(200);
+        $pmBuildings = $resPm->json('data.data') ?? $resPm->json('data') ?? [];
+        $returnedPmBuildingIds = array_column($pmBuildings, 'id');
+
+        $this->assertNotEmpty($returnedPmBuildingIds);
+        $this->assertEquals(count($expectedPmBuildingIds), count($returnedPmBuildingIds));
+        foreach ($returnedPmBuildingIds as $bId) {
+            $this->assertContains($bId, $expectedPmBuildingIds);
+        }
+
+        // 3. Admin được xem toàn bộ tòa nhà trong hệ thống
+        app('auth')->forgetGuards();
+        $totalSystemBuildings = Building::count();
+        $resAdmin = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->getJson('/api/v1/admin/buildings?per_page=100');
+
+        $resAdmin->assertStatus(200);
+        $adminBuildings = $resAdmin->json('data.data') ?? $resAdmin->json('data') ?? [];
+        $this->assertEquals($totalSystemBuildings, count($adminBuildings));
+
+        // 4. Sales không có quyền gán nhân sự (403 Forbidden)
+        app('auth')->forgetGuards();
+        $resForbidden = $this->withHeader('Authorization', "Bearer {$saleToken}")
+            ->postJson("/api/v1/admin/buildings/{$this->building->id}/assignments/sales", [
+                'sales_ids' => [$this->sale->id],
+            ]);
+        $resForbidden->assertStatus(403);
+    }
 }

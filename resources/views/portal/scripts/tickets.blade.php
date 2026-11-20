@@ -91,6 +91,35 @@
       }
 
       const listToRender = fetchedList || CURRENT_TICKETS_CACHE;
+      
+      // Cập nhật số lượng Badge trên Sidebar theo đúng phạm vi phân quyền của User đang đăng nhập
+      const effectiveRole = window.currentUiRole || String(localStorage.getItem('auth_role') || 'admin').toLowerCase();
+      const openTicketsCount = (listToRender || []).filter(t => {
+        const s = String(t.status?.value || t.status).toUpperCase();
+        return s === 'NEW' || s === 'OPEN' || s === 'IN_PROGRESS' || s === 'WAITING_CONFIRMATION';
+      }).length;
+
+      const badgeTicketEl = document.getElementById('nav-badge-tickets');
+      if (badgeTicketEl) {
+        badgeTicketEl.innerText = openTicketsCount;
+        badgeTicketEl.style.display = openTicketsCount > 0 ? 'inline-flex' : 'none';
+      }
+
+      const badgeTenantTicketEl = document.getElementById('nav-tenant-badge-tickets');
+      if (badgeTenantTicketEl) {
+        badgeTenantTicketEl.innerText = openTicketsCount;
+        badgeTenantTicketEl.style.display = openTicketsCount > 0 ? 'inline-flex' : 'none';
+      }
+
+      const kpiTicketEl = document.getElementById('tenant-kpi-ticket-count');
+      if (kpiTicketEl) {
+        kpiTicketEl.innerText = String(openTicketsCount).padStart(2, '0');
+      }
+
+      if (typeof updateTenantTopbarNotifications === 'function') {
+        updateTenantTopbarNotifications(effectiveRole, listToRender);
+      }
+
       renderAdminTicketsTable(listToRender);
       renderTenantTicketsTable(listToRender);
     }
@@ -103,6 +132,9 @@
         tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:#94a3b8;"><i class="fa-solid fa-inbox" style="font-size:28px;margin-bottom:8px;display:block;"></i>Không có phiếu yêu cầu nào phù hợp.</td></tr>`;
         return;
       }
+
+      const effectiveRole = window.currentUiRole || String(localStorage.getItem('auth_role') || 'admin').toLowerCase();
+      const canDelete = (effectiveRole === 'admin' || effectiveRole === 'super_admin');
 
       tbody.innerHTML = items.map(t => {
         const id = t.id;
@@ -134,9 +166,10 @@
               <button class="btn-mo-outline" style="padding:4px 8px;font-size:11.5px;" onclick="openUpdateTicketStatusModal('` + id + `')" title="Cập nhật tiến độ">
                 <i class="fa-solid fa-pen-nib"></i>
               </button>
+              ${canDelete ? `
               <button class="btn-mo-outline" style="padding:4px 8px;font-size:11.5px;color:#dc2626;border-color:#fca5a5;" onclick="handleDeleteTicket('` + id + `')" title="Xóa mềm">
                 <i class="fa-solid fa-trash-can"></i>
-              </button>
+              </button>` : ''}
             </td>
           </tr>
         `;
@@ -419,7 +452,10 @@
         html += `<button type="button" class="btn-mo-primary" style="background:#2563eb;color:#fff;padding:8px 14px;font-size:12.5px;" onclick="openAssignTicketModal('` + tid + `')"><i class="fa-solid fa-user-gear"></i> Phân công Kỹ thuật</button>`;
         html += `<button type="button" class="btn-mo-primary" style="background:#059669;color:#fff;padding:8px 14px;font-size:12.5px;" onclick="openUpdateTicketStatusModal('` + tid + `')"><i class="fa-solid fa-list-check"></i> Cập nhật Tiến độ</button>`;
         html += `<button type="button" class="btn-mo-outline" style="padding:8px 14px;font-size:12.5px;" onclick="openUploadProofModal('` + tid + `')"><i class="fa-solid fa-cloud-arrow-up"></i> Tải ảnh Before/After</button>`;
-        html += `<button type="button" class="btn-mo-outline" style="color:#dc2626;border-color:#fca5a5;padding:8px 14px;font-size:12.5px;" onclick="handleDeleteTicket('` + tid + `')"><i class="fa-solid fa-trash-can"></i> Xóa Ticket</button>`;
+        const isAdm = (role === 'ADMIN' || role === 'SUPER_ADMIN' || window.currentUiRole === 'admin');
+        if (isAdm) {
+          html += `<button type="button" class="btn-mo-outline" style="color:#dc2626;border-color:#fca5a5;padding:8px 14px;font-size:12.5px;" onclick="handleDeleteTicket('` + tid + `')"><i class="fa-solid fa-trash-can"></i> Xóa Ticket</button>`;
+        }
       }
 
       // Quyền Khách thuê (Tenant)
@@ -497,6 +533,11 @@
 
     // 61. DELETE /api/v1/tickets/{id}: Xóa mềm ticket (Admin)
     async function handleDeleteTicket(ticketId) {
+      const effectiveRole = window.currentUiRole || String(localStorage.getItem('auth_role') || 'admin').toLowerCase();
+      if (effectiveRole !== 'admin' && effectiveRole !== 'super_admin') {
+        alert("Chỉ Quản trị viên (Admin) mới có quyền xóa phiếu yêu cầu này.");
+        return;
+      }
       if (!confirm("Bạn có chắc chắn muốn xóa mềm phiếu yêu cầu hỗ trợ này khỏi hệ thống?")) return;
       const token = localStorage.getItem('auth_token');
 

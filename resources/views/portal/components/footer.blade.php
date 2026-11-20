@@ -2,7 +2,7 @@
       <div class="container">
         <div class="mo-footer-grid">
           <div class="mo-footer-col">
-            <div class="mo-logo" style="margin-bottom: 14px;">
+            <div class="mo-logo" style="margin-bottom: 14px; cursor: pointer;" onclick="return handlePublicLogoClick(event);" title="Về trang chủ Cổng thông tin">
               <div class="mo-logo-icon" style="background:#ea580c;">
                 <i class="fa-solid fa-building-wheat"></i>
               </div>

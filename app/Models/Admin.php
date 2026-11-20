@@ -68,4 +68,11 @@ class Admin extends Authenticatable
         return $this->hasMany(TicketHistory::class, 'admin_actor_id');
     }
 
+    /**
+     * Kiểm tra xem có phải Quản trị viên tối cao (Super Admin) hay không.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return (bool) $this->is_super_admin;
+    }
 }

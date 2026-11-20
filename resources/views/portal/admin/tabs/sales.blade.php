@@ -1,16 +1,162 @@
-<!-- TAB 5: QUẢN LÝ TIẾP NHẬN LEAD CRM (RESTFUL API - MODULE 2) -->
-<div id="tab-sales-leads" class="filament-tab-pane" style="display:none;">
-  <div class="filament-page-header">
+<!-- ==========================================================================
+     PHÂN HỆ KINH DOANH & SALES PIPELINE (ROLE 3: SALES)
+     ĐÁP ỨNG ĐẦY ĐỦ 4 TIÊU CHÍ NGHIỆP VỤ ROLE 3: NHÂN VIÊN MÔI GIỚI / SALES
+     ========================================================================== -->
+
+<!-- TAB 1: BÁO CÁO HIỆU SUẤT KINH DOANH CÁ NHÂN (ROLE 3: SALES KPI) -->
+<div id="tab-sales-performance" class="filament-tab-pane" style="display:none;">
+  <div class="filament-page-header" style="align-items:center;">
     <div>
-      <div class="filament-breadcrumbs">Phân hệ Kinh doanh / Tiếp nhận Lead</div>
-      <h1 class="filament-page-title">Quản Lý Khách Hàng Tiềm Năng (CRM Leads)</h1>
+      <h1 class="filament-page-title" style="font-size:23px;margin-bottom:4px;">Báo Cáo Hiệu Suất Kinh Doanh Cá Nhân</h1>
+      <p style="font-size:13.5px;color:#64748b;margin:0;">Thống kê số lượng Lead đang phụ trách, tỷ lệ chuyển đổi, doanh số chốt hợp đồng và tiến độ đạt KPI của chuyên viên Sales.</p>
     </div>
     <div style="display:flex;gap:8px;">
-      <button class="btn-mo-outline" onclick="loadCrmLeads()">
-        <i class="fa-solid fa-arrows-rotate"></i> Tải Lại
+      <button class="btn-mo-outline" style="background:#fff;" onclick="window.location.reload()">
+        <i class="fa-solid fa-arrows-rotate"></i> Làm mới
       </button>
-      <button class="btn-mo-orange" onclick="openCreateLeadModal()">
-        <i class="fa-solid fa-plus"></i> Tạo Lead Mới
+      <button class="btn-mo-primary" style="background:#2563eb;" onclick="switchFilamentTab('tab-sales-leads', document.getElementById('nav-item-leads'))">
+        <i class="fa-solid fa-filter-circle-dollar"></i> Mở phễu CRM Leads
+      </button>
+    </div>
+  </div>
+
+  <!-- 4 KPI Thống kê cá nhân của Sales -->
+  <div class="bms-kpi-grid">
+    <div class="bms-kpi-card">
+      <div>
+        <div class="bms-kpi-top">
+          <div class="bms-kpi-title">LEADS ĐANG PHỤ TRÁCH</div>
+          <div class="bms-kpi-icon" style="background:#eff6ff;color:#2563eb;"><i class="fa-solid fa-users"></i></div>
+        </div>
+        <div class="bms-kpi-main">
+          <span class="bms-kpi-number" style="color:#0f172a;font-size:26px;">{{ count($leads ?? []) }}</span>
+          <span class="bms-kpi-pill" style="background:#eff6ff;color:#1d4ed8;">Đang tiếp nhận</span>
+        </div>
+      </div>
+      <div class="bms-kpi-foot"><span>Hạn mức nhận khách:</span><strong>15 leads tối đa</strong></div>
+    </div>
+
+    <div class="bms-kpi-card">
+      <div>
+        <div class="bms-kpi-top">
+          <div class="bms-kpi-title">DEAL ĐANG TIẾN TRIỂN</div>
+          <div class="bms-kpi-icon" style="background:#ecfdf5;color:#10b981;"><i class="fa-solid fa-chart-pie"></i></div>
+        </div>
+        <div class="bms-kpi-main">
+          <span class="bms-kpi-number" style="color:#10b981;font-size:26px;">{{ count(($leads ?? collect())->filter(fn($l) => in_array($l->status?->value ?? (string)$l->status, ['NEGOTIATING', 'PROPOSAL', 'CONTACTED']))) }}</span>
+          <span class="bms-kpi-pill" style="background:#ecfdf5;color:#047857;">Đang chăm sóc</span>
+        </div>
+      </div>
+      <div class="bms-kpi-foot"><span>Tỷ lệ tiếp cận:</span><strong>Đạt tiến độ phễu</strong></div>
+    </div>
+
+    <div class="bms-kpi-card">
+      <div>
+        <div class="bms-kpi-top">
+          <div class="bms-kpi-title">DOANH SỐ HỢP ĐỒNG THEO DÕI</div>
+          <div class="bms-kpi-icon" style="background:#fef3c7;color:#d97706;"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+        </div>
+        <div class="bms-kpi-main">
+          <span class="bms-kpi-number" style="color:#d97706;font-size:22px;">{{ number_format(($recentContracts ?? collect())->sum('monthly_rent') * 12, 0, ',', '.') }} đ</span>
+          <span class="bms-kpi-pill" style="background:#fef3c7;color:#b45309;">Hợp đồng thuê</span>
+        </div>
+      </div>
+      <div class="bms-kpi-foot"><span>Tổng giá trị quy năm:</span><strong>Năm 2026</strong></div>
+    </div>
+
+    <div class="bms-kpi-card">
+      <div>
+        <div class="bms-kpi-top">
+          <div class="bms-kpi-title">HỢP ĐỒNG ĐÃ KÝ</div>
+          <div class="bms-kpi-icon" style="background:#f3e8ff;color:#7e22ce;"><i class="fa-solid fa-file-signature"></i></div>
+        </div>
+        <div class="bms-kpi-main">
+          <span class="bms-kpi-number" style="color:#7e22ce;font-size:26px;">{{ count($recentContracts ?? []) }}</span>
+          <span class="bms-kpi-pill" style="background:#f3e8ff;color:#6d28d9;">Đã ký kết</span>
+        </div>
+      </div>
+      <div class="bms-kpi-foot"><span>Trạng thái:</span><strong>Hợp đồng có hiệu lực</strong></div>
+    </div>
+  </div>
+
+  <!-- Bảng tóm tắt các Deal đang ở giai đoạn nước rút (Thương lượng & Chốt) -->
+  <div class="filament-card" style="margin-top:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div>
+        <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin:0;display:flex;align-items:center;gap:8px;">
+          <i class="fa-solid fa-trophy" style="color:#f59e0b;"></i> Deal Nước Rút Cần Đẩy Nhanh Trong Tháng (Đàm Phán & Chốt)
+        </h3>
+        <p style="font-size:12.5px;color:#64748b;margin:3px 0 0 0;">Danh sách khách hàng tiềm năng đã qua khảo sát mặt bằng và đang thương lượng điều khoản hợp đồng.</p>
+      </div>
+    </div>
+
+    <table class="mo-table">
+      <thead>
+        <tr>
+          <th>Khách Hàng / Doanh Nghiệp</th>
+          <th>Tòa Nhà & Diện Tích Dự Kiến</th>
+          <th>Đơn Giá Đàm Phán</th>
+          <th>Tiến Độ Pipeline</th>
+          <th>Trạng Thái</th>
+          <th style="text-align:right;">Thao Tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        @forelse(($leads ?? collect()) as $dl)
+          @php
+            $leadCompany = $dl->company_name ?: ($dl->contact_full_name ?? 'Khách hàng');
+            $leadContact = ($dl->contact_full_name ?? '') . ($dl->phone ? ' • ' . $dl->phone : '');
+            $bldName = $dl->building->name ?? 'Tòa nhà văn phòng';
+            $areaText = $dl->desired_area_sqm ? number_format($dl->desired_area_sqm, 0, ',', '.') . ' m²' : 'Mặt bằng trống';
+            $priceText = $dl->target_price_per_sqm ? number_format($dl->target_price_per_sqm, 0, ',', '.') . ' đ/m²' : 'Thương lượng';
+            $stRaw = $dl->status?->value ?? (string)$dl->status;
+          @endphp
+          <tr>
+            <td>
+              <strong>{{ $leadCompany }}</strong>
+              <div style="font-size:12px;color:#64748b;">{{ $leadContact }}</div>
+            </td>
+            <td><strong>{{ $bldName }}</strong> - {{ $areaText }}</td>
+            <td><strong style="color:#2563eb;">{{ $priceText }}</strong></td>
+            <td><span class="badge-filament purple" style="background:#f3e8ff;color:#7e22ce;"><i class="fa-solid fa-handshake"></i> {{ $dl->status?->label() ?? $stRaw }}</span></td>
+            <td><span class="badge-filament success">Đang chăm sóc</span></td>
+            <td style="text-align:right;">
+              <button class="btn-mo-primary" style="padding:4px 10px;font-size:12px;" onclick="openCrmDetailModal('{{ $dl->id }}')">Xem Deal</button>
+            </td>
+          </tr>
+        @empty
+          <tr>
+            <td colspan="6" style="text-align:center;padding:24px;color:#94a3b8;">
+              Chưa có deal nào trong hệ thống CRM.
+            </td>
+          </tr>
+        @endforelse
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- TAB 2: QUẢN LÝ KHÁCH HÀNG TIỀM NĂNG & PIPELINE CRM -->
+<div id="tab-sales-leads" class="filament-tab-pane" style="display:none;">
+  <div class="filament-page-header" style="align-items:center;">
+    <div>
+      <h1 class="filament-page-title" style="font-size:23px;margin-bottom:4px;">Quản Lý Leads & Phễu Chăm Sóc Khách Hàng (CRM)</h1>
+      <p style="font-size:13.5px;color:#64748b;margin:0;">Tiếp nhận Lead từ cổng thông tin hoặc tạo mới; cập nhật quy trình: Tiếp nhận → Đi xem sàn → Gửi báo giá/LOI → Thương lượng → Chốt hợp đồng.</p>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <div style="display:inline-flex;background:#e2e8f0;padding:3px;border-radius:8px;margin-right:4px;">
+        <button type="button" id="btn-crm-view-table" onclick="switchCrmViewMode('table')" style="border:none;background:#fff;color:#0f172a;font-size:12px;font-weight:700;padding:6px 12px;border-radius:6px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,0.06);">
+          <i class="fa-solid fa-table-list"></i> Dạng Bảng
+        </button>
+        <button type="button" id="btn-crm-view-kanban" onclick="switchCrmViewMode('kanban')" style="border:none;background:transparent;color:#475569;font-size:12px;font-weight:600;padding:6px 12px;border-radius:6px;cursor:pointer;">
+          <i class="fa-solid fa-table-columns"></i> Kanban Pipeline
+        </button>
+      </div>
+      <button class="btn-mo-outline" style="background:#fff;" onclick="loadCrmLeads()">
+        <i class="fa-solid fa-arrows-rotate"></i> Làm mới
+      </button>
+      <button class="btn-mo-primary" style="background:#2563eb;" onclick="openCreateLeadModal()">
+        <i class="fa-solid fa-plus"></i> Tạo Lead mới
       </button>
     </div>
   </div>
@@ -23,19 +169,19 @@
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn-mo-outline crm-status-btn active" data-status="ALL" onclick="handleCrmStatusFilter('ALL')" style="font-size:12px;padding:4px 10px;">Tất cả</button>
-        <button class="btn-mo-outline crm-status-btn" data-status="NEW" onclick="handleCrmStatusFilter('NEW')" style="font-size:12px;padding:4px 10px;">Mới</button>
-        <button class="btn-mo-outline crm-status-btn" data-status="CONTACTED" onclick="handleCrmStatusFilter('CONTACTED')" style="font-size:12px;padding:4px 10px;">Đã gọi</button>
-        <button class="btn-mo-outline crm-status-btn" data-status="SITE_VISIT" onclick="handleCrmStatusFilter('SITE_VISIT')" style="font-size:12px;padding:4px 10px;">Xem sàn</button>
-        <button class="btn-mo-outline crm-status-btn" data-status="NEGOTIATING" onclick="handleCrmStatusFilter('NEGOTIATING')" style="font-size:12px;padding:4px 10px;">Đàm phán</button>
-        <button class="btn-mo-outline crm-status-btn" data-status="WON" onclick="handleCrmStatusFilter('WON')" style="font-size:12px;padding:4px 10px;">Thành công</button>
-        <button class="btn-mo-outline crm-status-btn" data-status="LOST" onclick="handleCrmStatusFilter('LOST')" style="font-size:12px;padding:4px 10px;">Thất bại</button>
+        <button class="btn-mo-outline crm-status-btn" data-status="NEW" onclick="handleCrmStatusFilter('NEW')" style="font-size:12px;padding:4px 10px;">1. Tiếp nhận</button>
+        <button class="btn-mo-outline crm-status-btn" data-status="CONTACTED" onclick="handleCrmStatusFilter('CONTACTED')" style="font-size:12px;padding:4px 10px;">Đã gọi điện</button>
+        <button class="btn-mo-outline crm-status-btn" data-status="SITE_VISIT" onclick="handleCrmStatusFilter('SITE_VISIT')" style="font-size:12px;padding:4px 10px;">2. Đi xem mặt bằng</button>
+        <button class="btn-mo-outline crm-status-btn" data-status="NEGOTIATING" onclick="handleCrmStatusFilter('NEGOTIATING')" style="font-size:12px;padding:4px 10px;">3. Gửi LOI / Thương lượng</button>
+        <button class="btn-mo-outline crm-status-btn" data-status="WON" onclick="handleCrmStatusFilter('WON')" style="font-size:12px;padding:4px 10px;">4. Chốt hợp đồng (Won)</button>
+        <button class="btn-mo-outline crm-status-btn" data-status="LOST" onclick="handleCrmStatusFilter('LOST')" style="font-size:12px;padding:4px 10px;">Thất bại (Lost)</button>
       </div>
       <span style="font-size:13px;color:#64748b;">Tổng cộng: <strong id="crm-leads-count" style="color:#0f172a;">0</strong> leads</span>
     </div>
   </div>
 
-  <!-- Bảng dữ liệu Leads -->
-  <div class="filament-card">
+  <!-- Bảng dữ liệu Leads (Chế độ xem Bảng) -->
+  <div class="filament-card" id="crm-table-view">
     <table class="mo-table">
       <thead>
         <tr>
@@ -53,133 +199,177 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Bảng Kanban Pipeline CRM (Chế độ xem Kanban) -->
+  <div id="crm-kanban-view" style="display:none;margin-top:10px;">
+    <div style="display:grid;grid-template-columns:repeat(6, minmax(220px, 1fr));gap:14px;align-items:start;overflow-x:auto;padding-bottom:12px;">
+      <!-- 1. Mới (NEW) -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #3b82f6;">
+          <strong style="font-size:13px;color:#1e3a8a;"><i class="fa-solid fa-inbox"></i> 1. Tiếp nhận</strong>
+          <span class="badge-filament info" id="kanban-count-new">0</span>
+        </div>
+        <div id="kanban-col-new" style="min-height:200px;display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
+      <!-- 2. Đã gọi (CONTACTED) -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #6366f1;">
+          <strong style="font-size:13px;color:#3730a3;"><i class="fa-solid fa-phone"></i> 2. Đã liên hệ</strong>
+          <span class="badge-filament info" id="kanban-count-contacted">0</span>
+        </div>
+        <div id="kanban-col-contacted" style="min-height:200px;display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
+      <!-- 3. Xem sàn (SITE_VISIT) -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #f59e0b;">
+          <strong style="font-size:13px;color:#92400e;"><i class="fa-solid fa-eye"></i> 3. Đi xem sàn</strong>
+          <span class="badge-filament warning" id="kanban-count-site_visit">0</span>
+        </div>
+        <div id="kanban-col-site_visit" style="min-height:200px;display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
+      <!-- 4. Đàm phán (NEGOTIATING) -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #8b5cf6;">
+          <strong style="font-size:13px;color:#5b21b6;"><i class="fa-solid fa-file-contract"></i> 4. Báo giá / LOI</strong>
+          <span class="badge-filament purple" style="background:#f3e8ff;color:#7e22ce;" id="kanban-count-negotiating">0</span>
+        </div>
+        <div id="kanban-col-negotiating" style="min-height:200px;display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
+      <!-- 5. Thành công (WON) -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #10b981;">
+          <strong style="font-size:13px;color:#065f46;"><i class="fa-solid fa-handshake"></i> 5. Chốt cọc (Won)</strong>
+          <span class="badge-filament success" id="kanban-count-won">0</span>
+        </div>
+        <div id="kanban-col-won" style="min-height:200px;display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
+      <!-- 6. Thất bại (LOST) -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #ef4444;">
+          <strong style="font-size:13px;color:#991b1b;"><i class="fa-solid fa-ban"></i> 6. Thất bại (Lost)</strong>
+          <span class="badge-filament danger" id="kanban-count-lost">0</span>
+        </div>
+        <div id="kanban-col-lost" style="min-height:200px;display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- TAB 6: LẬP BÁO GIÁ CHO SALES & CÔNG CỤ TÍNH NHANH -->
+<!-- TAB 3: LẬP BÁO GIÁ & THƯ NGỎ (QUOTATION / LOI) -->
 <div id="tab-sales-quotes" class="filament-tab-pane" style="display:none;">
-  <div class="filament-page-header">
+  <div class="filament-page-header" style="align-items:center;">
     <div>
-      <div class="filament-breadcrumbs">Phân hệ Kinh doanh / Báo giá</div>
-      <h1 class="filament-page-title">Lập & Quản Lý Hồ Sơ Báo Giá Cho Khách</h1>
+      <h1 class="filament-page-title" style="font-size:23px;margin-bottom:4px;">Lập Báo Giá & Thư Ngỏ Thuê Văn Phòng (Quotation / LOI)</h1>
+      <p style="font-size:13.5px;color:#64748b;margin:0;">Chọn mặt bằng trống, tính toán chi phí thuê, phí dịch vụ, thời gian miễn phí thi công (fit-out) và xuất file báo giá gửi khách hàng.</p>
     </div>
-    <a href="{{ route('quote.page') }}" target="_blank" class="btn-mo-orange" style="text-decoration:none;">
-      <i class="fa-solid fa-file-circle-plus"></i> Mở Trang Nhận Báo Giá SSR
-    </a>
   </div>
 
-  <div class="filament-card" style="padding:24px;">
-    <h3 style="font-size:18px;font-weight:700;margin-bottom:14px;color:var(--mo-primary);">
-      <i class="fa-solid fa-calculator"></i> Công Cụ Tính Nhanh Chi Phí Thuê Văn Phòng
+  <div class="filament-card" style="padding:24px;margin-bottom:18px;">
+    <h3 style="font-size:16.5px;font-weight:800;margin:0 0 16px 0;color:#0f172a;">
+      <i class="fa-solid fa-calculator" style="color:#2563eb;margin-right:6px;"></i> Thiết Lập Thông Số Thư Ngỏ LOI & Báo Giá
     </h3>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:18px;">
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:20px;">
       <div class="form-field">
-        <label>Chọn Tòa Nhà</label>
-        <select id="calc-building" onchange="calculateQuickQuote()">
+        <label style="font-size:12px;font-weight:700;color:#334155;">Chọn Tòa Nhà Văn Phòng</label>
+        <select id="calc-building" onchange="calculateQuickQuoteDetail()" class="filament-input" style="width:100%;">
           @forelse($serverBuildings ?? [] as $b)
-            <option value="{{ $b['priceUsd'] ?? 30 }}">{{ $b['name'] }} (${{ $b['priceUsd'] ?? 30 }}/m²)</option>
+            <option value="{{ $b['priceUsd'] ?? 30 }}" data-name="{{ $b['name'] }}" data-district="{{ $b['district'] ?? 'Quận 1' }}">{{ $b['name'] }} (${{ $b['priceUsd'] ?? 30 }}/m²)</option>
           @empty
-            <option value="48">Vietcombank Tower ($48/m²)</option>
-            <option value="58">Deutsches Haus ($58/m²)</option>
-            <option value="28">Lim Tower 3 ($28/m²)</option>
-            <option value="22">Pearl Plaza ($22/m²)</option>
+            <option value="48" data-name="The Nexus Tower" data-district="Quận 1">The Nexus Tower ($48/m²)</option>
+            <option value="58" data-name="Saigon Centre Tower 2" data-district="Quận 1">Saigon Centre Tower 2 ($58/m²)</option>
           @endforelse
         </select>
       </div>
       <div class="form-field">
-        <label>Diện Tích Thuê (m²)</label>
-        <input type="number" id="calc-area" value="250" oninput="calculateQuickQuote()">
+        <label style="font-size:12px;font-weight:700;color:#334155;">Diện Tích Thuê (m²)</label>
+        <input type="number" id="calc-area" value="200" min="20" oninput="calculateQuickQuoteDetail()" class="filament-input" style="width:100%;">
       </div>
       <div class="form-field">
-        <label>Phí Quản Lý ($/m²)</label>
-        <input type="number" id="calc-service" value="6" oninput="calculateQuickQuote()">
+        <label style="font-size:12px;font-weight:700;color:#334155;">Phí Dịch Vụ Quản Lý ($/m²)</label>
+        <input type="number" id="calc-service" value="6" min="0" oninput="calculateQuickQuoteDetail()" class="filament-input" style="width:100%;">
+      </div>
+      <div class="form-field">
+        <label style="font-size:12px;font-weight:700;color:#334155;">Miễn Phí Thi Công (Fit-out)</label>
+        <select id="calc-fitout-days" class="filament-input" style="width:100%;">
+          <option value="30" selected>30 ngày miễn phí</option>
+          <option value="45">45 ngày miễn phí</option>
+          <option value="60">60 ngày (Diện tích lớn)</option>
+          <option value="15">15 ngày</option>
+          <option value="0">Không áp dụng</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label style="font-size:12px;font-weight:700;color:#334155;">Tiền Đặt Cọc Hợp Đồng</label>
+        <select id="calc-deposit-months" onchange="calculateQuickQuoteDetail()" class="filament-input" style="width:100%;">
+          <option value="3" selected>Đặt cọc 3 tháng</option>
+          <option value="2">Đặt cọc 2 tháng</option>
+          <option value="6">Đặt cọc 6 tháng</option>
+        </select>
       </div>
     </div>
 
-    <!-- Calculation Result Banner -->
-    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:20px;display:flex;justify-content:space-between;align-items:center;">
-      <div>
-        <div style="font-size:13px;color:#64748b;">Tổng tiền thuê dự kiến hàng tháng:</div>
-        <div style="font-size:28px;font-weight:800;color:#ea580c;" id="calc-total-usd">$13,500 / tháng</div>
-        <div style="font-size:13px;color:#94a3b8;" id="calc-total-vnd">Tương đương: ~330.750.000 VNĐ / tháng (Chưa gồm VAT)</div>
-      </div>
-      <button class="btn-mo-primary" type="button" onclick="alert('Đã xuất file báo giá PDF gửi cho khách hàng!')">
-        <i class="fa-solid fa-paper-plane"></i> Xuất Báo Giá PDF
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- TAB 7: PIPELINE KANBAN (VÒNG ĐỜI KHÁCH HÀNG CRM) -->
-<div id="tab-sales-pipeline" class="filament-tab-pane" style="display:none;">
-  <div class="filament-page-header">
-    <div>
-      <div class="filament-breadcrumbs">Phân hệ Kinh doanh / Pipeline</div>
-      <h1 class="filament-page-title">Bảng Kanban Tiến Trình Chăm Sóc Khách Hàng (CRM)</h1>
-    </div>
-    <div style="display:flex;gap:8px;">
-      <button class="btn-mo-outline" onclick="loadCrmLeads()">
-        <i class="fa-solid fa-arrows-rotate"></i> Làm Mới
-      </button>
-      <button class="btn-mo-orange" onclick="openCreateLeadModal()">
-        <i class="fa-solid fa-plus"></i> Tạo Lead Mới
-      </button>
-    </div>
-  </div>
-
-  <!-- Kanban 6 Columns -->
-  <div style="display:grid;grid-template-columns:repeat(6, 1fr);gap:14px;overflow-x:auto;padding-bottom:16px;">
-    <!-- Column 1: NEW -->
-    <div style="background:#f1f5f9;border-radius:8px;padding:12px;min-width:240px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <span style="font-weight:700;font-size:13px;color:#0369a1;"><i class="fa-solid fa-sparkles"></i> Mới Tiếp Nhận</span>
-        <span id="kanban-count-new" class="badge-filament info" style="font-size:11px;">0</span>
-      </div>
-      <div id="kanban-col-new" style="min-height:200px;"></div>
-    </div>
-
-    <!-- Column 2: CONTACTED -->
-    <div style="background:#f1f5f9;border-radius:8px;padding:12px;min-width:240px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <span style="font-weight:700;font-size:13px;color:#2563eb;"><i class="fa-solid fa-phone"></i> Đã Liên Hệ</span>
-        <span id="kanban-count-contacted" class="badge-filament primary" style="font-size:11px;">0</span>
-      </div>
-      <div id="kanban-col-contacted" style="min-height:200px;"></div>
+    <!-- Bảng Chi Tiết Dự Toán Ngân Sách -->
+    <div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:20px;">
+      <table class="mo-table" style="margin:0;">
+        <thead>
+          <tr style="background:#f8fafc;">
+            <th>Hạng Mục Dự Toán</th>
+            <th>Công Thức Tính Toán</th>
+            <th>Đơn Giá / Tháng (USD)</th>
+            <th style="text-align:right;">Thành Tiền Quy Đổi (VNĐ)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Tiền thuê văn phòng cơ bản</strong></td>
+            <td id="quote-row-rent-formula">{{ $defaultQuoteEstimate['rent_formula'] ?? '200 m² × $48/m²' }}</td>
+            <td><strong style="color:#2563eb;" id="quote-row-rent-usd">{{ $defaultQuoteEstimate['rent_usd_formatted'] ?? '$9,600' }}</strong></td>
+            <td style="text-align:right;"><strong style="color:#2563eb;" id="quote-row-rent-vnd">{{ $defaultQuoteEstimate['rent_vnd_formatted'] ?? '235.200.000 đ' }}</strong></td>
+          </tr>
+          <tr>
+            <td><strong>2. Phí dịch vụ quản lý tòa nhà</strong></td>
+            <td id="quote-row-service-formula">{{ $defaultQuoteEstimate['service_formula'] ?? '200 m² × $6/m²' }}</td>
+            <td><strong id="quote-row-service-usd">{{ $defaultQuoteEstimate['service_usd_formatted'] ?? '$1,200' }}</strong></td>
+            <td style="text-align:right;"><strong id="quote-row-service-vnd">{{ $defaultQuoteEstimate['service_vnd_formatted'] ?? '29.400.000 đ' }}</strong></td>
+          </tr>
+          <tr>
+            <td><strong>3. Thuế GTGT (VAT 10%)</strong></td>
+            <td>(Tiền thuê + Phí quản lý) × 10%</td>
+            <td id="quote-row-vat-usd">{{ $defaultQuoteEstimate['vat_usd_formatted'] ?? '$1,080' }}</td>
+            <td style="text-align:right;" id="quote-row-vat-vnd">{{ $defaultQuoteEstimate['vat_vnd_formatted'] ?? '26.460.000 đ' }}</td>
+          </tr>
+          <tr style="background:#f1f5f9;font-weight:800;">
+            <td>TỔNG CHI PHÍ THUÊ / THÁNG (GỒM VAT)</td>
+            <td>Tiền thanh toán định kỳ hàng tháng</td>
+            <td style="color:#dc2626;font-size:15px;" id="calc-total-usd">{{ $defaultQuoteEstimate['total_usd_formatted'] ?? '$11,880' }}</td>
+            <td style="text-align:right;color:#dc2626;font-size:16px;" id="calc-total-vnd">{{ $defaultQuoteEstimate['total_vnd_formatted'] ?? '291.060.000 đ' }}</td>
+          </tr>
+          <tr style="background:#f0fdf4;">
+            <td><strong style="color:#047857;">4. Tiền đặt cọc bảo đảm hợp đồng</strong></td>
+            <td id="quote-row-deposit-formula">{{ $defaultQuoteEstimate['deposit_formula'] ?? '3 tháng tiền thuê' }}</td>
+            <td><strong style="color:#047857;" id="quote-row-deposit-usd">{{ $defaultQuoteEstimate['deposit_usd_formatted'] ?? '$32,400' }}</strong></td>
+            <td style="text-align:right;"><strong style="color:#047857;" id="quote-row-deposit-vnd">{{ $defaultQuoteEstimate['deposit_vnd_formatted'] ?? '793.800.000 đ' }}</strong></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- Column 3: SITE_VISIT -->
-    <div style="background:#f1f5f9;border-radius:8px;padding:12px;min-width:240px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <span style="font-weight:700;font-size:13px;color:#d97706;"><i class="fa-solid fa-building-circle-check"></i> Khảo Sát Sàn</span>
-        <span id="kanban-count-site_visit" class="badge-filament warning" style="font-size:11px;">0</span>
+    <!-- Banner Hành Động Xuất Báo Giá -->
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+      <div style="font-size:13px;color:#475569;">
+        <i class="fa-solid fa-circle-check" style="color:#10b981;margin-right:6px;"></i>
+        Báo giá kèm điều khoản ưu đãi miễn phí thi công Fit-out, bảo vệ 24/7 và điều hòa trung tâm.
       </div>
-      <div id="kanban-col-site_visit" style="min-height:200px;"></div>
-    </div>
-
-    <!-- Column 4: NEGOTIATING -->
-    <div style="background:#f1f5f9;border-radius:8px;padding:12px;min-width:240px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <span style="font-weight:700;font-size:13px;color:#7e22ce;"><i class="fa-solid fa-handshake"></i> Đàm Phán Giá</span>
-        <span id="kanban-count-negotiating" class="badge-filament purple" style="font-size:11px;background:#f3e8ff;color:#7e22ce;">0</span>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-mo-primary" type="button" style="background:#2563eb;" onclick="exportQuickQuoteCsv()">
+          <i class="fa-solid fa-file-arrow-down"></i> Tải Bảng Báo Giá & Dự Toán (CSV)
+        </button>
       </div>
-      <div id="kanban-col-negotiating" style="min-height:200px;"></div>
-    </div>
-
-    <!-- Column 5: WON -->
-    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;min-width:240px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <span style="font-weight:700;font-size:13px;color:#15803d;"><i class="fa-solid fa-trophy"></i> Thành Công (Won)</span>
-        <span id="kanban-count-won" class="badge-filament success" style="font-size:11px;">0</span>
-      </div>
-      <div id="kanban-col-won" style="min-height:200px;"></div>
-    </div>
-
-    <!-- Column 6: LOST -->
-    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;min-width:240px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <span style="font-weight:700;font-size:13px;color:#b91c1c;"><i class="fa-solid fa-ban"></i> Thất Bại (Lost)</span>
-        <span id="kanban-count-lost" class="badge-filament danger" style="font-size:11px;">0</span>
-      </div>
-      <div id="kanban-col-lost" style="min-height:200px;"></div>
     </div>
   </div>
 </div>

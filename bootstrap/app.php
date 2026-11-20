@@ -26,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'force.json'  => ForceJsonResponseMiddleware::class,
             'api.catch'   => GlobalExceptionMiddleware::class,
             'super_admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
+            'role'        => \App\Http\Middleware\EnsureUserRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

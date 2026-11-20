@@ -1,19 +1,19 @@
 <!-- TAB 4: QUẢN LÝ HỢP ĐỒNG THUÊ VĂN PHÒNG (RESTFUL API - MODULE 3) -->
 <div id="tab-admin-contracts" class="filament-tab-pane" style="display:none;">
-  <div class="filament-page-header">
+  <div class="filament-page-header" style="align-items:center;">
     <div>
-      <div class="filament-breadcrumbs">Phân hệ Quản trị / Hợp đồng</div>
-      <h1 class="filament-page-title">Quản Lý Hợp Đồng Thuê Văn Phòng</h1>
+      <h1 class="filament-page-title" style="font-size:23px;margin-bottom:4px;">Quản Lý Hợp Đồng Thuê Văn Phòng</h1>
+      <p style="font-size:13.5px;color:#64748b;margin:0;">Theo dõi vòng đời hợp đồng thuê, đặt cọc giữ chỗ, ký duyệt hiệu lực, gia hạn và thanh lý hoàn trả mặt bằng.</p>
     </div>
     <div style="display:flex;gap:8px;">
-      <button class="btn-mo-outline" onclick="loadContractsList()">
-        <i class="fa-solid fa-arrows-rotate"></i> Tải Lại
+      <button class="btn-mo-outline" style="background:#fff;" onclick="loadContractsList()">
+        <i class="fa-solid fa-arrows-rotate"></i> Làm mới
       </button>
-      <button class="btn-mo-outline" style="color:#d97706;border-color:#fde68a;" onclick="openReserveContractModal()">
-        <i class="fa-solid fa-hourglass-half"></i> Giữ Chỗ Sàn
+      <button class="btn-mo-outline" style="background:#fff;color:#d97706;border-color:#fde68a;" onclick="openReserveContractModal()">
+        <i class="fa-solid fa-hourglass-half"></i> Giữ chỗ sàn
       </button>
-      <button class="btn-mo-orange" onclick="openCreateContractModal()">
-        <i class="fa-solid fa-plus"></i> Lập Hợp Đồng Mới
+      <button class="btn-mo-primary" style="background:#2563eb;" onclick="openCreateContractModal()">
+        <i class="fa-solid fa-plus"></i> Lập hợp đồng mới
       </button>
     </div>
   </div>

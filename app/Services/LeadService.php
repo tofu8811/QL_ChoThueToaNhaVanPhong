@@ -171,9 +171,10 @@ class LeadService
             });
         }
 
-        // Lọc theo trạng thái phễu Pipeline
-        if (!empty($filters['status'])) {
-            $statusValue = is_string($filters['status']) ? strtoupper($filters['status']) : $filters['status']->value;
+        // Lọc theo trạng thái phễu Pipeline (hỗ trợ cả tham số status và pipeline_status)
+        $rawStatus = $filters['status'] ?? $filters['pipeline_status'] ?? null;
+        if (!empty($rawStatus)) {
+            $statusValue = is_string($rawStatus) ? strtoupper($rawStatus) : $rawStatus->value;
             $query->where('status', $statusValue);
         }
 
@@ -192,14 +193,16 @@ class LeadService
             $query->where('lead_source', strtoupper($filters['lead_source']));
         }
 
-        // Tìm kiếm theo từ khóa (Họ tên, SĐT, Email, Tên công ty)
-        if (!empty($filters['keyword'])) {
-            $kw = trim($filters['keyword']);
+        // Tìm kiếm theo từ khóa (hỗ trợ cả tham số keyword và search: Họ tên, SĐT, Email, Tên công ty, Tòa nhà)
+        $rawKeyword = $filters['keyword'] ?? $filters['search'] ?? '';
+        if (!empty($rawKeyword)) {
+            $kw = trim((string) $rawKeyword);
             $query->where(function ($q) use ($kw) {
                 $q->where('contact_full_name', 'like', "%{$kw}%")
                   ->orWhere('company_name', 'like', "%{$kw}%")
                   ->orWhere('phone', 'like', "%{$kw}%")
-                  ->orWhere('email', 'like', "%{$kw}%");
+                  ->orWhere('email', 'like', "%{$kw}%")
+                  ->orWhereHas('building', fn ($b) => $b->where('name', 'like', "%{$kw}%"));
             });
         }
 

@@ -105,12 +105,51 @@ class UnitService
         $query = Unit::query()
             ->with(['building.provinceRelation', 'primaryImage', 'updatedByPropertyManager']);
 
-        // Phân quyền theo tòa nhà nếu không phải Super Admin
-        if ($user && method_exists($user, 'isSuperAdmin') && !$user->isSuperAdmin()) {
-            if (method_exists($user, 'assignedBuildings')) {
-                $assignedIds = $user->assignedBuildings()->pluck('buildings.id')->toArray();
-                $query->whereIn('building_id', $assignedIds);
+        // Xác định đối tượng người dùng (Ưu tiên Sanctum Auth; Fallback sang Header / Demo khi chưa đăng nhập)
+        if (!$user) {
+            $user = auth('sanctum')->user() ?? request()->user();
+        }
+        if (!$user && request()->header('X-User-Role')) {
+            $hdrRole = strtolower((string) request()->header('X-User-Role'));
+            $hdrId = (string) request()->header('X-User-Id');
+            if (in_array($hdrRole, ['sales', 'sale'])) {
+                $user = ($hdrId ? \App\Models\Sale::find($hdrId) : null)
+                    ?? \App\Models\Sale::first();
+            } elseif (in_array($hdrRole, ['pm', 'property_manager'])) {
+                $user = ($hdrId ? \App\Models\PropertyManager::find($hdrId) : null)
+                    ?? \App\Models\PropertyManager::first();
+            } elseif (in_array($hdrRole, ['accountant', 'accountants'])) {
+                $user = ($hdrId ? \App\Models\Accountant::find($hdrId) : null)
+                    ?? \App\Models\Accountant::first();
+            } elseif ($hdrRole === 'tenant') {
+                $user = ($hdrId ? \App\Models\Tenant::find($hdrId) : null)
+                    ?? \App\Models\Tenant::first();
+            } elseif (in_array($hdrRole, ['admin', 'super_admin'])) {
+                $user = ($hdrId ? \App\Models\Admin::find($hdrId) : null)
+                    ?? \App\Models\Admin::first();
             }
+        }
+
+        // Phân quyền theo tòa nhà cho từng vai trò:
+        if ($user instanceof \App\Models\Sale) {
+            $assignedIds = \Illuminate\Support\Facades\DB::table('sale_buildings')
+                ->where('sales_id', $user->id)
+                ->where('is_active', true)
+                ->pluck('building_id')
+                ->toArray();
+            $query->whereIn('building_id', $assignedIds);
+        } elseif ($user instanceof \App\Models\PropertyManager) {
+            $assignedIds = \Illuminate\Support\Facades\DB::table('manager_buildings')
+                ->where('pm_id', $user->id)
+                ->pluck('building_id')
+                ->toArray();
+            $query->whereIn('building_id', $assignedIds);
+        } elseif ($user instanceof \App\Models\Accountant) {
+            $assignedIds = \Illuminate\Support\Facades\DB::table('account_buildings')
+                ->where('accountant_id', $user->id)
+                ->pluck('building_id')
+                ->toArray();
+            $query->whereIn('building_id', $assignedIds);
         }
 
         if (!empty($filters['building_id'])) {

@@ -47,7 +47,7 @@
           </div>
           <h1 class="mo-hero-title">Cho Thuê Văn Phòng Toàn Quốc</h1>
           <p class="mo-hero-desc">
-            Hệ thống khảo sát và phân phối mặt bằng văn phòng chuyên nghiệp toàn quốc. Dữ liệu thực tế {{ $totalB }}+ cao ốc từ Hạng A, B, C trên toàn quốc. Cập nhật báo giá & diện tích trống mới nhất {{ date('Y') }}.
+            Hệ thống khảo sát và phân phối mặt bằng văn phòng chuyên nghiệp toàn quốc. Dữ liệu hơn {{ $totalB }}+ cao ốc từ Hạng A, B, C trên toàn quốc. Cập nhật báo giá & diện tích trống mới nhất {{ date('Y') }}.
           </p>
         </div>
       </section>

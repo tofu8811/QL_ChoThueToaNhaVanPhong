@@ -78,17 +78,19 @@
       }
 
       tbody.innerHTML = contractsList.map(c => {
+        const contractCode = c.contract_code || c.contract_number || '---';
         const tenantName = c.tenant?.company_name || '---';
         const buildingName = c.building?.name || '---';
-        const rentalPeriod = `${escapeHtml(c.start_date || '')} ➔ ${escapeHtml(c.end_date || '')}`;
-        const totalRent = c.total_rent_amount ? `$${Number(c.total_rent_amount).toLocaleString()}/tháng` : (c.rent_amount ? `$${Number(c.rent_amount).toLocaleString()}/tháng` : '---');
-        const deposit = c.deposit_amount ? `$${Number(c.deposit_amount).toLocaleString()}` : '$0';
+        const rentalPeriod = c.formatted_period || `${c.start_date || ''} ➔ ${c.end_date || ''}`;
+        const totalRent = c.formatted_monthly_rent || '---';
+        const deposit = c.formatted_deposit_amount || '0 đ';
+        const leasedArea = Number(c.total_leased_area_sqm || 0);
 
         return `
           <tr>
             <td>
-              <strong style="color:var(--mo-primary);font-family:monospace;font-size:13px;">${escapeHtml(c.contract_code || c.id.substring(0,8))}</strong>
-              <div style="font-size:11px;color:#94a3b8;">Ký bởi: ${escapeHtml(c.creator?.full_name || 'Sales')}</div>
+              <strong style="color:var(--mo-primary);font-family:monospace;font-size:13px;">${escapeHtml(contractCode)}</strong>
+              <div style="font-size:11px;color:#94a3b8;">${leasedArea > 0 ? `Tổng diện tích: ${leasedArea.toLocaleString('vi-VN')} m²` : `Ký bởi: ${escapeHtml(c.created_by_sales?.full_name || c.creator?.full_name || 'Sales')}`}</div>
             </td>
             <td>
               <div style="font-weight:700;color:#0f172a;font-size:13px;">${escapeHtml(tenantName)}</div>
@@ -118,10 +120,10 @@
                 </button>
               ` : ''}
               ${c.status === 'ACTIVE' || c.status === 'EXPIRING_SOON' ? `
-                <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#0284c7;border-color:#bae6fd;margin-left:4px;" onclick="openRenewContractModal('${c.id}', '${escapeHtml(c.contract_code)}', '${c.end_date}')" title="Gia hạn hợp đồng">
+                <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#0284c7;border-color:#bae6fd;margin-left:4px;" onclick="openRenewContractModal('${c.id}', '${escapeHtml(contractCode)}', '${c.end_date}')" title="Gia hạn hợp đồng">
                   <i class="fa-solid fa-calendar-plus"></i> Gia hạn
                 </button>
-                <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#dc2626;border-color:#fecaca;margin-left:4px;" onclick="openTerminateContractModal('${c.id}', '${escapeHtml(c.contract_code)}', ${c.deposit_amount || 0})" title="Thanh lý hợp đồng">
+                <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#dc2626;border-color:#fecaca;margin-left:4px;" onclick="openTerminateContractModal('${c.id}', '${escapeHtml(contractCode)}', ${c.deposit_amount || 0})" title="Thanh lý hợp đồng">
                   <i class="fa-solid fa-file-circle-xmark"></i> Thanh lý
                 </button>
               ` : ''}
@@ -300,6 +302,9 @@
 
       const units = c.units || [];
       const files = c.files || [];
+      const contractCode = c.contract_code || c.contract_number || '---';
+      const rentDisplay = c.formatted_monthly_rent || '---';
+      const depositDisplay = c.formatted_deposit_amount || '0 đ';
 
       container.innerHTML = `
         <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:20px;">
@@ -307,7 +312,7 @@
           <div style="background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
               <div>
-                <span style="font-family:monospace;font-weight:700;color:var(--mo-primary);font-size:15px;">${escapeHtml(c.contract_code)}</span>
+                <span style="font-family:monospace;font-weight:700;color:var(--mo-primary);font-size:15px;">${escapeHtml(contractCode)}</span>
                 <div style="font-size:13px;color:#64748b;">Tạo ngày: ${escapeHtml(new Date(c.created_at).toLocaleDateString('vi-VN'))}</div>
               </div>
               <div>${getContractStatusBadge(c.status)}</div>
@@ -318,12 +323,12 @@
               <div><strong>Mã số thuế:</strong> ${escapeHtml(c.tenant?.tax_code || '---')}</div>
               <div><strong>Tòa nhà:</strong> <span style="font-weight:600;color:#0284c7;">${escapeHtml(c.building?.name || '---')}</span></div>
               <hr style="border:none;border-top:1px dashed #cbd5e1;margin:8px 0;">
-              <div><strong>Thời hạn thuê:</strong> ${escapeHtml(c.start_date)} ➔ ${escapeHtml(c.end_date)}</div>
-              <div><strong>Tiền thuê mặt bằng:</strong> <span style="font-weight:700;color:#ea580c;">$${Number(c.rent_amount || 0).toLocaleString()}/tháng</span></div>
-              <div><strong>Phí dịch vụ vận hành:</strong> $${Number(c.service_fee_amount || 0).toLocaleString()}/tháng</div>
-              <div><strong>Tiền đặt cọc bảo đảm:</strong> <span style="font-weight:700;color:#16a34a;">$${Number(c.deposit_amount || 0).toLocaleString()}</span></div>
-              <div><strong>Kỳ thanh toán:</strong> ${c.billing_cycle_months || 1} tháng/lần (Hạn ngày ${c.payment_due_day || 5} hàng tháng)</div>
-              <div><strong>Ghi chú:</strong> ${escapeHtml(c.notes || 'Không có')}</div>
+              <div><strong>Thời hạn thuê:</strong> ${escapeHtml(c.formatted_period || '')}</div>
+              <div><strong>Tổng diện tích thuê:</strong> ${Number(c.total_leased_area_sqm || 0).toLocaleString('vi-VN')} m²</div>
+              <div><strong>Tiền thuê mặt bằng:</strong> <span style="font-weight:700;color:#ea580c;">${rentDisplay}</span></div>
+              <div><strong>Tiền đặt cọc bảo đảm:</strong> <span style="font-weight:700;color:#16a34a;">${depositDisplay}</span></div>
+              <div><strong>Kỳ thanh toán:</strong> ${c.payment_cycle_months || c.billing_cycle_months || 1} tháng/lần (Hạn ngày ${c.payment_due_day || 5} hàng kỳ)</div>
+              <div><strong>Tăng giá định kỳ:</strong> ${c.annual_price_escalation_percent || 0}% / năm</div>
             </div>
 
             <div style="margin-top:16px;padding-top:14px;border-top:1px solid #e2e8f0;display:flex;gap:8px;justify-content:flex-end;">
@@ -353,8 +358,8 @@
                       ${units.map(u => `
                         <tr>
                           <td><strong>${escapeHtml(u.unit_code)}</strong></td>
-                          <td>Tầng ${escapeHtml(u.floor_number || '---')}</td>
-                          <td>${u.area ? `${u.area} m²` : '---'}</td>
+                          <td>Tầng ${escapeHtml(String(u.floor_number ?? '---'))}</td>
+                          <td>${(u.area_sqm ?? u.area) ? `${Number(u.area_sqm ?? u.area).toLocaleString('vi-VN')} m²` : '---'}</td>
                           <td>
                             ${c.status === 'DRAFT' ? `
                               <button class="btn-mo-outline" style="padding:2px 6px;font-size:11px;color:#ef4444;" onclick="detachUnitFromContract('${c.id}', '${u.id}')" title="Gỡ sàn">
@@ -719,13 +724,22 @@
       container.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải hợp đồng của doanh nghiệp bạn từ API...</div>';
 
       try {
+        const authUserStr = localStorage.getItem('auth_user');
+        let authUser = null;
+        try { if (authUserStr) authUser = JSON.parse(authUserStr); } catch (e) {}
+
+        const headers = getAuthHeaders();
+        if (authUser?.id) {
+          headers['X-Tenant-Id'] = authUser.id;
+        }
+
         const res = await fetch('/api/v1/tenant/contracts', {
           method: 'GET',
-          headers: getAuthHeaders()
+          headers: headers
         });
 
         if (res.status === 401) {
-          container.innerHTML = '<div style="text-align:center;color:#ef4444;padding:24px;">Vui lòng đăng nhập với tài khoản Doanh nghiệp Khách Thuê (Tenant).</div>';
+          container.innerHTML = '<div style="text-align:center;color:#64748b;padding:32px;"><i class="fa-regular fa-building" style="font-size:26px;display:block;margin-bottom:8px;color:#94a3b8;"></i>Chưa có hợp đồng thuê nào được kích hoạt cho tài khoản này.</div>';
           return;
         }
 
@@ -736,30 +750,33 @@
           return;
         }
 
-        container.innerHTML = contracts.map(c => `
+        container.innerHTML = contracts.map(c => {
+          const contractCode = c.contract_code || c.contract_number || '---';
+          const rentDisplay = c.formatted_monthly_rent || '---';
+          return `
           <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
               <div>
                 <span style="font-size:12px;color:#64748b;">Mã Hợp Đồng:</span>
-                <strong style="color:var(--mo-primary);font-size:16px;font-family:monospace;margin-left:6px;">${escapeHtml(c.contract_code)}</strong>
+                <strong style="color:var(--mo-primary);font-size:16px;font-family:monospace;margin-left:6px;">${escapeHtml(contractCode)}</strong>
               </div>
               <div>${getContractStatusBadge(c.status)}</div>
             </div>
             <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:14px;background:#f8fafc;padding:14px;border-radius:8px;font-size:13px;">
               <div><strong>Tòa nhà:</strong> ${escapeHtml(c.building?.name || '---')}</div>
-              <div><strong>Thời hạn:</strong> ${escapeHtml(c.start_date)} ➔ ${escapeHtml(c.end_date)}</div>
-              <div><strong>Tiền thuê:</strong> <span style="color:#ea580c;font-weight:700;">$${Number(c.rent_amount || 0).toLocaleString()}/tháng</span></div>
+              <div><strong>Thời hạn:</strong> ${escapeHtml(c.formatted_period || '')}</div>
+              <div><strong>Tiền thuê:</strong> <span style="color:#ea580c;font-weight:700;">${escapeHtml(rentDisplay)}</span></div>
             </div>
             <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;">
               <span style="font-size:12px;color:#64748b;">
-                Sàn thuê: ${(c.units || []).map(u => `<strong>${escapeHtml(u.unit_code)}</strong> (${u.area} m²)`).join(', ') || 'Chưa định danh'}
+                Sàn thuê: ${(c.units || []).map(u => `<strong>${escapeHtml(u.unit_code)}</strong> (${escapeHtml(u.formatted_area || '')})`).join(', ') || `${Number(c.total_leased_area_sqm || 0).toLocaleString('vi-VN')} m²`}
               </span>
               <button class="btn-mo-primary" style="padding:6px 14px;font-size:12px;" onclick="openTenantContractDetail('${c.id}')">
                 <i class="fa-solid fa-file-contract"></i> Xem Chi Tiết Điều Khoản & File Scan
               </button>
             </div>
           </div>
-        `).join('');
+        `}).join('');
       } catch (err) {
         container.innerHTML = '<div style="color:#ef4444;text-align:center;padding:20px;">Lỗi kết nối tải hợp đồng khách thuê.</div>';
       }
@@ -805,9 +822,9 @@
           const phoneEl = document.getElementById('tenant-profile-phone');
           if (phoneEl) phoneEl.value = profile.contact_phone || '';
           const emailEl = document.getElementById('tenant-profile-email');
-          if (emailEl) emailEl.value = profile.contact_email || '';
+          if (emailEl) emailEl.value = profile.login_email || profile.billing_email || profile.contact_email || '';
           const addrEl = document.getElementById('tenant-profile-address');
-          if (addrEl) addrEl.value = profile.business_address || '';
+          if (addrEl) addrEl.value = profile.headquarter_address || profile.business_address || '';
         }
       } catch (e) {
         console.warn('Lỗi tải profile khách thuê:', e);

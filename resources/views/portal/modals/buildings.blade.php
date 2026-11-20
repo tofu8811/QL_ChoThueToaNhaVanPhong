@@ -265,3 +265,98 @@
     </div>
   </div>
 </div>
+
+<!-- MODAL 6: CẮT NHỎ / GỘP DIỆN TÍCH SÀN & CẬP NHẬT TRẠNG THÁI LẤP ĐẦY (ROLE 4: BQL) -->
+<div id="modal-split-merge-unit" class="mo-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.75);backdrop-filter:blur(4px);z-index:10002;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#ffffff !important;border-radius:12px;width:100%;max-width:620px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.3);overflow:hidden;border:1px solid #cbd5e1;position:relative;z-index:10003;">
+    <div style="background:linear-gradient(135deg,#0f172a,#2563eb);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="margin:0;font-size:16px;font-weight:700;"><i class="fa-solid fa-scissors"></i> Cắt Nhỏ / Gộp Diện Tích Sàn & Điều Chỉnh Trạng Thái</h3>
+      <button type="button" onclick="closeModal('modal-split-merge-unit')" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">&times;</button>
+    </div>
+    <form onsubmit="handleSplitMergeSubmit(event)" style="padding:20px;background:#ffffff !important;">
+      <div style="display:flex;gap:10px;margin-bottom:16px;">
+        <button type="button" id="btn-mode-split" class="btn-mo-primary" style="flex:1;justify-content:center;" onclick="switchSplitMergeMode('split')">
+          <i class="fa-solid fa-scissors"></i> 1. Cắt nhỏ mặt bằng
+        </button>
+        <button type="button" id="btn-mode-merge" class="btn-mo-outline" style="flex:1;justify-content:center;" onclick="switchSplitMergeMode('merge')">
+          <i class="fa-solid fa-object-group"></i> 2. Gộp sàn liền kề
+        </button>
+      </div>
+
+      <div id="box-split-mode">
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">CHỌN MẶT BẰNG GỐC CẦN CẮT NHỎ</label>
+          <select id="sm-source-unit" class="filament-input" style="width:100%;" onchange="updateSplitCalc()">
+            <option value="500">Sàn Tầng 12 - L12-01 (Hiện tại: 500 m² - Trống)</option>
+            <option value="400">Sàn Tầng 8 - L08-01 (Hiện tại: 400 m² - Trống)</option>
+            <option value="350">Sàn Tầng 15 - L15-02 (Hiện tại: 350 m² - Trống)</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">SÀN MỚI 1 (MÃ & DIỆN TÍCH)</label>
+            <div style="display:flex;gap:6px;">
+              <input type="text" id="split-code-1" class="filament-input" value="L12-01A" style="width:50%;">
+              <input type="number" id="split-area-1" class="filament-input" value="200" style="width:50%;" oninput="updateSplitRemainder()">
+            </div>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">SÀN MỚI 2 (MÃ & DIỆN TÍCH)</label>
+            <div style="display:flex;gap:6px;">
+              <input type="text" id="split-code-2" class="filament-input" value="L12-01B" style="width:50%;">
+              <input type="number" id="split-area-2" class="filament-input" value="300" style="width:50%;" readonly style="background:#f1f5f9;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="box-merge-mode" style="display:none;">
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">CHỌN 2 SÀN CẦN GỘP THÀNH MỘT</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <select id="merge-unit-1" class="filament-input" style="width:100%;">
+              <option value="150">L12-01A (150 m²)</option>
+              <option value="200">L12-01B (200 m²)</option>
+            </select>
+            <select id="merge-unit-2" class="filament-input" style="width:100%;">
+              <option value="250">L12-02 (250 m²)</option>
+              <option value="300">L12-03 (300 m²)</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">MÃ SÀN GỘP MỚI</label>
+          <input type="text" id="merge-new-code" class="filament-input" value="L12-WHOLE" style="width:100%;">
+        </div>
+      </div>
+
+      <!-- Cập nhật trạng thái lấp đầy -->
+      <div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-bottom:16px;">
+        <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:6px;">THIẾT LẬP TRẠNG THÁI LẤP ĐẦY SAU KHI ĐIỀU CHỈNH</label>
+        <div style="display:flex;gap:12px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer;">
+            <input type="radio" name="unit_occupancy_status" value="AVAILABLE" checked>
+            <span class="badge-filament success">Trống (Sẵn sàng chào thuê)</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer;">
+            <input type="radio" name="unit_occupancy_status" value="VACATING">
+            <span class="badge-filament warning">Sắp trống</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer;">
+            <input type="radio" name="unit_occupancy_status" value="RESERVED">
+            <span class="badge-filament purple" style="background:#f3e8ff;color:#7e22ce;">Giữ chỗ (Đang đàm phán)</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer;">
+            <input type="radio" name="unit_occupancy_status" value="OCCUPIED">
+            <span class="badge-filament">Đang thuê</span>
+          </label>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:10px;">
+        <button type="button" class="btn-mo-outline" onclick="closeModal('modal-split-merge-unit')">Hủy bỏ</button>
+        <button type="submit" class="btn-mo-primary"><i class="fa-solid fa-floppy-disk"></i> Lưu Thay Đổi Mặt Bằng</button>
+      </div>
+    </form>
+  </div>
+</div>

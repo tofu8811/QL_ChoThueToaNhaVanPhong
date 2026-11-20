@@ -76,6 +76,8 @@
       const tbody = document.getElementById('crm-leads-tbody');
       const countEl = document.getElementById('crm-leads-count');
       if (countEl) countEl.innerText = crmLeadsList.length;
+      const sideBadgeEl = document.getElementById('lead-count-badge');
+      if (sideBadgeEl && crmLeadsList.length > 0) sideBadgeEl.innerText = crmLeadsList.length;
 
       if (!tbody) return;
       if (crmLeadsList.length === 0) {

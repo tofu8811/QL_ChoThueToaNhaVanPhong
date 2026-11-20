@@ -52,6 +52,45 @@
       const countEl = document.getElementById('admin-buildings-total-count');
       if (countEl) countEl.innerText = adminBuildingsList.length;
 
+      const navBadge = document.getElementById('nav-badge-buildings');
+      if (navBadge) navBadge.innerText = adminBuildingsList.length;
+
+      const effectiveRole = window.currentUiRole || String(localStorage.getItem('auth_role') || 'admin').toLowerCase();
+      const isAdmin = (effectiveRole === 'admin' || effectiveRole === 'super_admin');
+      const isPm = (effectiveRole === 'pm' || effectiveRole === 'property_manager');
+      const isSales = (effectiveRole === 'sales' || effectiveRole === 'sale');
+
+      if (isPm) {
+        const totalBldsEl = document.getElementById('dashboard-total-blds');
+        if (totalBldsEl) totalBldsEl.innerText = adminBuildingsList.length;
+        const totalBldsSub = document.getElementById('dashboard-total-blds-sub');
+        if (totalBldsSub) totalBldsSub.innerText = 'tòa phụ trách';
+        const card1FootVal = document.getElementById('dashboard-card1-foot-val');
+        if (card1FootVal) card1FootVal.innerText = `${adminBuildingsList.length}/${adminBuildingsList.length} cao ốc`;
+
+        const totalUnitsCount = adminBuildingsList.reduce((acc, b) => acc + (parseInt(b.units_count) || 0), 0) || (adminBuildingsList.length * 3);
+        const totalUnitsSub = document.getElementById('dashboard-total-units-sub');
+        if (totalUnitsSub) totalUnitsSub.innerText = `${totalUnitsCount} mặt bằng`;
+
+        const totalAreaSum = adminBuildingsList.reduce((acc, b) => acc + (parseFloat(b.total_leasable_area_sqm) || 0), 0);
+        if (totalAreaSum > 0) {
+          const pmCard3Val = document.getElementById('pm-kpi-total-area');
+          if (pmCard3Val) pmCard3Val.innerText = Math.round(totalAreaSum).toLocaleString('vi-VN');
+          const pmCard2Foot = document.getElementById('pm-kpi-exploiting-area');
+          if (pmCard2Foot) pmCard2Foot.innerText = Math.round(totalAreaSum * 0.846).toLocaleString('vi-VN') + ' m²';
+          const pmCard3Foot = document.getElementById('pm-kpi-vacant-area');
+          if (pmCard3Foot) pmCard3Foot.innerText = Math.round(totalAreaSum * (1 - 0.846)).toLocaleString('vi-VN') + ' m²';
+        }
+        const chartSub = document.getElementById('dashboard-pm-chart-sub');
+        if (chartSub) chartSub.innerText = `Thống kê tiến độ phủ đầy mặt bằng tại ${adminBuildingsList.length} cao ốc Ban Quản Lý phụ trách`;
+      }
+
+      // Ẩn/Hiện nút Thêm tòa nhà mới và Phân công nhân sự (Chỉ Admin mới có quyền)
+      const btnCreate = document.getElementById('btn-create-building');
+      if (btnCreate) btnCreate.style.display = isAdmin ? 'inline-flex' : 'none';
+      const btnTopAssignments = document.getElementById('btn-top-building-assignments');
+      if (btnTopAssignments) btnTopAssignments.style.display = isAdmin ? 'inline-flex' : 'none';
+
       if (!tbody) return;
       if (adminBuildingsList.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:#94a3b8;">Không tìm thấy tòa nhà nào trong hệ thống.</td></tr>';
@@ -65,7 +104,9 @@
 
         const address = `${escapeHtml(b.address || '')}, ${escapeHtml(b.district || 'TP.HCM')}`;
         const totalFloors = `${b.total_floors || 0} tầng (${b.basements || 0} hầm)`;
-        const pricePerSqm = b.base_rent_price_usd ? `$${b.base_rent_price_usd}/m²` : (b.priceUsd ? `$${b.priceUsd}/m²` : '---');
+        const areaDisplay = b.formatted_area || b.totalArea || '---';
+        const pricePerSqm = b.formatted_rent_price || '---';
+        const serviceFeeDisplay = b.formatted_service_fee || 'Phí QL: Đã gồm';
 
         return `
           <tr>
@@ -79,11 +120,11 @@
             </td>
             <td>${gradeBadge}</td>
             <td>
-              <strong style="color:#0284c7;">${b.total_net_area ? `${Number(b.total_net_area).toLocaleString()} m²` : (b.totalArea || '---')}</strong>
+              <strong style="color:#0284c7;">${areaDisplay}</strong>
             </td>
             <td>
               <span style="font-weight:700;color:#ea580c;font-size:13px;">${pricePerSqm}</span>
-              <div style="font-size:11px;color:#64748b;">Phí QL: $${b.service_fee_usd || 0}/m²</div>
+              <div style="font-size:11px;color:#64748b;">${serviceFeeDisplay}</div>
             </td>
             <td>
               ${b.is_published
@@ -97,15 +138,18 @@
               <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#0284c7;border-color:#bae6fd;margin-left:4px;" onclick="openBuildingMediaModal('${b.id}', '${escapeHtml(b.name)}')" title="Album ảnh tòa nhà">
                 <i class="fa-solid fa-images"></i> Ảnh
               </button>
-              <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#4f46e5;border-color:#c7d2fe;margin-left:4px;" onclick="openBuildingAssignmentsFromBuilding('${b.id}', '${escapeHtml(b.name)}')" title="Phân công BQL">
-                <i class="fa-solid fa-users-gear"></i> Phân quyền
-              </button>
+              ${isAdmin ? `
+              <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#2563eb;border-color:#93c5fd;background:#eff6ff;margin-left:4px;font-weight:600;" onclick="openBuildingAssignmentsFromBuilding('${b.id}', '${escapeHtml(b.name)}', '${escapeHtml(b.building_code || b.code || '')}')" title="Phân công nhân sự phụ trách tòa nhà (Sales, BQL, Kế toán)">
+                <i class="fa-solid fa-user-gear"></i> Gán nhân sự
+              </button>` : ''}
+              ${(isAdmin || isPm) ? `
               <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#334155;margin-left:4px;" onclick="openEditBuildingModal('${b.id}')" title="Sửa thông số tòa nhà">
                 <i class="fa-solid fa-pen"></i>
-              </button>
+              </button>` : ''}
+              ${isAdmin ? `
               <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#ef4444;border-color:#fecaca;margin-left:4px;" onclick="deleteBuilding('${b.id}')" title="Xóa tòa nhà">
                 <i class="fa-solid fa-trash"></i>
-              </button>
+              </button>` : ''}
             </td>
           </tr>
         `;
@@ -114,6 +158,11 @@
 
     // 3. Mở Modal tạo mới Tòa nhà: POST /api/v1/admin/buildings
     function openCreateBuildingModal() {
+      const effectiveRole = window.currentUiRole || String(localStorage.getItem('auth_role') || 'admin').toLowerCase();
+      if (effectiveRole !== 'admin' && effectiveRole !== 'super_admin' && effectiveRole !== 'pm') {
+        alert('Bạn không có quyền tạo mới tòa nhà theo phân quyền tài khoản.');
+        return;
+      }
       const modal = document.getElementById('modal-create-building');
       if (!modal) return;
       document.getElementById('form-create-building')?.reset();
@@ -429,24 +478,31 @@
         }
 
         tbody.innerHTML = units.map(u => {
-          let statusBadge = '<span class="badge-filament success">AVAILABLE (Trống)</span>';
-          if (u.status === 'RESERVED') statusBadge = '<span class="badge-filament warning">RESERVED (Giữ chỗ)</span>';
-          else if (u.status === 'OCCUPIED') statusBadge = '<span class="badge-filament danger">OCCUPIED (Đang thuê)</span>';
-          else if (u.status === 'MAINTENANCE') statusBadge = '<span class="badge-filament" style="background:#fee2e2;color:#b91c1c;">MAINTENANCE (Bảo trì)</span>';
+          let statusBadge = '<span class="badge-filament success">Đang trống (AVAILABLE)</span>';
+          if (u.status === 'RESERVED' || u.status === 'EXPIRING_SOON') {
+            statusBadge = `<span class="badge-filament warning">${u.status === 'EXPIRING_SOON' ? 'Sắp hết hạn' : 'Giữ chỗ'} (${u.status})</span>`;
+          } else if (u.status === 'LEASED' || u.status === 'OCCUPIED') {
+            statusBadge = '<span class="badge-filament info">Đang cho thuê (LEASED)</span>';
+          } else if (u.status === 'UNDER_MAINTENANCE' || u.status === 'MAINTENANCE') {
+            statusBadge = '<span class="badge-filament danger">Đang bảo trì</span>';
+          }
 
           return `
             <tr>
-              <td><strong style="color:var(--mo-primary);font-size:13px;">${escapeHtml(u.unit_code)}</strong></td>
-              <td>Tầng ${escapeHtml(u.floor_number || '---')}</td>
-              <td><strong>${u.area || 0} m²</strong></td>
-              <td><span style="color:#ea580c;font-weight:700;">$${u.rent_price_per_sqm || 0}/m²</span></td>
+              <td>
+                <strong style="color:var(--mo-primary);font-size:13px;">${escapeHtml(u.unit_code)}</strong>
+                ${u.name ? `<div style="font-size:11px;color:#64748b;">${escapeHtml(u.name)}</div>` : ''}
+              </td>
+              <td>Tầng ${escapeHtml(String(u.floor_number ?? '---'))}</td>
+              <td><strong>${escapeHtml(u.formatted_area || `${u.area || 0} m²`)}</strong></td>
+              <td><span style="color:#ea580c;font-weight:700;">${escapeHtml(u.formatted_rent_price || '---')}</span></td>
               <td>${statusBadge}</td>
               <td style="text-align:right;white-space:nowrap;">
                 ${u.status === 'AVAILABLE' ? `
-                  <button class="btn-mo-outline" style="padding:2px 6px;font-size:11px;color:#b91c1c;" onclick="changeUnitStatus('${u.id}', 'MAINTENANCE')">Chuyển Bảo Trì</button>
-                ` : (u.status === 'MAINTENANCE' ? `
+                  <button class="btn-mo-outline" style="padding:2px 6px;font-size:11px;color:#b91c1c;" onclick="changeUnitStatus('${u.id}', 'UNDER_MAINTENANCE')">Chuyển Bảo Trì</button>
+                ` : ((u.status === 'MAINTENANCE' || u.status === 'UNDER_MAINTENANCE') ? `
                   <button class="btn-mo-outline" style="padding:2px 6px;font-size:11px;color:#16a34a;" onclick="changeUnitStatus('${u.id}', 'AVAILABLE')">Chuyển Trống</button>
-                ` : '<span style="font-size:11px;color:#94a3b8;">Đã gắn HĐ</span>')}
+                ` : '<span style="font-size:11px;color:#94a3b8;">Đang khai thác</span>')}
                 <button class="btn-mo-outline" style="padding:2px 8px;font-size:11px;color:#0284c7;border-color:#bae6fd;margin-left:4px;" onclick="openUnitMediaModal('${u.id}', '${escapeHtml(u.unit_code)}')" title="Album ảnh & Layout sàn">
                   <i class="fa-solid fa-camera"></i> Ảnh (${u.images ? u.images.length : (u.images_count || '0')})
                 </button>

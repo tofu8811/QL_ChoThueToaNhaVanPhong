@@ -11,17 +11,16 @@
 
     // Hàm lấy Token Sanctum toàn cục phục vụ các API nội bộ
     function getSanctumToken() {
-      const storedRole = String(localStorage.getItem('auth_role') || '').toUpperCase();
       const storedToken = localStorage.getItem('auth_token');
-      // Nếu đang đăng nhập vai trò Admin thì ưu tiên dùng token cá nhân
-      if (storedToken && (storedRole === 'ADMIN' || storedRole === 'SUPER_ADMIN')) {
+      // Luôn ưu tiên Token Sanctum thực tế của người dùng đang đăng nhập (Admin, Sales, PM, Kế toán, Tenant)
+      if (storedToken && storedToken.trim() !== '') {
         return storedToken;
       }
-      // Ưu tiên token Super Admin mặc định cho các tác vụ quản trị RBAC
+      // Token mặc định dùng cho các tác vụ xem dữ liệu ban đầu
       if (typeof DEFAULT_STAFF_TOKEN === 'string' && DEFAULT_STAFF_TOKEN.trim() !== '') {
         return DEFAULT_STAFF_TOKEN;
       }
-      return storedToken || '';
+      return '';
     }
 
     // Helper toàn cục bảo vệ XSS khi render HTML động
@@ -44,6 +43,22 @@
       }
       if (token) {
         headers['Authorization'] = 'Bearer ' + token;
+      }
+      const role = window.currentUiRole || localStorage.getItem('auth_role');
+      if (role) {
+        headers['X-User-Role'] = role;
+      }
+      // Luôn ưu tiên ID người dùng thực tế đang đăng nhập
+      let authedUserId = null;
+      try {
+        const u = JSON.parse(localStorage.getItem('auth_user') || '{}');
+        if (u && u.id) authedUserId = u.id;
+      } catch (e) {}
+
+      if (authedUserId) {
+        headers['X-User-Id'] = authedUserId;
+      } else if (window.currentStaffUser && window.currentStaffUser.id) {
+        headers['X-User-Id'] = window.currentStaffUser.id;
       }
       return headers;
     }

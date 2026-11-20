@@ -147,7 +147,7 @@
 
                 <!-- Cột 4: Khu Vực -->
                 <div class="mo-mega-col">
-                  <div class="mo-mega-col-title"><i class="fa-solid fa-location-dot" style="color:#ea580c;margin-right:6px;font-size:12px;"></i> Quận / Huyện</div>
+                  <div class="mo-mega-col-title"><i class="fa-solid fa-location-dot" style="color:#2563eb;margin-right:6px;font-size:12px;"></i> Quận / Huyện</div>
                   @forelse($hnDistricts as $d)
                     <a href="{{ route('home', ['district' => $d['name'], 'province' => '1']) }}" class="mo-mega-item" onclick="return handleHeaderFilter(event, 'district', '{{ $d['name'] }}', '{{ route('home', ['district' => $d['name'], 'province' => '1']) }}')">
                       <span class="mo-mega-item-text" title="{{ $d['name'] }}">{{ $d['name'] }}</span>
@@ -181,14 +181,14 @@
               <a href="{{ route('home', ['province' => '79']) }}" 
                  class="mo-mega-header-link" 
                  onclick="return handleHeaderFilter(event, 'province', '79', '{{ route('home', ['province' => '79']) }}')">
-                <span><i class="fa-solid fa-city" style="color:#ea580c;margin-right:8px;"></i> <strong>Xem tất cả văn phòng cho thuê TP. Hồ Chí Minh</strong></span>
-                <span class="badge-num" style="background:#fed7aa;color:#c2410c;font-weight:700;">{{ $hcmCount }} cao ốc</span>
+                <span><i class="fa-solid fa-city" style="color:#2563eb;margin-right:8px;"></i> <strong>Xem tất cả văn phòng cho thuê TP. Hồ Chí Minh</strong></span>
+                <span class="badge-num" style="background:#dbeafe;color:#1e40af;font-weight:700;">{{ $hcmCount }} cao ốc</span>
               </a>
 
               <div class="mo-nav-mega-grid">
                 <!-- Cột 1: Phường / Tuyến Phố -->
                 <div class="mo-mega-col">
-                  <div class="mo-mega-col-title"><i class="fa-solid fa-map-pin" style="color:#ea580c;margin-right:6px;font-size:12px;"></i> Phường / Tuyến Phố</div>
+                  <div class="mo-mega-col-title"><i class="fa-solid fa-map-pin" style="color:#2563eb;margin-right:6px;font-size:12px;"></i> Phường / Tuyến Phố</div>
                   @forelse($hcmCol1 as $w)
                     <a href="{{ route('home', ['district' => $w['display_label'], 'province' => '79']) }}" class="mo-mega-item" onclick="return handleHeaderFilter(event, 'district', '{{ $w['display_label'] }}', '{{ route('home', ['district' => $w['display_label'], 'province' => '79']) }}')">
                       <span class="mo-mega-item-text" title="{{ $w['display_label'] }}">
@@ -198,7 +198,7 @@
                         @endif
                       </span>
                       @if(($w['count'] ?? 0) > 0)
-                        <span class="badge-num" style="background:#fed7aa;color:#c2410c;font-size:11px;">{{ $w['count'] }} tòa</span>
+                        <span class="badge-num" style="background:#dbeafe;color:#1e40af;font-size:11px;">{{ $w['count'] }} tòa</span>
                       @endif
                     </a>
                   @empty
@@ -218,7 +218,7 @@
                         @endif
                       </span>
                       @if(($w['count'] ?? 0) > 0)
-                        <span class="badge-num" style="background:#fed7aa;color:#c2410c;font-size:11px;">{{ $w['count'] }} tòa</span>
+                        <span class="badge-num" style="background:#dbeafe;color:#1e40af;font-size:11px;">{{ $w['count'] }} tòa</span>
                       @endif
                     </a>
                   @empty
@@ -238,7 +238,7 @@
                         @endif
                       </span>
                       @if(($w['count'] ?? 0) > 0)
-                        <span class="badge-num" style="background:#fed7aa;color:#c2410c;font-size:11px;">{{ $w['count'] }} tòa</span>
+                        <span class="badge-num" style="background:#dbeafe;color:#1e40af;font-size:11px;">{{ $w['count'] }} tòa</span>
                       @endif
                     </a>
                   @empty
@@ -248,11 +248,11 @@
 
                 <!-- Cột 4: Khu Vực -->
                 <div class="mo-mega-col">
-                  <div class="mo-mega-col-title"><i class="fa-solid fa-location-dot" style="color:#ea580c;margin-right:6px;font-size:12px;"></i> Quận / Huyện</div>
+                  <div class="mo-mega-col-title"><i class="fa-solid fa-location-dot" style="color:#2563eb;margin-right:6px;font-size:12px;"></i> Quận / Huyện</div>
                   @forelse($hcmDistricts as $d)
                     <a href="{{ route('home', ['district' => $d['name'], 'province' => '79']) }}" class="mo-mega-item" onclick="return handleHeaderFilter(event, 'district', '{{ $d['name'] }}', '{{ route('home', ['district' => $d['name'], 'province' => '79']) }}')">
                       <span class="mo-mega-item-text" title="{{ $d['name'] }}">{{ $d['name'] }}</span>
-                      <span class="badge-num" style="background:#fed7aa;color:#c2410c;font-size:11px;">{{ $d['count'] }} tòa</span>
+                      <span class="badge-num" style="background:#dbeafe;color:#1e40af;font-size:11px;">{{ $d['count'] }} tòa</span>
                     </a>
                   @empty
                     <div class="mo-dropdown-empty" style="padding:10px;font-size:12px;color:#94a3b8;">Đang cập nhật nguồn cung</div>
@@ -282,14 +282,14 @@
               <a href="{{ route('home', ['province' => '48']) }}" 
                  class="mo-mega-header-link" 
                  onclick="return handleHeaderFilter(event, 'province', '48', '{{ route('home', ['province' => '48']) }}')">
-                <span><i class="fa-solid fa-city" style="color:#6366f1;margin-right:8px;"></i> <strong>Xem tất cả văn phòng cho thuê Đà Nẵng</strong></span>
-                <span class="badge-num" style="background:#e0e7ff;color:#4338ca;font-weight:700;">{{ $dnCount }} cao ốc</span>
+                <span><i class="fa-solid fa-city" style="color:#2563eb;margin-right:8px;"></i> <strong>Xem tất cả văn phòng cho thuê Đà Nẵng</strong></span>
+                <span class="badge-num" style="background:#dbeafe;color:#1e40af;font-weight:700;">{{ $dnCount }} cao ốc</span>
               </a>
 
               <div class="mo-nav-mega-grid mo-grid-danang">
                 <!-- Cột 1: Phường / Tuyến Phố -->
                 <div class="mo-mega-col">
-                  <div class="mo-mega-col-title"><i class="fa-solid fa-map-pin" style="color:#6366f1;margin-right:6px;font-size:12px;"></i> Phường / Tuyến Phố</div>
+                  <div class="mo-mega-col-title"><i class="fa-solid fa-map-pin" style="color:#2563eb;margin-right:6px;font-size:12px;"></i> Phường / Tuyến Phố</div>
                   @forelse(($dnInfo['wards'] ?? []) as $w)
                     <a href="{{ route('home', ['district' => $w['display_label'], 'province' => '48']) }}" class="mo-mega-item" onclick="return handleHeaderFilter(event, 'district', '{{ $w['display_label'] }}', '{{ route('home', ['district' => $w['display_label'], 'province' => '48']) }}')">
                       <span class="mo-mega-item-text" title="{{ $w['display_label'] }}">
@@ -299,7 +299,7 @@
                         @endif
                       </span>
                       @if(($w['count'] ?? 0) > 0)
-                        <span class="badge-num" style="background:#e0e7ff;color:#4338ca;font-size:11px;">{{ $w['count'] }} tòa</span>
+                        <span class="badge-num" style="background:#dbeafe;color:#1e40af;font-size:11px;">{{ $w['count'] }} tòa</span>
                       @endif
                     </a>
                   @empty
@@ -309,11 +309,11 @@
 
                 <!-- Cột 2: Quận / Huyện -->
                 <div class="mo-mega-col">
-                  <div class="mo-mega-col-title"><i class="fa-solid fa-location-dot" style="color:#6366f1;margin-right:6px;font-size:12px;"></i> Quận / Huyện</div>
+                  <div class="mo-mega-col-title"><i class="fa-solid fa-location-dot" style="color:#2563eb;margin-right:6px;font-size:12px;"></i> Quận / Huyện</div>
                   @forelse($dnDistricts as $d)
                     <a href="{{ route('home', ['district' => $d['name'], 'province' => '48']) }}" class="mo-mega-item" onclick="return handleHeaderFilter(event, 'district', '{{ $d['name'] }}', '{{ route('home', ['district' => $d['name'], 'province' => '48']) }}')">
                       <span class="mo-mega-item-text" title="{{ $d['name'] }}">{{ $d['name'] }}</span>
-                      <span class="badge-num" style="background:#e0e7ff;color:#4338ca;font-size:11px;">{{ $d['count'] }} tòa</span>
+                      <span class="badge-num" style="background:#dbeafe;color:#1e40af;font-size:11px;">{{ $d['count'] }} tòa</span>
                     </a>
                   @empty
                     <div class="mo-dropdown-empty" style="padding:10px;font-size:12px;color:#94a3b8;">Đang cập nhật nguồn cung</div>
@@ -543,14 +543,14 @@
           <!-- 3. TP. Hồ Chí Minh Accordion -->
           <div class="mo-drawer-accordion-item">
             <button type="button" class="mo-drawer-accordion-btn" onclick="toggleDrawerAccordion(this)">
-              <span><i class="fa-solid fa-city" style="color: #ea580c; width: 18px;"></i> TP. Hồ Chí Minh</span>
-              <span class="badge-num" style="background:#fed7aa;color:#c2410c;font-size:11px;font-weight:700;">{{ $hcmCount }} tòa</span>
+              <span><i class="fa-solid fa-city" style="color: #2563eb; width: 18px;"></i> TP. Hồ Chí Minh</span>
+              <span class="badge-num" style="background:#dbeafe;color:#1e40af;font-size:11px;font-weight:700;">{{ $hcmCount }} tòa</span>
               <i class="fa-solid fa-chevron-down accordion-caret"></i>
             </button>
             <div class="mo-drawer-accordion-content">
               <a href="{{ route('home', ['province' => '79']) }}" class="mo-drawer-sublink highlight" onclick="closeMobileMenu(); return handleHeaderFilter(event, 'province', '79', '{{ route('home', ['province' => '79']) }}')">
                 <span><i class="fa-solid fa-arrow-right"></i> Tất cả văn phòng TP.HCM</span>
-                <span class="badge-num" style="background:#fed7aa;color:#c2410c;font-size:10.5px;">{{ $hcmCount }}</span>
+                <span class="badge-num" style="background:#dbeafe;color:#1e40af;font-size:10.5px;">{{ $hcmCount }}</span>
               </a>
               @if(!empty($hcmDistricts))
                 <div class="mo-drawer-subgroup-title">Khu vực / Quận trọng điểm:</div>
@@ -568,14 +568,14 @@
           <!-- 4. Đà Nẵng Accordion -->
           <div class="mo-drawer-accordion-item">
             <button type="button" class="mo-drawer-accordion-btn" onclick="toggleDrawerAccordion(this)">
-              <span><i class="fa-solid fa-water" style="color: #6366f1; width: 18px;"></i> Đà Nẵng</span>
-              <span class="badge-num" style="background:#e0e7ff;color:#4338ca;font-size:11px;font-weight:700;">{{ $dnCount }} tòa</span>
+              <span><i class="fa-solid fa-water" style="color: #2563eb; width: 18px;"></i> Đà Nẵng</span>
+              <span class="badge-num" style="background:#dbeafe;color:#1e40af;font-size:11px;font-weight:700;">{{ $dnCount }} tòa</span>
               <i class="fa-solid fa-chevron-down accordion-caret"></i>
             </button>
             <div class="mo-drawer-accordion-content">
               <a href="{{ route('home', ['province' => '48']) }}" class="mo-drawer-sublink highlight" onclick="closeMobileMenu(); return handleHeaderFilter(event, 'province', '48', '{{ route('home', ['province' => '48']) }}')">
                 <span><i class="fa-solid fa-arrow-right"></i> Tất cả văn phòng Đà Nẵng</span>
-                <span class="badge-num" style="background:#e0e7ff;color:#4338ca;font-size:10.5px;">{{ $dnCount }}</span>
+                <span class="badge-num" style="background:#dbeafe;color:#1e40af;font-size:10.5px;">{{ $dnCount }}</span>
               </a>
               @if(!empty($dnDistricts))
                 <div class="mo-drawer-tags-grid">

@@ -306,7 +306,7 @@
       top: 100%;
       left: 0;
       margin-top: 4px;
-      min-width: 230px;
+      min-width: 280px;
       background: #ffffff;
       border: 1px solid #e2e8f0;
       border-radius: 8px;
@@ -337,20 +337,28 @@
     /* Mega Dropdown cho danh sách địa chỉ / phường sáp nhập & khu vực */
     .mo-nav-dropdown.mo-mega-dropdown {
       width: max-content;
-      min-width: 680px;
-      max-width: min(760px, calc(100vw - 32px));
+      min-width: 1060px;
+      max-width: min(1120px, calc(100vw - 32px));
       height: auto;
-      max-height: calc(100vh - 110px);
+      max-height: calc(100vh - 100px);
       overflow-y: auto;
       overflow-x: hidden;
       overscroll-behavior: contain;
-      padding: 16px 20px;
+      padding: 18px 22px;
       left: 0;
       transform: translateY(6px);
       box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.18), 0 10px 20px -5px rgba(0, 0, 0, 0.08);
       border-radius: 12px;
       scrollbar-width: thin;
       scrollbar-color: #cbd5e1 #f8fafc;
+    }
+    .mo-nav-dropdown.mo-mega-dropdown.mo-mega-hcm {
+      left: -120px;
+    }
+    .mo-nav-dropdown.mo-mega-dropdown.mo-mega-danang {
+      min-width: 580px;
+      max-width: 620px;
+      left: 0;
     }
     .mo-nav-dropdown.mo-mega-dropdown::-webkit-scrollbar {
       width: 6px;
@@ -371,15 +379,30 @@
       transform: translateY(0);
     }
 
-    /* Đảm bảo căn lề trái cố định với title cho mọi dropdown */
-    .mo-nav-dropdown.mo-mega-dropdown.mo-mega-align-right {
-      left: 0;
-      right: auto;
-      transform: translateY(6px);
+    /* Dropdown Văn Phòng Theo Hạng */
+    .mo-nav-dropdown.mo-dropdown-grades {
+      min-width: 310px;
+      width: max-content;
+      padding: 8px 0;
     }
-    .mo-nav-dropdown-wrap:hover .mo-nav-dropdown.mo-mega-dropdown.mo-mega-align-right,
-    .mo-nav-dropdown-wrap.open .mo-nav-dropdown.mo-mega-dropdown.mo-mega-align-right {
-      transform: translateY(0);
+    .mo-dropdown-grades .mo-dropdown-link {
+      padding: 9px 18px;
+      gap: 16px;
+      white-space: nowrap;
+    }
+    .mo-dropdown-grades .mo-dropdown-link > span:first-child {
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
+      font-size: 13.5px;
+      font-weight: 500;
+    }
+    .mo-dropdown-grades .badge-num {
+      flex-shrink: 0;
+      white-space: nowrap;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 600;
     }
 
     .mo-mega-header-link {
@@ -404,9 +427,12 @@
     }
     .mo-nav-mega-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(160px, 1fr));
+      grid-template-columns: repeat(3, minmax(280px, 1fr)) minmax(175px, 0.65fr);
       gap: 14px;
       align-items: start;
+    }
+    .mo-grid-danang {
+      grid-template-columns: minmax(330px, 1.4fr) minmax(210px, 1fr) !important;
     }
     .mo-mega-col {
       display: flex;
@@ -417,38 +443,65 @@
       font-weight: 700;
       font-size: 13.5px;
       color: #0f172a;
-      padding: 6px 10px 8px 10px;
+      padding: 6px 8px 8px 8px;
       border-bottom: 2px solid #e2e8f0;
       margin-bottom: 4px;
       letter-spacing: -0.2px;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+    }
+    .mo-mega-col-title.mo-mega-col-sub {
+      border-bottom: 2px solid #f1f5f9;
     }
     .mo-mega-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      padding: 7px 10px;
-      font-size: 13px;
-      color: #475569;
+      padding: 6px 8px;
+      font-size: 12.5px;
+      color: #334155;
       text-decoration: none;
       border-bottom: 1px solid #f1f5f9;
       transition: all 0.15s ease;
-      white-space: nowrap;
       cursor: pointer;
-    }
-    .mo-mega-item-text {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      border-radius: 6px;
     }
     .mo-mega-item:last-child {
       border-bottom: none;
     }
     .mo-mega-item:hover {
-      background: #f8fafc;
-      color: #0f3361;
+      background: #eff6ff;
+      color: #1d4ed8;
       font-weight: 600;
-      padding-left: 14px;
+      padding-left: 12px;
+    }
+    .mo-mega-item:hover .mo-mega-subtext {
+      color: #3b82f6;
+    }
+    .mo-mega-item-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .mo-mega-subtext {
+      color: #94a3b8;
+      font-size: 11px;
+      font-weight: 400;
+      flex-shrink: 0;
+    }
+    .mo-mega-item .badge-num {
+      flex-shrink: 0;
+      white-space: nowrap;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 9999px;
     }
 
     @media (max-width: 1024px) {

@@ -23,6 +23,19 @@ class Contract extends Model
     protected $table = 'contracts';
 
     /**
+     * Thuộc tính tính toán sẵn từ Backend trả về cho API & View.
+     *
+     * @var list<string>
+     */
+    protected $appends = [
+        'contract_code',
+        'rent_amount',
+        'formatted_monthly_rent',
+        'formatted_deposit_amount',
+        'formatted_period',
+    ];
+
+    /**
      * @var list<string>
      */
     protected $fillable = [
@@ -243,5 +256,85 @@ class Contract extends Model
             ContractStatus::EXPIRING_SOON,
             ContractStatus::RESERVED,
         ]);
+    }
+
+    /**
+     * Lấy số hiệu hợp đồng pháp lý chuẩn (contract_number).
+     *
+     * @return string
+     */
+    public function getContractCodeAttribute(): string
+    {
+        return (string) ($this->attributes['contract_number'] ?? substr((string) ($this->attributes['id'] ?? ''), 0, 8));
+    }
+
+    /**
+     * Tính tổng tiền thuê mặt bằng hàng tháng từ danh sách sàn gán trong hợp đồng hoặc tiền đặt cọc.
+     *
+     * @return float
+     */
+    public function getRentAmountAttribute(): float
+    {
+        if ($this->relationLoaded('units') && $this->units->isNotEmpty()) {
+            $sum = $this->units->sum(function ($u) {
+                $pivotRent = (float) ($u->pivot->monthly_base_rent ?? 0);
+                if ($pivotRent > 0) {
+                    return $pivotRent;
+                }
+
+                return (float) ($u->base_rental_price ?? 0) * (float) ($u->area_sqm ?? 0);
+            });
+            if ($sum > 0) {
+                return (float) round($sum);
+            }
+        }
+
+        $deposit = (float) ($this->attributes['deposit_amount'] ?? 0);
+
+        return $deposit > 0 ? (float) round($deposit / 3) : 0.0;
+    }
+
+    /**
+     * Định dạng tổng tiền thuê hàng tháng chuẩn VNĐ/tháng.
+     *
+     * @return string
+     */
+    public function getFormattedMonthlyRentAttribute(): string
+    {
+        $rent = $this->rent_amount;
+        if ($rent <= 0) {
+            return '---';
+        }
+
+        return $rent > 100000
+            ? number_format($rent, 0, ',', '.') . ' đ/tháng'
+            : '$' . number_format($rent, 0) . '/tháng';
+    }
+
+    /**
+     * Định dạng tiền đặt cọc bảo đảm hợp đồng chuẩn VNĐ.
+     *
+     * @return string
+     */
+    public function getFormattedDepositAmountAttribute(): string
+    {
+        $deposit = (float) ($this->attributes['deposit_amount'] ?? $this->attributes['booking_deposit_amount'] ?? 0);
+
+        return $deposit > 100000
+            ? number_format($deposit, 0, ',', '.') . ' đ'
+            : '$' . number_format($deposit, 0);
+    }
+
+    /**
+     * Định dạng chu kỳ hiệu lực hợp đồng (Bắt đầu ➔ Kết thúc).
+     *
+     * @return string
+     */
+    public function getFormattedPeriodAttribute(): string
+    {
+        $start = $this->start_date ? $this->start_date->format('d/m/Y') : '';
+        $end = $this->end_date ? $this->end_date->format('d/m/Y') : '';
+
+        return "{$start} ➔ {$end}";
     }
 }

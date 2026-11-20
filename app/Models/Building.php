@@ -19,6 +19,21 @@ class Building extends Model
     protected $table = 'buildings';
 
     /**
+     * Thuộc tính tính toán sẵn từ Backend trả về cho API / Giao diện.
+     *
+     * @var list<string>
+     */
+    protected $appends = [
+        'basements',
+        'total_net_area',
+        'base_rent_price_usd',
+        'service_fee_usd',
+        'formatted_area',
+        'formatted_rent_price',
+        'formatted_service_fee',
+    ];
+
+    /**
      * Danh sách các thuộc tính cho phép gán hàng loạt (Mass Assignment).
      *
      * @var list<string>
@@ -215,4 +230,91 @@ class Building extends Model
         return $this->hasMany(Ticket::class, 'building_id');
     }
 
+    /**
+     * Lấy số lượng tầng hầm của tòa nhà (tương thích ngược cho cột total_basements).
+     *
+     * @return int
+     */
+    public function getBasementsAttribute(): int
+    {
+        return (int) ($this->attributes['total_basements'] ?? 0);
+    }
+
+    /**
+     * Lấy tổng diện tích sàn cho thuê (m2).
+     *
+     * @return float
+     */
+    public function getTotalNetAreaAttribute(): float
+    {
+        return (float) ($this->attributes['total_leasable_area_sqm'] ?? 0);
+    }
+
+    /**
+     * Quy đổi đơn giá thuê cơ sở từ VNĐ sang USD theo tỷ giá cấu hình hệ thống.
+     *
+     * @return int
+     */
+    public function getBaseRentPriceUsdAttribute(): int
+    {
+        $vnd = (float) ($this->attributes['min_rent_price_per_sqm'] ?? 0);
+        $exchangeRate = (float) config('services.bms.usd_exchange_rate', 25000);
+
+        return ($vnd > 0 && $exchangeRate > 0) ? (int) round($vnd / $exchangeRate) : 0;
+    }
+
+    /**
+     * Quy đổi phí quản lý mặc định từ VNĐ sang USD theo tỷ giá cấu hình hệ thống.
+     *
+     * @return int
+     */
+    public function getServiceFeeUsdAttribute(): int
+    {
+        $vnd = (float) ($this->attributes['default_service_fee_per_sqm'] ?? 0);
+        $exchangeRate = (float) config('services.bms.usd_exchange_rate', 25000);
+
+        return ($vnd > 0 && $exchangeRate > 0) ? (int) round($vnd / $exchangeRate) : 0;
+    }
+
+    /**
+     * Chuỗi hiển thị tổng diện tích sàn đã định dạng chuẩn tiếng Việt.
+     *
+     * @return string
+     */
+    public function getFormattedAreaAttribute(): string
+    {
+        $area = (float) ($this->attributes['total_leasable_area_sqm'] ?? 0);
+
+        return $area > 0 ? number_format($area, 0, ',', '.') . ' m²' : '---';
+    }
+
+    /**
+     * Chuỗi hiển thị đơn giá thuê niêm yết (VNĐ/m² kèm quy đổi USD).
+     *
+     * @return string
+     */
+    public function getFormattedRentPriceAttribute(): string
+    {
+        $minVnd = (float) ($this->attributes['min_rent_price_per_sqm'] ?? 0);
+        if ($minVnd <= 0) {
+            return '---';
+        }
+        $usd = $this->base_rent_price_usd;
+
+        return number_format($minVnd, 0, ',', '.') . " đ/m² (~\${$usd})";
+    }
+
+    /**
+     * Chuỗi hiển thị phí dịch vụ quản lý định kỳ trên mỗi m².
+     *
+     * @return string
+     */
+    public function getFormattedServiceFeeAttribute(): string
+    {
+        $feeVnd = (float) ($this->attributes['default_service_fee_per_sqm'] ?? 0);
+
+        return $feeVnd > 0
+            ? 'Phí QL: ' . number_format($feeVnd, 0, ',', '.') . ' đ/m²'
+            : 'Phí QL: Đã gồm';
+    }
 }

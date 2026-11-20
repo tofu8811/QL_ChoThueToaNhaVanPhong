@@ -86,9 +86,6 @@ class AppServiceProvider extends ServiceProvider
                         $col3 = array_slice($wards, $perCol * 2);
 
                         $geo = [];
-                        try {
-                            $geo = app(\App\Services\LocationService::class)->getProvinceGeoData($provinceCode);
-                        } catch (\Throwable $e) {}
 
                         return [
                             'name' => $name,

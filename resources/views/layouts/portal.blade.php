@@ -21,10 +21,20 @@
   @include('portal.partials.styles')
   @livewireStyles
   @stack('styles')
+  <script>
+    (function() {
+      try {
+        var t = localStorage.getItem('auth_token');
+        if (t && !document.cookie.includes('auth_token=')) {
+          document.cookie = 'auth_token=' + t + '; path=/; max-age=86400; SameSite=Lax';
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head><body style="margin: 0 !important; padding: 0 !important;">
   @yield('content')
 
-  <!-- Modals (Báo giá nhanh, Ticket sự cố, Đăng nhập đa tác nhân) -->
+  <!-- Modals (Báo giá nhanh, Ticket sự cố, Đăng nhập hệ thống) -->
   @include('portal.partials.modals')
 
   <!-- JavaScript Client Logic & API Sync -->

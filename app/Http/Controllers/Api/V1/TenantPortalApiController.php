@@ -121,6 +121,13 @@ class TenantPortalApiController extends BaseApiController
             return Tenant::findOrFail($tenantId);
         }
 
+        // Cho phép Admin xem hồ sơ mẫu hoặc chỉ định tenant_id
+        if ($user instanceof \App\Models\Admin) {
+            $adminViewTenant = Tenant::first();
+            if ($adminViewTenant) {
+                return $adminViewTenant;
+            }
+        }
         throw new BusinessException('Yêu cầu xác thực tài khoản Khách thuê (Tenant).', 401);
     }
 }

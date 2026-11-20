@@ -9,6 +9,11 @@
 @endsection
 
 @section('content')
+  <script>
+    if (!localStorage.getItem('auth_token')) {
+      window.location.replace('/#portal');
+    }
+  </script>
   <div id="portal-wrapper">
     @include('portal.components.header')
 

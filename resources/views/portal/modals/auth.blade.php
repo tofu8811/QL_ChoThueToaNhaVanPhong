@@ -4,9 +4,9 @@
         <!-- Header Sang Trọng -->
         <div class="login-modal-header">
           <div class="login-header-badge">
-            <i class="fa-solid fa-shield-halved"></i> Hệ Thống Xác Thực Đa Tác Nhân
+            <i class="fa-solid fa-shield-halved"></i> Cổng Đăng Nhập Hệ Thống
           </div>
-          <h3 class="login-modal-title">Đăng Nhập Hệ Thống Đa Tác Nhân</h3>
+          <h3 class="login-modal-title">Đăng Nhập Hệ Thống Quản Trị</h3>
           <p class="login-modal-sub">Truy cập không gian làm việc số theo vai trò của bạn</p>
           <div class="login-modal-close" onclick="closeLoginModal()">
             <i class="fa-solid fa-xmark"></i>
@@ -58,14 +58,25 @@
                 </div>
               </div>
 
-              <!-- Role 4: Doanh Nghiệp Khách Thuê -->
-              <div class="sample-role-pill" id="chip-role-tenant" onclick="selectSampleRole('tenant', this)">
+              <!-- Role 4: Kế Toán Công Nợ -->
+              <div class="sample-role-pill" id="chip-role-accountant" onclick="selectSampleRole('accountant', this)">
+                <div class="sample-role-icon" style="background:#d1fae5; color:#047857;">
+                  <i class="fa-solid fa-file-invoice-dollar"></i>
+                </div>
+                <div class="sample-role-meta">
+                  <strong>Kế Toán (Acc)</strong>
+                  <small>Công nợ & Thanh toán</small>
+                </div>
+              </div>
+
+              <!-- Role 5: Doanh Nghiệp Khách Thuê -->
+              <div class="sample-role-pill" id="chip-role-tenant" style="grid-column: 1 / -1;" onclick="selectSampleRole('tenant', this)">
                 <div class="sample-role-icon" style="background:#ede9fe; color:#6d28d9;">
                   <i class="fa-solid fa-building"></i>
                 </div>
                 <div class="sample-role-meta">
-                  <strong>Khách Thuê (Tenant)</strong>
-                  <small>DN An Khang Tech</small>
+                  <strong>Khách Thuê Doanh Nghiệp (Tenant)</strong>
+                  <small>Cty Cổ Phần Công Nghệ Demo Tech — Hợp đồng, Ticket & Hóa đơn</small>
                 </div>
               </div>
             </div>
@@ -226,8 +237,8 @@
                   <i class="fa-solid fa-shield-halved"></i>
                 </div>
                 <div>
-                  <div style="font-weight:700; color:#0f3361; font-size:14px;">Phiên Làm Việc Laravel Sanctum</div>
-                  <div style="font-size:12px; color:#64748b;">Mã hóa Bearer Token an toàn theo tiêu chuẩn RESTful API</div>
+                  <div style="font-weight:700; color:#0f3361; font-size:14px;">Phiên Đăng Nhập & Bảo Mật</div>
+                  <div style="font-size:12px; color:#64748b;">Mã hóa bảo mật phiên làm việc trực tuyến an toàn</div>
                 </div>
               </div>
 

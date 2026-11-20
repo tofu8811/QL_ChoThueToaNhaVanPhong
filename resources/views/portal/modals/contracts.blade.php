@@ -234,3 +234,81 @@
     </form>
   </div>
 </div>
+
+<!-- MODAL 8: BIÊN BẢN BÀN GIAO MẶT BẰNG (ROLE 4: BQL) -->
+<div id="modal-contract-handover" class="mo-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.65);backdrop-filter:blur(3px);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:12px;width:100%;max-width:540px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);overflow:hidden;border:1px solid #cbd5e1;">
+    <div style="background:linear-gradient(135deg,#0f172a,#2563eb);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="margin:0;font-size:16px;font-weight:700;"><i class="fa-solid fa-clipboard-check"></i> Biên Bản Bàn Giao Mặt Bằng Văn Phòng</h3>
+      <button type="button" onclick="closeModal('modal-contract-handover')" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">&times;</button>
+    </div>
+    <form onsubmit="handleSaveHandover(event)" style="padding:20px;">
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">HỢP ĐỒNG THUÊ</label>
+        <input type="text" id="handover-contract-code" class="filament-input" readonly style="width:100%;background:#f1f5f9;font-weight:700;">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">NGÀY BÀN GIAO THỰC TẾ <span style="color:#ef4444;">*</span></label>
+          <input type="date" id="handover-actual-date" class="filament-input" required value="2026-11-18" style="width:100%;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">TIÊU CHUẨN BÀN GIAO</label>
+          <select id="handover-standard" class="filament-input" style="width:100%;">
+            <option value="BASIC">Hoàn thiện cơ bản (Trần, sàn, điều hòa)</option>
+            <option value="RAW">Bàn giao thô (Sàn bê tông)</option>
+            <option value="FULL">Đầy đủ nội thất văn phòng</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">HIỆN TRẠNG KỸ THUẬT KHI BÀN GIAO</label>
+        <textarea id="handover-notes" class="filament-input" rows="2" style="width:100%;">Hệ thống điều hòa Daikin hoạt động tốt, đồng hồ điện số 12450 kWh, 2 van nước khóa an toàn, 4 bình chữa cháy CO2 kiểm định đạt chuẩn.</textarea>
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">TẢI LÊN BẢN QUÉT BIÊN BẢN KÝ TAY (.PDF / .JPG)</label>
+        <input type="file" accept=".pdf,image/*" class="filament-input" style="width:100%;">
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;">
+        <button type="button" class="btn-mo-outline" onclick="closeModal('modal-contract-handover')">Hủy</button>
+        <button type="submit" class="btn-mo-primary"><i class="fa-solid fa-floppy-disk"></i> Lưu & Ký Bàn Giao</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL 9: LỊCH TRÌNH TĂNG GIÁ TỰ ĐỘNG (ROLE 4: BQL) -->
+<div id="modal-contract-escalation" class="mo-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.65);backdrop-filter:blur(3px);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:12px;width:100%;max-width:540px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);overflow:hidden;border:1px solid #cbd5e1;">
+    <div style="background:linear-gradient(135deg,#15803d,#16a34a);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="margin:0;font-size:16px;font-weight:700;"><i class="fa-solid fa-arrow-trend-up"></i> Thiết Lập Lịch Trình Tăng Giá Tự Động</h3>
+      <button type="button" onclick="closeModal('modal-contract-escalation')" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">&times;</button>
+    </div>
+    <form onsubmit="handleSaveEscalation(event)" style="padding:20px;">
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">HỢP ĐỒNG ÁP DỤNG</label>
+        <input type="text" id="esc-contract-code" class="filament-input" readonly style="width:100%;background:#f1f5f9;font-weight:700;">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div>
+          <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">CHU KỲ ĐIỀU CHỈNH</label>
+          <select id="esc-cycle" class="filament-input" style="width:100%;">
+            <option value="12">Mỗi 12 tháng (Hàng năm)</option>
+            <option value="24">Mỗi 24 tháng (2 năm một lần)</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">TỶ LỆ TĂNG GIÁ (%)</label>
+          <input type="number" step="0.5" id="esc-rate" class="filament-input" value="5.0" style="width:100%;">
+        </div>
+      </div>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;margin-bottom:16px;font-size:12.5px;color:#166534;">
+        <i class="fa-solid fa-calculator"></i> Hệ thống sẽ tự động điều chỉnh biểu phí thanh toán của khách thuê vào đầu mỗi năm hợp đồng và gửi thông báo trước 30 ngày.
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;">
+        <button type="button" class="btn-mo-outline" onclick="closeModal('modal-contract-escalation')">Hủy</button>
+        <button type="submit" class="btn-mo-primary" style="background:#16a34a;"><i class="fa-solid fa-check"></i> Lưu Lịch Trình Tăng Giá</button>
+      </div>
+    </form>
+  </div>
+</div>

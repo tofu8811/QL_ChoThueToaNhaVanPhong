@@ -36,7 +36,7 @@
     <!-- Main Header -->
     <header class="mo-header">
       <div class="container">
-        <a href="{{ route('home') }}" class="mo-logo" style="cursor: pointer; text-decoration: none;">
+        <a href="{{ route('home') }}" class="mo-logo" onclick="return handlePublicLogoClick(event);" title="Về trang chủ Cổng thông tin" style="cursor: pointer; text-decoration: none;">
           <div class="mo-logo-icon">
             <i class="fa-solid fa-building-wheat"></i>
           </div>
@@ -400,14 +400,12 @@
           <!-- 7. Nhận Báo Giá -->
           <a href="{{ route('quote.page') }}" 
              class="mo-nav-item {{ request()->routeIs('quote.page') ? 'active' : '' }}" 
+             onclick="if(window.location.pathname==='/'||window.location.pathname===''){ if(typeof showPublicPage==='function'){ showPublicPage('page-quote'); updateAppRoute('quote'); return false; } }"
              style="text-decoration:none;">Nhận Báo Giá</a>
+
         </nav>
 
         <div class="mo-header-actions">
-          <button class="btn-mo-outline" id="btn-workspace-nav" style="display:none;" onclick="handleGoToWorkspace()">
-            <i class="fa-solid fa-desktop"></i> <span id="btn-workspace-text">Không Gian Làm Việc</span>
-          </button>
-
           <!-- Nút Đăng Nhập / Thông tin User Auth -->
           <div id="auth-actions-container" style="display: inline-flex; align-items: center; position: relative;">
             <!-- Chưa đăng nhập: Nút mở Modal Login -->
@@ -472,7 +470,7 @@
     <!-- Off-canvas Mobile Menu Drawer -->
     <aside id="mo-mobile-drawer" class="mo-mobile-drawer" aria-label="Menu điều hướng di động">
       <div class="mo-drawer-header">
-        <a href="{{ route('home') }}" class="mo-logo" onclick="closeMobileMenu()" style="cursor: pointer; text-decoration: none;">
+        <a href="{{ route('home') }}" class="mo-logo" onclick="closeMobileMenu(); return handlePublicLogoClick(event);" title="Về trang chủ Cổng thông tin" style="cursor: pointer; text-decoration: none;">
           <div class="mo-logo-icon">
             <i class="fa-solid fa-building-wheat"></i>
           </div>
@@ -625,7 +623,9 @@
           </div>
 
           <!-- 7. Nhận Báo Giá Link -->
-          <a href="{{ route('quote.page') }}" class="mo-drawer-link {{ request()->routeIs('quote.page') ? 'active' : '' }}" onclick="closeMobileMenu()">
+          <a href="{{ route('quote.page') }}"
+             class="mo-drawer-link {{ request()->routeIs('quote.page') ? 'active' : '' }}"
+             onclick="closeMobileMenu(); if(window.location.pathname==='/'||window.location.pathname===''){ if(typeof showPublicPage==='function'){ showPublicPage('page-quote'); updateAppRoute('quote'); return false; } }">
             <i class="fa-solid fa-file-invoice-dollar" style="color: #f97316; width: 18px;"></i>
             <span>Tư Vấn Miễn Phí & Khảo Sát</span>
           </a>

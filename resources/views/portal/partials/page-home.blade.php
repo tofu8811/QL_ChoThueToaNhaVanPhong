@@ -8,7 +8,7 @@
             <span>Cho thuê văn phòng toàn quốc</span>
           </div>
           <h1 class="mo-hero-title">Cho Thuê Văn Phòng Toàn Quốc - Hà Nội, TP.HCM, Đồng Nai & Đà Nẵng</h1>
-          <p class="mo-hero-desc">Hệ thống khảo sát và phân phối mặt bằng văn phòng chuyên nghiệp toàn quốc theo chuẩn Maison Office. Dữ liệu thực tế hơn {{ $stats['total_buildings'] ?? 39 }}+ cao ốc từ Hạng A, B, C tại Hà Nội, TP. Hồ Chí Minh, Đồng Nai và Đà Nẵng. Tư vấn miễn phí và hỗ trợ thương lượng giá tốt nhất cho doanh nghiệp.</p>
+          <p class="mo-hero-desc">Hệ thống khảo sát và phân phối mặt bằng văn phòng chuyên nghiệp toàn quốc theo chuẩn Maison Office. Dữ liệu hơn {{ $stats['total_buildings'] ?? 22 }}+ cao ốc từ Hạng A, B, C tại Hà Nội, TP. Hồ Chí Minh, Đồng Nai và Đà Nẵng. Tư vấn miễn phí và hỗ trợ thương lượng giá tốt nhất cho doanh nghiệp.</p>
         </div>
       </section>
 
@@ -16,9 +16,7 @@
       <div class="container mo-filter-container">
         <div class="mo-filter-box">
           <div class="mo-filter-tabs">
-            <div class="mo-filter-tab active"><i class="fa-solid fa-building"></i> Cho Thuê Văn Phòng</div>
-            <div class="mo-filter-tab" onclick="alert('Đã chọn phân hệ Văn Phòng Trọn Gói / Coworking Space!')"><i class="fa-solid fa-briefcase"></i> Văn Phòng Trọn Gói</div>
-            <div class="mo-filter-tab" onclick="alert('Đã chọn phân hệ Tòa Nhà Nguyên Căn!')"><i class="fa-solid fa-city"></i> Tòa Nhà Nguyên Căn</div>
+            <div class="mo-filter-tab active"><i class="fa-solid fa-building"></i> Cho Thuê Văn Phòng Toàn Quốc</div>
           </div>
 
           <div class="mo-filter-grid">

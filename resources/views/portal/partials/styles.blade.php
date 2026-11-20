@@ -202,11 +202,16 @@
       box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.12), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
     }
     .mo-header .container {
-      gap: 16px;
+      gap: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       height: 74px;
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 24px;
+      box-sizing: border-box;
     }
     .mo-logo {
       flex-shrink: 0;
@@ -244,27 +249,30 @@
     }
 
     .mo-nav {
-      flex-shrink: 0;
+      flex: 1;
+      min-width: 0;
       display: flex;
       align-items: center;
-      gap: 16px;
+      justify-content: space-evenly;
+      margin: 0 clamp(8px, 1.5vw, 24px);
     }
     .mo-nav-item {
       white-space: nowrap !important;
       flex-shrink: 0;
-      letter-spacing: 0.15px;
+      letter-spacing: 0.1px;
       font-size: 13.5px;
       font-weight: 600;
       color: #334155;
-      padding: 8px 4px;
+      padding: 8px 6px;
       position: relative;
       cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 4px;
       background: none;
       border: none;
       font-family: inherit;
+      transition: color 0.15s ease;
     }
     .mo-nav-item:hover, .mo-nav-item.active {
       color: var(--mo-orange);
@@ -626,6 +634,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      padding-right: 2px;
     }
 
     /* Mobile Hamburger Menu Toggle Button */
@@ -1781,9 +1790,9 @@
       font-size: 14px;
     }
 
-    /* Filament Sidebar */
+    /* Filament Sidebar (Ẩn thanh lăn mặc định, chỉ hiện ra khi lăn) */
     .filament-sidebar {
-      width: 270px;
+      width: 276px;
       background-color: var(--fl-sidebar);
       color: #94a3b8;
       display: flex;
@@ -1794,7 +1803,27 @@
       top: 0;
       height: 100vh;
       overflow-y: auto;
+      overflow-x: hidden;
       z-index: 50;
+      scrollbar-width: none;
+    }
+    .filament-sidebar.is-scrolling {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+    }
+    .filament-sidebar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .filament-sidebar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .filament-sidebar::-webkit-scrollbar-thumb {
+      background: transparent;
+      border-radius: 999px;
+      transition: background 0.25s ease;
+    }
+    .filament-sidebar.is-scrolling::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.45);
     }
     .filament-brand {
       padding: 20px;
@@ -1812,70 +1841,86 @@
       font-size: 17px;
     }
     .filament-badge-role {
-      background: #f59e0b;
-      color: #000;
-      font-size: 10px;
+      background: rgba(245, 158, 11, 0.16);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      color: #fbbf24;
+      font-size: 9.5px;
       font-weight: 800;
-      padding: 2px 6px;
-      border-radius: 4px;
+      padding: 2px 7px;
+      border-radius: 5px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.4px;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .filament-nav-section {
-      padding: 16px 12px 6px;
+      padding: 14px 12px 4px;
     }
     .filament-section-heading {
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
       color: #64748b;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.8px;
       padding: 0 10px 8px;
     }
     .filament-link {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      padding: 9px 12px;
+      gap: 8px;
+      padding: 9px 11px;
       border-radius: 8px;
       color: #cbd5e1;
       font-weight: 500;
-      font-size: 13.5px;
+      font-size: 13px;
       cursor: pointer;
-      margin-bottom: 2px;
+      margin-bottom: 3px;
       transition: all 0.15s;
+      white-space: nowrap;
     }
     .filament-link-content {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .filament-link i {
-      font-size: 16px;
-      width: 20px;
+      font-size: 15px;
+      width: 18px;
       text-align: center;
       color: #94a3b8;
+      flex-shrink: 0;
     }
     .filament-link:hover {
       background: var(--fl-sidebar-hover);
       color: #ffffff;
     }
-    .filament-link:hover i { color: #f59e0b; }
+    .filament-link:hover i { color: #60a5fa; }
     .filament-link.active {
       background: #2563eb;
       color: #ffffff;
       font-weight: 600;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
     }
     .filament-link.active i {
       color: #ffffff;
     }
     .filament-nav-badge {
-      font-size: 11px;
+      font-size: 10.5px;
       padding: 2px 7px;
-      border-radius: 999px;
+      border-radius: 6px;
       font-weight: 700;
+      line-height: 1.3;
+      white-space: nowrap;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     /* Filament Main Area */
@@ -2057,7 +2102,7 @@
       font-size: 13px;
     }
 
-    /* Filament Badges */
+    /* FilamentBadges & VIETOFFICE BMS Proptech Core Styling (Image 2 Design) */
     .badge-filament {
       font-size: 11.5px;
       font-weight: 700;
@@ -2071,6 +2116,338 @@
     .badge-filament.warning { background: #fef3c7; color: #b45309; }
     .badge-filament.danger { background: #fee2e2; color: #b91c1c; }
     .badge-filament.info { background: #e0f2fe; color: #0369a1; }
+
+    /* BMS Brand & Context Selector in Sidebar */
+    .bms-brand-header {
+      padding: 18px 16px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .bms-brand-left {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+    .bms-brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+      flex-shrink: 0;
+    }
+    .bms-brand-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      line-height: 1.2;
+    }
+    .bms-brand-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      display: inline-block;
+      box-shadow: 0 0 8px #10b981;
+    }
+    .bms-brand-sub {
+      font-size: 10px;
+      font-weight: 700;
+      color: #64748b;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .bms-context-switcher {
+      margin: 0 12px 10px;
+      padding: 10px 12px;
+      background: rgba(30, 41, 59, 0.75);
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s;
+    }
+    .bms-context-switcher:hover {
+      border-color: #334155;
+      background: #1e293b;
+    }
+    .bms-context-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .bms-context-select-wrap {
+      flex: 1;
+      min-width: 0;
+    }
+    .bms-context-select {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: #f8fafc;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+      outline: none;
+      text-overflow: ellipsis;
+    }
+    .bms-context-select option {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 6px;
+    }
+    .bms-context-sub {
+      font-size: 10.5px;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 1px;
+    }
+
+    /* Topbar Breadcrumb & Sync Status */
+    .bms-topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #64748b;
+      font-weight: 500;
+    }
+    .bms-topbar-left .bms-bc-current {
+      color: #2563eb;
+      font-weight: 700;
+    }
+    .bms-sync-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #15803d;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .bms-sync-pill .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #16a34a;
+    }
+    .bms-notif-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      color: #475569;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .bms-notif-btn:hover {
+      background: #eff6ff;
+      color: #2563eb;
+      border-color: #bfdbfe;
+    }
+    .bms-notif-dot {
+      position: absolute;
+      top: 6px;
+      right: 7px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ef4444;
+      border: 1.5px solid #fff;
+    }
+
+    /* BMS 4 KPI Cards (Image 2 Spec) */
+    .bms-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+    .bms-kpi-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 20px 22px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+    }
+    .bms-kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.06);
+      border-color: #cbd5e1;
+    }
+    .bms-kpi-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .bms-kpi-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      line-height: 1.4;
+    }
+    .bms-kpi-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .bms-kpi-main {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .bms-kpi-number {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.5px;
+    }
+    .bms-kpi-pill {
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+    }
+    .bms-kpi-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12.5px;
+      color: #64748b;
+      padding-top: 12px;
+      border-top: 1px solid #f1f5f9;
+    }
+    .bms-kpi-foot strong {
+      color: #0f172a;
+      font-weight: 700;
+    }
+
+    /* BMS Analytics Row (Donut + Building Performance) */
+    .bms-analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.55fr;
+      gap: 20px;
+      margin-bottom: 26px;
+    }
+    .bms-panel-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 22px 24px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .bms-building-perf-item {
+      margin-bottom: 18px;
+    }
+    .bms-building-perf-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 7px;
+      font-size: 13px;
+    }
+    .bms-progress-track {
+      width: 100%;
+      height: 10px;
+      background: #f1f5f9;
+      border-radius: 999px;
+      position: relative;
+      overflow: visible;
+    }
+    .bms-progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.5s ease;
+    }
+    .bms-progress-kpi-marker {
+      position: absolute;
+      top: -3px;
+      bottom: -3px;
+      left: 85%;
+      width: 2px;
+      background: #94a3b8;
+      border-radius: 2px;
+      z-index: 2;
+    }
+
+    /* BMS Bottom Operational Alerts (3 Cards Grid) */
+    .bms-alerts-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 14px;
+    }
+    .bms-alert-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 18px 20px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+      transition: all 0.2s;
+    }
+    .bms-alert-card:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 6px 16px -4px rgba(15, 23, 42, 0.06);
+    }
+    @media (max-width: 1100px) {
+      .bms-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .bms-analytics-grid { grid-template-columns: 1fr; }
+      .bms-alerts-grid { grid-template-columns: 1fr; }
+    }
 
     /* ==========================================================================
        8. MAISON OFFICE FOOTER (Chuẩn BĐS cao cấp & thông tin đề tài)
@@ -2163,20 +2540,24 @@
     }
 
     /* Responsive */
-    @media (max-width: 1200px) and (min-width: 1025px) {
+    @media (max-width: 1366px) and (min-width: 1025px) {
       .mo-header .container {
         padding: 0 16px;
         gap: 8px;
       }
       .mo-nav {
-        gap: 6px;
+        margin: 0 8px;
+        justify-content: space-evenly;
       }
       .mo-nav-item {
-        font-size: 13px;
-        padding: 6px 6px;
+        font-size: 12.5px;
+        padding: 6px 3px;
       }
       .mo-logo-text h1 {
         font-size: 18px;
+      }
+      .user-name-label {
+        max-width: 95px;
       }
     }
     @media (max-width: 1200px) {
@@ -2300,16 +2681,19 @@
       border-radius: 24px;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
       cursor: pointer;
       transition: all 0.2s ease;
       white-space: nowrap !important;
       flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+      box-sizing: border-box;
+      max-width: 175px;
     }
     .user-profile-pill:hover {
       background: #eff6ff;
       border-color: #93c5fd;
-      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
     }
     .user-avatar-circle {
       width: 30px;
@@ -2318,38 +2702,47 @@
       background: linear-gradient(135deg, #0f3361, #2563eb);
       color: #ffffff;
       font-weight: 700;
-      font-size: 11.5px;
+      font-size: 11px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 6px rgba(15, 51, 97, 0.25);
+      box-shadow: 0 2px 5px rgba(15, 51, 97, 0.2);
+      flex-shrink: 0;
     }
     .user-info-text {
       display: flex;
       flex-direction: column;
       text-align: left;
       line-height: 1.2;
+      min-width: 0;
     }
     .user-name-label {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
       color: #0f3361;
-      max-width: 110px;
+      max-width: 105px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      display: block;
     }
     .user-role-tag {
-      font-size: 10px;
+      font-size: 9.5px;
       font-weight: 600;
       color: #2563eb;
       text-transform: uppercase;
       letter-spacing: 0.3px;
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .user-dropdown-caret {
-      font-size: 10px;
+      font-size: 9.5px;
       color: #64748b;
       transition: transform 0.2s;
+      flex-shrink: 0;
+      margin-left: 1px;
     }
     .user-profile-pill.active .user-dropdown-caret {
       transform: rotate(180deg);
@@ -2359,7 +2752,7 @@
       position: absolute;
       top: calc(100% + 8px);
       right: 0;
-      width: 240px;
+      width: 250px;
       background: #ffffff;
       border-radius: 12px;
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
@@ -3097,20 +3490,132 @@
       color: #0f172a;
     }
     .staff-subtab-btn.active {
-      background: #0f3361;
+      background: #2563eb;
       color: #ffffff;
-      box-shadow: 0 2px 8px rgba(15, 51, 97, 0.3);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+    .staff-subtab-btn.active i {
+      color: #ffffff !important;
     }
     .staff-subtab-btn .badge-pill {
-      background: rgba(255, 255, 255, 0.2);
-      padding: 2px 7px;
-      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+      padding: 2px 8px;
+      border-radius: 999px;
       font-size: 11px;
+      font-weight: 700;
     }
     .staff-subtab-btn:not(.active) .badge-pill {
-      background: #cbd5e1;
+      background: #e2e8f0;
       color: #334155;
     }
+
+    /* Card, Table & Form Controls cho cả 5 mục Nhân Sự & Phân Quyền (RBAC) */
+    #tab-admin-staff > .filament-card,
+    .staff-subpanel > .filament-card {
+      padding: 20px 24px;
+    }
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      background: #ffffff;
+    }
+    .filament-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      text-align: left;
+    }
+    .filament-table thead th {
+      background: #f8fafc;
+      color: #475569;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 13px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      white-space: nowrap;
+    }
+    .filament-table tbody td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #334155;
+      vertical-align: middle;
+    }
+    .filament-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+    .filament-table tbody tr:hover td {
+      background: #f8fafc;
+    }
+
+    /* Chuẩn hóa Form Control & Modals cho cả 5 mục Nhân sự & Phân công */
+    .form-control {
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 0 12px;
+      height: 38px;
+      font-size: 13px;
+      color: #0f172a;
+      background: #ffffff;
+      outline: none;
+      transition: all 0.15s ease;
+    }
+    .form-control:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .mo-modal-content {
+      background: #ffffff !important;
+      width: 100%;
+      max-width: 560px;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.45);
+      border: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      margin: auto;
+    }
+    .mo-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 24px;
+      color: #ffffff;
+    }
+    .mo-modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+      font-size: 20px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+    .mo-modal-close:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+    .mo-modal-content .mo-modal-body {
+      background: #ffffff;
+      color: #1e293b;
+      padding: 24px;
+    }
+
     .building-select-grid {
       max-height: 180px;
       overflow-y: auto;
@@ -3141,27 +3646,29 @@
     }
     .building-check-label input[type="checkbox"] {
       cursor: pointer;
-      accent-color: #0f3361;
+      accent-color: #2563eb;
     }
     .staff-badge-super {
       background: #fee2e2;
       color: #b91c1c;
       border: 1px solid #fecaca;
       font-weight: 700;
-      padding: 2px 8px;
+      padding: 3px 9px;
       border-radius: 9999px;
       font-size: 11px;
       display: inline-flex;
       align-items: center;
       gap: 4px;
+      white-space: nowrap;
     }
     .staff-badge-admin {
       background: #e0e7ff;
       color: #3730a3;
       border: 1px solid #c7d2fe;
       font-weight: 600;
-      padding: 2px 8px;
+      padding: 3px 9px;
       border-radius: 9999px;
       font-size: 11px;
+      white-space: nowrap;
     }
   </style>

@@ -35,11 +35,12 @@ class BuildingApiController extends BaseApiController
         return $this->successResponse($building, 'Lấy thông tin chi tiết tòa nhà thành công.');
     }
 
-    // Lấy danh sách tòa nhà cho trang quản trị (Admin)
+    // Lấy danh sách tòa nhà cho trang quản trị (Admin / BQL / Sales / Kế toán)
     public function adminIndex(Request $request): JsonResponse
     {
         $perPage = (int) $request->input('per_page', 15);
-        $buildings = $this->buildingService->getAdminBuildings($request->all(), $request->user(), $perPage);
+        $user = auth('sanctum')->user() ?? $request->user();
+        $buildings = $this->buildingService->getAdminBuildings($request->all(), $user, $perPage);
 
         return $this->paginateResponse($buildings, 'Lấy danh sách quản trị tòa nhà thành công.');
     }

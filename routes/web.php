@@ -21,3 +21,8 @@ Route::middleware(['web', 'auth:admin,web'])->group(function () {
 
 // Cổng thông tin Khách thuê
 Route::get('cong-khach-thue', [PortalWebController::class, 'tenantPortalPage'])->name('tenant-portal.page');
+
+// Các endpoint tính toán & kết xuất báo cáo từ Backend (Server-side Calculation & Export)
+Route::get('bao-cao/tong-quan-csv', [PortalWebController::class, 'exportDashboardCsv'])->name('admin.dashboard.export-csv');
+Route::get('api/quote-estimate', [PortalWebController::class, 'calculateQuoteEstimate'])->name('admin.quote.estimate');
+Route::get('bao-cao/bao-gia-csv', [PortalWebController::class, 'exportQuoteCsv'])->name('admin.quote.export-csv');

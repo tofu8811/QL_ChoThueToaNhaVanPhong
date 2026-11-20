@@ -1,16 +1,16 @@
 <!-- TAB 3: ADMIN TICKETS & BẢO TRÌ (Ban quản lý xử lý yêu cầu khách thuê - Module 4) -->
 <div id="tab-admin-tickets" class="filament-tab-pane" style="display:none;">
-  <div class="filament-page-header">
+  <div class="filament-page-header" style="align-items:center;">
     <div>
-      <div class="filament-breadcrumbs">Vận hành / Hỗ trợ khách thuê (Module 4)</div>
-      <h1 class="filament-page-title">Tiếp Nhận & Điều Phối Ticket Bảo Trì</h1>
+      <h1 class="filament-page-title" style="font-size:23px;margin-bottom:4px;">Quản Lý Bảo Trì & Điều Phối Ticket Kỹ Thuật</h1>
+      <p style="font-size:13.5px;color:#64748b;margin:0;">Tiếp nhận yêu cầu sửa chữa từ khách thuê, phân công kỹ thuật viên BQL xử lý và nghiệm thu chất lượng vận hành.</p>
     </div>
     <div style="display:flex;gap:8px;">
-      <button class="btn-mo-outline" onclick="loadTicketsList('admin')">
-        <i class="fa-solid fa-arrows-rotate"></i> Tải Lại Dữ Liệu
+      <button class="btn-mo-outline" style="background:#fff;" onclick="loadTicketsList('admin')">
+        <i class="fa-solid fa-arrows-rotate"></i> Làm mới
       </button>
-      <button class="btn-mo-primary" onclick="alert('Đã kết xuất danh sách phiếu kỹ thuật gửi đội cơ điện tòa nhà!')">
-        <i class="fa-solid fa-print"></i> In Phiếu Kỹ Thuật
+      <button class="btn-mo-primary" style="background:#2563eb;" onclick="window.print()">
+        <i class="fa-solid fa-print"></i> In phiếu kỹ thuật
       </button>
     </div>
   </div>
@@ -19,7 +19,7 @@
   <div class="filament-card" style="margin-bottom:14px; padding:12px 18px;">
     <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
       <div style="flex:1; min-width:200px;">
-        <input type="text" id="ticket-filter-keyword" class="filament-input-sm" placeholder="Tìm theo mã ticket, tiêu đề, phòng..." onkeyup="if(event.key==='Enter') loadTicketsList('admin')">
+        <input type="text" id="ticket-filter-keyword" class="filament-input-sm" placeholder="Tìm theo mã ticket, tiêu đề, phòng, tòa nhà, công ty..." oninput="loadTicketsList('admin')" onkeyup="if(event.key==='Enter') loadTicketsList('admin')" style="width:100%;">
       </div>
       <div>
         <select id="ticket-filter-status" class="filament-input-sm" onchange="loadTicketsList('admin')">

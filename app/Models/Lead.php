@@ -18,6 +18,21 @@ class Lead extends Model
     protected $table = 'leads';
 
     /**
+     * Thuộc tính chuẩn hóa từ Backend trả về cho API & Giao diện CRM.
+     *
+     * @var list<string>
+     */
+    protected $appends = [
+        'lead_code',
+        'contact_name',
+        'contact_phone',
+        'contact_email',
+        'expected_area',
+        'pipeline_status',
+        'notes',
+    ];
+
+    /**
      * @var list<string>
      */
     protected $fillable = [
@@ -108,5 +123,77 @@ class Lead extends Model
     public function scopeStatus(Builder $query, LeadStatus $status): Builder
     {
         return $query->where('status', $status);
+    }
+
+    /**
+     * Mã định danh rút gọn của Lead trên bảng CRM.
+     *
+     * @return string
+     */
+    public function getLeadCodeAttribute(): string
+    {
+        return 'LD-' . strtoupper(substr((string) ($this->attributes['id'] ?? ''), -6));
+    }
+
+    /**
+     * Họ và tên khách hàng liên hệ (đồng bộ tên trường cho bảng CRM).
+     *
+     * @return string
+     */
+    public function getContactNameAttribute(): string
+    {
+        return (string) ($this->attributes['contact_full_name'] ?? '---');
+    }
+
+    /**
+     * Số điện thoại khách hàng liên hệ.
+     *
+     * @return string
+     */
+    public function getContactPhoneAttribute(): string
+    {
+        return (string) ($this->attributes['phone'] ?? '---');
+    }
+
+    /**
+     * Địa chỉ email khách hàng liên hệ.
+     *
+     * @return string
+     */
+    public function getContactEmailAttribute(): string
+    {
+        return (string) ($this->attributes['email'] ?? '');
+    }
+
+    /**
+     * Diện tích thuê mong muốn (m2).
+     *
+     * @return float
+     */
+    public function getExpectedAreaAttribute(): float
+    {
+        return (float) ($this->attributes['desired_area_sqm'] ?? 0);
+    }
+
+    /**
+     * Giá trị trạng thái Pipeline chuẩn chuỗi in hoa.
+     *
+     * @return string
+     */
+    public function getPipelineStatusAttribute(): string
+    {
+        $st = $this->status;
+
+        return $st instanceof LeadStatus ? $st->value : (string) ($st ?? LeadStatus::NEW->value);
+    }
+
+    /**
+     * Ghi chú yêu cầu của khách hàng.
+     *
+     * @return string
+     */
+    public function getNotesAttribute(): string
+    {
+        return (string) ($this->attributes['customer_note'] ?? '');
     }
 }

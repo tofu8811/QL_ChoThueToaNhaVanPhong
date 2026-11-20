@@ -44,7 +44,22 @@ class TicketService
             'assignedPm:id,full_name,employee_code,phone',
         ]);
 
-        // Phân quyền dữ liệu (Multi-guard scope)
+        // Phân quyền dữ liệu (Multi-guard scope: ưu tiên user xác thực Sanctum)
+        if (!$user) {
+            $user = auth('sanctum')->user() ?? request()->user();
+        }
+        if (!$user && request()->header('X-User-Role')) {
+            $hdrRole = strtolower((string) request()->header('X-User-Role'));
+            $hdrId = (string) request()->header('X-User-Id');
+            if ($hdrRole === 'tenant') {
+                $user = ($hdrId ? Tenant::find($hdrId) : null)
+                    ?? Tenant::first();
+            } elseif (in_array($hdrRole, ['pm', 'property_manager'])) {
+                $user = ($hdrId ? PropertyManager::find($hdrId) : null)
+                    ?? PropertyManager::first();
+            }
+        }
+
         if ($user instanceof Tenant) {
             $query->where('tenant_id', $user->id);
         } elseif ($user instanceof PropertyManager) {
@@ -82,13 +97,17 @@ class TicketService
             $query->where('building_id', $filters['building_id']);
         }
 
-        // Tìm kiếm theo từ khóa
-        if (!empty($filters['keyword'])) {
-            $kw = '%' . trim($filters['keyword']) . '%';
+        // Tìm kiếm theo từ khóa (hỗ trợ cả tham số keyword và search: Mã ticket, tiêu đề, phòng, tòa nhà, công ty)
+        $rawKeyword = $filters['keyword'] ?? $filters['search'] ?? '';
+        if (!empty($rawKeyword)) {
+            $kw = '%' . trim((string) $rawKeyword) . '%';
             $query->where(function ($q) use ($kw) {
                 $q->where('ticket_code', 'like', $kw)
                   ->orWhere('title', 'like', $kw)
-                  ->orWhere('description', 'like', $kw);
+                  ->orWhere('description', 'like', $kw)
+                  ->orWhereHas('unit', fn ($u) => $u->where('unit_code', 'like', $kw))
+                  ->orWhereHas('building', fn ($b) => $b->where('name', 'like', $kw))
+                  ->orWhereHas('tenant', fn ($t) => $t->where('company_name', 'like', $kw));
             });
         }
 

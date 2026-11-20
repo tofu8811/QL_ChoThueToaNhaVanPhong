@@ -35,11 +35,12 @@ class UnitApiController extends BaseApiController
         return $this->successResponse($unit, 'Lấy thông tin chi tiết mặt bằng thành công.');
     }
 
-    // Lấy danh sách mặt bằng cho trang quản trị (Admin)
+    // Lấy danh sách mặt bằng cho trang quản trị (Admin / BQL / Sales / Kế toán)
     public function adminIndex(Request $request): JsonResponse
     {
         $perPage = (int) $request->input('per_page', 15);
-        $units = $this->unitService->getAdminUnits($request->all(), $request->user(), $perPage);
+        $user = auth('sanctum')->user() ?? $request->user();
+        $units = $this->unitService->getAdminUnits($request->all(), $user, $perPage);
 
         return $this->paginateResponse($units, 'Lấy danh sách quản trị mặt bằng thành công.');
     }

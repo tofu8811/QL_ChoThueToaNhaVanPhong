@@ -29,7 +29,8 @@ class ContractApiController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $perPage = (int) $request->input('per_page', 15);
-        $contracts = $this->contractService->getContracts($request->all(), $request->user(), $perPage);
+        $user = auth('sanctum')->user() ?? $request->user();
+        $contracts = $this->contractService->getContracts($request->all(), $user, $perPage);
 
         return $this->paginateResponse($contracts, 'Lấy danh sách hợp đồng thuê thành công.');
     }

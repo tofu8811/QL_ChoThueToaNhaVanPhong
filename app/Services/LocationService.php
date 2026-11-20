@@ -27,6 +27,10 @@ class LocationService
      */
     public function getProvinceGeoData(int $provinceCode): array
     {
+        if (app()->environment('testing')) {
+            return [];
+        }
+
         $fileName = self::GEO_STORAGE_DIR . "/province_{$provinceCode}.json";
 
         // 1. Kiểm tra file đã tồn tại trong local storage chưa
@@ -94,18 +98,9 @@ class LocationService
             $wardCode = (int) $w['code'];
             $wardName = $w['name'];
 
-            // Lấy danh sách phường cũ đã sáp nhập thành phường này (nếu có)
-            $legacies = $this->fetchWardLegacies($wardCode, $districtMap);
-
-            // Tìm gợi ý tên Quận cũ từ các đơn vị tiền thân (legacy)
             $districtHint = null;
-            if (!empty($legacies)) {
-                foreach ($legacies as $legacy) {
-                    if (!empty($legacy['district_name'])) {
-                        $districtHint = $legacy['district_name'];
-                        break;
-                    }
-                }
+            if (!empty($w['district_code']) && isset($districtMap[(int) $w['district_code']])) {
+                $districtHint = $districtMap[(int) $w['district_code']];
             }
 
             // Tạo nhãn hiển thị chuẩn: "Phường Sài Gòn (Quận 1)" hoặc giữ nguyên nếu không có hint
@@ -124,7 +119,7 @@ class LocationService
                 'district_hint' => $districtHint,
                 'display_label' => $displayLabel,
                 'slug' => Str::slug($wardName),
-                'legacies' => $legacies,
+                'legacies' => [],
             ];
         }
 

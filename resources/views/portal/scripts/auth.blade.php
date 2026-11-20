@@ -17,7 +17,7 @@
       document.getElementById("login-modal").classList.remove("show");
     }
 
-    function selectSampleRole(role, el) {
+    function selectSampleRole(role, el, autoSubmit = false) {
       document.querySelectorAll('.sample-role-pill').forEach(pill => pill.classList.remove('selected'));
       if (el) el.classList.add('selected');
 
@@ -43,6 +43,10 @@
       } else if (role === 'tenant') {
         emailInput.value = 'tenant.demo@officeleasing.vn';
         passInput.value = 'Password@123';
+      }
+
+      if (autoSubmit) {
+        handleLoginSubmit({ preventDefault: () => {} });
       }
     }
 
@@ -136,11 +140,9 @@
           localStorage.setItem('auth_user', JSON.stringify(authData.user));
 
           closeLoginModal();
-          alert(`Đăng nhập thành công!\nXin chào ${authData.user.full_name || authData.user.name} (${authData.role})`);
-          
           updateAuthUI(authData.user, authData.role);
 
-          // Tự động chuyển view phù hợp theo đúng Role
+          // Tự động chuyển view phù hợp theo đúng Role ngay lập tức
           const upperRole = String(authData.role || '').toUpperCase();
           if (upperRole === 'ADMIN' || upperRole === 'SUPER_ADMIN') {
             handleRoleSwitch('admin');

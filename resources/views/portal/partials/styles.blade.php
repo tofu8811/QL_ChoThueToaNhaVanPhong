@@ -2924,6 +2924,25 @@
       color: #1e293b;
       line-height: 1.2;
     }
+    .btn-pill-direct-login {
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      margin-left: auto;
+      box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
+    }
+    .btn-pill-direct-login:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+    }
     .sample-role-meta small {
       display: block;
       font-size: 11px;

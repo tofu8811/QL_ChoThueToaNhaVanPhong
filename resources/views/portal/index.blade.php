@@ -4,8 +4,8 @@
   $totalB = $stats['total_buildings'] ?? 39;
   $provincesText = $stats['active_provinces_text'] ?? 'Hà Nội, TP.HCM, Đồng Nai & Đà Nẵng';
   $provincesArr = !empty($stats['active_provinces']) ? $stats['active_provinces'] : ['Thành phố Hà Nội', 'Thành phố Hồ Chí Minh', 'Thành phố Đồng Nai', 'Thành phố Đà Nẵng'];
-  $minPrice = $stats['min_price_usd'] ?? 10;
-  $maxPrice = $stats['max_price_usd'] ?? 70;
+  $minPrice = $stats['min_price_vnd'] ?? 240000;
+  $maxPrice = $stats['max_price_vnd'] ?? 1680000;
 @endphp
 
 @section('title', 'Cho Thuê Văn Phòng Toàn Quốc | Office Portal')
@@ -26,7 +26,7 @@
     'name' => 'Office Leasing Portal',
     'description' => 'Hệ thống Quản lý và Cho thuê Tòa nhà Văn phòng chuyên nghiệp toàn quốc',
     'areaServed' => $provincesArr,
-    'priceRange' => '$' . $minPrice . ' - $' . $maxPrice . ' / m²',
+    'priceRange' => number_format($minPrice, 0, ',', '.') . ' - ' . number_format($maxPrice, 0, ',', '.') . ' VNĐ/m²',
   ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}
   </script>
 @endsection

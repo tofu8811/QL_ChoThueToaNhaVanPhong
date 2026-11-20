@@ -121,16 +121,6 @@ class TenantPortalApiController extends BaseApiController
             return Tenant::findOrFail($tenantId);
         }
 
-        // Fallback demo tenant cho môi trường local/testing để trải nghiệm liền mạch
-        if (app()->environment('local', 'testing')) {
-            $fallback = Tenant::where('login_email', 'contact@vng.com.vn')->first()
-                ?? Tenant::has('contracts')->first()
-                ?? Tenant::first();
-            if ($fallback) {
-                return $fallback;
-            }
-        }
-
         throw new BusinessException('Yêu cầu xác thực tài khoản Khách thuê (Tenant).', 401);
     }
 }

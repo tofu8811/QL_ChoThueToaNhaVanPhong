@@ -32,8 +32,8 @@
 
             <div class="detail-price-highlight">
               <div style="font-size: 13px; color: #64748b; font-weight: 500;">Giá chào thuê chính thức:</div>
-              <div style="font-size: 26px; font-weight: 800; color: #ea580c;" id="detail-price-text">$48 - $54 / m² / tháng</div>
-              <div style="font-size: 12px; color: #94a3b8;">(Khoảng 1.180.000đ - 1.330.000đ/m² - Chưa bao gồm VAT & PQL)</div>
+              <div style="font-size: 26px; font-weight: 800; color: #ea580c;" id="detail-price-text">1.150.000 đ - 1.350.000 đ / m²</div>
+              <div style="font-size: 12px; color: #94a3b8;">(Đơn giá áp dụng theo diện tích sàn thuê thực tế - Chưa bao gồm VAT & PQL)</div>
             </div>
 
             <!-- Specs Table -->

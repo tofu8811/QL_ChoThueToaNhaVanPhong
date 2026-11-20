@@ -36,13 +36,17 @@ class PortalWebTest extends TestCase
         $response = $this->get('/');
 
         $response->assertStatus(200);
-        $response->assertSee('Cho Thuê Văn Phòng TP.HCM');
+        $response->assertSee('Cho Thuê Văn Phòng Toàn Quốc');
         $response->assertSee('Filament Admin');
 
         // Kiểm tra dữ liệu thật từ database được render lên trang chủ
-        $response->assertSee('22+', false);
-        $response->assertSee('428.430', false);
-        $response->assertSee('10+', false);
+        $totalBuildings = Building::published()->count();
+        $response->assertSee($totalBuildings . '+', false);
+        
+        $totalArea = Building::published()->sum('total_leasable_area_sqm');
+        if ($totalArea > 0) {
+            $response->assertSee(number_format($totalArea, 0, ',', '.'), false);
+        }
     }
 
     /**

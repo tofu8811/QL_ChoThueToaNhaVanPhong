@@ -47,7 +47,7 @@ class BuildingApiController extends BaseApiController
     // Tạo mới một tòa nhà văn phòng
     public function store(StoreBuildingRequest $request): JsonResponse
     {
-        $adminId = $request->user()?->id;
+        $adminId = $request->user() instanceof \App\Models\Admin ? $request->user()->id : null;
         $building = $this->buildingService->storeBuilding($request->validated(), $adminId);
 
         return $this->createdResponse($building, 'Khởi tạo tòa nhà văn phòng thành công.');

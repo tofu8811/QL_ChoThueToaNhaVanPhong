@@ -105,12 +105,10 @@ class UnitService
         $query = Unit::query()
             ->with(['building.provinceRelation', 'primaryImage', 'updatedByPropertyManager']);
 
-        // Phân quyền theo tòa nhà nếu không phải Super Admin
-        if ($user && method_exists($user, 'isSuperAdmin') && !$user->isSuperAdmin()) {
-            if (method_exists($user, 'assignedBuildings')) {
-                $assignedIds = $user->assignedBuildings()->pluck('buildings.id')->toArray();
-                $query->whereIn('building_id', $assignedIds);
-            }
+        // Phân quyền dữ liệu theo phạm vi tòa nhà nếu là PropertyManager, Sale hoặc Accountant
+        if ($user instanceof \App\Models\PropertyManager || $user instanceof \App\Models\Sale || $user instanceof \App\Models\Accountant) {
+            $assignedIds = $user->buildings()->pluck('buildings.id')->toArray();
+            $query->whereIn('building_id', $assignedIds);
         }
 
         if (!empty($filters['building_id'])) {

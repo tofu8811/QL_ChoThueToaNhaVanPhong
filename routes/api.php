@@ -48,60 +48,90 @@ Route::prefix('v1')->group(function () {
     // =========================================================================
     // MODULE 1: QUẢN TRỊ TÒA NHÀ & MẶT BẰNG (ADMIN & BQL)
     // =========================================================================
-    Route::prefix('admin')->group(function () {
-        // Quản lý Tòa nhà & Thư viện hình ảnh
-        Route::get('buildings', [BuildingApiController::class, 'adminIndex'])->name('v1.admin.buildings.index');
-        Route::post('buildings', [BuildingApiController::class, 'store'])->name('v1.admin.buildings.store');
-        Route::get('buildings/{id}', [BuildingApiController::class, 'show'])->name('v1.admin.buildings.show');
-        Route::put('buildings/{id}', [BuildingApiController::class, 'update'])->name('v1.admin.buildings.update');
-        Route::delete('buildings/{id}', [BuildingApiController::class, 'destroy'])->name('v1.admin.buildings.destroy');
+    Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
+        // Quản lý Tòa nhà & Thư viện hình ảnh (Admin & PM)
+        Route::middleware('role:admin,property_manager')->group(function () {
+            Route::get('buildings', [BuildingApiController::class, 'adminIndex'])->name('v1.admin.buildings.index');
+            Route::get('buildings/{id}', [BuildingApiController::class, 'show'])->name('v1.admin.buildings.show');
 
-        Route::post('buildings/{id}/images', [BuildingApiController::class, 'uploadImages'])->name('v1.admin.buildings.images.store');
-        Route::delete('buildings/{id}/images/{imageId}', [BuildingApiController::class, 'deleteImage'])->name('v1.admin.buildings.images.destroy');
-        Route::patch('buildings/{id}/images/{imageId}/set-primary', [BuildingApiController::class, 'setPrimaryImage'])->name('v1.admin.buildings.images.primary');
+            // Chỉ Admin mới được tạo, cập nhật thông tin và xóa tòa nhà
+            Route::middleware('role:admin')->group(function () {
+                Route::post('buildings', [BuildingApiController::class, 'store'])->name('v1.admin.buildings.store');
+                Route::put('buildings/{id}', [BuildingApiController::class, 'update'])->name('v1.admin.buildings.update');
+                Route::delete('buildings/{id}', [BuildingApiController::class, 'destroy'])->name('v1.admin.buildings.destroy');
+            });
 
-        // Quản lý Mặt bằng sàn & Layout
-        Route::get('units', [UnitApiController::class, 'adminIndex'])->name('v1.admin.units.index');
-        Route::post('units', [UnitApiController::class, 'store'])->name('v1.admin.units.store');
-        Route::get('units/{id}', [UnitApiController::class, 'show'])->name('v1.admin.units.show');
-        Route::put('units/{id}', [UnitApiController::class, 'update'])->name('v1.admin.units.update');
-        Route::delete('units/{id}', [UnitApiController::class, 'destroy'])->name('v1.admin.units.destroy');
+            Route::post('buildings/{id}/images', [BuildingApiController::class, 'uploadImages'])->name('v1.admin.buildings.images.store');
+            Route::delete('buildings/{id}/images/{imageId}', [BuildingApiController::class, 'deleteImage'])->name('v1.admin.buildings.images.destroy');
+            Route::patch('buildings/{id}/images/{imageId}/set-primary', [BuildingApiController::class, 'setPrimaryImage'])->name('v1.admin.buildings.images.primary');
 
-        Route::patch('units/{id}/status', [UnitApiController::class, 'updateStatus'])->name('v1.admin.units.status');
-        Route::post('units/{id}/images', [UnitApiController::class, 'uploadImages'])->name('v1.admin.units.images.store');
-        Route::delete('units/{id}/images/{imageId}', [UnitApiController::class, 'deleteImage'])->name('v1.admin.units.images.destroy');
+            // Quản lý Mặt bằng sàn & Layout (Admin & PM)
+            Route::get('units', [UnitApiController::class, 'adminIndex'])->name('v1.admin.units.index');
+            Route::post('units', [UnitApiController::class, 'store'])->name('v1.admin.units.store');
+            Route::get('units/{id}', [UnitApiController::class, 'show'])->name('v1.admin.units.show');
+            Route::put('units/{id}', [UnitApiController::class, 'update'])->name('v1.admin.units.update');
+            Route::delete('units/{id}', [UnitApiController::class, 'destroy'])->name('v1.admin.units.destroy');
+
+            Route::patch('units/{id}/status', [UnitApiController::class, 'updateStatus'])->name('v1.admin.units.status');
+            Route::post('units/{id}/images', [UnitApiController::class, 'uploadImages'])->name('v1.admin.units.images.store');
+            Route::delete('units/{id}/images/{imageId}', [UnitApiController::class, 'deleteImage'])->name('v1.admin.units.images.destroy');
+        });
 
         // =====================================================================
         // MODULE 3: QUẢN TRỊ KHÁCH THUÊ DOANH NGHIỆP (TENANTS)
         // =====================================================================
-        Route::get('tenants', [TenantApiController::class, 'index'])->name('v1.admin.tenants.index');
-        Route::post('tenants', [TenantApiController::class, 'store'])->name('v1.admin.tenants.store');
-        Route::get('tenants/{id}', [TenantApiController::class, 'show'])->name('v1.admin.tenants.show');
-        Route::put('tenants/{id}', [TenantApiController::class, 'update'])->name('v1.admin.tenants.update');
-        Route::delete('tenants/{id}', [TenantApiController::class, 'destroy'])->name('v1.admin.tenants.destroy');
+        // Xem thông tin hồ sơ khách thuê (Admin, Sales, PM, Kế toán)
+        Route::middleware('role:admin,sales,property_manager,accountant')->group(function () {
+            Route::get('tenants', [TenantApiController::class, 'index'])->name('v1.admin.tenants.index');
+            Route::get('tenants/{id}', [TenantApiController::class, 'show'])->name('v1.admin.tenants.show');
+            Route::get('tenants/{id}/download-license', [TenantApiController::class, 'downloadLicense'])->name('v1.admin.tenants.downloadLicense');
+        });
 
-        Route::post('tenants/{id}/upload-license', [TenantApiController::class, 'uploadLicense'])->name('v1.admin.tenants.uploadLicense');
-        Route::get('tenants/{id}/download-license', [TenantApiController::class, 'downloadLicense'])->name('v1.admin.tenants.downloadLicense');
+        // Thao tác tạo mới & cập nhật hồ sơ khách thuê (Admin & Sales)
+        Route::middleware('role:admin,sales')->group(function () {
+            Route::post('tenants', [TenantApiController::class, 'store'])->name('v1.admin.tenants.store');
+            Route::put('tenants/{id}', [TenantApiController::class, 'update'])->name('v1.admin.tenants.update');
+            Route::post('tenants/{id}/upload-license', [TenantApiController::class, 'uploadLicense'])->name('v1.admin.tenants.uploadLicense');
+        });
+
+        // Chỉ Admin được xóa khách thuê
+        Route::delete('tenants/{id}', [TenantApiController::class, 'destroy'])
+            ->middleware('role:admin')
+            ->name('v1.admin.tenants.destroy');
 
         // =====================================================================
         // MODULE 3: QUẢN TRỊ HỢP ĐỒNG THUÊ VĂN PHÒNG (CONTRACTS & UNITS)
         // =====================================================================
-        Route::get('contracts', [ContractApiController::class, 'index'])->name('v1.admin.contracts.index');
-        Route::post('contracts', [ContractApiController::class, 'store'])->name('v1.admin.contracts.store');
-        Route::post('contracts/reserve', [ContractApiController::class, 'reserve'])->name('v1.admin.contracts.reserve');
-        Route::get('contracts/{id}', [ContractApiController::class, 'show'])->name('v1.admin.contracts.show');
-        Route::put('contracts/{id}', [ContractApiController::class, 'update'])->name('v1.admin.contracts.update');
-        Route::delete('contracts/{id}', [ContractApiController::class, 'destroy'])->name('v1.admin.contracts.destroy');
+        // Xem danh sách và chi tiết hợp đồng (Admin, PM, Kế toán, Sales)
+        Route::middleware('role:admin,property_manager,accountant,sales')->group(function () {
+            Route::get('contracts', [ContractApiController::class, 'index'])->name('v1.admin.contracts.index');
+            Route::get('contracts/{id}', [ContractApiController::class, 'show'])->name('v1.admin.contracts.show');
+            Route::get('contracts/{id}/files/{fileId}/download', [ContractApiController::class, 'downloadFile'])->name('v1.admin.contracts.downloadFile');
+        });
 
-        Route::post('contracts/{id}/units', [ContractApiController::class, 'attachUnit'])->name('v1.admin.contracts.units.attach');
-        Route::delete('contracts/{id}/units/{unitId}', [ContractApiController::class, 'detachUnit'])->name('v1.admin.contracts.units.detach');
+        // Lập hợp đồng & Giữ chỗ (Admin, Sales, PM)
+        Route::middleware('role:admin,sales,property_manager')->group(function () {
+            Route::post('contracts', [ContractApiController::class, 'store'])->name('v1.admin.contracts.store');
+            Route::post('contracts/reserve', [ContractApiController::class, 'reserve'])->name('v1.admin.contracts.reserve');
+        });
 
-        Route::post('contracts/{id}/sign', [ContractApiController::class, 'sign'])->name('v1.admin.contracts.sign');
-        Route::post('contracts/{id}/renew', [ContractApiController::class, 'renew'])->name('v1.admin.contracts.renew');
-        Route::post('contracts/{id}/terminate', [ContractApiController::class, 'terminate'])->name('v1.admin.contracts.terminate');
+        // Ký duyệt, gia hạn, thanh lý, cập nhật, đính kèm sàn & tải file hợp đồng (Admin & PM)
+        Route::middleware('role:admin,property_manager')->group(function () {
+            Route::put('contracts/{id}', [ContractApiController::class, 'update'])->name('v1.admin.contracts.update');
+            Route::post('contracts/{id}/units', [ContractApiController::class, 'attachUnit'])->name('v1.admin.contracts.units.attach');
+            Route::delete('contracts/{id}/units/{unitId}', [ContractApiController::class, 'detachUnit'])->name('v1.admin.contracts.units.detach');
 
-        Route::post('contracts/{id}/upload-files', [ContractApiController::class, 'uploadFiles'])->name('v1.admin.contracts.uploadFiles');
-        Route::get('contracts/{id}/files/{fileId}/download', [ContractApiController::class, 'downloadFile'])->name('v1.admin.contracts.downloadFile');
+            Route::post('contracts/{id}/sign', [ContractApiController::class, 'sign'])->name('v1.admin.contracts.sign');
+            Route::post('contracts/{id}/renew', [ContractApiController::class, 'renew'])->name('v1.admin.contracts.renew');
+            Route::post('contracts/{id}/terminate', [ContractApiController::class, 'terminate'])->name('v1.admin.contracts.terminate');
+
+            Route::post('contracts/{id}/upload-files', [ContractApiController::class, 'uploadFiles'])->name('v1.admin.contracts.uploadFiles');
+        });
+
+        // Chỉ Admin được xóa hợp đồng
+        Route::delete('contracts/{id}', [ContractApiController::class, 'destroy'])
+            ->middleware('role:admin')
+            ->name('v1.admin.contracts.destroy');
     });
 
     // =========================================================================
@@ -114,7 +144,7 @@ Route::prefix('v1')->group(function () {
     // =========================================================================
     // MODULE 2: CRM & QUẢN LÝ KHÁCH HÀNG TIỀM NĂNG (LEADS & ACTIVITIES)
     // =========================================================================
-    Route::prefix('crm')->group(function () {
+    Route::middleware(['auth:sanctum', 'role:admin,sales'])->prefix('crm')->group(function () {
         // Quản lý Lead & Pipeline
         Route::get('leads', [CrmLeadApiController::class, 'index'])->name('v1.crm.leads.index');
         Route::post('leads', [CrmLeadApiController::class, 'store'])->name('v1.crm.leads.store');
@@ -124,8 +154,12 @@ Route::prefix('v1')->group(function () {
 
         // Hành vi chuyển trạng thái, điều phối & chuyển đổi
         Route::patch('leads/{id}/status', [CrmLeadApiController::class, 'updateStatus'])->name('v1.crm.leads.status');
-        Route::post('leads/{id}/assign', [CrmLeadApiController::class, 'assign'])->name('v1.crm.leads.assign');
         Route::post('leads/{id}/convert-to-tenant', [CrmLeadApiController::class, 'convertToTenant'])->name('v1.crm.leads.convert');
+
+        // Chỉ Admin mới được điều phối / phân bổ lead cho Sales
+        Route::post('leads/{id}/assign', [CrmLeadApiController::class, 'assign'])
+            ->middleware('role:admin')
+            ->name('v1.crm.leads.assign');
 
         // Dòng thời gian chăm sóc & Nhật ký hoạt động
         Route::get('leads/{id}/activities', [LeadActivityApiController::class, 'index'])->name('v1.crm.leads.activities.index');
@@ -135,7 +169,7 @@ Route::prefix('v1')->group(function () {
     // =========================================================================
     // MODULE 3: CỔNG THÔNG TIN KHÁCH THUÊ (TENANT PORTAL)
     // =========================================================================
-    Route::prefix('tenant')->group(function () {
+    Route::middleware(['auth:sanctum', 'role:tenant'])->prefix('tenant')->group(function () {
         Route::get('profile', [TenantPortalApiController::class, 'getProfile'])->name('v1.tenant.profile.show');
         Route::put('profile', [TenantPortalApiController::class, 'updateProfile'])->name('v1.tenant.profile.update');
         Route::get('contracts', [TenantPortalApiController::class, 'getContracts'])->name('v1.tenant.contracts.index');

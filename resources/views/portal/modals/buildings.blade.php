@@ -50,12 +50,12 @@
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Đơn Giá Thuê Niêm Yết ($/m²/tháng)</label>
-          <input type="number" step="0.1" id="build-base-price" class="filament-input-sm" placeholder="VD: 32">
+          <label style="font-size:12px;font-weight:600;color:#334155;">Đơn Giá Thuê Niêm Yết (VNĐ/m²/tháng)</label>
+          <input type="number" step="1000" id="build-base-price" class="filament-input-sm" placeholder="VD: 650000">
         </div>
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Phí Dịch Vụ Quản Lý ($/m²/tháng)</label>
-          <input type="number" step="0.1" id="build-service-fee" class="filament-input-sm" placeholder="VD: 6">
+          <label style="font-size:12px;font-weight:600;color:#334155;">Phí Dịch Vụ Quản Lý (VNĐ/m²/tháng)</label>
+          <input type="number" step="1000" id="build-service-fee" class="filament-input-sm" placeholder="VD: 120000">
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
@@ -144,12 +144,12 @@
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Đơn Giá Thuê Niêm Yết ($/m²)</label>
-          <input type="number" step="0.1" id="edit-build-base-price" class="filament-input-sm">
+          <label style="font-size:12px;font-weight:600;color:#334155;">Đơn Giá Thuê Niêm Yết (VNĐ/m²)</label>
+          <input type="number" step="1000" id="edit-build-base-price" class="filament-input-sm">
         </div>
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Phí Quản Lý ($/m²)</label>
-          <input type="number" step="0.1" id="edit-build-service-fee" class="filament-input-sm">
+          <label style="font-size:12px;font-weight:600;color:#334155;">Phí Quản Lý (VNĐ/m²)</label>
+          <input type="number" step="1000" id="edit-build-service-fee" class="filament-input-sm">
         </div>
       </div>
       <div style="margin-bottom:16px;">
@@ -212,12 +212,12 @@
             <input type="number" step="0.1" id="new-unit-area" placeholder="VD: 250" class="filament-input-sm" required>
           </div>
           <div class="form-field">
-            <label style="font-size:11px;font-weight:600;color:#475569;">Giá Thuê ($/m²) <span style="color:#ef4444;">*</span></label>
-            <input type="number" step="0.1" id="new-unit-price" placeholder="VD: 35" class="filament-input-sm" required>
+            <label style="font-size:11px;font-weight:600;color:#475569;">Giá Thuê (VNĐ/m²) <span style="color:#ef4444;">*</span></label>
+            <input type="number" step="1000" id="new-unit-price" placeholder="VD: 650000" class="filament-input-sm" required>
           </div>
           <div class="form-field">
-            <label style="font-size:11px;font-weight:600;color:#475569;">Phí DV ($/m²)</label>
-            <input type="number" step="0.1" id="new-unit-service-fee" placeholder="VD: 6" class="filament-input-sm">
+            <label style="font-size:11px;font-weight:600;color:#475569;">Phí DV (VNĐ/m²)</label>
+            <input type="number" step="1000" id="new-unit-service-fee" placeholder="VD: 120000" class="filament-input-sm">
           </div>
           <button type="submit" class="btn-mo-orange" style="padding:6px 14px;font-size:12px;height:32px;">
             <i class="fa-solid fa-plus"></i> Thêm Sàn

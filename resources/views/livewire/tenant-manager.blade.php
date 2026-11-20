@@ -106,9 +106,14 @@
                             </td>
                             <td style="padding:14px 16px;text-align:right;">
                                 <div style="display:inline-flex;gap:6px;">
-                                    <button wire:click="openDetailModal('{{ $t->id }}')" class="btn-mo-outline" style="padding:5px 8px;font-size:12px;" title="Xem hồ sơ">
+                                    <button wire:click="openDetailModal('{{ $t->id }}')" class="btn-mo-outline" style="padding:5px 8px;font-size:12px;" title="Xem hồ sơ & Giấy phép ĐKKD">
                                         <i class="fa-solid fa-eye"></i>
                                     </button>
+                                    @if(!empty($t->business_license_private_path) && $t->business_license_private_path !== 'licenses/default.pdf')
+                                        <button wire:click="downloadTenantLicense('{{ $t->id }}')" class="btn-mo-outline" style="padding:5px 8px;font-size:12px;color:#16a34a;border-color:#bbf7d0;" title="Xem/Tải Giấy phép ĐKKD">
+                                            <i class="fa-solid fa-file-shield"></i>
+                                        </button>
+                                    @endif
                                     <button wire:click="openEditModal('{{ $t->id }}')" class="btn-mo-outline" style="padding:5px 8px;font-size:12px;color:#2563eb;border-color:#bfdbfe;" title="Chỉnh sửa">
                                         <i class="fa-solid fa-pen"></i>
                                     </button>
@@ -231,6 +236,18 @@
                             </div>
                         @endif
                     </div>
+
+                    <div style="margin-bottom:14px;background:#f8fafc;padding:12px;border-radius:6px;border:1px dashed #cbd5e1;">
+                        <label style="display:block;font-size:12.5px;font-weight:600;color:#334155;margin-bottom:4px;">
+                            <i class="fa-solid fa-file-shield" style="color:#16a34a;"></i> Giấy Phép Đăng Ký Kinh Doanh (ĐKKD) - PDF hoặc Ảnh Scan (Tùy chọn):
+                        </label>
+                        <input type="file" wire:model="licenseFile" accept=".pdf,image/png,image/jpeg"
+                            style="width:100%;font-size:12.5px;color:#475569;">
+                        <div wire:loading wire:target="licenseFile" style="font-size:11.5px;color:#2563eb;margin-top:4px;">
+                            <i class="fa-solid fa-spinner fa-spin"></i> Đang tải file lên tạm thời...
+                        </div>
+                        @error('licenseFile') <span style="color:red;font-size:12px;display:block;margin-top:2px;">{{ $message }}</span> @enderror
+                    </div>
                 </div>
 
                 <div style="padding:16px 24px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:12px;">
@@ -267,6 +284,50 @@
                             <div><strong>Email đăng nhập:</strong> {{ $selectedTenant->login_email }}</div>
                             <div><strong>Email nhận cước:</strong> {{ $selectedTenant->billing_email }}</div>
                             <div style="grid-column:span 2;"><strong>Trụ sở:</strong> {{ $selectedTenant->headquarter_address }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Hồ sơ Giấy phép ĐKKD (Supabase Private Storage) -->
+                    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin-bottom:20px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <i class="fa-solid fa-file-shield" style="font-size:18px;color:#16a34a;"></i>
+                                <span style="font-weight:700;font-size:14px;color:#166534;">Giấy Phép Đăng Ký Kinh Doanh (ĐKKD)</span>
+                                @if(!empty($selectedTenant->business_license_private_path) && $selectedTenant->business_license_private_path !== 'licenses/default.pdf')
+                                    <span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:9999px;background:#dcfce7;color:#15803d;font-size:11.5px;font-weight:600;">
+                                        <i class="fa-solid fa-circle-check"></i> Đã lưu trữ Private S3
+                                    </span>
+                                @else
+                                    <span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:9999px;background:#fef3c7;color:#b45309;font-size:11.5px;font-weight:600;">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> Chưa tải file scan
+                                    </span>
+                                @endif
+                            </div>
+
+                            @if(!empty($selectedTenant->business_license_private_path) && $selectedTenant->business_license_private_path !== 'licenses/default.pdf')
+                                <button wire:click="downloadTenantLicense('{{ $selectedTenant->id }}')" type="button" class="btn-mo-orange" style="padding:6px 14px;font-size:12.5px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Xem / Tải Giấy Phép (Signed URL 10 phút)
+                                </button>
+                            @endif
+                        </div>
+
+                        <!-- Form tải lên file ĐKKD mới -->
+                        <div style="background:#fff;border:1px dashed #cbd5e1;border-radius:6px;padding:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+                            <div style="flex:1;min-width:240px;">
+                                <label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px;">
+                                    Đính kèm / Thay thế Giấy phép ĐKKD (PDF, PNG, JPG - Tối đa 10MB):
+                                </label>
+                                <input type="file" wire:model="licenseFile" accept=".pdf,image/png,image/jpeg" style="font-size:12.5px;color:#475569;">
+                                <div wire:loading wire:target="licenseFile" style="font-size:11.5px;color:#2563eb;margin-top:4px;">
+                                    <i class="fa-solid fa-spinner fa-spin"></i> Đang tải file lên tạm thời...
+                                </div>
+                                @error('licenseFile') <span style="color:red;font-size:11.5px;display:block;margin-top:2px;">{{ $message }}</span> @enderror
+                            </div>
+                            @if($licenseFile)
+                                <button wire:click="uploadDetailLicense" type="button" class="btn-mo-orange" style="padding:6px 14px;font-size:12.5px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> Lưu Vào Supabase Private
+                                </button>
+                            @endif
                         </div>
                     </div>
 

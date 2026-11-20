@@ -481,6 +481,13 @@ class Module3LivewireComponentTest extends TestCase
 
     public function test_ssr_module3_pages_render_http_200(): void
     {
+        // Khi chưa đăng nhập -> Chuyển hướng tới trang đăng nhập
+        $this->get(route('contracts.page'))->assertRedirect('/admin/login');
+        $this->get(route('tenants.page'))->assertRedirect('/admin/login');
+
+        // Khi nhân viên đăng nhập -> Tải trang 200 OK
+        $this->actingAs($this->admin, 'admin');
+
         $this->get(route('contracts.page'))
             ->assertStatus(200)
             ->assertSee('Quản lý hợp đồng thuê');

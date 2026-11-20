@@ -29,19 +29,21 @@ class TenantPortalWorkspace extends Component
 
     public function mount(?string $tenantId = null): void
     {
-        if ($tenantId) {
-            $this->tenantId = $tenantId;
-        } else {
-            $user = Auth::guard('tenant')->user();
-            if ($user instanceof Tenant) {
-                $this->tenantId = $user->id;
-            } else {
-                // Fallback cho chế độ xem Portal / Demo
-                $fallbackTenant = Tenant::where('login_email', 'contact@vng.com.vn')->first()
-                    ?? Tenant::has('contracts')->first()
-                    ?? Tenant::first();
-                $this->tenantId = $fallbackTenant?->id;
+        $requested = $tenantId ?: (request('tenant_id') ?: request('tenant'));
+        if ($requested) {
+            $matched = Tenant::where('id', $requested)
+                ->orWhere('tenant_code', $requested)
+                ->orWhere('tax_code', $requested)
+                ->first();
+            if ($matched) {
+                $this->tenantId = $matched->id;
+                return;
             }
+        }
+
+        $user = Auth::guard('tenant')->user() ?? Auth::user();
+        if ($user instanceof Tenant) {
+            $this->tenantId = $user->id;
         }
     }
 

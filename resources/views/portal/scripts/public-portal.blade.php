@@ -120,13 +120,8 @@
 
             <div class="mo-card-pricing">
               <div class="mo-price-box">
-                <span class="price-usd">$${b.priceUsd} - $${b.priceMaxUsd}</span>
-                <span class="price-unit">/ m² / tháng</span>
-                <div class="price-vnd">Khoảng ${b.priceVnd} / m²</div>
-              </div>
-              <div class="mo-card-actions">
-                <button class="btn-card-quote" onclick="openQuoteForBuilding('${b.name}')">Nhận Báo Giá</button>
-                <button class="btn-card-view" onclick="openBuildingDetail('${b.id}')">Xem Chi Tiết</button>
+                <span class="price-usd" style="font-size:18px;font-weight:800;color:#ea580c;">${b.priceVndMax && b.priceVndMax !== b.priceVnd ? `${b.priceVnd} - ${b.priceVndMax}` : b.priceVnd}</span>
+                <span class="price-unit" style="font-size:13px;color:#64748b;font-weight:500;margin-left:4px;">/ m²</span>
               </div>
             </div>
           </div>
@@ -233,9 +228,9 @@
         }
         if (district !== "all" && b.district !== district) return false;
         if (grade !== "all" && !b.grade.includes(grade.replace(' / A+', '').replace(' / B+', '').replace(' / Giá rẻ', ''))) return false;
-        if (price === "under20" && b.priceUsd >= 20) return false;
-        if (price === "20to35" && (b.priceUsd < 20 || b.priceUsd > 35)) return false;
-        if (price === "over35" && b.priceUsd <= 35) return false;
+        if (price === "under500k" && b.minRentPrice >= 500000) return false;
+        if (price === "500kto1m" && (b.minRentPrice < 500000 || b.minRentPrice > 1000000)) return false;
+        if (price === "over1m" && b.minRentPrice < 1000000) return false;
         return true;
       });
 
@@ -286,9 +281,9 @@
     function sortBuildings(criteria) {
       let list = [...currentFilteredList];
       if (criteria === "price-asc") {
-        list.sort((a,b) => a.priceUsd - b.priceUsd);
+        list.sort((a,b) => (a.minRentPrice || 0) - (b.minRentPrice || 0));
       } else if (criteria === "price-desc") {
-        list.sort((a,b) => b.priceUsd - a.priceUsd);
+        list.sort((a,b) => (b.minRentPrice || 0) - (a.minRentPrice || 0));
       } else if (criteria === "area-desc") {
         list.sort((a,b) => parseInt(b.floorPlate) - parseInt(a.floorPlate));
       }

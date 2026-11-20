@@ -31,6 +31,13 @@ class Module3TenantAndContractApiTest extends TestCase
     private PropertyManager $otherPm;
     private Sale $sale;
 
+    private string $adminToken;
+    private string $pmToken;
+    private string $otherPmToken;
+    private string $saleToken;
+    private string $tenantToken;
+    private string $otherTenantToken;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -170,6 +177,13 @@ class Module3TenantAndContractApiTest extends TestCase
             'max_concurrent_leads' => 10,
             'status' => 'ACTIVE',
         ]);
+
+        $this->adminToken = $this->admin->createToken('admin-token', ['admin'])->plainTextToken;
+        $this->pmToken = $this->pm->createToken('pm-token', ['property_manager'])->plainTextToken;
+        $this->otherPmToken = $this->otherPm->createToken('other-pm-token', ['property_manager'])->plainTextToken;
+        $this->saleToken = $this->sale->createToken('sale-token', ['sales'])->plainTextToken;
+        $this->tenantToken = $this->tenant->createToken('tenant-token', ['tenant'])->plainTextToken;
+        $this->otherTenantToken = $this->otherTenant->createToken('other-tenant-token', ['tenant'])->plainTextToken;
     }
 
     /**
@@ -178,15 +192,16 @@ class Module3TenantAndContractApiTest extends TestCase
     public function test_tenant_crud_and_search(): void
     {
         // Tạo mới Tenant
-        $response = $this->postJson('/api/v1/admin/tenants', [
-            'company_name' => 'Tập đoàn Đầu tư Delta',
-            'tax_code' => '0317777777',
-            'representative_name' => 'Võ Văn Delta',
-            'headquarter_address' => '300 Hai Bà Trưng, Quận 3',
-            'login_email' => 'contact@delta.vn',
-            'billing_email' => 'finance@delta.vn',
-            'contact_phone' => '0907777777',
-        ]);
+        $response = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->postJson('/api/v1/admin/tenants', [
+                'company_name' => 'Tập đoàn Đầu tư Delta',
+                'tax_code' => '0317777777',
+                'representative_name' => 'Võ Văn Delta',
+                'headquarter_address' => '300 Hai Bà Trưng, Quận 3',
+                'login_email' => 'contact@delta.vn',
+                'billing_email' => 'finance@delta.vn',
+                'contact_phone' => '0907777777',
+            ]);
 
         $response->assertStatus(201)
             ->assertJsonPath('status', 'success')
@@ -195,25 +210,29 @@ class Module3TenantAndContractApiTest extends TestCase
         $tenantId = $response->json('data.id');
 
         // Danh sách có bộ lọc tìm kiếm
-        $listResponse = $this->getJson('/api/v1/admin/tenants?search=0317777777');
+        $listResponse = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->getJson('/api/v1/admin/tenants?search=0317777777');
         $listResponse->assertStatus(200)
             ->assertJsonPath('data.0.tax_code', '0317777777');
 
         // Xem chi tiết
-        $detailResponse = $this->getJson("/api/v1/admin/tenants/{$tenantId}");
+        $detailResponse = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->getJson("/api/v1/admin/tenants/{$tenantId}");
         $detailResponse->assertStatus(200)
             ->assertJsonPath('data.id', $tenantId);
 
         // Cập nhật
-        $updateResponse = $this->putJson("/api/v1/admin/tenants/{$tenantId}", [
-            'representative_position' => 'Tổng Giám Đốc',
-            'billing_email' => 'accounting.new@delta.vn',
-        ]);
+        $updateResponse = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->putJson("/api/v1/admin/tenants/{$tenantId}", [
+                'representative_position' => 'Tổng Giám Đốc',
+                'billing_email' => 'accounting.new@delta.vn',
+            ]);
         $updateResponse->assertStatus(200)
             ->assertJsonPath('data.representative_position', 'Tổng Giám Đốc');
 
         // Vô hiệu hóa
-        $deleteResponse = $this->deleteJson("/api/v1/admin/tenants/{$tenantId}");
+        $deleteResponse = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->deleteJson("/api/v1/admin/tenants/{$tenantId}");
         $deleteResponse->assertStatus(200);
         $this->assertDatabaseHas('tenants', ['id' => $tenantId, 'status' => 'LOCKED']);
     }
@@ -225,9 +244,10 @@ class Module3TenantAndContractApiTest extends TestCase
     {
         $fakeFile = UploadedFile::fake()->create('giay_phep_kinh_doanh.pdf', 500, 'application/pdf');
 
-        $uploadResponse = $this->postJson("/api/v1/admin/tenants/{$this->tenant->id}/upload-license", [
-            'file' => $fakeFile,
-        ]);
+        $uploadResponse = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->postJson("/api/v1/admin/tenants/{$this->tenant->id}/upload-license", [
+                'file' => $fakeFile,
+            ]);
 
         $uploadResponse->assertStatus(200)
             ->assertJsonPath('status', 'success');
@@ -237,7 +257,8 @@ class Module3TenantAndContractApiTest extends TestCase
         Storage::disk($disk)->assertExists($storedPath);
 
         // Lấy Signed URL tải file
-        $downloadResponse = $this->getJson("/api/v1/admin/tenants/{$this->tenant->id}/download-license");
+        $downloadResponse = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->getJson("/api/v1/admin/tenants/{$this->tenant->id}/download-license");
         $downloadResponse->assertStatus(200)
             ->assertJsonPath('status', 'success')
             ->assertJsonStructure(['data' => ['download_url', 'expires_in_minutes']]);
@@ -248,15 +269,16 @@ class Module3TenantAndContractApiTest extends TestCase
      */
     public function test_contract_draft_creation_and_attach_unit(): void
     {
-        $response = $this->postJson('/api/v1/admin/contracts', [
-            'building_id' => $this->building->id,
-            'tenant_id' => $this->tenant->id,
-            'start_date' => '2026-06-01',
-            'end_date' => '2027-05-31',
-            'deposit_amount' => 180000000,
-            'payment_cycle_months' => 3,
-            'payment_due_day' => 5,
-        ]);
+        $response = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->postJson('/api/v1/admin/contracts', [
+                'building_id' => $this->building->id,
+                'tenant_id' => $this->tenant->id,
+                'start_date' => '2026-06-01',
+                'end_date' => '2027-05-31',
+                'deposit_amount' => 180000000,
+                'payment_cycle_months' => 3,
+                'payment_due_day' => 5,
+            ]);
 
         $response->assertStatus(201)
             ->assertJsonPath('data.status', 'DRAFT');
@@ -264,27 +286,31 @@ class Module3TenantAndContractApiTest extends TestCase
         $contractId = $response->json('data.id');
 
         // Lấy danh sách hợp đồng (STT 43)
-        $listContractsRes = $this->getJson('/api/v1/admin/contracts');
+        $listContractsRes = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->getJson('/api/v1/admin/contracts');
         $listContractsRes->assertStatus(200);
 
         // Xem chi tiết hợp đồng (STT 45)
-        $detailContractRes = $this->getJson("/api/v1/admin/contracts/{$contractId}");
+        $detailContractRes = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->getJson("/api/v1/admin/contracts/{$contractId}");
         $detailContractRes->assertStatus(200)
             ->assertJsonPath('data.id', $contractId);
 
         // Cập nhật điều khoản hợp đồng (STT 46)
-        $updateContractRes = $this->putJson("/api/v1/admin/contracts/{$contractId}", [
-            'deposit_amount' => 190000000,
-        ]);
+        $updateContractRes = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->putJson("/api/v1/admin/contracts/{$contractId}", [
+                'deposit_amount' => 190000000,
+            ]);
         $updateContractRes->assertStatus(200);
 
         // Gắn mặt bằng P.801 vào hợp đồng (STT 48)
-        $attachResponse = $this->postJson("/api/v1/admin/contracts/{$contractId}/units", [
-            'unit_id' => $this->unitA->id,
-            'leased_area_sqm' => 150.00,
-            'agreed_rental_price_per_sqm' => 600000,
-            'agreed_service_fee_per_sqm' => 50000,
-        ]);
+        $attachResponse = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->postJson("/api/v1/admin/contracts/{$contractId}/units", [
+                'unit_id' => $this->unitA->id,
+                'leased_area_sqm' => 150.00,
+                'agreed_rental_price_per_sqm' => 600000,
+                'agreed_service_fee_per_sqm' => 50000,
+            ]);
 
         $attachResponse->assertStatus(201)
             ->assertJsonPath('data.contract.total_leased_area_sqm', '150.00');
@@ -297,27 +323,31 @@ class Module3TenantAndContractApiTest extends TestCase
 
         // Tải lên file scan hợp đồng (STT 53)
         Storage::fake('public');
-        $uploadScanRes = $this->postJson("/api/v1/admin/contracts/{$contractId}/upload-files", [
-            'files' => [
-                UploadedFile::fake()->create('contract_signed.pdf', 200, 'application/pdf'),
-            ],
-            'document_type' => 'SIGNED_CONTRACT_SCAN',
-        ]);
+        $uploadScanRes = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->postJson("/api/v1/admin/contracts/{$contractId}/upload-files", [
+                'files' => [
+                    UploadedFile::fake()->create('contract_signed.pdf', 200, 'application/pdf'),
+                ],
+                'document_type' => 'SIGNED_CONTRACT_SCAN',
+            ]);
         $uploadScanRes->assertStatus(201);
         $fileId = $uploadScanRes->json('data.0.id');
 
         // Tải xuống file scan hợp đồng (STT 54)
         if ($fileId) {
-            $downloadRes = $this->getJson("/api/v1/admin/contracts/{$contractId}/files/{$fileId}/download");
+            $downloadRes = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+                ->getJson("/api/v1/admin/contracts/{$contractId}/files/{$fileId}/download");
             $downloadRes->assertStatus(200);
         }
 
         // Gỡ mặt bằng khỏi hợp đồng nháp (STT 49)
-        $detachRes = $this->deleteJson("/api/v1/admin/contracts/{$contractId}/units/{$this->unitA->id}");
+        $detachRes = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->deleteJson("/api/v1/admin/contracts/{$contractId}/units/{$this->unitA->id}");
         $detachRes->assertStatus(200);
 
         // Xóa hợp đồng bản nháp (STT 47)
-        $deleteContractRes = $this->deleteJson("/api/v1/admin/contracts/{$contractId}");
+        $deleteContractRes = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->deleteJson("/api/v1/admin/contracts/{$contractId}");
         $deleteContractRes->assertStatus(200);
     }
 
@@ -359,12 +389,13 @@ class Module3TenantAndContractApiTest extends TestCase
         ]);
 
         // 3. Cố tình gán Unit A vào Hợp đồng B -> BẮT BUỘC BỊ CHẶN VỚI MÃ HTTP 422
-        $overlapResponse = $this->postJson("/api/v1/admin/contracts/{$contractB->id}/units", [
-            'unit_id' => $this->unitA->id,
-            'leased_area_sqm' => 150.00,
-            'agreed_rental_price_per_sqm' => 600000,
-            'agreed_service_fee_per_sqm' => 50000,
-        ]);
+        $overlapResponse = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->postJson("/api/v1/admin/contracts/{$contractB->id}/units", [
+                'unit_id' => $this->unitA->id,
+                'leased_area_sqm' => 150.00,
+                'agreed_rental_price_per_sqm' => 600000,
+                'agreed_service_fee_per_sqm' => 50000,
+            ]);
 
         $overlapResponse->assertStatus(422)
             ->assertJsonPath('status', 'error')
@@ -376,22 +407,23 @@ class Module3TenantAndContractApiTest extends TestCase
      */
     public function test_booking_contract_locks_unit_to_reserved(): void
     {
-        $response = $this->postJson('/api/v1/admin/contracts/reserve', [
-            'building_id' => $this->building->id,
-            'tenant_id' => $this->tenant->id,
-            'start_date' => '2026-07-01',
-            'end_date' => '2027-06-30',
-            'booking_deposit_amount' => 30000000,
-            'reservation_expires_at' => now()->addDays(10)->toDateTimeString(),
-            'units' => [
-                [
-                    'unit_id' => $this->unitB->id,
-                    'leased_area_sqm' => 200.00,
-                    'agreed_rental_price_per_sqm' => 650000,
-                    'agreed_service_fee_per_sqm' => 50000,
+        $response = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->postJson('/api/v1/admin/contracts/reserve', [
+                'building_id' => $this->building->id,
+                'tenant_id' => $this->tenant->id,
+                'start_date' => '2026-07-01',
+                'end_date' => '2027-06-30',
+                'booking_deposit_amount' => 30000000,
+                'reservation_expires_at' => now()->addDays(10)->toDateTimeString(),
+                'units' => [
+                    [
+                        'unit_id' => $this->unitB->id,
+                        'leased_area_sqm' => 200.00,
+                        'agreed_rental_price_per_sqm' => 650000,
+                        'agreed_service_fee_per_sqm' => 50000,
+                    ],
                 ],
-            ],
-        ]);
+            ]);
 
         $response->assertStatus(201)
             ->assertJsonPath('data.status', 'RESERVED');
@@ -424,13 +456,14 @@ class Module3TenantAndContractApiTest extends TestCase
         ]);
 
         // 6.1. PM không phụ trách tòa nhà (otherPm) duyệt ký -> BỊ TỪ CHỐI HTTP 403
-        $this->actingAs($this->otherPm);
-        $forbiddenResponse = $this->postJson("/api/v1/admin/contracts/{$contract->id}/sign");
+        $forbiddenResponse = $this->withHeader('Authorization', "Bearer {$this->otherPmToken}")
+            ->postJson("/api/v1/admin/contracts/{$contract->id}/sign");
         $forbiddenResponse->assertStatus(403);
 
         // 6.2. PM được phân công tòa nhà (pm) duyệt ký -> THÀNH CÔNG HTTP 200
-        $this->actingAs($this->pm);
-        $successResponse = $this->postJson("/api/v1/admin/contracts/{$contract->id}/sign");
+        $this->app['auth']->forgetGuards();
+        $successResponse = $this->withHeader('Authorization', "Bearer {$this->pmToken}")
+            ->postJson("/api/v1/admin/contracts/{$contract->id}/sign");
         $successResponse->assertStatus(200)
             ->assertJsonPath('data.status', 'ACTIVE')
             ->assertJsonPath('data.approved_by_pm_id', $this->pm->id);
@@ -463,11 +496,11 @@ class Module3TenantAndContractApiTest extends TestCase
             'agreed_service_fee_per_sqm' => 50000,
         ]);
 
-        $this->actingAs($this->admin);
-        $renewResponse = $this->postJson("/api/v1/admin/contracts/{$oldContract->id}/renew", [
-            'new_end_date' => '2028-01-01',
-            'annual_price_escalation_percent' => 10.00,
-        ]);
+        $renewResponse = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->postJson("/api/v1/admin/contracts/{$oldContract->id}/renew", [
+                'new_end_date' => '2028-01-01',
+                'annual_price_escalation_percent' => 10.00,
+            ]);
 
         $renewResponse->assertStatus(201)
             ->assertJsonPath('data.status', 'ACTIVE')
@@ -506,22 +539,22 @@ class Module3TenantAndContractApiTest extends TestCase
         ]);
         $this->unitA->update(['status' => UnitStatus::LEASED]);
 
-        $this->actingAs($this->admin);
-
         // 8.1. Cố tình nhập hoàn cọc + phạt vượt quá số tiền cọc -> BỊ CHẶN HTTP 422
-        $invalidDepositResponse = $this->postJson("/api/v1/admin/contracts/{$contract->id}/terminate", [
-            'refund_deposit_amount' => 80000000,
-            'penalty_deposit_amount' => 40000000, // 80 + 40 = 120tr > 100tr
-            'termination_note' => 'Thanh lý sai tiền cọc',
-        ]);
+        $invalidDepositResponse = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->postJson("/api/v1/admin/contracts/{$contract->id}/terminate", [
+                'refund_deposit_amount' => 80000000,
+                'penalty_deposit_amount' => 40000000, // 80 + 40 = 120tr > 100tr
+                'termination_note' => 'Thanh lý sai tiền cọc',
+            ]);
         $invalidDepositResponse->assertStatus(422);
 
         // 8.2. Nhập đúng phân định cọc -> THÀNH CÔNG
-        $validResponse = $this->postJson("/api/v1/admin/contracts/{$contract->id}/terminate", [
-            'refund_deposit_amount' => 70000000,
-            'penalty_deposit_amount' => 30000000,
-            'termination_note' => 'Khách dọn trả mặt bằng đúng hiện trạng',
-        ]);
+        $validResponse = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->postJson("/api/v1/admin/contracts/{$contract->id}/terminate", [
+                'refund_deposit_amount' => 70000000,
+                'penalty_deposit_amount' => 30000000,
+                'termination_note' => 'Khách dọn trả mặt bằng đúng hiện trạng',
+            ]);
 
         $validResponse->assertStatus(200)
             ->assertJsonPath('data.status', 'TERMINATED')
@@ -538,16 +571,17 @@ class Module3TenantAndContractApiTest extends TestCase
     public function test_tenant_portal_profile_and_contract_isolation(): void
     {
         // 1. Khách thuê Beta xem hồ sơ của mình
-        $this->actingAs($this->tenant, 'tenant');
-        $profileResponse = $this->getJson('/api/v1/tenant/profile');
+        $profileResponse = $this->withHeader('Authorization', "Bearer {$this->tenantToken}")
+            ->getJson('/api/v1/tenant/profile');
         $profileResponse->assertStatus(200)
             ->assertJsonPath('data.tax_code', $this->tenant->tax_code);
 
         // 2. Khách thuê Beta cập nhật email thanh toán
-        $updateProfileResponse = $this->putJson('/api/v1/tenant/profile', [
-            'billing_email' => 'ketoan.moi@beta.vn',
-            'contact_phone' => '0901112233',
-        ]);
+        $updateProfileResponse = $this->withHeader('Authorization', "Bearer {$this->tenantToken}")
+            ->putJson('/api/v1/tenant/profile', [
+                'billing_email' => 'ketoan.moi@beta.vn',
+                'contact_phone' => '0901112233',
+            ]);
         $updateProfileResponse->assertStatus(200)
             ->assertJsonPath('data.billing_email', 'ketoan.moi@beta.vn');
 
@@ -575,17 +609,39 @@ class Module3TenantAndContractApiTest extends TestCase
         ]);
 
         // 4. Khách thuê Beta xem danh sách hợp đồng -> Chỉ thấy hợp đồng của mình
-        $contractsListResponse = $this->getJson('/api/v1/tenant/contracts');
+        $contractsListResponse = $this->withHeader('Authorization', "Bearer {$this->tenantToken}")
+            ->getJson('/api/v1/tenant/contracts');
         $contractsListResponse->assertStatus(200)
             ->assertJsonPath('meta.total', 1)
             ->assertJsonPath('data.0.contract_number', 'HD-PORTAL-BETA');
 
         // 5. Khách thuê Beta xem chi tiết hợp đồng của mình -> 200 OK
-        $detailBetaResponse = $this->getJson("/api/v1/tenant/contracts/{$contractBeta->id}");
+        $detailBetaResponse = $this->withHeader('Authorization', "Bearer {$this->tenantToken}")
+            ->getJson("/api/v1/tenant/contracts/{$contractBeta->id}");
         $detailBetaResponse->assertStatus(200);
 
         // 6. Khách thuê Beta cố tình xem hợp đồng của Gamma -> BỊ TỪ CHỐI HTTP 403 (IDOR Protection)
-        $idorAttackResponse = $this->getJson("/api/v1/tenant/contracts/{$contractGamma->id}");
+        $idorAttackResponse = $this->withHeader('Authorization', "Bearer {$this->tenantToken}")
+            ->getJson("/api/v1/tenant/contracts/{$contractGamma->id}");
         $idorAttackResponse->assertStatus(403);
+    }
+
+    /**
+     * 10. Test chặn truy cập trái phép khi chưa đăng nhập (401 Unauthorized)
+     */
+    public function test_unauthenticated_user_cannot_access_contracts_or_tenant_portal(): void
+    {
+        $this->getJson('/api/v1/admin/contracts')->assertStatus(401);
+        $this->getJson('/api/v1/tenant/profile')->assertStatus(401);
+    }
+
+    /**
+     * 11. Test chặn tài khoản Khách thuê gọi vào API Quản trị Hợp đồng (403 Forbidden)
+     */
+    public function test_tenant_cannot_access_admin_contract_management(): void
+    {
+        $response = $this->withHeader('Authorization', "Bearer {$this->tenantToken}")
+            ->getJson('/api/v1/admin/contracts');
+        $response->assertStatus(403);
     }
 }

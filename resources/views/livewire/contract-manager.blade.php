@@ -301,7 +301,7 @@
                                     <option value="">-- Chọn mặt bằng còn trống --</option>
                                     @foreach($availableUnitsInBuilding as $u)
                                         <option value="{{ $u->id }}">
-                                            Tầng {{ $u->floor_number }} - {{ $u->unit_code }} ({{ $u->area_sqm }} m² - ${{ number_format($u->rent_price_usd_per_sqm ?? 30, 0) }}/m²)
+                                            Tầng {{ $u->floor_number }} - {{ $u->unit_code }} ({{ $u->area_sqm }} m² - {{ number_format($u->base_rental_price ?: 0, 0, ',', '.') }} đ/m²)
                                         </option>
                                     @endforeach
                                 </select>

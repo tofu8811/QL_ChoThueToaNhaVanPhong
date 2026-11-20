@@ -1642,13 +1642,5 @@
         </div>
       `;
     }
-    // Tự động tải trước toàn bộ dữ liệu nhân sự và số lượng badge ngay khi nạp script
-    if (typeof preloadAllStaffData === 'function') {
-      preloadAllStaffData();
-    }
-    document.addEventListener('DOMContentLoaded', function() {
-      if (typeof preloadAllStaffData === 'function') {
-        preloadAllStaffData();
-      }
-    });
+    // Dữ liệu nhân sự sẽ được nạp theo cơ chế lazy load khi người dùng mở tab Nhân Sự trong Admin Panel
   </script>

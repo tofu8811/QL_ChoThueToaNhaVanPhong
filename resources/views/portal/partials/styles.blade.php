@@ -330,15 +330,15 @@
     .mo-nav-dropdown.mo-mega-dropdown {
       width: max-content;
       min-width: 680px;
-      max-width: min(1040px, 94vw);
+      max-width: min(760px, calc(100vw - 32px));
       height: auto;
       max-height: calc(100vh - 110px);
       overflow-y: auto;
       overflow-x: hidden;
       overscroll-behavior: contain;
       padding: 16px 20px;
-      left: 50%;
-      transform: translateX(-40%) translateY(6px);
+      left: 0;
+      transform: translateY(6px);
       box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.18), 0 10px 20px -5px rgba(0, 0, 0, 0.08);
       border-radius: 12px;
       scrollbar-width: thin;
@@ -360,13 +360,13 @@
     }
     .mo-nav-dropdown-wrap:hover .mo-nav-dropdown.mo-mega-dropdown,
     .mo-nav-dropdown-wrap.open .mo-nav-dropdown.mo-mega-dropdown {
-      transform: translateX(-40%) translateY(0);
+      transform: translateY(0);
     }
 
-    /* Căn lề phải cho các dropdown nằm lệch về bên phải header */
+    /* Đảm bảo căn lề trái cố định với title cho mọi dropdown */
     .mo-nav-dropdown.mo-mega-dropdown.mo-mega-align-right {
-      left: auto;
-      right: -30px;
+      left: 0;
+      right: auto;
       transform: translateY(6px);
     }
     .mo-nav-dropdown-wrap:hover .mo-nav-dropdown.mo-mega-dropdown.mo-mega-align-right,
@@ -396,8 +396,8 @@
     }
     .mo-nav-mega-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(180px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(4, minmax(160px, 1fr));
+      gap: 14px;
       align-items: start;
     }
     .mo-mega-col {
@@ -1482,8 +1482,13 @@
       padding-top: 12px;
       border-top: 1px solid #f1f5f9;
       display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
+      align-items: baseline;
+    }
+    .mo-price-box {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 4px;
     }
     .mo-price-box .price-usd {
       font-size: 20px;
@@ -1491,9 +1496,9 @@
       color: #ea580c;
     }
     .mo-price-box .price-unit {
-      font-size: 12px;
+      font-size: 13px;
       color: #64748b;
-      font-weight: normal;
+      font-weight: 600;
     }
     .mo-price-box .price-vnd {
       font-size: 11.5px;

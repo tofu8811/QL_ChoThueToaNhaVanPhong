@@ -26,7 +26,7 @@
       $otherProvinces = $headerLocations['other_provinces'] ?? [];
       $otherList = is_array($otherProvinces) ? $otherProvinces : (is_iterable($otherProvinces) ? $otherProvinces : []);
       $isOtherActive = request()->has('province') && !in_array(request('province'), ['1', '79', '48']);
-      $isGradeActive = request()->has('grade') || (request()->has('price') && request('price') === 'under20');
+      $isGradeActive = request()->has('grade') || (request()->has('price') && in_array(request('price'), ['under500k', 'under20']));
       $totalNationwide = $headerLocations['total_nationwide'] ?? 22;
     @endphp
 
@@ -240,7 +240,7 @@
                onclick="toggleNavDropdown(event, this)">
               Đà Nẵng <i class="fa-solid fa-chevron-down nav-caret"></i>
             </button>
-            <div class="mo-nav-dropdown mo-mega-dropdown mo-mega-align-right">
+            <div class="mo-nav-dropdown mo-mega-dropdown">
               <a href="{{ route('home', ['province' => '48']) }}" 
                  class="mo-mega-header-link" 
                  onclick="return handleHeaderFilter(event, 'province', '48', '{{ route('home', ['province' => '48']) }}')">
@@ -355,7 +355,7 @@
 
           <!-- 6. Văn Phòng Theo Hạng Dropdown -->
           @php
-            $isGradeActive = request()->has('grade') || (request()->has('price') && request('price') === 'under20');
+            $isGradeActive = request()->has('grade') || (request()->has('price') && in_array(request('price'), ['under500k', 'under20']));
           @endphp
           <div class="mo-nav-dropdown-wrap">
             <button type="button" 
@@ -388,11 +388,11 @@
                 <span><i class="fa-regular fa-building" style="color:#10b981;margin-right:8px;"></i> Văn phòng Hạng C</span>
                 <span class="badge-num" style="background:#d1fae5;color:#047857;font-size:11px;">Tiêu chuẩn</span>
               </a>
-              <a href="{{ route('home', ['price' => 'under20']) }}" 
-                 class="mo-dropdown-link {{ request('price') === 'under20' ? 'active-link' : '' }}" 
-                 onclick="return handleHeaderFilter(event, 'price', 'under20', '{{ route('home', ['price' => 'under20']) }}')">
+              <a href="{{ route('home', ['price' => 'under500k']) }}" 
+                 class="mo-dropdown-link {{ in_array(request('price'), ['under500k', 'under20']) ? 'active-link' : '' }}" 
+                 onclick="return handleHeaderFilter(event, 'price', 'under500k', '{{ route('home', ['price' => 'under500k']) }}')">
                 <span><i class="fa-solid fa-tag" style="color:#8b5cf6;margin-right:8px;"></i> Văn phòng Giá Rẻ</span>
-                <span class="badge-num" style="background:#ede9fe;color:#6d28d9;font-size:11px;">&lt; $20/m²</span>
+                <span class="badge-num" style="background:#ede9fe;color:#6d28d9;font-size:11px;">&lt; 500k/m²</span>
               </a>
             </div>
           </div>
@@ -401,11 +401,6 @@
           <a href="{{ route('quote.page') }}" 
              class="mo-nav-item {{ request()->routeIs('quote.page') ? 'active' : '' }}" 
              style="text-decoration:none;">Nhận Báo Giá</a>
-
-          <!-- 8. Phễu CRM Sales -->
-          <a href="{{ route('leads.page') }}" 
-             class="mo-nav-item {{ request()->routeIs('leads.page') ? 'active' : '' }}" 
-             style="text-decoration:none;"><i class="fa-solid fa-bolt" style="color:#f59e0b;margin-right:4px;"></i> Phễu CRM</a>
         </nav>
 
         <div class="mo-header-actions">
@@ -623,8 +618,8 @@
               <a href="{{ route('home', ['grade' => 'C']) }}" class="mo-drawer-sublink" onclick="closeMobileMenu(); return handleHeaderFilter(event, 'grade', 'C', '{{ route('home', ['grade' => 'C']) }}')">
                 <span><i class="fa-regular fa-building" style="color:#10b981;margin-right:6px;"></i> Văn phòng Hạng C</span>
               </a>
-              <a href="{{ route('home', ['price' => 'under20']) }}" class="mo-drawer-sublink" onclick="closeMobileMenu(); return handleHeaderFilter(event, 'price', 'under20', '{{ route('home', ['price' => 'under20']) }}')">
-                <span><i class="fa-solid fa-tag" style="color:#8b5cf6;margin-right:6px;"></i> Văn phòng Giá Rẻ (&lt; $20/m²)</span>
+              <a href="{{ route('home', ['price' => 'under500k']) }}" class="mo-drawer-sublink" onclick="closeMobileMenu(); return handleHeaderFilter(event, 'price', 'under500k', '{{ route('home', ['price' => 'under500k']) }}')">
+                <span><i class="fa-solid fa-tag" style="color:#8b5cf6;margin-right:6px;"></i> Văn phòng Tiết Kiệm (&lt; 500k/m²)</span>
               </a>
             </div>
           </div>

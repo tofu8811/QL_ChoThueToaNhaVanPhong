@@ -162,7 +162,7 @@ class ContractPrintAndDraftingTest extends TestCase
      */
     public function test_print_contract_page_renders_successfully(): void
     {
-        $response = $this->get("/quan-ly-hop-dong/{$this->contract->id}/in-hop-dong");
+        $response = $this->actingAs($this->admin, 'admin')->get("/quan-ly-hop-dong/{$this->contract->id}/in-hop-dong");
 
         $response->assertStatus(200);
         $response->assertSee('HỢP ĐỒNG THUÊ VĂN PHÒNG');
@@ -173,6 +173,15 @@ class ContractPrintAndDraftingTest extends TestCase
         $response->assertSee('Sáu trăm ba mươi triệu đồng chẵn');
         $response->assertSee('Xuất PDF');
         $response->assertSee('triggerPrint');
+    }
+
+    /**
+     * Test Route In hợp đồng chặn người dùng chưa đăng nhập.
+     */
+    public function test_print_contract_page_redirects_unauthenticated_user(): void
+    {
+        $response = $this->get("/quan-ly-hop-dong/{$this->contract->id}/in-hop-dong");
+        $response->assertRedirect('/admin/login');
     }
 
     /**

@@ -204,16 +204,16 @@ class BuildingSearchFilter extends Component
 
     public function render(BuildingService $buildingService, LocationService $locationService)
     {
-        // 1. Chuyển đổi bộ lọc giá ($/m2 -> VND/m2)
+        // 1. Chuyển đổi bộ lọc giá theo chuẩn VNĐ (VND/m2)
         $minPrice = null;
         $maxPrice = null;
-        if ($this->appliedPrice === 'under20') {
-            $maxPrice = 20 * 24000;
-        } elseif ($this->appliedPrice === '20to35') {
-            $minPrice = 20 * 24000;
-            $maxPrice = 35 * 24000;
-        } elseif ($this->appliedPrice === 'over35') {
-            $minPrice = 35 * 24000;
+        if ($this->appliedPrice === 'under500k' || $this->appliedPrice === 'under20') {
+            $maxPrice = 500000;
+        } elseif ($this->appliedPrice === '500kto1m' || $this->appliedPrice === '20to35') {
+            $minPrice = 500000;
+            $maxPrice = 1000000;
+        } elseif ($this->appliedPrice === 'over1m' || $this->appliedPrice === 'over35') {
+            $minPrice = 1000000;
         }
 
         // 2. Chuyển đổi bộ lọc diện tích (m2)

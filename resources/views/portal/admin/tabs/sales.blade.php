@@ -76,12 +76,12 @@
         <label>Chọn Tòa Nhà</label>
         <select id="calc-building" onchange="calculateQuickQuote()">
           @forelse($serverBuildings ?? [] as $b)
-            <option value="{{ $b['priceUsd'] ?? 30 }}">{{ $b['name'] }} (${{ $b['priceUsd'] ?? 30 }}/m²)</option>
+            <option value="{{ $b['minRentPrice'] ?? 600000 }}">{{ $b['name'] }} ({{ $b['priceVnd'] ?? '600.000 đ' }}/m²)</option>
           @empty
-            <option value="48">Vietcombank Tower ($48/m²)</option>
-            <option value="58">Deutsches Haus ($58/m²)</option>
-            <option value="28">Lim Tower 3 ($28/m²)</option>
-            <option value="22">Pearl Plaza ($22/m²)</option>
+            <option value="1150000">Vietcombank Tower (1.150.000 đ/m²)</option>
+            <option value="1400000">Deutsches Haus (1.400.000 đ/m²)</option>
+            <option value="680000">Lim Tower 3 (680.000 đ/m²)</option>
+            <option value="530000">Pearl Plaza (530.000 đ/m²)</option>
           @endforelse
         </select>
       </div>
@@ -90,8 +90,8 @@
         <input type="number" id="calc-area" value="250" oninput="calculateQuickQuote()">
       </div>
       <div class="form-field">
-        <label>Phí Quản Lý ($/m²)</label>
-        <input type="number" id="calc-service" value="6" oninput="calculateQuickQuote()">
+        <label>Phí Quản Lý (VNĐ/m²)</label>
+        <input type="number" id="calc-service" value="120000" oninput="calculateQuickQuote()">
       </div>
     </div>
 
@@ -99,8 +99,8 @@
     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:20px;display:flex;justify-content:space-between;align-items:center;">
       <div>
         <div style="font-size:13px;color:#64748b;">Tổng tiền thuê dự kiến hàng tháng:</div>
-        <div style="font-size:28px;font-weight:800;color:#ea580c;" id="calc-total-usd">$13,500 / tháng</div>
-        <div style="font-size:13px;color:#94a3b8;" id="calc-total-vnd">Tương đương: ~330.750.000 VNĐ / tháng (Chưa gồm VAT)</div>
+        <div style="font-size:28px;font-weight:800;color:#ea580c;" id="calc-total-vnd">180.000.000 VNĐ / tháng</div>
+        <div style="font-size:13px;color:#94a3b8;" id="calc-sub-note">Đã bao gồm đơn giá thuê và phí quản lý (Chưa gồm VAT)</div>
       </div>
       <button class="btn-mo-primary" type="button" onclick="alert('Đã xuất file báo giá PDF gửi cho khách hàng!')">
         <i class="fa-solid fa-paper-plane"></i> Xuất Báo Giá PDF

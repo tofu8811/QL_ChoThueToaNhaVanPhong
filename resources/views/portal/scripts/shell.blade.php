@@ -531,14 +531,10 @@
       const area = parseFloat(document.getElementById("calc-area")?.value) || 0;
       const service = parseFloat(document.getElementById("calc-service")?.value) || 0;
 
-      const totalUsd = area * (pricePerM2 + service);
-      const totalVnd = totalUsd * 24500;
+      const totalVnd = Math.round(area * (pricePerM2 + service));
 
-      if (document.getElementById("calc-total-usd")) {
-        document.getElementById("calc-total-usd").innerText = `$${totalUsd.toLocaleString()} / tháng`;
-      }
       if (document.getElementById("calc-total-vnd")) {
-        document.getElementById("calc-total-vnd").innerText = `Tương đương: ~${totalVnd.toLocaleString('vi-VN')} VNĐ / tháng (Chưa gồm VAT)`;
+        document.getElementById("calc-total-vnd").innerText = `${totalVnd.toLocaleString('vi-VN')} VNĐ / tháng`;
       }
     }
 

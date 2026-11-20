@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\LeadStatus;
 use App\Events\LeadAssignedToSalesEvent;
 use App\Events\LeadPendingAssignmentEvent;
+use App\Models\Admin;
 use App\Models\Building;
 use App\Models\Lead;
 use App\Models\LeadActivity;
@@ -23,10 +24,24 @@ class Module2LeadApiTest extends TestCase
     protected Province $province;
     protected Building $building;
     protected Unit $unit;
+    protected Admin $admin;
+    protected string $adminToken;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->admin = Admin::create([
+            'employee_code' => 'ADM-M2-01',
+            'full_name' => 'Admin Module 2',
+            'email' => 'admin.m2@officeleasing.vn',
+            'phone' => '0912345681',
+            'password' => 'secret123',
+            'role' => 'SUPER_ADMIN',
+            'is_super_admin' => true,
+            'status' => 'ACTIVE',
+        ]);
+        $this->adminToken = $this->admin->createToken('admin-m2', ['admin'])->plainTextToken;
 
         $this->province = Province::create([
             'code' => 79,
@@ -253,6 +268,39 @@ class Module2LeadApiTest extends TestCase
     }
 
     /**
+     * Test chặn truy cập CRM khi chưa xác thực (401 Unauthorized).
+     */
+    public function test_unauthenticated_user_cannot_access_crm(): void
+    {
+        $response = $this->getJson('/api/v1/crm/leads');
+        $response->assertStatus(401);
+    }
+
+    /**
+     * Test chặn nhân viên Sales tự ý điều phối Lead (chỉ Admin mới được điều phối).
+     */
+    public function test_sales_cannot_reassign_lead_without_admin_role(): void
+    {
+        $sale = $this->createSales('Sales Role Test', 'SALE-RT1', 10);
+        $saleToken = $sale->createToken('sale-rt1', ['sales'])->plainTextToken;
+
+        $lead = Lead::create([
+            'contact_full_name' => 'Khách Cần Điều Phối',
+            'phone' => '0977665544',
+            'email' => 'sales-role-test@company.vn',
+            'building_id' => $this->building->id,
+            'status' => LeadStatus::NEW,
+        ]);
+
+        $response = $this->withHeader('Authorization', "Bearer {$saleToken}")
+            ->postJson("/api/v1/crm/leads/{$lead->id}/assign", [
+                'sales_id' => $sale->id,
+            ]);
+
+        $response->assertStatus(403);
+    }
+
+    /**
      * Test chuyển đổi trạng thái Pipeline và ràng buộc lý do khi LOST.
      */
     public function test_pipeline_status_and_lost_validation(): void
@@ -268,17 +316,19 @@ class Module2LeadApiTest extends TestCase
         ]);
 
         // Thử chuyển sang LOST mà không có lý do -> HTTP 422
-        $resFail = $this->patchJson("/api/v1/crm/leads/{$lead->id}/status", [
-            'status' => 'LOST',
-        ]);
+        $resFail = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->patchJson("/api/v1/crm/leads/{$lead->id}/status", [
+                'status' => 'LOST',
+            ]);
         $resFail->assertStatus(422);
 
         // Chuyển sang LOST kèm lý do đầy đủ -> Thành công
-        $resSuccess = $this->patchJson("/api/v1/crm/leads/{$lead->id}/status", [
-            'status' => 'LOST',
-            'lost_reason_category' => 'Giá quá cao so với ngân sách',
-            'lost_reason_detail' => 'Khách chỉ có ngân sách tối đa 500k/m2.',
-        ]);
+        $resSuccess = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->patchJson("/api/v1/crm/leads/{$lead->id}/status", [
+                'status' => 'LOST',
+                'lost_reason_category' => 'Giá quá cao so với ngân sách',
+                'lost_reason_detail' => 'Khách chỉ có ngân sách tối đa 500k/m2.',
+            ]);
         $resSuccess->assertStatus(200)
             ->assertJsonPath('data.status', 'LOST')
             ->assertJsonPath('data.lost_reason_category', 'Giá quá cao so với ngân sách');
@@ -290,6 +340,8 @@ class Module2LeadApiTest extends TestCase
     public function test_logging_activity_triggers_first_contacted_at(): void
     {
         $sale = $this->createSales('Sales Contact', 'SALE-C1', 10);
+        $saleToken = $sale->createToken('sale-c1', ['sales'])->plainTextToken;
+
         $lead = Lead::create([
             'contact_full_name' => 'Khách Cần Gọi',
             'phone' => '0988888888',
@@ -300,11 +352,12 @@ class Module2LeadApiTest extends TestCase
             'first_contacted_at' => null,
         ]);
 
-        $response = $this->postJson("/api/v1/crm/leads/{$lead->id}/activities", [
-            'activity_type' => 'CALL',
-            'title' => 'Gọi điện chào giá và khảo sát sơ bộ',
-            'content' => 'Khách đã nghe máy và hẹn 10h sáng mai gửi brochure chi tiết.',
-        ]);
+        $response = $this->withHeader('Authorization', "Bearer {$saleToken}")
+            ->postJson("/api/v1/crm/leads/{$lead->id}/activities", [
+                'activity_type' => 'CALL',
+                'title' => 'Gọi điện chào giá và khảo sát sơ bộ',
+                'content' => 'Khách đã nghe máy và hẹn 10h sáng mai gửi brochure chi tiết.',
+            ]);
 
         $response->assertStatus(201)
             ->assertJsonPath('status', 'success')
@@ -316,7 +369,7 @@ class Module2LeadApiTest extends TestCase
     }
 
     /**
-     * Test điều phối / Gán lại Sales và ghi audit log.
+     * Test điều phối / Gán lại Sales và ghi audit log bởi Admin.
      */
     public function test_manual_assign_sales_and_system_note(): void
     {
@@ -332,10 +385,11 @@ class Module2LeadApiTest extends TestCase
             'status' => LeadStatus::NEW,
         ]);
 
-        $response = $this->postJson("/api/v1/crm/leads/{$lead->id}/assign", [
-            'sales_id' => $saleB->id,
-            'assignment_note' => 'Sales A bận công tác đột xuất.',
-        ]);
+        $response = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->postJson("/api/v1/crm/leads/{$lead->id}/assign", [
+                'sales_id' => $saleB->id,
+                'assignment_note' => 'Sales A bận công tác đột xuất.',
+            ]);
 
         $response->assertStatus(200)
             ->assertJsonPath('status', 'success')
@@ -354,6 +408,8 @@ class Module2LeadApiTest extends TestCase
     public function test_convert_lead_to_tenant_success(): void
     {
         $sale = $this->createSales('Sales Chốt Deal', 'SALE-DEAL', 10);
+        $saleToken = $sale->createToken('sale-deal', ['sales'])->plainTextToken;
+
         $lead = Lead::create([
             'contact_full_name' => 'Trần Văn Giám Đốc',
             'company_name' => 'Tập Đoàn Bất Động Sản Toàn Cầu',
@@ -364,11 +420,12 @@ class Module2LeadApiTest extends TestCase
             'status' => LeadStatus::NEGOTIATING,
         ]);
 
-        $response = $this->postJson("/api/v1/crm/leads/{$lead->id}/convert-to-tenant", [
-            'tax_code' => '0312345678',
-            'representative_position' => 'Tổng Giám Đốc',
-            'headquarter_address' => 'Tầng 12, Bitexco, Q.1, TP.HCM',
-        ]);
+        $response = $this->withHeader('Authorization', "Bearer {$saleToken}")
+            ->postJson("/api/v1/crm/leads/{$lead->id}/convert-to-tenant", [
+                'tax_code' => '0312345678',
+                'representative_position' => 'Tổng Giám Đốc',
+                'headquarter_address' => 'Tầng 12, Bitexco, Q.1, TP.HCM',
+            ]);
 
         $response->assertStatus(201)
             ->assertJsonPath('status', 'success')
@@ -391,48 +448,53 @@ class Module2LeadApiTest extends TestCase
      */
     public function test_crm_lead_crud_and_activity_list(): void
     {
-        $sale = $this->createSales('Sales CRM Test', 'SALE-TEST', 10);
-
         // 1. Tạo mới Lead qua POST /api/v1/crm/leads
-        $createRes = $this->postJson('/api/v1/crm/leads', [
-            'contact_full_name' => 'Nguyễn Quản Trị',
-            'phone' => '0933333333',
-            'email' => 'crmtest@company.vn',
-            'company_name' => 'Công Ty Công Nghệ CRM',
-            'building_id' => $this->building->id,
-            'lead_source' => 'HOTLINE',
-        ]);
+        $createRes = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->postJson('/api/v1/crm/leads', [
+                'contact_full_name' => 'Nguyễn Quản Trị',
+                'phone' => '0933333333',
+                'email' => 'crmtest@company.vn',
+                'company_name' => 'Công Ty Công Nghệ CRM',
+                'building_id' => $this->building->id,
+                'lead_source' => 'HOTLINE',
+            ]);
         $createRes->assertStatus(201);
         $leadId = $createRes->json('data.id');
 
         // 2. Lấy danh sách qua GET /api/v1/crm/leads
-        $listRes = $this->getJson('/api/v1/crm/leads');
+        $listRes = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->getJson('/api/v1/crm/leads');
         $listRes->assertStatus(200);
 
         // 3. Lấy chi tiết qua GET /api/v1/crm/leads/{id}
-        $detailRes = $this->getJson("/api/v1/crm/leads/{$leadId}");
+        $detailRes = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->getJson("/api/v1/crm/leads/{$leadId}");
         $detailRes->assertStatus(200)
             ->assertJsonPath('data.id', $leadId);
 
         // 4. Cập nhật thông tin qua PUT /api/v1/crm/leads/{id}
-        $updateRes = $this->putJson("/api/v1/crm/leads/{$leadId}", [
-            'contact_full_name' => 'Nguyễn Quản Trị Cập Nhật',
-            'expected_area_sqm' => 200,
-        ]);
+        $updateRes = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->putJson("/api/v1/crm/leads/{$leadId}", [
+                'contact_full_name' => 'Nguyễn Quản Trị Cập Nhật',
+                'expected_area_sqm' => 200,
+            ]);
         $updateRes->assertStatus(200);
 
         // 5. Thêm hoạt động và lấy danh sách timeline qua GET /api/v1/crm/leads/{id}/activities
-        $this->postJson("/api/v1/crm/leads/{$leadId}/activities", [
-            'activity_type' => 'NOTE',
-            'title' => 'Ghi chú hệ thống',
-            'content' => 'Kiểm thử ghi nhận hoạt động.',
-        ]);
+        $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->postJson("/api/v1/crm/leads/{$leadId}/activities", [
+                'activity_type' => 'NOTE',
+                'title' => 'Ghi chú hệ thống',
+                'content' => 'Kiểm thử ghi nhận hoạt động.',
+            ]);
 
-        $actListRes = $this->getJson("/api/v1/crm/leads/{$leadId}/activities");
+        $actListRes = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->getJson("/api/v1/crm/leads/{$leadId}/activities");
         $actListRes->assertStatus(200);
 
         // 6. Xóa mềm Lead qua DELETE /api/v1/crm/leads/{id}
-        $deleteRes = $this->deleteJson("/api/v1/crm/leads/{$leadId}");
+        $deleteRes = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->deleteJson("/api/v1/crm/leads/{$leadId}");
         $deleteRes->assertStatus(200);
     }
 }

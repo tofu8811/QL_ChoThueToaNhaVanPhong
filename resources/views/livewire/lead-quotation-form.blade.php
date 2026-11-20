@@ -68,9 +68,9 @@
             <option value="">-- Chọn tòa nhà bạn quan tâm --</option>
             @foreach($buildings as $b)
               @php
-                $priceUsd = $b->min_rent_price_per_sqm ? round($b->min_rent_price_per_sqm / 24000) : 30;
+                $priceText = $b->min_rent_price_per_sqm ? number_format($b->min_rent_price_per_sqm, 0, ',', '.') . ' đ/m²' : 'Liên hệ';
               @endphp
-              <option value="{{ $b->id }}">{{ $b->name }} ({{ $b->district }} - ${{ $priceUsd }}/m²)</option>
+              <option value="{{ $b->id }}">{{ $b->name }} ({{ $b->district }} - {{ $priceText }})</option>
             @endforeach
           </select>
           @error('building_id')
@@ -113,7 +113,7 @@
         <!-- Yêu cầu chi tiết khác -->
         <div class="form-field full">
           <label for="lead-notes">Yêu cầu chi tiết khác (Vị trí, hướng, ngân sách, số chỗ đỗ xe...)</label>
-          <textarea id="lead-notes" wire:model.defer="customer_note" rows="4" placeholder="Ví dụ: Cần bàn giao hoàn thiện cơ bản, có phòng họp sẵn, ngân sách khoảng $25 - $35/m²..."></textarea>
+          <textarea id="lead-notes" wire:model.defer="customer_note" rows="4" placeholder="Ví dụ: Cần bàn giao hoàn thiện cơ bản, có phòng họp sẵn, ngân sách khoảng 500.000 - 800.000 đ/m²..."></textarea>
           @error('customer_note')
             <span style="color:#ef4444; font-size:12px; margin-top:4px; display:block;">{{ $message }}</span>
           @enderror

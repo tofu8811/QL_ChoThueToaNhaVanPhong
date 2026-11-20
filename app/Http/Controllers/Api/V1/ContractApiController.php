@@ -39,7 +39,7 @@ class ContractApiController extends BaseApiController
      */
     public function store(StoreContractRequest $request): JsonResponse
     {
-        $salesId = $request->user()?->id;
+        $salesId = $request->user() instanceof \App\Models\Sale ? $request->user()->id : null;
         $contract = $this->contractService->createDraftContract($request->validated(), $salesId);
 
         return $this->createdResponse($contract, 'Khởi tạo hợp đồng thuê bản nháp thành công.');
@@ -50,7 +50,7 @@ class ContractApiController extends BaseApiController
      */
     public function reserve(ReserveContractRequest $request): JsonResponse
     {
-        $salesId = $request->user()?->id;
+        $salesId = $request->user() instanceof \App\Models\Sale ? $request->user()->id : null;
         $contract = $this->contractService->createBookingContract($request->validated(), $salesId);
 
         return $this->createdResponse($contract, 'Lập hợp đồng giữ chỗ thành công.');

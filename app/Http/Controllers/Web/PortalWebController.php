@@ -40,51 +40,7 @@ class PortalWebController extends Controller
 
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('buildings')) {
-                $totalBuildings = Building::published()->count();
-                $totalArea = (float) Building::published()->sum('total_leasable_area_sqm');
-                $totalTenants = \Illuminate\Support\Facades\Schema::hasTable('tenants') ? \App\Models\Tenant::count() : 10;
-
-                $provincesList = Building::published()->distinct()->pluck('province')->filter()->values();
-                $cleanProvinces = $provincesList->map(fn($p) => str_replace(['Thành phố ', 'Tỉnh '], '', $p))->implode(', ');
-                $minPriceVnd = Building::published()->min('min_rent_price_per_sqm') ?: 240000;
-                $maxPriceVnd = Building::published()->max('max_rent_price_per_sqm') ?: 1680000;
-
-                $stats = [
-                    'total_buildings' => $totalBuildings,
-                    'total_leasable_area' => $totalArea > 0 ? $totalArea : 428430,
-                    'total_tenants' => $totalTenants,
-                    'free_consult_pct' => 100,
-                    'active_provinces' => $provincesList->toArray(),
-                    'active_provinces_text' => $cleanProvinces ?: 'Hà Nội, TP.HCM, Đồng Nai & Đà Nẵng',
-                    'min_price_usd' => round($minPriceVnd / 24000),
-                    'max_price_usd' => round($maxPriceVnd / 24000),
-                    'by_grade' => [
-                        'A' => Building::published()->where('grade', 'A')->count(),
-                        'B' => Building::published()->where('grade', 'B')->count(),
-                        'C' => Building::published()->where('grade', 'C')->count(),
-                    ],
-                    'by_province' => [
-                        'ha_noi' => Building::published()->where('province_code', 1)->count(),
-                        'ho_chi_minh' => Building::published()->where('province_code', 79)->count(),
-                        'dong_nai' => Building::published()->where('province_code', 75)->count(),
-                        'da_nang' => Building::published()->where('province_code', 48)->count(),
-                    ],
-                    'by_district' => [
-                        'Quận 1' => Building::published()->where('district', 'like', '%Quận 1%')->count(),
-                        'Quận 3' => Building::published()->where('district', 'like', '%Quận 3%')->count(),
-                        'Bình Thạnh' => Building::published()->where('district', 'like', '%Bình Thạnh%')->count(),
-                        'Quận 7' => Building::published()->where('district', 'like', '%Quận 7%')->count(),
-                        'TP Thủ Đức' => Building::published()->where(function ($q) {
-                            $q->where('district', 'like', '%Thủ Đức%')->orWhere('district', 'like', '%Thành phố Thủ Đức%');
-                        })->count(),
-                        'Ba Đình' => Building::published()->where('district', 'like', '%Ba Đình%')->count(),
-                        'Cầu Giấy' => Building::published()->where('district', 'like', '%Cầu Giấy%')->count(),
-                        'Biên Hòa' => Building::published()->where('district', 'like', '%Biên Hòa%')->count(),
-                        'Hải Châu' => Building::published()->where('district', 'like', '%Hải Châu%')->count(),
-                    ],
-                ];
-
-                $buildings = Building::query()
+                $buildingsRaw = Building::query()
                     ->published()
                     ->with(['images', 'primaryImage', 'units'])
                     ->withCount([
@@ -93,8 +49,51 @@ class PortalWebController extends Controller
                         }
                     ])
                     ->latest()
-                    ->get()
-                    ->map(function (Building $b) {
+                    ->get();
+
+                $totalBuildings = $buildingsRaw->count();
+                $totalArea = (float) $buildingsRaw->sum('total_leasable_area_sqm');
+                $totalTenants = \Illuminate\Support\Facades\Schema::hasTable('tenants') ? \App\Models\Tenant::count() : 10;
+
+                $provincesList = $buildingsRaw->pluck('province')->filter()->unique()->values();
+                $cleanProvinces = $provincesList->map(fn($p) => str_replace(['Thành phố ', 'Tỉnh '], '', $p))->implode(', ');
+                $minPriceVnd = $buildingsRaw->min('min_rent_price_per_sqm') ?: 240000;
+                $maxPriceVnd = $buildingsRaw->max('max_rent_price_per_sqm') ?: 1680000;
+
+                $stats = [
+                    'total_buildings' => $totalBuildings,
+                    'total_leasable_area' => $totalArea > 0 ? $totalArea : 428430,
+                    'total_tenants' => $totalTenants,
+                    'free_consult_pct' => 100,
+                    'active_provinces' => $provincesList->toArray(),
+                    'active_provinces_text' => $cleanProvinces ?: 'Hà Nội, TP.HCM, Đồng Nai & Đà Nẵng',
+                    'min_price_vnd' => $minPriceVnd,
+                    'max_price_vnd' => $maxPriceVnd,
+                    'by_grade' => [
+                        'A' => $buildingsRaw->where('grade', 'A')->count(),
+                        'B' => $buildingsRaw->where('grade', 'B')->count(),
+                        'C' => $buildingsRaw->where('grade', 'C')->count(),
+                    ],
+                    'by_province' => [
+                        'ha_noi' => $buildingsRaw->where('province_code', 1)->count(),
+                        'ho_chi_minh' => $buildingsRaw->where('province_code', 79)->count(),
+                        'dong_nai' => $buildingsRaw->where('province_code', 75)->count(),
+                        'da_nang' => $buildingsRaw->where('province_code', 48)->count(),
+                    ],
+                    'by_district' => [
+                        'Quận 1' => $buildingsRaw->filter(fn($b) => str_contains($b->district ?? '', 'Quận 1'))->count(),
+                        'Quận 3' => $buildingsRaw->filter(fn($b) => str_contains($b->district ?? '', 'Quận 3'))->count(),
+                        'Bình Thạnh' => $buildingsRaw->filter(fn($b) => str_contains($b->district ?? '', 'Bình Thạnh'))->count(),
+                        'Quận 7' => $buildingsRaw->filter(fn($b) => str_contains($b->district ?? '', 'Quận 7'))->count(),
+                        'TP Thủ Đức' => $buildingsRaw->filter(fn($b) => str_contains($b->district ?? '', 'Thủ Đức'))->count(),
+                        'Ba Đình' => $buildingsRaw->filter(fn($b) => str_contains($b->district ?? '', 'Ba Đình'))->count(),
+                        'Cầu Giấy' => $buildingsRaw->filter(fn($b) => str_contains($b->district ?? '', 'Cầu Giấy'))->count(),
+                        'Biên Hòa' => $buildingsRaw->filter(fn($b) => str_contains($b->district ?? '', 'Biên Hòa'))->count(),
+                        'Hải Châu' => $buildingsRaw->filter(fn($b) => str_contains($b->district ?? '', 'Hải Châu'))->count(),
+                    ],
+                ];
+
+                $buildings = $buildingsRaw->map(function (Building $b) {
                         $primaryImg = $b->primaryImage?->image_url ?? $b->images->first()?->image_url ?? 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80';
                         $buildingImages = $b->images->pluck('image_url')->toArray();
                         if (empty($buildingImages) && $primaryImg) {
@@ -102,24 +101,25 @@ class PortalWebController extends Controller
                         }
                         
                         $floors = $b->units->map(function ($unit) {
+                            $priceVal = $unit->base_rental_price ?: 600000;
                             return [
                                 'floor' => 'Tầng ' . ($unit->floor_number ?? '1'),
                                 'area' => ($unit->area_sqm ?? 100) . ' m²',
                                 'deliver' => $unit->handover_condition ?? 'Hoàn thiện cơ bản',
-                                'price' => '$' . number_format($unit->rent_price_usd_per_sqm ?? 30, 0) . ' / m²',
+                                'price' => number_format($priceVal, 0, ',', '.') . ' đ/m²',
                                 'status' => $unit->status === 'AVAILABLE' ? 'Đang trống' : 'Sắp trống',
                             ];
                         })->toArray();
 
                         if (empty($floors)) {
                             $floors = [
-                                ['floor' => 'Tầng 5', 'area' => '180 m²', 'deliver' => 'Hoàn thiện cơ bản', 'price' => '$' . number_format($b->min_rent_price_per_sqm ? $b->min_rent_price_per_sqm / 24000 : 35, 0) . ' / m²', 'status' => 'Đang trống'],
-                                ['floor' => 'Tầng 12', 'area' => '350 m²', 'deliver' => 'Nội thất tiêu chuẩn', 'price' => '$' . number_format($b->max_rent_price_per_sqm ? $b->max_rent_price_per_sqm / 24000 : 45, 0) . ' / m²', 'status' => 'Đang trống'],
+                                ['floor' => 'Tầng 5', 'area' => '180 m²', 'deliver' => 'Hoàn thiện cơ bản', 'price' => number_format($b->min_rent_price_per_sqm ?: 600000, 0, ',', '.') . ' đ/m²', 'status' => 'Đang trống'],
+                                ['floor' => 'Tầng 12', 'area' => '350 m²', 'deliver' => 'Nội thất tiêu chuẩn', 'price' => number_format($b->max_rent_price_per_sqm ?: 900000, 0, ',', '.') . ' đ/m²', 'status' => 'Đang trống'],
                             ];
                         }
 
-                        $minUsd = $b->min_rent_price_per_sqm ? round($b->min_rent_price_per_sqm / 24000) : 25;
-                        $maxUsd = $b->max_rent_price_per_sqm ? round($b->max_rent_price_per_sqm / 24000) : ($minUsd + 10);
+                        $minPrice = (float) ($b->min_rent_price_per_sqm ?: 600000);
+                        $maxPrice = (float) ($b->max_rent_price_per_sqm ?: ($minPrice + 200000));
 
                         return [
                             'id' => $b->id,
@@ -128,9 +128,9 @@ class PortalWebController extends Controller
                             'grade' => 'Hạng ' . ($b->grade ?? 'A'),
                             'district' => $b->district ?? 'Quận 1',
                             'address' => $b->address . ($b->ward ? ', ' . $b->ward : '') . ($b->district ? ', ' . $b->district : ''),
-                            'priceUsd' => $minUsd,
-                            'priceMaxUsd' => $maxUsd,
-                            'priceVnd' => number_format($b->min_rent_price_per_sqm ?: 600000, 0, ',', '.') . ' đ',
+                            'minRentPrice' => $minPrice,
+                            'maxRentPrice' => $maxPrice,
+                            'priceVnd' => number_format($minPrice, 0, ',', '.') . ' đ',
                             'totalArea' => number_format($b->total_leasable_area_sqm ?: 25000, 0, ',', '.') . ' m²',
                             'availableArea' => '1.500 m²',
                             'floorPlate' => '1.000 m²',
@@ -188,8 +188,10 @@ class PortalWebController extends Controller
             if (\Illuminate\Support\Facades\Schema::hasTable('admins')) {
                 $superAdmin = \App\Models\Admin::where('is_super_admin', true)->first();
                 if ($superAdmin) {
-                    $superAdmin->tokens()->where('name', 'portal-admin-token')->delete();
-                    $defaultStaffToken = $superAdmin->createToken('portal-admin-token')->plainTextToken;
+                    $defaultStaffToken = \Illuminate\Support\Facades\Cache::remember('portal_admin_token_' . $superAdmin->id, 86400, function () use ($superAdmin) {
+                        $superAdmin->tokens()->where('name', 'portal-admin-token')->delete();
+                        return $superAdmin->createToken('portal-admin-token')->plainTextToken;
+                    });
                 }
             }
         } catch (\Throwable $e) {

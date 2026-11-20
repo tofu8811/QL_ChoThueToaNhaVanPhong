@@ -21,7 +21,7 @@
         </div>
 
         <!-- Nhúng Livewire 3 TenantPortalWorkspace Component -->
-        <livewire:tenant-portal-workspace />
+        <livewire:tenant-portal-workspace :tenant-id="request('tenant_id')" />
       </div>
     </main>
 

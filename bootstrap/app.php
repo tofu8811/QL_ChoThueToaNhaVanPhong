@@ -26,7 +26,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'force.json'  => ForceJsonResponseMiddleware::class,
             'api.catch'   => GlobalExceptionMiddleware::class,
             'super_admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
+            'role'        => \App\Http\Middleware\EnsureRole::class,
         ]);
+
+        $middleware->redirectGuestsTo('/admin/login');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Luôn trả về JSON khi request vào endpoint API

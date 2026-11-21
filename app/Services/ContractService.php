@@ -385,7 +385,41 @@ class ContractService
                 'last_status_changed_at' => now(),
             ]);
 
-            return $contract->fresh(['contractUnits.unit', 'building', 'tenant']);
+            // Tự động kích hoạt tài khoản Tenant Portal & cấp mật khẩu ngẫu nhiên an toàn nếu là lần đầu
+            $tenant = $contract->tenant;
+            $plainPassword = null;
+
+            if ($tenant && ($tenant->last_login_at === null || $tenant->initial_password_issued_at === null)) {
+                $plainPassword = \App\Helpers\PasswordHelper::generateSecurePassword(10);
+                $tenant->update([
+                    'password' => $plainPassword,
+                    'status' => 'ACTIVE',
+                    'must_change_password' => true,
+                    'initial_password_issued_at' => now(),
+                ]);
+            }
+
+            $freshContract = $contract->fresh(['contractUnits.unit', 'building', 'tenant']);
+
+            // Đẩy Job gửi email bàn giao tài khoản vào Laravel Queue sau khi DB transaction commit
+            if ($plainPassword && $tenant) {
+                $tenant->notify(
+                    (new \App\Notifications\TenantCredentialNotification($freshContract, $plainPassword))->afterCommit()
+                );
+
+                // Gắn thông tin tài khoản vào model để UI Livewire / API hiển thị One-Time Modal
+                $freshContract->tenant_credential_issued = [
+                    'company_name' => $tenant->company_name,
+                    'tenant_code' => $tenant->tenant_code,
+                    'login_email' => $tenant->login_email,
+                    'billing_email' => $tenant->billing_email,
+                    'password' => $plainPassword,
+                    'building_name' => $freshContract->building?->name,
+                    'contract_number' => $freshContract->contract_number,
+                ];
+            }
+
+            return $freshContract;
         });
     }
 

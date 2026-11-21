@@ -428,6 +428,8 @@ class LeadService
         return DB::transaction(function () use ($lead, $tenantData) {
             $tenantCode = $tenantData['tenant_code'] ?? 'TN-' . date('Y') . '-' . str_pad((string)(Tenant::withTrashed()->count() + 1), 4, '0', STR_PAD_LEFT);
 
+            $rawPassword = $tenantData['password'] ?? \App\Helpers\PasswordHelper::generateSecurePassword(10);
+
             $tenant = Tenant::create([
                 'tenant_code' => $tenantCode,
                 'converted_from_lead_id' => $lead->id,
@@ -440,10 +442,14 @@ class LeadService
                 'login_email' => $tenantData['login_email'] ?? $lead->email,
                 'billing_email' => $tenantData['billing_email'] ?? $lead->email,
                 'contact_phone' => $tenantData['contact_phone'] ?? $lead->phone,
-                'password' => $tenantData['password'] ?? Str::random(12),
+                'password' => $rawPassword,
+                'must_change_password' => true,
+                'initial_password_issued_at' => now(),
                 'status' => 'ACTIVE',
                 'created_by_sales_id' => $lead->assigned_sales_id,
             ]);
+
+            $tenant->initial_plain_password = $rawPassword;
 
             $lead->status = LeadStatus::WON;
             $lead->converted_tenant_id = $tenant->id;

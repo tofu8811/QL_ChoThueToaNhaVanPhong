@@ -194,4 +194,42 @@ class TenantService
         $count = Tenant::withTrashed()->whereYear('created_at', $year)->count() + 1;
         return sprintf('TNT-%s-%04d', $year, $count);
     }
+
+    /**
+     * Quản trị viên / Sales cấp lại mật khẩu tạm thời cho Khách thuê (Admin-Assisted Reset).
+     *
+     * @param Tenant $tenant
+     * @param mixed $actor
+     * @return string Mật khẩu ngẫu nhiên mới sinh ra (dạng chuỗi thuần)
+     */
+    public function adminResetPassword(Tenant $tenant, mixed $actor): string
+    {
+        return DB::transaction(function () use ($tenant, $actor) {
+            $newPassword = \App\Helpers\PasswordHelper::generateSecurePassword(10);
+
+            $tenant->update([
+                'password' => $newPassword,
+                'status' => 'ACTIVE',
+                'must_change_password' => true,
+                'password_changed_at' => now(),
+            ]);
+
+            // Thu hồi toàn bộ Sanctum tokens phiên cũ để chặn truy cập trái phép
+            $tenant->tokens()->delete();
+
+            // Gửi email thông báo cập nhật mật khẩu mới qua Queue
+            $latestContract = $tenant->contracts()
+                ->whereIn('status', [ContractStatus::ACTIVE, ContractStatus::EXPIRING_SOON, ContractStatus::DRAFT])
+                ->latest()
+                ->first();
+
+            if ($latestContract) {
+                $tenant->notify(
+                    (new \App\Notifications\TenantCredentialNotification($latestContract, $newPassword))->afterCommit()
+                );
+            }
+
+            return $newPassword;
+        });
+    }
 }

@@ -62,10 +62,11 @@ class AuthService
                 continue;
             }
 
-            // Tenant sử dụng login_email hoặc billing_email để đăng nhập
+            // Tenant sử dụng login_email, billing_email hoặc tenant_code để đăng nhập
             if ($modelClass === Tenant::class) {
                 $user = $modelClass::where('login_email', $email)
                     ->orWhere('billing_email', $email)
+                    ->orWhere('tenant_code', $email)
                     ->first();
             } else {
                 $user = $modelClass::where('email', $email)->first();
@@ -129,6 +130,7 @@ class AuthService
                 'role'                  => $matchedRole,
                 'user'                  => $authenticatedUser,
                 'assigned_building_ids' => $assignedBuildingIds,
+                'must_change_password'  => (bool) ($authenticatedUser->must_change_password ?? false),
             ];
         } catch (\Throwable $e) {
             Log::error('Lỗi phát sinh trong quá trình tạo phiên đăng nhập: ' . $e->getMessage(), [
@@ -325,5 +327,87 @@ class AuthService
             $user instanceof Tenant          => UserRole::TENANT->value,
             default                          => 'user',
         };
+    }
+
+    /**
+     * Gửi liên kết khôi phục mật khẩu cho Khách thuê (Tenant Password Reset via Queue).
+     *
+     * @param string $email Địa chỉ email hoặc mã khách thuê
+     * @return void
+     * @throws ValidationException
+     */
+    public function sendTenantPasswordResetLink(string $email): void
+    {
+        $identifier = trim($email);
+        $tenant = Tenant::where('login_email', $identifier)
+            ->orWhere('billing_email', $identifier)
+            ->orWhere('tenant_code', $identifier)
+            ->first();
+
+        if (!$tenant) {
+            throw ValidationException::withMessages([
+                'email' => ['Không tìm thấy thông tin tài khoản khách thuê khớp với dữ liệu đã cung cấp.'],
+            ]);
+        }
+
+        $isActive = ($tenant->status ?? 'ACTIVE') === 'ACTIVE';
+        if (!$isActive) {
+            throw ValidationException::withMessages([
+                'email' => ['Tài khoản khách thuê này đang bị tạm khóa hoặc ngừng hoạt động. Vui lòng liên hệ BQL tòa nhà.'],
+            ]);
+        }
+
+        // Tạo token và phát Notification gửi email qua Queue
+        $token = \Illuminate\Support\Facades\Password::broker('tenants')->createToken($tenant);
+        $tenant->sendPasswordResetNotification($token);
+
+        Log::info('Đã tạo token và kích hoạt gửi email khôi phục mật khẩu Tenant qua Queue', [
+            'tenant_id' => $tenant->id,
+            'email' => $tenant->login_email,
+        ]);
+    }
+
+    /**
+     * Xác thực token và thiết lập mật khẩu mới cho Khách thuê.
+     *
+     * @param array{token: string, email: string, password: string, password_confirmation: string} $credentials
+     * @return void
+     * @throws ValidationException
+     */
+    public function resetTenantPassword(array $credentials): void
+    {
+        $email = trim($credentials['email'] ?? ($credentials['login_email'] ?? ''));
+
+        // Chuẩn hóa credentials để EloquentUserProvider truy vấn đúng cột login_email trong bảng tenants
+        $brokerCredentials = [
+            'login_email' => $email,
+            'token' => $credentials['token'],
+            'password' => $credentials['password'],
+            'password_confirmation' => $credentials['password_confirmation'] ?? $credentials['password'],
+        ];
+
+        $status = \Illuminate\Support\Facades\Password::broker('tenants')->reset(
+            $brokerCredentials,
+            function (Tenant $tenant, string $password) {
+                $tenant->password = $password; // Cast 'hashed' trong Model Tenant sẽ tự động băm bcrypt
+                $tenant->must_change_password = false;
+                $tenant->password_changed_at = now();
+                $tenant->setRememberToken(\Illuminate\Support\Str::random(60));
+                $tenant->save();
+
+                // Thu hồi toàn bộ Access Tokens cũ để bảo vệ phiên làm việc
+                $tenant->tokens()->delete();
+
+                Log::info('Khách thuê đã đặt lại mật khẩu thành công', [
+                    'tenant_id' => $tenant->id,
+                ]);
+            }
+        );
+
+        if ($status !== \Illuminate\Support\Facades\Password::PASSWORD_RESET) {
+            throw ValidationException::withMessages([
+                'email' => [__($status) ?: 'Mã token khôi phục không hợp lệ hoặc đã hết hạn.'],
+            ]);
+        }
     }
 }

@@ -582,6 +582,69 @@
     </div>
   @endif
 
+  <!-- MODAL: BÀN GIAO MẬT KHẨU KHỞI TẠO TENANT VỪA CHUYỂN ĐỔI -->
+  @if($showConvertedCredentialModal && !empty($convertedCredential))
+    <div class="mo-modal show" style="display: flex; z-index: 10009;">
+      <div class="mo-modal-box" style="max-width: 580px; border-radius: 12px; overflow: hidden; border: 1px solid #bbf7d0;"
+           x-data="{
+              copiedMsg: false,
+              copyTemplate() {
+                  const text = `Kính gửi Quý Khách thuê {{ $convertedCredential['company_name'] ?? '' }},\n\nHồ sơ doanh nghiệp của Quý khách đã được thiết lập thành công trên Cổng Khách Thuê (Tenant Portal):\n- Email đăng nhập: {{ $convertedCredential['login_email'] ?? '' }}\n- Mã định danh: {{ $convertedCredential['tenant_code'] ?? '' }}\n- Mật khẩu khởi tạo: {{ $convertedCredential['password'] ?? '' }}\n- Link Cổng Khách Thuê: {{ route('tenant-portal.page') }}\n\n(Lưu ý bảo mật: Quý khách vui lòng đổi mật khẩu mới ngay trong lần đầu tiên đăng nhập).\n\nTrân trọng,\nPhòng Kinh Doanh`;
+                  navigator.clipboard.writeText(text).then(() => {
+                      this.copiedMsg = true;
+                      setTimeout(() => this.copiedMsg = false, 3000);
+                  });
+              }
+           }">
+        <div style="background: linear-gradient(135deg, #15803d, #166534); padding: 18px 24px; color: #fff; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="display: inline-flex; width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.2); align-items: center; justify-content: center; font-size: 16px;">
+              <i class="fa-solid fa-key"></i>
+            </span>
+            <div>
+              <h3 style="margin: 0; font-size: 16.5px; font-weight: 700; color: #fff;">Khởi Tạo Hồ Sơ Khách Thuê Thành Công</h3>
+              <p style="margin: 2px 0 0 0; font-size: 12px; color: #bbf7d0;">Bàn giao tài khoản Tenant Portal cho khách</p>
+            </div>
+          </div>
+          <button wire:click="closeConvertedCredentialModal" style="background: none; border: none; color: #fff; font-size: 20px; cursor: pointer;">&times;</button>
+        </div>
+
+        <div style="padding: 22px 24px;">
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #166534; line-height: 1.5;">
+            <i class="fa-solid fa-circle-check"></i> Đã cấp mã định danh <strong>{{ $convertedCredential['tenant_code'] ?? '' }}</strong> cho doanh nghiệp <strong>{{ $convertedCredential['company_name'] ?? '' }}</strong>.
+          </div>
+
+          <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #f8fafc; margin-bottom: 16px;">
+            <div style="display: grid; grid-template-columns: 130px 1fr; gap: 8px; font-size: 13px; margin-bottom: 8px;">
+              <span style="color: #64748b; font-weight: 600;">Email đăng nhập:</span>
+              <span style="color: #0f172a; font-weight: 700;">{{ $convertedCredential['login_email'] ?? '' }}</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 130px 1fr; gap: 8px; font-size: 13px; align-items: center; padding-top: 8px; border-top: 1px dashed #cbd5e1;">
+              <span style="color: #b45309; font-weight: 700;">Mật khẩu ban đầu:</span>
+              <span style="background: #fef3c7; border: 1px solid #fde68a; color: #b45309; padding: 5px 12px; border-radius: 6px; font-family: monospace; font-size: 16px; font-weight: 800; display: inline-block; width: max-content;">
+                {{ $convertedCredential['password'] ?? '' }}
+              </span>
+            </div>
+          </div>
+
+          <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 10px 14px; font-size: 12px; color: #92400e; line-height: 1.5;">
+            <i class="fa-solid fa-triangle-exclamation"></i> <strong>Lưu ý:</strong> Mật khẩu này chỉ hiển thị lần đầu tại đây. Khách sẽ đổi mật khẩu mới trong lần đăng nhập đầu tiên.
+          </div>
+        </div>
+
+        <div style="padding: 14px 24px; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: space-between; align-items: center;">
+          <button type="button" @click="copyTemplate()" class="btn-mo-outline" style="padding: 8px 16px; border-color: #16a34a; color: #16a34a; background: #f0fdf4; font-size: 12.5px;">
+            <span x-text="copiedMsg ? '✓ Đã sao chép tin nhắn!' : '📋 Sao Chép Tin Nhắn Bàn Giao'"></span>
+          </button>
+          <button type="button" wire:click="closeConvertedCredentialModal" class="btn-mo-primary" style="background: #15803d; border-color: #15803d; padding: 8px 18px; font-size: 12.5px;">
+            Đã Lưu & Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+  @endif
+
   <!-- MODAL: TẠO LEAD THỦ CÔNG (HOTLINE / OFFLINE) -->
   @if($showCreateModal)
     <div class="mo-modal show" style="display: flex;">

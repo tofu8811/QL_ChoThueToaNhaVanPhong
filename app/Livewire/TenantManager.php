@@ -50,6 +50,12 @@ class TenantManager extends Component
     public ?Tenant $selectedTenant = null;
     public ?string $licenseDownloadUrl = null;
 
+    // Modal Cấp lại Mật khẩu Tạm thời (Admin-Assisted Password Reset)
+    public bool $showResetModal = false;
+    public ?string $resetTenantId = null;
+    public ?Tenant $resetTenant = null;
+    public ?string $generatedNewPassword = null;
+
     public function updatingSearchKeyword(): void
     {
         $this->resetPage();
@@ -279,6 +285,43 @@ class TenantManager extends Component
             $this->flashMessage = 'Lỗi: ' . $e->getMessage();
             $this->flashType = 'danger';
         }
+    }
+
+    // Mở modal cấp lại mật khẩu cho khách thuê (Admin/Sales Assisted)
+    public function openResetModal(string $tenantId): void
+    {
+        $this->resetTenantId = $tenantId;
+        $this->resetTenant = Tenant::findOrFail($tenantId);
+        $this->generatedNewPassword = null;
+        $this->showResetModal = true;
+    }
+
+    // Thực thi cấp lại mật khẩu tạm thời
+    public function confirmResetPassword(TenantService $tenantService): void
+    {
+        if (!$this->resetTenant) {
+            return;
+        }
+
+        try {
+            $user = Auth::user();
+            $this->generatedNewPassword = $tenantService->adminResetPassword($this->resetTenant, $user);
+            $this->flashMessage = "Đã cấp lại mật khẩu tạm thời thành công cho khách thuê [{$this->resetTenant->company_name}]!";
+            $this->flashType = 'success';
+        } catch (\Throwable $e) {
+            $this->flashMessage = 'Lỗi cấp lại mật khẩu: ' . $e->getMessage();
+            $this->flashType = 'danger';
+            $this->showResetModal = false;
+        }
+    }
+
+    // Đóng modal cấp lại mật khẩu
+    public function closeResetModal(): void
+    {
+        $this->showResetModal = false;
+        $this->resetTenantId = null;
+        $this->resetTenant = null;
+        $this->generatedNewPassword = null;
     }
 
     public function render(TenantService $tenantService)

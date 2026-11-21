@@ -17,6 +17,79 @@
       document.getElementById("login-modal").classList.remove("show");
     }
 
+    function openForgotPasswordModal() {
+      closeLoginModal();
+      const modal = document.getElementById("forgot-password-modal");
+      if (modal) {
+        modal.classList.add("show");
+        const err = document.getElementById("forgot-error-alert");
+        const succ = document.getElementById("forgot-success-alert");
+        if (err) err.style.display = "none";
+        if (succ) succ.style.display = "none";
+      }
+    }
+
+    function closeForgotPasswordModal() {
+      const modal = document.getElementById("forgot-password-modal");
+      if (modal) modal.classList.remove("show");
+    }
+
+    async function handleForgotPasswordSubmit(event) {
+      if (event) event.preventDefault();
+      const emailInput = document.getElementById("forgot-email");
+      const errBox = document.getElementById("forgot-error-alert");
+      const errText = document.getElementById("forgot-error-text");
+      const succBox = document.getElementById("forgot-success-alert");
+      const succText = document.getElementById("forgot-success-text");
+      const btn = document.getElementById("btn-submit-forgot");
+
+      if (!emailInput || !emailInput.value.trim()) return;
+
+      if (errBox) errBox.style.display = "none";
+      if (succBox) succBox.style.display = "none";
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi yêu cầu...';
+      }
+
+      try {
+        const response = await fetch('/api/v1/auth/tenant/forgot-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+          },
+          body: JSON.stringify({ email: emailInput.value.trim() })
+        });
+
+        const resData = await response.json();
+
+        if (response.ok) {
+          if (succBox) {
+            succText.innerText = resData.message || 'Yêu cầu khôi phục mật khẩu đã được tiếp nhận. Vui lòng kiểm tra hộp thư email của bạn.';
+            succBox.style.display = 'block';
+          }
+          emailInput.value = '';
+        } else {
+          if (errBox) {
+            errText.innerText = resData.errors?.email?.[0] || resData.message || 'Không thể gửi yêu cầu khôi phục mật khẩu.';
+            errBox.style.display = 'block';
+          }
+        }
+      } catch (err) {
+        if (errBox) {
+          errText.innerText = 'Lỗi kết nối máy chủ. Vui lòng thử lại sau.';
+          errBox.style.display = 'block';
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Gửi Yêu Cầu Khôi Phục';
+        }
+      }
+    }
+
     function selectSampleRole(role, el, autoSubmit = false) {
       document.querySelectorAll('.sample-role-pill').forEach(pill => pill.classList.remove('selected'));
       if (el) el.classList.add('selected');

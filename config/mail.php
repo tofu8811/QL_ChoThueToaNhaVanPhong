@@ -101,18 +101,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Global "From" Address
+    | Global "From" Address & "Reply-To" (No-Reply Standard)
     |--------------------------------------------------------------------------
     |
-    | You may wish for all emails sent by your application to be sent from
-    | the same address. Here you may specify a name and address that is
-    | used globally for all emails that are sent by your application.
+    | Cấu hình địa chỉ gửi thông báo mặc định của hệ thống là No-Reply.
+    | Toàn bộ email giao dịch sẽ mang danh nghĩa Ban Quản Lý (No-Reply)
+    | và chặn/hướng luồng phản hồi trực tiếp của người nhận.
     |
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
+        'address' => env('MAIL_FROM_ADDRESS', 'noreply@officeleasing.vn'),
+        'name' => env('MAIL_FROM_NAME', 'Ban Quản Lý Tòa Nhà (No-Reply)'),
+    ],
+
+    'reply_to' => [
+        'address' => env('MAIL_REPLY_TO_ADDRESS', 'noreply@officeleasing.vn'),
+        'name' => env('MAIL_REPLY_TO_NAME', 'No-Reply (Do Not Reply)'),
     ],
 
 ];

@@ -94,6 +94,10 @@ class ContractManager extends Component
     public float $penalty_deposit_amount = 0;
     public float $maxDepositAllowed = 0;
 
+    // Modal Bàn giao Tài khoản Khách thuê lần đầu (One-Time Credential Reveal)
+    public bool $showCredentialModal = false;
+    public array $issuedCredentials = [];
+
     public function mount(): void
     {
         $this->start_date = Carbon::now()->addDays(7)->toDateString();
@@ -405,10 +409,16 @@ class ContractManager extends Component
                 throw new BusinessException('Vui lòng đăng nhập để thực hiện thao tác.', 401);
             }
 
-            $contractService->signContract($contract, $user);
+            $signedContract = $contractService->signContract($contract, $user);
 
             $this->flashMessage = "Hợp đồng {$contract->contract_number} đã được Ký duyệt & Kích hoạt chính thức (ACTIVE)!";
             $this->flashType = 'success';
+
+            // Nếu hệ thống vừa tự động cấp tài khoản & mật khẩu khởi tạo lần đầu cho Tenant
+            if (!empty($signedContract->tenant_credential_issued)) {
+                $this->issuedCredentials = $signedContract->tenant_credential_issued;
+                $this->showCredentialModal = true;
+            }
 
             if ($this->showDetailModal && $this->selectedContractId === $contractId) {
                 $this->contractDetail = $contractService->getContractDetail($contractId);
@@ -417,6 +427,13 @@ class ContractManager extends Component
             $this->flashMessage = 'Lỗi ký hợp đồng: ' . $e->getMessage();
             $this->flashType = 'danger';
         }
+    }
+
+    // Đóng Modal Bàn giao tài khoản lần đầu
+    public function closeCredentialModal(): void
+    {
+        $this->showCredentialModal = false;
+        $this->issuedCredentials = [];
     }
 
     // Mở modal Gia hạn hợp đồng (Renew)

@@ -120,6 +120,13 @@
               </button>
             </div>
 
+            <!-- Forgot Password Link -->
+            <div style="display:flex; justify-content:flex-end; margin-top:-6px; margin-bottom:14px;">
+              <a href="javascript:void(0)" onclick="openForgotPasswordModal()" style="font-size:12.5px; color:#2563eb; font-weight:600; text-decoration:none;">
+                <i class="fa-solid fa-key" style="font-size:11px; margin-right:4px;"></i>Quên mật khẩu?
+              </a>
+            </div>
+
             <!-- Error Box -->
             <div id="login-error-alert" style="display:none; background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; padding:10px 14px; border-radius:8px; font-size:12.5px; margin-bottom:14px;">
               <i class="fa-solid fa-circle-exclamation"></i>
@@ -194,6 +201,52 @@
               </button>
             </form>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Forgot Password Modal (Khôi Phục Mật Khẩu Tenant) -->
+    <div id="forgot-password-modal" class="mo-modal">
+      <div class="login-modal-box">
+        <div class="login-modal-header">
+          <div class="login-header-badge">
+            <i class="fa-solid fa-shield-halved"></i> Khôi Phục Tài Khoản
+          </div>
+          <h3 class="login-modal-title">Quên Mật Khẩu Khách Thuê</h3>
+          <p class="login-modal-sub">Nhập email hoặc mã khách thuê để nhận liên kết khôi phục</p>
+          <div class="login-modal-close" onclick="closeForgotPasswordModal()">
+            <i class="fa-solid fa-xmark"></i>
+          </div>
+        </div>
+
+        <div class="login-modal-body">
+          <form id="forgot-password-form" onsubmit="handleForgotPasswordSubmit(event)">
+            <div class="input-icon-wrapper">
+              <label for="forgot-email">Địa chỉ Email hoặc Mã khách thuê *</label>
+              <i class="fa-solid fa-envelope field-icon"></i>
+              <input type="text" id="forgot-email" required placeholder="name@company.com hoặc TNT-..." autocomplete="email">
+            </div>
+
+            <div id="forgot-error-alert" style="display:none; background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; padding:10px 14px; border-radius:8px; font-size:12.5px; margin-bottom:14px;">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              <span id="forgot-error-text">Lỗi khôi phục</span>
+            </div>
+
+            <div id="forgot-success-alert" style="display:none; background:#ecfdf5; border:1px solid #a7f3d0; color:#047857; padding:10px 14px; border-radius:8px; font-size:12.5px; margin-bottom:14px;">
+              <i class="fa-solid fa-circle-check"></i>
+              <span id="forgot-success-text">Liên kết khôi phục đã được gửi vào email!</span>
+            </div>
+
+            <button type="submit" id="btn-submit-forgot" class="btn-login-submit" style="background:linear-gradient(135deg,#0f3361,#2563eb);">
+              <i class="fa-solid fa-paper-plane"></i> Gửi Yêu Cầu Khôi Phục
+            </button>
+
+            <div style="text-align:center; margin-top:14px;">
+              <a href="javascript:void(0)" onclick="closeForgotPasswordModal(); openLoginModal();" style="font-size:13px; color:#475569; text-decoration:none; font-weight:600;">
+                <i class="fa-solid fa-arrow-left"></i> Quay lại Đăng nhập
+              </a>
+            </div>
+          </form>
         </div>
       </div>
     </div>

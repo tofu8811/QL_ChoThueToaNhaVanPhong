@@ -158,6 +158,14 @@ Route::prefix('v1')->group(function () {
         // 67. Đăng nhập Đa Tác nhân (Public)
         Route::post('login', [AuthController::class, 'login'])->name('v1.auth.login');
 
+        // Quên mật khẩu & Đặt lại mật khẩu cho Khách thuê (Tenant Portal)
+        Route::post('tenant/forgot-password', [AuthController::class, 'tenantForgotPassword'])
+            ->middleware('throttle:5,1')
+            ->name('v1.auth.tenant.forgot-password');
+        Route::post('tenant/reset-password', [AuthController::class, 'tenantResetPassword'])
+            ->middleware('throttle:5,1')
+            ->name('v1.auth.tenant.reset-password');
+
         // Các Endpoint yêu cầu Sanctum Bearer Token
         Route::middleware('auth:sanctum')->group(function () {
             // 68. Đăng xuất Thu hồi Token

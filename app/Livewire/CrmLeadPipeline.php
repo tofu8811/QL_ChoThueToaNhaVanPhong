@@ -62,6 +62,8 @@ class CrmLeadPipeline extends Component
     public string $tenantHeadquarter = '';
     public string $tenantEmail = '';
     public string $tenantPhone = '';
+    public bool $showConvertedCredentialModal = false;
+    public array $convertedCredential = [];
 
     // Trạng thái Modal Tạo Lead Thủ Công (Sales tự nhập)
     public bool $showCreateModal = false;
@@ -331,12 +333,30 @@ class CrmLeadPipeline extends Component
             $this->flashSuccess = "Chuyển đổi thành công! Đã tạo hồ sơ Khách thuê chính thức [{$tenant->tenant_code}].";
             $this->showConvertModal = false;
             $this->convertLeadId = null;
+
+            if (!empty($tenant->initial_plain_password)) {
+                $this->convertedCredential = [
+                    'company_name' => $tenant->company_name,
+                    'tenant_code' => $tenant->tenant_code,
+                    'login_email' => $tenant->login_email,
+                    'password' => $tenant->initial_plain_password,
+                ];
+                $this->showConvertedCredentialModal = true;
+            }
+
             if ($this->selectedLeadId === $lead->id) {
                 $this->selectedLead = $lead->fresh(['building', 'unit', 'assignedSales', 'convertedTenant']);
             }
         } catch (BusinessException $e) {
             $this->flashError = $e->getMessage();
         }
+    }
+
+    // Đóng Modal hiển thị thông tin tài khoản vừa chuyển đổi
+    public function closeConvertedCredentialModal(): void
+    {
+        $this->showConvertedCredentialModal = false;
+        $this->convertedCredential = [];
     }
 
     /**

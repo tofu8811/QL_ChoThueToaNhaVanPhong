@@ -271,17 +271,19 @@
 
   <div class="filament-card" style="padding:24px;margin-bottom:18px;">
     <h3 style="font-size:16.5px;font-weight:800;margin:0 0 16px 0;color:#0f172a;">
-      <i class="fa-solid fa-calculator" style="color:#2563eb;margin-right:6px;"></i> Thiết Lập Thông Số Thư Ngỏ LOI & Báo Giá
+      <i class="fa-solid fa-calculator" style="color:#2563eb;margin-right:6px;"></i> Thiết Lập Thông Số Thư Ngỏ LOI & Báo Giá (100% VNĐ)
     </h3>
     <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:20px;">
       <div class="form-field">
         <label style="font-size:12px;font-weight:700;color:#334155;">Chọn Tòa Nhà Văn Phòng</label>
         <select id="calc-building" onchange="calculateQuickQuoteDetail()" class="filament-input" style="width:100%;">
           @forelse($serverBuildings ?? [] as $b)
-            <option value="{{ $b['priceUsd'] ?? 30 }}" data-name="{{ $b['name'] }}" data-district="{{ $b['district'] ?? 'Quận 1' }}">{{ $b['name'] }} (${{ $b['priceUsd'] ?? 30 }}/m²)</option>
+            <option value="{{ $b['minRentPrice'] ?? 600000 }}" data-name="{{ $b['name'] }}" data-district="{{ $b['district'] ?? 'Quận 1' }}" data-service="{{ $b['serviceFeeVnd'] ?? 120000 }}">{{ $b['name'] }} ({{ $b['priceVnd'] ?? number_format($b['minRentPrice'] ?? 600000, 0, ',', '.') . ' đ' }}/m²)</option>
           @empty
-            <option value="48" data-name="The Nexus Tower" data-district="Quận 1">The Nexus Tower ($48/m²)</option>
-            <option value="58" data-name="Saigon Centre Tower 2" data-district="Quận 1">Saigon Centre Tower 2 ($58/m²)</option>
+            <option value="1150000" data-name="Vietcombank Tower" data-district="Quận 1" data-service="140000">Vietcombank Tower (1.150.000 đ/m²)</option>
+            <option value="1400000" data-name="Deutsches Haus" data-district="Quận 1" data-service="160000">Deutsches Haus (1.400.000 đ/m²)</option>
+            <option value="680000" data-name="Lim Tower 3" data-district="Quận 1" data-service="120000">Lim Tower 3 (680.000 đ/m²)</option>
+            <option value="530000" data-name="Pearl Plaza" data-district="Bình Thạnh" data-service="100000">Pearl Plaza (530.000 đ/m²)</option>
           @endforelse
         </select>
       </div>
@@ -290,8 +292,8 @@
         <input type="number" id="calc-area" value="200" min="20" oninput="calculateQuickQuoteDetail()" class="filament-input" style="width:100%;">
       </div>
       <div class="form-field">
-        <label style="font-size:12px;font-weight:700;color:#334155;">Phí Dịch Vụ Quản Lý ($/m²)</label>
-        <input type="number" id="calc-service" value="6" min="0" oninput="calculateQuickQuoteDetail()" class="filament-input" style="width:100%;">
+        <label style="font-size:12px;font-weight:700;color:#334155;">Phí Dịch Vụ Quản Lý (VNĐ/m²)</label>
+        <input type="number" id="calc-service" value="120000" step="10000" min="0" oninput="calculateQuickQuoteDetail()" class="filament-input" style="width:100%;">
       </div>
       <div class="form-field">
         <label style="font-size:12px;font-weight:700;color:#334155;">Miễn Phí Thi Công (Fit-out)</label>
@@ -313,47 +315,41 @@
       </div>
     </div>
 
-    <!-- Bảng Chi Tiết Dự Toán Ngân Sách -->
+    <!-- Bảng Chi Tiết Dự Toán Ngân Sách Thuần VNĐ -->
     <div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:20px;">
       <table class="mo-table" style="margin:0;">
         <thead>
           <tr style="background:#f8fafc;">
-            <th>Hạng Mục Dự Toán</th>
-            <th>Công Thức Tính Toán</th>
-            <th>Đơn Giá / Tháng (USD)</th>
-            <th style="text-align:right;">Thành Tiền Quy Đổi (VNĐ)</th>
+            <th style="width:35%;">Hạng Mục Dự Toán Chi Phí</th>
+            <th style="width:40%;">Công Thức Tính Toán</th>
+            <th style="text-align:right;width:25%;">Thành Tiền (VNĐ)</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td><strong>1. Tiền thuê văn phòng cơ bản</strong></td>
-            <td id="quote-row-rent-formula">{{ $defaultQuoteEstimate['rent_formula'] ?? '200 m² × $48/m²' }}</td>
-            <td><strong style="color:#2563eb;" id="quote-row-rent-usd">{{ $defaultQuoteEstimate['rent_usd_formatted'] ?? '$9,600' }}</strong></td>
-            <td style="text-align:right;"><strong style="color:#2563eb;" id="quote-row-rent-vnd">{{ $defaultQuoteEstimate['rent_vnd_formatted'] ?? '235.200.000 đ' }}</strong></td>
+            <td id="quote-row-rent-formula">{{ $defaultQuoteEstimate['rent_formula'] ?? '200 m² × 600.000 đ/m²' }}</td>
+            <td style="text-align:right;"><strong style="color:#2563eb;" id="quote-row-rent-vnd">{{ $defaultQuoteEstimate['rent_vnd_formatted'] ?? '120.000.000 đ' }}</strong></td>
           </tr>
           <tr>
             <td><strong>2. Phí dịch vụ quản lý tòa nhà</strong></td>
-            <td id="quote-row-service-formula">{{ $defaultQuoteEstimate['service_formula'] ?? '200 m² × $6/m²' }}</td>
-            <td><strong id="quote-row-service-usd">{{ $defaultQuoteEstimate['service_usd_formatted'] ?? '$1,200' }}</strong></td>
-            <td style="text-align:right;"><strong id="quote-row-service-vnd">{{ $defaultQuoteEstimate['service_vnd_formatted'] ?? '29.400.000 đ' }}</strong></td>
+            <td id="quote-row-service-formula">{{ $defaultQuoteEstimate['service_formula'] ?? '200 m² × 120.000 đ/m²' }}</td>
+            <td style="text-align:right;"><strong id="quote-row-service-vnd">{{ $defaultQuoteEstimate['service_vnd_formatted'] ?? '24.000.000 đ' }}</strong></td>
           </tr>
           <tr>
             <td><strong>3. Thuế GTGT (VAT 10%)</strong></td>
-            <td>(Tiền thuê + Phí quản lý) × 10%</td>
-            <td id="quote-row-vat-usd">{{ $defaultQuoteEstimate['vat_usd_formatted'] ?? '$1,080' }}</td>
-            <td style="text-align:right;" id="quote-row-vat-vnd">{{ $defaultQuoteEstimate['vat_vnd_formatted'] ?? '26.460.000 đ' }}</td>
+            <td id="quote-row-vat-formula">{{ $defaultQuoteEstimate['vat_formula'] ?? '(Tiền thuê + Phí quản lý) × 10%' }}</td>
+            <td style="text-align:right;" id="quote-row-vat-vnd">{{ $defaultQuoteEstimate['vat_vnd_formatted'] ?? '14.400.000 đ' }}</td>
           </tr>
           <tr style="background:#f1f5f9;font-weight:800;">
             <td>TỔNG CHI PHÍ THUÊ / THÁNG (GỒM VAT)</td>
             <td>Tiền thanh toán định kỳ hàng tháng</td>
-            <td style="color:#dc2626;font-size:15px;" id="calc-total-usd">{{ $defaultQuoteEstimate['total_usd_formatted'] ?? '$11,880' }}</td>
-            <td style="text-align:right;color:#dc2626;font-size:16px;" id="calc-total-vnd">{{ $defaultQuoteEstimate['total_vnd_formatted'] ?? '291.060.000 đ' }}</td>
+            <td style="text-align:right;color:#dc2626;font-size:16px;" id="calc-total-vnd">{{ $defaultQuoteEstimate['total_vnd_formatted'] ?? '158.400.000 đ / tháng' }}</td>
           </tr>
           <tr style="background:#f0fdf4;">
             <td><strong style="color:#047857;">4. Tiền đặt cọc bảo đảm hợp đồng</strong></td>
-            <td id="quote-row-deposit-formula">{{ $defaultQuoteEstimate['deposit_formula'] ?? '3 tháng tiền thuê' }}</td>
-            <td><strong style="color:#047857;" id="quote-row-deposit-usd">{{ $defaultQuoteEstimate['deposit_usd_formatted'] ?? '$32,400' }}</strong></td>
-            <td style="text-align:right;"><strong style="color:#047857;" id="quote-row-deposit-vnd">{{ $defaultQuoteEstimate['deposit_vnd_formatted'] ?? '793.800.000 đ' }}</strong></td>
+            <td id="quote-row-deposit-formula">{{ $defaultQuoteEstimate['deposit_formula'] ?? '3 tháng tiền thuê cơ sở' }}</td>
+            <td style="text-align:right;"><strong style="color:#047857;" id="quote-row-deposit-vnd">{{ $defaultQuoteEstimate['deposit_vnd_formatted'] ?? '360.000.000 đ' }}</strong></td>
           </tr>
         </tbody>
       </table>

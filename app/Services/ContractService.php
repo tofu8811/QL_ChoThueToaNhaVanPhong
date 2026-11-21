@@ -57,10 +57,19 @@ class ContractService
             });
         }
 
-        // Phân quyền dữ liệu theo phạm vi tòa nhà nếu là PropertyManager
+        // Phân quyền dữ liệu theo vai trò (Data Isolation)
         if ($user instanceof PropertyManager) {
             $assignedBuildingIds = $user->buildings()->pluck('buildings.id')->toArray();
             $query->whereIn('building_id', $assignedBuildingIds);
+        } elseif ($user instanceof \App\Models\Accountant) {
+            $assignedBuildingIds = $user->buildings()->pluck('buildings.id')->toArray();
+            $query->whereIn('building_id', $assignedBuildingIds);
+        } elseif ($user instanceof \App\Models\Sale) {
+            $assignedBuildingIds = $user->buildings()->pluck('buildings.id')->toArray();
+            $query->where(function ($q) use ($user, $assignedBuildingIds) {
+                $q->where('created_by_sales_id', $user->id)
+                  ->orWhereIn('building_id', $assignedBuildingIds);
+            });
         }
 
         return $query->orderByDesc('created_at')->paginate($perPage);
@@ -87,6 +96,10 @@ class ContractService
 
         if ($user instanceof PropertyManager) {
             $this->ensurePmAssignedToBuilding($user, $contract->building_id);
+        } elseif ($user instanceof \App\Models\Accountant) {
+            $this->ensureAccountantAssignedToBuilding($user, $contract->building_id);
+        } elseif ($user instanceof \App\Models\Sale) {
+            $this->ensureSaleAssignedToContract($user, $contract);
         }
 
         return $contract;
@@ -343,6 +356,10 @@ class ContractService
 
         if ($user instanceof PropertyManager) {
             $this->ensurePmAssignedToBuilding($user, $contract->building_id);
+        } elseif ($user instanceof \App\Models\Accountant) {
+            $this->ensureAccountantAssignedToBuilding($user, $contract->building_id);
+        } elseif ($user instanceof \App\Models\Sale) {
+            $this->ensureSaleAssignedToContract($user, $contract);
         }
 
         return DB::transaction(function () use ($contract, $user) {
@@ -464,6 +481,10 @@ class ContractService
 
         if ($user instanceof PropertyManager) {
             $this->ensurePmAssignedToBuilding($user, $contract->building_id);
+        } elseif ($user instanceof \App\Models\Accountant) {
+            $this->ensureAccountantAssignedToBuilding($user, $contract->building_id);
+        } elseif ($user instanceof \App\Models\Sale) {
+            $this->ensureSaleAssignedToContract($user, $contract);
         }
 
         $refund = (float) $data['refund_deposit_amount'];
@@ -649,6 +670,29 @@ class ContractService
         $isAssigned = $pm->buildings()->where('buildings.id', $buildingId)->exists();
         if (!$isAssigned) {
             throw new BusinessException('Bạn không được phân công quản lý tòa nhà này. Hành động bị từ chối.', 403);
+        }
+    }
+
+    /**
+     * Đảm bảo Kế toán được phân công quản lý tài chính/công nợ tòa nhà này qua account_buildings.
+     */
+    protected function ensureAccountantAssignedToBuilding(\App\Models\Accountant $accountant, string $buildingId): void
+    {
+        $isAssigned = $accountant->buildings()->where('buildings.id', $buildingId)->exists();
+        if (!$isAssigned) {
+            throw new BusinessException('Bạn không được phân công quản lý tài chính tòa nhà này. Hành động bị từ chối.', 403);
+        }
+    }
+
+    /**
+     * Đảm bảo Sales chỉ được xem hợp đồng do chính mình phụ trách/tạo lập hoặc thuộc tòa nhà được phân công.
+     */
+    protected function ensureSaleAssignedToContract(\App\Models\Sale $sale, Contract $contract): void
+    {
+        $isCreator = $contract->created_by_sales_id === $sale->id;
+        $isBuildingAssigned = $sale->buildings()->where('buildings.id', $contract->building_id)->exists();
+        if (!$isCreator && !$isBuildingAssigned) {
+            throw new BusinessException('Bạn không có quyền truy cập hồ sơ hợp đồng này.', 403);
         }
     }
 

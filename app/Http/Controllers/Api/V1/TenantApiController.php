@@ -35,7 +35,7 @@ class TenantApiController extends BaseApiController
      */
     public function store(StoreTenantRequest $request): JsonResponse
     {
-        $salesId = $request->user()?->id;
+        $salesId = $request->user() instanceof \App\Models\Sale ? $request->user()->id : null;
         $tenant = $this->tenantService->createTenant($request->validated(), $salesId);
 
         return $this->createdResponse($tenant, 'Tạo mới hồ sơ khách thuê thành công.');

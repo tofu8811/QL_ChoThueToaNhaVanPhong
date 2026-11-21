@@ -85,12 +85,12 @@
 
             <!-- Price -->
             <div class="mo-filter-group">
-              <label class="mo-filter-label"><i class="fa-solid fa-dollar-sign"></i> Khoảng giá ($/m²)</label>
+              <label class="mo-filter-label"><i class="fa-solid fa-coins"></i> Khoảng giá (VNĐ/m²)</label>
               <select id="filter-price" class="mo-filter-select" onchange="applyFilters()">
                 <option value="all">Tất cả mức giá</option>
-                <option value="under20">Dưới $20 / m²</option>
-                <option value="20to35">$20 - $35 / m²</option>
-                <option value="over35">Trên $35 / m²</option>
+                <option value="under500k">Dưới 500.000 đ/m²</option>
+                <option value="500kto1m">500k - 1.000.000 đ/m²</option>
+                <option value="over1m">Trên 1.000.000 đ/m²</option>
               </select>
             </div>
 

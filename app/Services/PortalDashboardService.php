@@ -89,18 +89,7 @@ class PortalDashboardService
 
         try {
             if (Schema::hasTable('buildings')) {
-                $stats['total_buildings'] = Building::published()->count();
-                $stats['total_leasable_area'] = (float) Building::published()->sum('total_leasable_area_sqm');
-
-                if (Schema::hasTable('units')) {
-                    $stats['available_units'] = Unit::where('status', UnitStatus::AVAILABLE)->count();
-                }
-
-                if (Schema::hasTable('tenants')) {
-                    $stats['total_tenants'] = Tenant::count();
-                }
-
-                $buildings = Building::published()
+                $buildingsRaw = Building::published()
                     ->with(['primaryImage', 'images', 'units' => function ($q) {
                         $q->whereIn('status', [UnitStatus::AVAILABLE, UnitStatus::EXPIRING_SOON]);
                     }])
@@ -110,8 +99,48 @@ class PortalDashboardService
                         },
                     ])
                     ->latest()
-                    ->get()
-                    ->map(function (Building $b) use ($exchangeRate) {
+                    ->get();
+
+                $stats['total_buildings'] = $buildingsRaw->count();
+                $stats['total_leasable_area'] = (float) $buildingsRaw->sum('total_leasable_area_sqm');
+
+                $provincesList = $buildingsRaw->pluck('province')->filter()->unique()->values();
+                $cleanProvinces = $provincesList->map(fn($p) => str_replace(['Thành phố ', 'Tỉnh '], '', $p))->implode(', ');
+                $minPriceVnd = (float) ($buildingsRaw->min('min_rent_price_per_sqm') ?: 240000);
+                $maxPriceVnd = (float) ($buildingsRaw->max('max_rent_price_per_sqm') ?: 1680000);
+
+                $stats['active_provinces'] = $provincesList->toArray();
+                $stats['active_provinces_text'] = $cleanProvinces ?: 'Hà Nội, TP.HCM, Đồng Nai & Đà Nẵng';
+                $stats['min_price_vnd'] = $minPriceVnd;
+                $stats['max_price_vnd'] = $maxPriceVnd;
+                $stats['by_grade'] = [
+                    'A' => $buildingsRaw->where('grade', 'A')->count(),
+                    'B' => $buildingsRaw->where('grade', 'B')->count(),
+                    'C' => $buildingsRaw->where('grade', 'C')->count(),
+                ];
+                $stats['by_province'] = [
+                    'ha_noi' => $buildingsRaw->where('province_code', 1)->count(),
+                    'ho_chi_minh' => $buildingsRaw->where('province_code', 79)->count(),
+                    'dong_nai' => $buildingsRaw->where('province_code', 75)->count(),
+                    'da_nang' => $buildingsRaw->where('province_code', 48)->count(),
+                ];
+                $stats['by_district'] = [
+                    'Quận 1' => $buildingsRaw->filter(fn($b) => str_contains($b->district ?? '', 'Quận 1'))->count(),
+                    'Quận 3' => $buildingsRaw->filter(fn($b) => str_contains($b->district ?? '', 'Quận 3'))->count(),
+                    'Bình Thạnh' => $buildingsRaw->filter(fn($b) => str_contains($b->district ?? '', 'Bình Thạnh'))->count(),
+                    'Quận 7' => $buildingsRaw->filter(fn($b) => str_contains($b->district ?? '', 'Quận 7'))->count(),
+                    'TP Thủ Đức' => $buildingsRaw->filter(fn($b) => str_contains($b->district ?? '', 'Thủ Đức') || in_array($b->district ?? '', ['Quận 2', 'Quận 9']))->count(),
+                ];
+
+                if (Schema::hasTable('units')) {
+                    $stats['available_units'] = Unit::where('status', UnitStatus::AVAILABLE)->count();
+                }
+
+                if (Schema::hasTable('tenants')) {
+                    $stats['total_tenants'] = Tenant::count();
+                }
+
+                $buildings = $buildingsRaw->map(function (Building $b) {
                         $primaryImg = $b->primaryImage?->image_url
                             ?? $b->images->first()?->image_url
                             ?? config('services.bms.default_building_image', 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80');
@@ -123,20 +152,20 @@ class PortalDashboardService
 
                         $floors = $b->units->map(function (Unit $unit) {
                             $unitStatus = $unit->status instanceof UnitStatus ? $unit->status : UnitStatus::tryFrom((string) $unit->status);
+                            $priceVal = (float) ($unit->base_rental_price ?: 600000);
 
                             return [
                                 'floor' => 'Tầng ' . ($unit->floor_number ?? 1),
                                 'area' => number_format((float) ($unit->area_sqm ?? 100), 0, ',', '.') . ' m²',
                                 'deliver' => $unit->handover_condition ?? 'Hoàn thiện cơ bản',
-                                'price' => $unit->formatted_rent_price,
+                                'price' => number_format($priceVal, 0, ',', '.') . ' đ/m²',
                                 'status' => $unitStatus?->label() ?? UnitStatus::AVAILABLE->label(),
                             ];
                         })->toArray();
 
-                        $minUsd = $b->base_rent_price_usd > 0 ? $b->base_rent_price_usd : 25;
-                        $maxUsd = $b->max_rent_price_per_sqm
-                            ? (int) round(((float) $b->max_rent_price_per_sqm) / $exchangeRate)
-                            : ($minUsd + 10);
+                        $minPrice = (float) ($b->min_rent_price_per_sqm ?: 600000);
+                        $maxPrice = (float) ($b->max_rent_price_per_sqm ?: ($minPrice + 200000));
+                        $serviceFeeVnd = (float) ($b->default_service_fee_per_sqm ?: 120000);
 
                         return [
                             'id' => $b->id,
@@ -145,9 +174,10 @@ class PortalDashboardService
                             'grade' => 'Hạng ' . ($b->grade ?? 'A'),
                             'district' => $b->district ?? '',
                             'address' => $b->address . ($b->ward ? ', ' . $b->ward : '') . ($b->district ? ', ' . $b->district : ''),
-                            'priceUsd' => $minUsd,
-                            'priceMaxUsd' => $maxUsd,
-                            'priceVnd' => number_format((float) ($b->min_rent_price_per_sqm ?: 600000), 0, ',', '.') . ' đ',
+                            'minRentPrice' => $minPrice,
+                            'maxRentPrice' => $maxPrice,
+                            'serviceFeeVnd' => $serviceFeeVnd,
+                            'priceVnd' => number_format($minPrice, 0, ',', '.') . ' đ',
                             'totalArea' => $b->formatted_area,
                             'availableArea' => number_format((float) $b->units->sum('area_sqm'), 0, ',', '.') . ' m²',
                             'floorPlate' => '1.000 m²',
@@ -283,8 +313,10 @@ class PortalDashboardService
             if (Schema::hasTable('admins')) {
                 $superAdmin = Admin::where('is_super_admin', true)->first();
                 if ($superAdmin) {
-                    $superAdmin->tokens()->where('name', 'portal-admin-token')->delete();
-                    $defaultStaffToken = $superAdmin->createToken('portal-admin-token')->plainTextToken;
+                    $defaultStaffToken = \Illuminate\Support\Facades\Cache::remember('portal_admin_token_' . $superAdmin->id, 86400, function () use ($superAdmin) {
+                        $superAdmin->tokens()->where('name', 'portal-admin-token')->delete();
+                        return $superAdmin->createToken('portal-admin-token')->plainTextToken;
+                    });
                 }
             }
         } catch (\Throwable $e) {
@@ -312,7 +344,8 @@ class PortalDashboardService
             $stats['first_ticket_status_label'] = $statusEnum?->label() ?? TicketStatus::IN_PROGRESS->label();
         }
 
-        $firstBuildingPriceUsd = (float) ($buildings->first()['priceUsd'] ?? 30);
+        $firstBuildingPriceVnd = (float) ($buildings->first()['minRentPrice'] ?? 600000);
+        $firstBuildingServiceFee = (float) ($buildings->first()['serviceFeeVnd'] ?? 120000);
         $firstBuildingName = (string) ($buildings->first()['name'] ?? 'Tòa nhà văn phòng');
 
         $notifications = $this->buildSystemNotifications($recentTickets, $recentDebitNotes, $leads, (int) ($stats['expiring_units'] ?? 0));
@@ -329,7 +362,7 @@ class PortalDashboardService
             'firstContract' => $firstContract,
             'pendingDebit' => $pendingDebit,
             'firstTicket' => $firstTicket,
-            'defaultQuoteEstimate' => $this->calculateQuoteEstimate($firstBuildingPriceUsd, 200, 6, 3, $firstBuildingName),
+            'defaultQuoteEstimate' => $this->calculateQuoteEstimate($firstBuildingPriceVnd, 200, $firstBuildingServiceFee, 3, $firstBuildingName),
             'sampleTenant' => $sampleTenant,
             'sampleContract' => $sampleContract,
             'sampleDebit' => $sampleDebit,
@@ -446,81 +479,81 @@ class PortalDashboardService
     }
 
     /**
-     * Tính toán dự toán chi phí thuê văn phòng (Base Rent + Service Fee + VAT 10% + Tiền đặt cọc).
+     * Tính toán dự toán chi phí thuê văn phòng cho khách hàng (Báo giá nhanh Sales).
+     * Áp dụng 100% đồng tiền Việt Nam (VNĐ).
      * Công thức chuẩn BLL: Thuế GTGT 10% áp dụng trên tổng tiền thuê cơ sở và phí dịch vụ quản lý.
      *
-     * @param  float  $priceUsd  Đơn giá thuê cơ sở (USD/m2/tháng)
+     * @param  float  $priceVnd  Đơn giá thuê cơ sở (VNĐ/m2/tháng)
      * @param  float  $areaSqm  Diện tích thuê dự kiến (m2)
-     * @param  float  $serviceFeeUsd  Phí quản lý dịch vụ (USD/m2/tháng)
+     * @param  float  $serviceFeeVnd  Phí quản lý dịch vụ (VNĐ/m2/tháng)
      * @param  int  $depositMonths  Số tháng đặt cọc bảo đảm hợp đồng
      * @param  string  $buildingName  Tên thương mại tòa nhà
      * @return array<string, mixed>
      */
     public function calculateQuoteEstimate(
-        float $priceUsd,
+        float $priceVnd,
         float $areaSqm,
-        float $serviceFeeUsd,
+        float $serviceFeeVnd,
         int $depositMonths,
         string $buildingName = 'Tòa nhà văn phòng'
     ): array {
-        $exchangeRate = (float) config('services.bms.usd_exchange_rate', 25000);
         $vatRate = (float) config('services.bms.vat_rate', 0.10);
 
-        $priceUsd = max(0, $priceUsd);
+        // Hỗ trợ fallback trường hợp truyền số USD nhỏ tự nhân tỷ giá 25.000 VNĐ
+        if ($priceVnd > 0 && $priceVnd < 1000) {
+            $priceVnd = $priceVnd * 25000;
+        }
+        if ($serviceFeeVnd > 0 && $serviceFeeVnd < 200) {
+            $serviceFeeVnd = $serviceFeeVnd * 25000;
+        }
+
+        $priceVnd = max(0, $priceVnd);
         $areaSqm = max(0, $areaSqm);
-        $serviceFeeUsd = max(0, $serviceFeeUsd);
+        $serviceFeeVnd = max(0, $serviceFeeVnd);
         $depositMonths = max(1, $depositMonths);
 
-        $baseRentUsd = round($priceUsd * $areaSqm, 2);
-        $baseRentVnd = round($baseRentUsd * $exchangeRate);
+        $baseRentVnd = round($priceVnd * $areaSqm);
+        $serviceTotalVnd = round($serviceFeeVnd * $areaSqm);
 
-        $serviceTotalUsd = round($serviceFeeUsd * $areaSqm, 2);
-        $serviceTotalVnd = round($serviceTotalUsd * $exchangeRate);
+        $subTotalVnd = $baseRentVnd + $serviceTotalVnd;
+        $vatVnd = round($subTotalVnd * $vatRate);
 
-        $subTotalUsd = $baseRentUsd + $serviceTotalUsd;
-        $vatUsd = round($subTotalUsd * $vatRate, 2);
-        $vatVnd = round($vatUsd * $exchangeRate);
-
-        $totalMonthlyUsd = round($subTotalUsd + $vatUsd, 2);
-        $totalMonthlyVnd = round($totalMonthlyUsd * $exchangeRate);
-
-        $depositUsd = round($baseRentUsd * $depositMonths, 2);
-        $depositVnd = round($depositUsd * $exchangeRate);
+        $totalMonthlyVnd = $subTotalVnd + $vatVnd;
+        $depositVnd = round($baseRentVnd * $depositMonths);
 
         return [
             'building_name' => $buildingName,
             'area_sqm' => $areaSqm,
-            'price_usd' => $priceUsd,
-            'service_fee_usd' => $serviceFeeUsd,
+            'price_vnd' => $priceVnd,
+            'service_fee_vnd' => $serviceFeeVnd,
             'deposit_months' => $depositMonths,
-            'rent_formula' => '$' . number_format($priceUsd, 0) . '/m² × ' . number_format($areaSqm, 0, ',', '.') . ' m²',
-            'rent_usd_formatted' => '$' . number_format($baseRentUsd, 0),
+            'rent_formula' => number_format($priceVnd, 0, ',', '.') . ' đ/m² × ' . number_format($areaSqm, 0, ',', '.') . ' m²',
             'rent_vnd_formatted' => number_format($baseRentVnd, 0, ',', '.') . ' đ',
-            'service_formula' => '$' . number_format($serviceFeeUsd, 0) . '/m² × ' . number_format($areaSqm, 0, ',', '.') . ' m²',
-            'service_usd_formatted' => '$' . number_format($serviceTotalUsd, 0),
+            'service_formula' => number_format($serviceFeeVnd, 0, ',', '.') . ' đ/m² × ' . number_format($areaSqm, 0, ',', '.') . ' m²',
             'service_vnd_formatted' => number_format($serviceTotalVnd, 0, ',', '.') . ' đ',
-            'vat_usd_formatted' => '$' . number_format($vatUsd, 0),
+            'vat_formula' => '(' . number_format($subTotalVnd, 0, ',', '.') . ' đ) × 10%',
             'vat_vnd_formatted' => number_format($vatVnd, 0, ',', '.') . ' đ',
-            'total_usd_formatted' => '$' . number_format($totalMonthlyUsd, 0) . ' / tháng',
             'total_vnd_formatted' => number_format($totalMonthlyVnd, 0, ',', '.') . ' đ / tháng',
             'deposit_formula' => "{$depositMonths} tháng tiền thuê cơ sở",
-            'deposit_usd_formatted' => '$' . number_format($depositUsd, 0),
             'deposit_vnd_formatted' => number_format($depositVnd, 0, ',', '.') . ' đ',
         ];
     }
 
     /**
-     * Xây dựng mảng các dòng dữ liệu CSV cho Phiếu Dự Toán & Báo Giá Thuê Văn Phòng.
+     * Xây dựng mảng các dòng dữ liệu CSV cho Phiếu Dự Toán & Báo Giá Thuê Văn Phòng (100% VNĐ).
      *
      * @param  array<string, mixed>  $params
      * @return list<list<string>>
      */
     public function getQuoteCsvRows(array $params): array
     {
+        $price = (float) ($params['price_vnd'] ?? ($params['price_usd'] ?? 600000));
+        $fee = (float) ($params['service_fee_vnd'] ?? ($params['service_fee_usd'] ?? 120000));
+
         $calc = $this->calculateQuoteEstimate(
-            (float) ($params['price_usd'] ?? 30),
+            $price,
             (float) ($params['area_sqm'] ?? 200),
-            (float) ($params['service_fee_usd'] ?? 6),
+            $fee,
             (int) ($params['deposit_months'] ?? 3),
             (string) ($params['building_name'] ?? 'Tòa nhà văn phòng')
         );
@@ -531,12 +564,12 @@ class PortalDashboardService
             ['Diện tích dự kiến', number_format($calc['area_sqm'], 0, ',', '.') . ' m²'],
             ['Ngày lập báo giá', now()->format('d/m/Y H:i')],
             [],
-            ['Hạng mục', 'Công thức', 'Quy đổi USD', 'Thành tiền VNĐ'],
-            ['1. Tiền thuê mặt bằng cơ sở', $calc['rent_formula'], $calc['rent_usd_formatted'], $calc['rent_vnd_formatted']],
-            ['2. Phí dịch vụ quản lý', $calc['service_formula'], $calc['service_usd_formatted'], $calc['service_vnd_formatted']],
-            ['3. Thuế GTGT (VAT 10%)', '10%', $calc['vat_usd_formatted'], $calc['vat_vnd_formatted']],
-            ['TỔNG HÀNG THÁNG (GỒM VAT)', '', $calc['total_usd_formatted'], $calc['total_vnd_formatted']],
-            ['4. Tiền đặt cọc bảo đảm', $calc['deposit_formula'], $calc['deposit_usd_formatted'], $calc['deposit_vnd_formatted']],
+            ['Hạng mục', 'Công thức tính', 'Thành tiền (VNĐ)'],
+            ['1. Tiền thuê mặt bằng cơ sở', $calc['rent_formula'], $calc['rent_vnd_formatted']],
+            ['2. Phí dịch vụ quản lý', $calc['service_formula'], $calc['service_vnd_formatted']],
+            ['3. Thuế GTGT (VAT 10%)', $calc['vat_formula'], $calc['vat_vnd_formatted']],
+            ['TỔNG HÀNG THÁNG (GỒM VAT)', '', $calc['total_vnd_formatted']],
+            ['4. Tiền đặt cọc bảo đảm hợp đồng', $calc['deposit_formula'], $calc['deposit_vnd_formatted']],
         ];
     }
 

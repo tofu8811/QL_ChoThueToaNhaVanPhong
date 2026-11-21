@@ -4,8 +4,8 @@
   $totalB = $stats['total_buildings'] ?? 39;
   $provincesText = $stats['active_provinces_text'] ?? 'Hà Nội, TP.HCM, Đồng Nai & Đà Nẵng';
   $provincesArr = !empty($stats['active_provinces']) ? $stats['active_provinces'] : ['Thành phố Hà Nội', 'Thành phố Hồ Chí Minh', 'Thành phố Đồng Nai', 'Thành phố Đà Nẵng'];
-  $minPrice = $stats['min_price_usd'] ?? 10;
-  $maxPrice = $stats['max_price_usd'] ?? 70;
+  $minPrice = $stats['min_price_vnd'] ?? 240000;
+  $maxPrice = $stats['max_price_vnd'] ?? 1680000;
 @endphp
 
 @section('title', 'Cho Thuê Văn Phòng Toàn Quốc | Office Portal')
@@ -26,7 +26,7 @@
     'name' => 'Office Leasing Portal',
     'description' => 'Hệ thống Quản lý và Cho thuê Tòa nhà Văn phòng chuyên nghiệp toàn quốc',
     'areaServed' => $provincesArr,
-    'priceRange' => '$' . $minPrice . ' - $' . $maxPrice . ' / m²',
+    'priceRange' => number_format($minPrice, 0, ',', '.') . ' - ' . number_format($maxPrice, 0, ',', '.') . ' VNĐ/m²',
   ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}
   </script>
 @endsection
@@ -36,19 +36,10 @@
     <!-- Header & Topbar -->
     @include('portal.components.header')
 
-    <!-- Page 1: Trang chủ tìm kiếm tòa nhà & bộ lọc nâng cao -->
+    <!-- Trang chủ tìm kiếm tòa nhà & bộ lọc nâng cao -->
     @include('portal.pages.home')
-
-    <!-- Page 2: Chi tiết tòa nhà & danh sách diện tích sàn trống -->
-    @include('portal.pages.detail')
-
-    <!-- Page 3: Form đăng ký tư vấn & nhận báo giá chi tiết -->
-    @include('portal.pages.quote')
 
     <!-- Footer thông tin liên hệ & bản quyền -->
     @include('portal.components.footer')
   </div>
-
-  <!-- VIEW B: FILAMENT ADMIN PANEL SHELL (QUẢN TRỊ 4 TÁC NHÂN: ADMIN, SALES, BQL, TENANT) -->
-  @include('portal.admin.shell')
 @endsection

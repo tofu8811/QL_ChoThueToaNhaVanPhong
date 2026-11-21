@@ -42,10 +42,12 @@ class CrmLeadApiController extends BaseApiController
     }
 
     // Xem chi tiết hồ sơ Lead và lịch sử chăm sóc
-    public function show(string $id): JsonResponse
+    public function show(Request $request, string $id): JsonResponse
     {
         $lead = Lead::with(['building', 'unit', 'assignedSales', 'convertedTenant', 'activities.sales'])
             ->findOrFail($id);
+
+        $this->authorizeSalesAccess($request->user(), $lead);
 
         return $this->successResponse($lead, 'Lấy thông tin chi tiết Lead thành công.');
     }
@@ -54,15 +56,21 @@ class CrmLeadApiController extends BaseApiController
     public function update(UpdateLeadRequest $request, string $id): JsonResponse
     {
         $lead = Lead::findOrFail($id);
+        $this->authorizeSalesAccess($request->user(), $lead);
+
         $updated = $this->leadService->updateLead($lead, $request->validated());
 
         return $this->successResponse($updated, 'Cập nhật thông tin Lead thành công.');
     }
 
     // Xóa mềm hồ sơ Lead
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
         $lead = Lead::findOrFail($id);
+        if (!$request->user() instanceof \App\Models\Admin) {
+            throw new \App\Exceptions\BusinessException('Chỉ có Admin mới có quyền xóa hồ sơ Lead.', 403);
+        }
+
         $this->leadService->deleteLead($lead);
 
         return $this->successResponse(null, "Đã xóa Lead [{$lead->contact_full_name}] thành công.");
@@ -72,6 +80,8 @@ class CrmLeadApiController extends BaseApiController
     public function updateStatus(UpdateLeadStatusRequest $request, string $id): JsonResponse
     {
         $lead = Lead::findOrFail($id);
+        $this->authorizeSalesAccess($request->user(), $lead);
+
         $updated = $this->leadService->updateLeadStatus(
             $lead,
             $request->input('status'),
@@ -80,6 +90,17 @@ class CrmLeadApiController extends BaseApiController
         );
 
         return $this->successResponse($updated, 'Cập nhật trạng thái Pipeline thành công.');
+    }
+
+    protected function authorizeSalesAccess(mixed $user, Lead $lead): void
+    {
+        if ($user instanceof \App\Models\Sale) {
+            $isAssigned = $lead->assigned_sales_id === $user->id;
+            $isBuildingAssigned = $lead->building_id && $user->buildings()->where('buildings.id', $lead->building_id)->exists();
+            if (!$isAssigned && !$isBuildingAssigned) {
+                throw new \App\Exceptions\BusinessException('Bạn không có quyền truy cập hồ sơ khách hàng tiềm năng này.', 403);
+            }
+        }
     }
 
     // Điều phối hoặc phân công lại Sales phụ trách Lead

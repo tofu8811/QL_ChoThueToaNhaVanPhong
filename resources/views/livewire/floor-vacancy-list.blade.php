@@ -13,7 +13,7 @@
         <th>Vị trí Tầng</th>
         <th>Diện tích trống</th>
         <th>Hiện trạng bàn giao</th>
-        <th>Đơn giá thuê</th>
+        <th>Đơn giá thuê (VNĐ/m²)</th>
         <th>Tình trạng lấp đầy</th>
         <th>Thao tác</th>
       </tr>
@@ -21,7 +21,7 @@
     <tbody id="detail-floors-tbody">
       @forelse($units as $unit)
         @php
-          $priceUsd = $unit->base_rental_price ? round($unit->base_rental_price / 24000) : 35;
+          $priceVnd = (float) ($unit->base_rental_price ?: 0);
           $handover = match($unit->handover_condition) {
               'RAW' => 'Trần sàn thô',
               'BASIC' => 'Hoàn thiện cơ bản',
@@ -38,7 +38,7 @@
           <td><strong>Tầng {{ $unit->floor_number }} ({{ $unit->unit_code }})</strong></td>
           <td><strong style="color:var(--mo-blue-accent);">{{ number_format($unit->area_sqm, 0) }} m²</strong></td>
           <td>{{ $handover }}</td>
-          <td><strong style="color:#ea580c;">${{ $priceUsd }} / m²</strong></td>
+          <td><strong style="color:#ea580c;">{{ number_format($priceVnd, 0, ',', '.') }} đ / m²</strong></td>
           <td><span class="badge-filament success">{{ $statusLabel }}</span></td>
           <td style="white-space:nowrap;">
             <button wire:click="viewUnitDetail('{{ $unit->id }}')" type="button" class="btn-mo-outline" style="padding:4px 10px;font-size:12px;margin-right:6px;color:var(--mo-primary);border-color:#cbd5e1;">
@@ -54,7 +54,7 @@
           <td><strong>Tầng 5</strong></td>
           <td><strong style="color:var(--mo-blue-accent);">180 m²</strong></td>
           <td>Trần sàn thô</td>
-          <td><strong style="color:#ea580c;">$48 / m²</strong></td>
+          <td><strong style="color:#ea580c;">650.000 đ / m²</strong></td>
           <td><span class="badge-filament success">Đang trống</span></td>
           <td>
             <button class="btn-mo-orange" style="padding:4px 10px;font-size:12px;" type="button"
@@ -113,7 +113,7 @@
             </div>
             <div style="background:#f8fafc;padding:12px 16px;border-radius:8px;border:1px solid #e2e8f0;">
               <div style="font-size:12px;color:#64748b;">Đơn giá chào thuê:</div>
-              <div style="font-size:16px;font-weight:700;color:#ea580c;">${{ $selectedUnit->base_rental_price ? round($selectedUnit->base_rental_price / 24000) : 35 }} / m² / tháng</div>
+              <div style="font-size:16px;font-weight:700;color:#ea580c;">{{ number_format($selectedUnit->base_rental_price ?: 0, 0, ',', '.') }} đ / m²</div>
               <div style="font-size:12px;color:#64748b;margin-top:8px;">Hiện trạng bàn giao:</div>
               <div style="font-size:13px;font-weight:600;color:#1e293b;">
                 @if($selectedUnit->handover_condition === 'RAW') Trần sàn thô

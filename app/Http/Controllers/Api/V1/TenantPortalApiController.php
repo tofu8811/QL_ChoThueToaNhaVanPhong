@@ -128,7 +128,6 @@ class TenantPortalApiController extends BaseApiController
                 return $adminViewTenant;
             }
         }
-
         throw new BusinessException('Yêu cầu xác thực tài khoản Khách thuê (Tenant).', 401);
     }
 }

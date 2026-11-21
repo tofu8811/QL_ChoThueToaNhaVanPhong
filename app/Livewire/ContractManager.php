@@ -400,7 +400,10 @@ class ContractManager extends Component
     {
         try {
             $contract = Contract::findOrFail($contractId);
-            $user = Auth::user() ?? Admin::first() ?? PropertyManager::first();
+            $user = Auth::user();
+            if (!$user) {
+                throw new BusinessException('Vui lòng đăng nhập để thực hiện thao tác.', 401);
+            }
 
             $contractService->signContract($contract, $user);
 
@@ -446,7 +449,10 @@ class ContractManager extends Component
 
         try {
             $oldContract = Contract::findOrFail($this->renewContractId);
-            $user = Auth::user() ?? Admin::first() ?? PropertyManager::first();
+            $user = Auth::user();
+            if (!$user) {
+                throw new BusinessException('Vui lòng đăng nhập để thực hiện thao tác.', 401);
+            }
 
             $newContract = $contractService->renewContract($oldContract, [
                 'new_end_date' => $this->new_end_date,
@@ -497,7 +503,10 @@ class ContractManager extends Component
 
         try {
             $contract = Contract::findOrFail($this->terminateContractId);
-            $user = Auth::user() ?? Admin::first() ?? PropertyManager::first();
+            $user = Auth::user();
+            if (!$user) {
+                throw new BusinessException('Vui lòng đăng nhập để thực hiện thao tác.', 401);
+            }
 
             $contractService->terminateContract($contract, [
                 'terminated_at' => $this->terminated_at,

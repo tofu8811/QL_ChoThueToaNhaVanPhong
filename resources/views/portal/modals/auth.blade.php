@@ -21,63 +21,78 @@
               <span style="font-size:12px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.4px;">
                 <i class="fa-solid fa-bolt" style="color:#f59e0b;"></i> Chọn nhanh vai trò dùng thử:
               </span>
-              <span style="font-size:11px; color:#2563eb; font-weight:600; cursor:pointer;" onclick="selectSampleRole('admin', document.getElementById('chip-role-admin'))">1-Click điền</span>
+              <span style="font-size:11px; color:#2563eb; font-weight:600; cursor:pointer;" onclick="selectSampleRole('admin', document.getElementById('chip-role-admin'), true)">⚡ 1-Click Đăng nhập</span>
             </div>
 
             <div class="sample-roles-grid">
               <!-- Role 1: Super Admin -->
-              <div class="sample-role-pill" id="chip-role-admin" onclick="selectSampleRole('admin', this)">
+              <div class="sample-role-pill" id="chip-role-admin" onclick="selectSampleRole('admin', this)" ondblclick="selectSampleRole('admin', this, true)">
                 <div class="sample-role-icon" style="background:#dbeafe; color:#1d4ed8;">
                   <i class="fa-solid fa-crown"></i>
                 </div>
-                <div class="sample-role-meta">
+                <div class="sample-role-meta" style="flex:1;">
                   <strong>Super Admin</strong>
-                  <small>Toàn quyền</small>
+                  <small>Toàn quyền hệ thống</small>
                 </div>
+                <button type="button" class="btn-pill-direct-login" onclick="event.stopPropagation(); selectSampleRole('admin', document.getElementById('chip-role-admin'), true);" title="Đăng nhập ngay">
+                  Vào ngay
+                </button>
               </div>
 
               <!-- Role 2: Ban Quản Lý (PM) -->
-              <div class="sample-role-pill" id="chip-role-pm" onclick="selectSampleRole('pm', this)">
+              <div class="sample-role-pill" id="chip-role-pm" onclick="selectSampleRole('pm', this)" ondblclick="selectSampleRole('pm', this, true)">
                 <div class="sample-role-icon" style="background:#dcfce7; color:#15803d;">
                   <i class="fa-solid fa-building-user"></i>
                 </div>
-                <div class="sample-role-meta">
+                <div class="sample-role-meta" style="flex:1;">
                   <strong>Ban Quản Lý (PM)</strong>
                   <small>Vận hành tòa nhà</small>
                 </div>
+                <button type="button" class="btn-pill-direct-login" onclick="event.stopPropagation(); selectSampleRole('pm', document.getElementById('chip-role-pm'), true);" title="Đăng nhập ngay">
+                  Vào ngay
+                </button>
               </div>
 
               <!-- Role 3: Sales / Môi Giới -->
-              <div class="sample-role-pill" id="chip-role-sales" onclick="selectSampleRole('sales', this)">
+              <div class="sample-role-pill" id="chip-role-sales" onclick="selectSampleRole('sales', this)" ondblclick="selectSampleRole('sales', this, true)">
                 <div class="sample-role-icon" style="background:#ffedd5; color:#c2410c;">
                   <i class="fa-solid fa-briefcase"></i>
                 </div>
-                <div class="sample-role-meta">
+                <div class="sample-role-meta" style="flex:1;">
                   <strong>Chuyên Viên Sales</strong>
                   <small>Leads & Báo giá</small>
                 </div>
+                <button type="button" class="btn-pill-direct-login" onclick="event.stopPropagation(); selectSampleRole('sales', document.getElementById('chip-role-sales'), true);" title="Đăng nhập ngay">
+                  Vào ngay
+                </button>
               </div>
 
               <!-- Role 4: Kế Toán Công Nợ -->
-              <div class="sample-role-pill" id="chip-role-accountant" onclick="selectSampleRole('accountant', this)">
+              <div class="sample-role-pill" id="chip-role-accountant" onclick="selectSampleRole('accountant', this)" ondblclick="selectSampleRole('accountant', this, true)">
                 <div class="sample-role-icon" style="background:#d1fae5; color:#047857;">
                   <i class="fa-solid fa-file-invoice-dollar"></i>
                 </div>
-                <div class="sample-role-meta">
+                <div class="sample-role-meta" style="flex:1;">
                   <strong>Kế Toán (Acc)</strong>
                   <small>Công nợ & Thanh toán</small>
                 </div>
+                <button type="button" class="btn-pill-direct-login" onclick="event.stopPropagation(); selectSampleRole('accountant', document.getElementById('chip-role-accountant'), true);" title="Đăng nhập ngay">
+                  Vào ngay
+                </button>
               </div>
 
               <!-- Role 5: Doanh Nghiệp Khách Thuê -->
-              <div class="sample-role-pill" id="chip-role-tenant" style="grid-column: 1 / -1;" onclick="selectSampleRole('tenant', this)">
+              <div class="sample-role-pill" id="chip-role-tenant" style="grid-column: 1 / -1;" onclick="selectSampleRole('tenant', this)" ondblclick="selectSampleRole('tenant', this, true)">
                 <div class="sample-role-icon" style="background:#ede9fe; color:#6d28d9;">
                   <i class="fa-solid fa-building"></i>
                 </div>
-                <div class="sample-role-meta">
+                <div class="sample-role-meta" style="flex:1;">
                   <strong>Khách Thuê Doanh Nghiệp (Tenant)</strong>
-                  <small>Cty Cổ Phần Công Nghệ Demo Tech — Hợp đồng, Ticket & Hóa đơn</small>
+                  <small>Cty Demo Tech — Hợp đồng, Ticket & Hóa đơn</small>
                 </div>
+                <button type="button" class="btn-pill-direct-login" onclick="event.stopPropagation(); selectSampleRole('tenant', document.getElementById('chip-role-tenant'), true);" title="Đăng nhập ngay">
+                  Vào ngay
+                </button>
               </div>
             </div>
           </div>

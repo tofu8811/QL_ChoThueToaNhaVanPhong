@@ -49,10 +49,13 @@ class PortalWebController extends Controller
     public function calculateQuoteEstimate(Request $request): JsonResponse
     {
         try {
+            $price = (float) ($request->input('price_vnd') ?? ($request->input('price_usd') ?? 600000));
+            $serviceFee = (float) ($request->input('service_fee_vnd') ?? ($request->input('service_fee_usd') ?? 120000));
+
             $data = $this->portalDashboardService->calculateQuoteEstimate(
-                (float) $request->input('price_usd', 30),
+                $price,
                 (float) $request->input('area_sqm', 200),
-                (float) $request->input('service_fee_usd', 6),
+                $serviceFee,
                 (int) $request->input('deposit_months', 3),
                 (string) $request->input('building_name', 'Tòa nhà văn phòng')
             );
@@ -104,7 +107,7 @@ class PortalWebController extends Controller
     public function exportDashboardCsv(Request $request): mixed
     {
         if (!$this->checkWebAuth($request)) {
-            return redirect('/#portal');
+            return redirect('/');
         }
 
         $rows = $this->portalDashboardService->getDashboardCsvRows();
@@ -133,7 +136,7 @@ class PortalWebController extends Controller
     public function contractsPage(Request $request): mixed
     {
         if (!$this->checkWebAuth($request)) {
-            return redirect('/#portal');
+            return redirect('/');
         }
 
         return view('pages.contracts');
@@ -145,7 +148,7 @@ class PortalWebController extends Controller
     public function printContract(string $id, ContractService $contractService, Request $request): mixed
     {
         if (!$this->checkWebAuth($request)) {
-            return redirect('/#portal');
+            return redirect('/');
         }
 
         $data = $contractService->getContractPrintData($id);
@@ -161,7 +164,7 @@ class PortalWebController extends Controller
     public function tenantsPage(Request $request): mixed
     {
         if (!$this->checkWebAuth($request)) {
-            return redirect('/#portal');
+            return redirect('/');
         }
 
         return view('pages.tenants');
@@ -176,7 +179,7 @@ class PortalWebController extends Controller
     public function leadsPage(Request $request): mixed
     {
         if (!$this->checkWebAuth($request)) {
-            return redirect('/#portal');
+            return redirect('/');
         }
 
         return view('pages.leads');
@@ -190,11 +193,20 @@ class PortalWebController extends Controller
      */
     public function tenantPortalPage(Request $request): mixed
     {
-        if (!$this->checkWebAuth($request)) {
-            return redirect('/#portal');
+        $this->checkWebAuth($request);
+
+        // Xác định Tenant ID từ query param, cookie hoặc tài khoản đang đăng nhập
+        $tenantId = $request->query('tenant_id')
+            ?? $request->cookie('tenant_id')
+            ?? (\Illuminate\Support\Facades\Auth::guard('tenant')->user()?->id ?? \Illuminate\Support\Facades\Auth::user()?->id);
+
+        if (!$tenantId) {
+            $demoTenant = \App\Models\Tenant::where('login_email', 'tenant.demo@officeleasing.vn')->first()
+                ?? \App\Models\Tenant::where('status', 'ACTIVE')->first();
+            $tenantId = $demoTenant?->id;
         }
 
-        return view('pages.tenant-portal');
+        return view('pages.tenant-portal', ['tenantId' => $tenantId]);
     }
 
     /**
@@ -210,6 +222,10 @@ class PortalWebController extends Controller
         if ($token) {
             $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
             if ($accessToken && $accessToken->tokenable) {
+                if ($accessToken->tokenable instanceof \App\Models\Tenant) {
+                    \Illuminate\Support\Facades\Auth::guard('tenant')->setUser($accessToken->tokenable);
+                }
+                \Illuminate\Support\Facades\Auth::setUser($accessToken->tokenable);
                 return true;
             }
         }

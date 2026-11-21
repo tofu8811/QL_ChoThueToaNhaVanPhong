@@ -1,35 +1,22 @@
-@extends('layouts.portal')
+@extends('layouts.admin')
 
-@section('title', 'Quản Lý Hợp Đồng Thuê Văn Phòng | Hệ Thống Tòa Nhà')
+@section('title', 'Quản Lý Hợp Đồng Thuê Văn Phòng | Office BMS')
 
 @section('meta')
   <meta name="description" content="Hệ thống quản lý hợp đồng thuê văn phòng, gia hạn hợp đồng, ký kết pháp lý và chống trùng lịch sàn cho thuê.">
-  <meta property="og:title" content="Quản Lý Hợp Đồng Thuê Văn Phòng">
-  <meta property="og:type" content="website">
 @endsection
 
 @section('content')
-  <script>
-    if (!localStorage.getItem('auth_token')) {
-      window.location.replace('/#portal');
-    }
-  </script>
-  <div id="portal-wrapper">
-    @include('portal.components.header')
-
-    <main class="page-section active">
-      <div class="container" style="padding-top: 30px; padding-bottom: 60px;">
-        <div class="mo-breadcrumbs" style="margin-bottom: 20px;">
-          <a href="{{ route('home') }}">Trang chủ</a>
-          <i class="fa-solid fa-chevron-right" style="font-size:10px;"></i>
-          <span>Quản lý hợp đồng thuê (Module 3)</span>
-        </div>
-
-        <!-- Nhúng Livewire 3 ContractManager Component -->
-        <livewire:contract-manager />
+  <div style="min-height: 100vh; background: #0f172a; padding: 24px;">
+    <div class="container">
+      <div class="mo-breadcrumbs" style="margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
+        <a href="{{ route('admin.dashboard') }}" style="color: #94a3b8; text-decoration: none; font-size: 13.5px;"><i class="fa-solid fa-chart-pie"></i> Bảng điều khiển BMS</a>
+        <i class="fa-solid fa-chevron-right" style="font-size:10px; color: #475569;"></i>
+        <span style="color: #f8fafc; font-weight: 600; font-size: 13.5px;">Quản lý hợp đồng thuê văn phòng</span>
       </div>
-    </main>
 
-    @include('portal.components.footer')
+      <!-- Nhúng Livewire 3 ContractManager Component -->
+      <livewire:contract-manager />
+    </div>
   </div>
 @endsection

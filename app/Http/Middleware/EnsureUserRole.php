@@ -31,6 +31,11 @@ class EnsureUserRole
             throw new BusinessException('Yêu cầu xác thực phiên đăng nhập (Unauthenticated).', 401);
         }
 
+        // Super Admin có toàn quyền truy cập trên mọi endpoint
+        if ($user instanceof Admin && $user->is_super_admin) {
+            return $next($request);
+        }
+
         $userRole = null;
         if ($user instanceof Admin) {
             $userRole = 'admin';

@@ -71,6 +71,7 @@ Route::prefix('v1')->group(function () {
         Route::post('units/{id}/images', [UnitApiController::class, 'uploadImages'])->middleware('role:admin,pm')->name('v1.admin.units.images.store');
         Route::delete('units/{id}/images/{imageId}', [UnitApiController::class, 'deleteImage'])->middleware('role:admin,pm')->name('v1.admin.units.images.destroy');
 
+
         // =====================================================================
         // MODULE 3: QUẢN TRỊ KHÁCH THUÊ DOANH NGHIỆP (TENANTS)
         // =====================================================================
@@ -82,6 +83,7 @@ Route::prefix('v1')->group(function () {
 
         Route::post('tenants/{id}/upload-license', [TenantApiController::class, 'uploadLicense'])->middleware('role:admin,pm,sales')->name('v1.admin.tenants.uploadLicense');
         Route::get('tenants/{id}/download-license', [TenantApiController::class, 'downloadLicense'])->name('v1.admin.tenants.downloadLicense');
+
 
         // =====================================================================
         // MODULE 3: QUẢN TRỊ HỢP ĐỒNG THUÊ VĂN PHÒNG (CONTRACTS & UNITS)
@@ -102,6 +104,7 @@ Route::prefix('v1')->group(function () {
 
         Route::post('contracts/{id}/upload-files', [ContractApiController::class, 'uploadFiles'])->middleware('role:admin,pm')->name('v1.admin.contracts.uploadFiles');
         Route::get('contracts/{id}/files/{fileId}/download', [ContractApiController::class, 'downloadFile'])->name('v1.admin.contracts.downloadFile');
+
     });
 
     // =========================================================================
@@ -124,8 +127,12 @@ Route::prefix('v1')->group(function () {
 
         // Hành vi chuyển trạng thái, điều phối & chuyển đổi
         Route::patch('leads/{id}/status', [CrmLeadApiController::class, 'updateStatus'])->name('v1.crm.leads.status');
-        Route::post('leads/{id}/assign', [CrmLeadApiController::class, 'assign'])->name('v1.crm.leads.assign');
         Route::post('leads/{id}/convert-to-tenant', [CrmLeadApiController::class, 'convertToTenant'])->name('v1.crm.leads.convert');
+
+        // Chỉ Admin mới được điều phối / phân bổ lead cho Sales
+        Route::post('leads/{id}/assign', [CrmLeadApiController::class, 'assign'])
+            ->middleware('role:admin')
+            ->name('v1.crm.leads.assign');
 
         // Dòng thời gian chăm sóc & Nhật ký hoạt động
         Route::get('leads/{id}/activities', [LeadActivityApiController::class, 'index'])->name('v1.crm.leads.activities.index');
@@ -136,6 +143,7 @@ Route::prefix('v1')->group(function () {
     // MODULE 3: CỔNG THÔNG TIN KHÁCH THUÊ (TENANT PORTAL - TENANT & ADMIN)
     // =========================================================================
     Route::middleware(['auth:sanctum', 'role:tenant,admin'])->prefix('tenant')->group(function () {
+
         Route::get('profile', [TenantPortalApiController::class, 'getProfile'])->name('v1.tenant.profile.show');
         Route::put('profile', [TenantPortalApiController::class, 'updateProfile'])->name('v1.tenant.profile.update');
         Route::get('contracts', [TenantPortalApiController::class, 'getContracts'])->name('v1.tenant.contracts.index');
@@ -292,55 +300,5 @@ Route::prefix('v1')->group(function () {
 
 // Nhóm Endpoint kiểm thử hệ thống bắt lỗi tập trung (Global Exception Handling)
 if (app()->environment('local', 'testing')) {
-    Route::prefix('test-errors')->group(function () {
-        Route::get('model-not-found', function () {
-            $exception = new \Illuminate\Database\Eloquent\ModelNotFoundException();
-            $exception->setModel(\App\Models\Unit::class, ['fake-id-123']);
-            throw $exception;
-        });
-
-        Route::post('validation-error', function (\Illuminate\Http\Request $request) {
-            $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
-                'building_id' => 'required',
-                'price_per_m2' => 'required|numeric|min:1',
-            ], [
-                'building_id.required' => 'Mã tòa nhà là bắt buộc.',
-                'price_per_m2.required' => 'Đơn giá thuê là bắt buộc.',
-                'price_per_m2.min' => 'Đơn giá thuê phải lớn hơn 0.',
-            ]);
-
-            if ($validator->fails()) {
-                throw new \Illuminate\Validation\ValidationException($validator);
-            }
-
-            return response()->json(['message' => 'Hợp lệ']);
-        });
-
-        Route::get('business-error', function () {
-            throw new \App\Exceptions\BusinessException('Mặt bằng này đã có hợp đồng thuê hiệu lực trong khoảng thời gian đã chọn.', 422);
-        });
-
-        Route::get('db-error', function () {
-            $pdoException = new \PDOException('SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry', 23000);
-            $pdoException->errorInfo = ['23000', 1062, "Duplicate entry 'VP-301' for key 'units_unit_code_unique'"];
-
-            throw new \Illuminate\Database\QueryException('mysql', 'insert into units ...', [], $pdoException);
-        });
-
-        Route::get('auth-error', function () {
-            throw new \Illuminate\Auth\AuthenticationException('Chưa đăng nhập hoặc phiên làm việc đã hết hạn.');
-        });
-
-        Route::get('success-sample', function () {
-            $controller = new class {
-                use \App\Traits\ApiResponse;
-            };
-
-            return $controller->successResponse([
-                'unit_code' => 'VP-301',
-                'area' => 125.5,
-                'status' => 'available',
-            ], 'Lấy thông tin mặt bằng thành công.');
-        });
-    });
+    require __DIR__ . '/test_errors.php';
 }

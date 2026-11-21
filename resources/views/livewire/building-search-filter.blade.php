@@ -21,9 +21,12 @@
         'C': 'Tòa nhà Hạng C'
       },
       priceMap: {
-        'under20': 'Dưới $20 / m²',
-        '20to35': '$20 - $35 / m²',
-        'over35': 'Trên $35 / m²'
+        'under500k': 'Dưới 500.000 đ/m²',
+        '500kto1m': '500k - 1tr đ/m²',
+        'over1m': 'Trên 1.000.000 đ/m²',
+        'under20': 'Dưới 500.000 đ/m²',
+        '20to35': '500k - 1tr đ/m²',
+        'over35': 'Trên 1.000.000 đ/m²'
       },
       areaMap: {
         'under150': 'Dưới 150 m²',
@@ -164,12 +167,12 @@
 
         <!-- Price Range -->
         <div class="mo-filter-group">
-          <label class="mo-filter-label"><i class="fa-solid fa-dollar-sign"></i> Khoảng giá ($/m²)</label>
+          <label class="mo-filter-label"><i class="fa-solid fa-coins"></i> Khoảng giá (VNĐ/m²)</label>
           <select x-model="price" class="mo-filter-select">
             <option value="all">Tất cả mức giá</option>
-            <option value="under20">Dưới $20 / m² (Kinh tế)</option>
-            <option value="20to35">$20 - $35 / m² (Phổ biến)</option>
-            <option value="over35">Trên $35 / m² (Hạng A VIP)</option>
+            <option value="under500k">Dưới 500.000 đ / m² (Kinh tế)</option>
+            <option value="500kto1m">500.000 - 1.000.000 đ / m² (Phổ biến)</option>
+            <option value="over1m">Trên 1.000.000 đ / m² (Hạng A VIP)</option>
           </select>
         </div>
 
@@ -237,7 +240,7 @@
 
           {{-- 5. Khoảng giá --}}
           <span class="mo-active-filter-chip" x-show="Boolean(price) && price !== 'all'" style="display: none;">
-            <i class="fa-solid fa-dollar-sign" style="color:#8b5cf6;font-size:11px;"></i>
+            <i class="fa-solid fa-coins" style="color:#8b5cf6;font-size:11px;"></i>
             <span x-text="priceMap[price] || price"></span>
             <button type="button" class="chip-remove-btn" @click="remove('price')" title="Bỏ chọn mức giá">
               <i class="fa-solid fa-xmark"></i>
@@ -400,8 +403,8 @@
         <div class="mo-building-grid">
           @forelse($buildings as $b)
             @php
-              $minUsd = $b->min_rent_price_per_sqm ? round($b->min_rent_price_per_sqm / 24000) : 25;
-              $maxUsd = $b->max_rent_price_per_sqm ? round($b->max_rent_price_per_sqm / 24000) : ($minUsd + 10);
+              $minPriceVnd = (float) ($b->min_rent_price_per_sqm ?: 0);
+              $maxPriceVnd = (float) ($b->max_rent_price_per_sqm ?: 0);
               $image = $b->primaryImage?->image_url ?? $b->images->first()?->image_url ?? 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80';
               $slug = $b->slug ?? \Illuminate\Support\Str::slug($b->name);
               $gradeLabel = 'Hạng ' . ($b->grade ?? 'A');
@@ -432,13 +435,10 @@
 
                 <div class="mo-card-pricing">
                   <div class="mo-price-box">
-                    <span class="price-usd">${{ $minUsd }} - ${{ $maxUsd }}</span>
-                    <span class="price-unit">/ m² / tháng</span>
-                    <div class="price-vnd">Khoảng {{ number_format($b->min_rent_price_per_sqm ?: ($minUsd * 24000), 0, ',', '.') }} đ / m²</div>
-                  </div>
-                  <div class="mo-card-actions">
-                    <button class="btn-card-quote" type="button" onclick="openQuoteForBuilding('{{ addslashes($b->name) }}')">Nhận Báo Giá</button>
-                    <a href="{{ route('buildings.show', $slug) }}" class="btn-card-view" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Xem Chi Tiết</a>
+                    <span class="price-usd" style="font-size:18px;font-weight:800;color:#ea580c;">
+                      {{ number_format($minPriceVnd, 0, ',', '.') }} đ@if($maxPriceVnd > $minPriceVnd) - {{ number_format($maxPriceVnd, 0, ',', '.') }} đ@endif
+                    </span>
+                    <span class="price-unit" style="font-size:13px;color:#64748b;font-weight:500;margin-left:4px;">/ m²</span>
                   </div>
                 </div>
               </div>

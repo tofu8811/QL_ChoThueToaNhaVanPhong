@@ -104,9 +104,9 @@
 
         const address = `${escapeHtml(b.address || '')}, ${escapeHtml(b.district || 'TP.HCM')}`;
         const totalFloors = `${b.total_floors || 0} tầng (${b.basements || 0} hầm)`;
-        const areaDisplay = b.formatted_area || b.totalArea || '---';
-        const pricePerSqm = b.formatted_rent_price || '---';
-        const serviceFeeDisplay = b.formatted_service_fee || 'Phí QL: Đã gồm';
+        const areaDisplay = b.formatted_area || b.totalArea || (b.total_leasable_area_sqm ? `${Number(b.total_leasable_area_sqm).toLocaleString('vi-VN')} m²` : '---');
+        const pricePerSqm = b.min_rent_price_per_sqm ? `${Number(b.min_rent_price_per_sqm).toLocaleString('vi-VN')} đ/m²` : (b.priceVnd ? `${b.priceVnd}/m²` : (b.formatted_rent_price || '---'));
+        const serviceFeeDisplay = b.default_service_fee_per_sqm ? `Phí QL: ${Number(b.default_service_fee_per_sqm).toLocaleString('vi-VN')} đ/m²` : (b.formatted_service_fee || 'Phí QL: Đã gồm');
 
         return `
           <tr>
@@ -185,8 +185,8 @@
         total_floors: parseInt(document.getElementById('build-floors').value) || 10,
         basements: parseInt(document.getElementById('build-basements').value) || 1,
         total_net_area: parseFloat(document.getElementById('build-net-area').value) || null,
-        base_rent_price_usd: parseFloat(document.getElementById('build-base-price').value) || null,
-        service_fee_usd: parseFloat(document.getElementById('build-service-fee').value) || null,
+        min_rent_price_per_sqm: parseFloat(document.getElementById('build-base-price').value) || null,
+        default_service_fee_per_sqm: parseFloat(document.getElementById('build-service-fee').value) || null,
         electricity_fee_desc: document.getElementById('build-electric-fee').value.trim() || null,
         water_fee_desc: document.getElementById('build-water-fee').value.trim() || null,
         motorcycle_parking_fee: document.getElementById('build-motor-fee').value.trim() || null,
@@ -248,8 +248,8 @@
         document.getElementById('edit-build-floors').value = b.total_floors || 10;
         document.getElementById('edit-build-basements').value = b.basements || 1;
         document.getElementById('edit-build-net-area').value = b.total_net_area || '';
-        document.getElementById('edit-build-base-price').value = b.base_rent_price_usd || '';
-        document.getElementById('edit-build-service-fee').value = b.service_fee_usd || '';
+        document.getElementById('edit-build-base-price').value = b.min_rent_price_per_sqm || '';
+        document.getElementById('edit-build-service-fee').value = b.default_service_fee_per_sqm || '';
         document.getElementById('edit-build-published').checked = Boolean(b.is_published);
       } catch (e) {
         alert('Lỗi kết nối khi tải chi tiết tòa nhà.');
@@ -276,8 +276,8 @@
         total_floors: parseInt(document.getElementById('edit-build-floors').value) || 10,
         basements: parseInt(document.getElementById('edit-build-basements').value) || 1,
         total_net_area: parseFloat(document.getElementById('edit-build-net-area').value) || null,
-        base_rent_price_usd: parseFloat(document.getElementById('edit-build-base-price').value) || null,
-        service_fee_usd: parseFloat(document.getElementById('edit-build-service-fee').value) || null,
+        min_rent_price_per_sqm: parseFloat(document.getElementById('edit-build-base-price').value) || null,
+        default_service_fee_per_sqm: parseFloat(document.getElementById('edit-build-service-fee').value) || null,
         is_published: document.getElementById('edit-build-published').checked
       };
 

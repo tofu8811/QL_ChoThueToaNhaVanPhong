@@ -136,8 +136,8 @@
         <select id="attach-unit-select" class="filament-input-sm" style="width:100%;"></select>
       </div>
       <div class="form-field" style="margin-bottom:16px;">
-        <label style="font-size:12px;font-weight:600;color:#334155;">Đơn Giá Thuê Thỏa Thuận ($/m²/tháng - Bỏ trống lấy giá niêm yết)</label>
-        <input type="number" step="0.01" id="attach-unit-price" class="filament-input-sm" placeholder="VD: 32">
+        <label style="font-size:12px;font-weight:600;color:#334155;">Đơn Giá Thuê Thỏa Thuận (VNĐ/m²/tháng - Bỏ trống lấy giá niêm yết)</label>
+        <input type="number" step="1000" id="attach-unit-price" class="filament-input-sm" placeholder="VD: 650000">
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;">
         <button type="button" class="btn-mo-outline" onclick="closeAttachUnitModal()">Hủy</button>

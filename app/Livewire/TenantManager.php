@@ -7,6 +7,7 @@ use App\Models\Tenant;
 use App\Services\TenantService;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 /**
@@ -16,7 +17,7 @@ use Livewire\WithPagination;
  */
 class TenantManager extends Component
 {
-    use WithPagination;
+    use WithPagination, WithFileUploads;
 
     // Bộ lọc & Tìm kiếm
     public string $searchKeyword = '';
@@ -42,10 +43,12 @@ class TenantManager extends Component
     public string $billing_email = '';
     public string $contact_phone = '';
     public string $password = '';
+    public $licenseFile = null;
 
     // Modal Chi tiết Khách thuê & Hợp đồng
     public bool $showDetailModal = false;
     public ?Tenant $selectedTenant = null;
+    public ?string $licenseDownloadUrl = null;
 
     public function updatingSearchKeyword(): void
     {
@@ -73,6 +76,7 @@ class TenantManager extends Component
         $this->billing_email = '';
         $this->contact_phone = '';
         $this->password = Str::random(10);
+        $this->licenseFile = null;
         $this->showFormModal = true;
     }
 
@@ -94,6 +98,7 @@ class TenantManager extends Component
         $this->billing_email = $tenant->billing_email;
         $this->contact_phone = $tenant->contact_phone;
         $this->password = '';
+        $this->licenseFile = null;
         $this->showFormModal = true;
     }
 
@@ -101,6 +106,7 @@ class TenantManager extends Component
     {
         $this->showFormModal = false;
         $this->tenantId = null;
+        $this->licenseFile = null;
     }
 
     // Lưu thông tin khách thuê (Tạo mới hoặc Cập nhật)
@@ -114,7 +120,7 @@ class TenantManager extends Component
             ? "required|email|max:100|unique:tenants,login_email,{$this->tenantId}"
             : "required|email|max:100|unique:tenants,login_email";
 
-        $this->validate([
+        $rules = [
             'company_name' => 'required|string|max:255',
             'tax_code' => $taxRule,
             'representative_name' => 'required|string|max:100',
@@ -122,7 +128,13 @@ class TenantManager extends Component
             'login_email' => $emailRule,
             'billing_email' => 'required|email|max:100',
             'contact_phone' => 'required|string|max:20',
-        ], [
+        ];
+
+        if ($this->licenseFile) {
+            $rules['licenseFile'] = 'file|mimes:pdf,jpg,jpeg,png|max:10240';
+        }
+
+        $this->validate($rules, [
             'company_name.required' => 'Vui lòng nhập tên công ty doanh nghiệp.',
             'tax_code.required' => 'Vui lòng nhập mã số thuế.',
             'tax_code.unique' => 'Mã số thuế này đã tồn tại trong hệ thống.',
@@ -130,6 +142,8 @@ class TenantManager extends Component
             'login_email.unique' => 'Email đăng nhập này đã được sử dụng.',
             'representative_name.required' => 'Vui lòng nhập họ tên người đại diện pháp luật.',
             'contact_phone.required' => 'Vui lòng nhập số điện thoại liên hệ.',
+            'licenseFile.mimes' => 'Giấy phép ĐKKD phải có định dạng PDF, JPG, JPEG hoặc PNG.',
+            'licenseFile.max' => 'Dung lượng Giấy phép ĐKKD tối đa là 10MB.',
         ]);
 
         try {
@@ -147,14 +161,21 @@ class TenantManager extends Component
             if ($this->isEditing) {
                 $tenant = Tenant::findOrFail($this->tenantId);
                 $tenantService->updateTenant($tenant, $data);
+                if ($this->licenseFile) {
+                    $tenantService->uploadBusinessLicense($tenant, $this->licenseFile);
+                }
                 $this->flashMessage = "Cập nhật hồ sơ doanh nghiệp {$tenant->company_name} thành công!";
             } else {
                 $data['tenant_code'] = $this->tenant_code;
                 $data['password'] = $this->password ?: Str::random(12);
                 $tenant = $tenantService->createTenant($data);
+                if ($this->licenseFile) {
+                    $tenantService->uploadBusinessLicense($tenant, $this->licenseFile);
+                }
                 $this->flashMessage = "Thêm mới khách thuê {$tenant->company_name} ({$tenant->tenant_code}) thành công!";
             }
 
+            $this->licenseFile = null;
             $this->flashType = 'success';
             $this->closeFormModal();
         } catch (\Throwable $e) {
@@ -167,6 +188,17 @@ class TenantManager extends Component
     public function openDetailModal(string $id, TenantService $tenantService): void
     {
         $this->selectedTenant = $tenantService->getTenantDetail($id);
+        $this->licenseFile = null;
+        $this->licenseDownloadUrl = null;
+
+        if (!empty($this->selectedTenant->business_license_private_path) && $this->selectedTenant->business_license_private_path !== 'licenses/default.pdf') {
+            try {
+                $this->licenseDownloadUrl = $tenantService->getLicenseDownloadUrl($this->selectedTenant);
+            } catch (\Throwable $e) {
+                $this->licenseDownloadUrl = null;
+            }
+        }
+
         $this->showDetailModal = true;
     }
 
@@ -174,6 +206,49 @@ class TenantManager extends Component
     {
         $this->showDetailModal = false;
         $this->selectedTenant = null;
+        $this->licenseFile = null;
+        $this->licenseDownloadUrl = null;
+    }
+
+    // Tải lên Giấy phép ĐKKD từ Modal Chi tiết
+    public function uploadDetailLicense(TenantService $tenantService): void
+    {
+        $this->validate([
+            'licenseFile' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+        ], [
+            'licenseFile.required' => 'Vui lòng chọn file Giấy phép ĐKKD để tải lên.',
+            'licenseFile.mimes' => 'File phải có định dạng PDF, JPG, JPEG hoặc PNG.',
+            'licenseFile.max' => 'Dung lượng file tối đa là 10MB.',
+        ]);
+
+        if (!$this->selectedTenant) {
+            return;
+        }
+
+        try {
+            $tenantService->uploadBusinessLicense($this->selectedTenant, $this->licenseFile);
+            $this->selectedTenant = $this->selectedTenant->fresh();
+            $this->licenseDownloadUrl = $tenantService->getLicenseDownloadUrl($this->selectedTenant);
+            $this->licenseFile = null;
+            $this->flashMessage = "Tải lên Giấy phép ĐKKD cho doanh nghiệp {$this->selectedTenant->company_name} thành công!";
+            $this->flashType = 'success';
+        } catch (\Throwable $e) {
+            $this->flashMessage = 'Lỗi tải file ĐKKD: ' . $e->getMessage();
+            $this->flashType = 'danger';
+        }
+    }
+
+    // Tải / Mở Giấy phép ĐKKD qua Signed URL
+    public function downloadTenantLicense(string $id, TenantService $tenantService): void
+    {
+        try {
+            $tenant = Tenant::findOrFail($id);
+            $url = $tenantService->getLicenseDownloadUrl($tenant);
+            $this->js("window.open('{$url}', '_blank')");
+        } catch (\Throwable $e) {
+            $this->flashMessage = 'Không thể tải Giấy phép ĐKKD: ' . $e->getMessage();
+            $this->flashType = 'danger';
+        }
     }
 
     // Khóa / Vô hiệu hóa tài khoản khách thuê

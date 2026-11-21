@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             ProvinceSeeder::class,
             BuildingAndUnitSeeder::class,
             OperationalBusinessSeeder::class,
+            DemoAccountsSeeder::class,
         ]);
     }
 }

@@ -48,7 +48,7 @@ class UnitApiController extends BaseApiController
     // Tạo mới một mặt bằng văn phòng
     public function store(StoreUnitRequest $request): JsonResponse
     {
-        $pmId = $request->user()?->id;
+        $pmId = $request->user() instanceof \App\Models\PropertyManager ? $request->user()->id : null;
         $unit = $this->unitService->storeUnit($request->validated(), $pmId);
 
         return $this->createdResponse($unit, 'Khởi tạo mặt bằng văn phòng thành công.');
@@ -66,7 +66,7 @@ class UnitApiController extends BaseApiController
     public function update(UpdateUnitRequest $request, string $id): JsonResponse
     {
         $unit = Unit::findOrFail($id);
-        $pmId = $request->user()?->id;
+        $pmId = $request->user() instanceof \App\Models\PropertyManager ? $request->user()->id : null;
         $updated = $this->unitService->updateUnit($unit, $request->validated(), $pmId);
 
         return $this->successResponse($updated, 'Cập nhật thông tin mặt bằng thành công.');
@@ -91,7 +91,7 @@ class UnitApiController extends BaseApiController
         ]);
 
         $unit = Unit::findOrFail($id);
-        $pmId = $request->user()?->id;
+        $pmId = $request->user() instanceof \App\Models\PropertyManager ? $request->user()->id : null;
         $updated = $this->unitService->updateStatus($unit, $request->input('status'), $pmId);
 
         return $this->successResponse($updated, "Đã cập nhật trạng thái mặt bằng sang [{$updated->status->label()}].");

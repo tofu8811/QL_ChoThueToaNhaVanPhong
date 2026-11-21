@@ -41,7 +41,13 @@ class PortalWebTest extends TestCase
         $response->assertSee('Office');
 
         // Kiểm tra dữ liệu thật từ database được render lên trang chủ
-        $response->assertSee('39+', false);
+        $totalBuildings = Building::published()->count();
+        $response->assertSee($totalBuildings . '+', false);
+        
+        $totalArea = Building::published()->sum('total_leasable_area_sqm');
+        if ($totalArea > 0) {
+            $response->assertSee(number_format($totalArea, 0, ',', '.'), false);
+        }
         $response->assertSee('Quản Lý Trạng Thái Mặt Bằng', false);
     }
 
@@ -54,8 +60,8 @@ class PortalWebTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('id="login-modal"', false);
-        $response->assertSee('Đăng Nhập Hệ Thống Đa Tác Nhân');
-        $response->assertSee('admin@officeleasing.vn');
+        $response->assertSee('Đăng Nhập Hệ Thống');
+        $response->assertSee('admin.demo@officeleasing.vn');
         $response->assertSee('btn-open-login');
         $response->assertSee('auth-login-form');
     }

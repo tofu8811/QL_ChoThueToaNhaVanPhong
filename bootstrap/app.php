@@ -28,6 +28,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'super_admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
             'role'        => \App\Http\Middleware\EnsureUserRole::class,
         ]);
+
+        $middleware->redirectGuestsTo('/admin/login');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Luôn trả về JSON khi request vào endpoint API

@@ -5,13 +5,13 @@
 @section('meta')
   <meta name="description" content="Thông tin diện tích trống, giá thuê, kết cấu và phí dịch vụ tại tòa nhà {{ $building->name ?? '' }}, {{ $building->address ?? '' }}.">
   <meta property="og:title" content="{{ $building->name ?? '' }} - Cho Thuê Văn Phòng Chuyên Nghiệp">
-  <meta property="og:description" content="Giá thuê từ ${{ round(($building->min_rent_price_per_sqm ?? 600000) / 24000) }}/m². Cập nhật mặt bằng trống mới nhất 2026.">
+  <meta property="og:description" content="Giá thuê từ {{ number_format($building->min_rent_price_per_sqm ?? 600000, 0, ',', '.') }} VNĐ/m². Cập nhật mặt bằng trống mới nhất 2026.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="{{ url()->current() }}">
   @php
     $heroImg = $building->primaryImage?->image_url ?? $building->images?->first()?->image_url ?? 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80';
-    $minUsd = $building->min_rent_price_per_sqm ? round($building->min_rent_price_per_sqm / 24000) : 35;
-    $maxUsd = $building->max_rent_price_per_sqm ? round($building->max_rent_price_per_sqm / 24000) : 45;
+    $minPriceVnd = (float) ($building->min_rent_price_per_sqm ?: 0);
+    $maxPriceVnd = (float) ($building->max_rent_price_per_sqm ?: 0);
 
     // Danh sách ảnh gallery hiển thị (ảnh chính đầu tiên, không trùng lặp)
     $galleryImages = collect();
@@ -133,9 +133,15 @@
 
             <div class="detail-price-highlight">
               <div style="font-size: 13px; color: #64748b; font-weight: 500;">Giá chào thuê chính thức:</div>
-              <div style="font-size: 26px; font-weight: 800; color: #ea580c;">${{ $minUsd }} - ${{ $maxUsd }} / m² / tháng</div>
+              <div style="font-size: 26px; font-weight: 800; color: #ea580c;">
+                {{ number_format($minPriceVnd, 0, ',', '.') }} đ
+                @if($maxPriceVnd > $minPriceVnd)
+                  - {{ number_format($maxPriceVnd, 0, ',', '.') }} đ
+                @endif
+                <span style="font-size: 16px; font-weight: 600; color: #64748b;">/ m²</span>
+              </div>
               <div style="font-size: 12px; color: #94a3b8;">
-                (Khoảng {{ number_format($building->min_rent_price_per_sqm ?: ($minUsd * 24000), 0, ',', '.') }}đ - {{ number_format($building->max_rent_price_per_sqm ?: ($maxUsd * 24000), 0, ',', '.') }}đ/m² - Chưa bao gồm VAT & PQL)
+                (Đơn giá áp dụng theo diện tích sàn thuê thực tế - Chưa bao gồm VAT & PQL)
               </div>
             </div>
 

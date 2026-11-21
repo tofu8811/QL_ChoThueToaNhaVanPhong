@@ -29,13 +29,13 @@ class LeadService
      */
     public function storePortalLead(array $data): Lead
     {
-        $buildingId = $data['building_id'];
+        $buildingId = $data['building_id'] ?? null;
         $phone = trim($data['phone']);
         $email = trim($data['email']);
 
         // 1. Kiểm tra chống trùng lặp 30 ngày (Anti-duplicate 30 days)
         $existingLead = Lead::query()
-            ->where('building_id', $buildingId)
+            ->when($buildingId, fn($q) => $q->where('building_id', $buildingId), fn($q) => $q->whereNull('building_id'))
             ->where('created_at', '>=', now()->subDays(30))
             ->where(function ($q) use ($phone, $email) {
                 $q->where('phone', $phone)->orWhere('email', $email);
@@ -59,6 +59,10 @@ class LeadService
 
         // 2. Ràng buộc toàn vẹn: Mặt bằng (nếu chọn) phải thuộc đúng tòa nhà
         if (!empty($data['unit_id'])) {
+            if (empty($buildingId)) {
+                throw new BusinessException('Không thể chọn mặt bằng khi chưa chọn tòa nhà.', 422);
+            }
+
             $unitExists = Unit::query()
                 ->where('id', $data['unit_id'])
                 ->where('building_id', $buildingId)
@@ -81,7 +85,7 @@ class LeadService
                 'phone' => $data['phone'],
                 'email' => $data['email'],
                 'lead_source' => $data['lead_source'] ?? 'WEBSITE',
-                'building_id' => $data['building_id'],
+                'building_id' => $data['building_id'] ?? null,
                 'unit_id' => $data['unit_id'] ?? null,
                 'desired_area_sqm' => $data['desired_area_sqm'] ?? null,
                 'budget_min' => $data['budget_min'] ?? null,
@@ -109,16 +113,18 @@ class LeadService
     /**
      * Tìm kiếm Sales tối ưu nhất theo giải thuật Least-Active-Leads kết hợp Tie-Breaker.
      *
-     * @param string $buildingId
+     * @param string|null $buildingId
      * @return Sale|null
      */
-    public function findOptimalSales(string $buildingId): ?Sale
+    public function findOptimalSales(?string $buildingId = null): ?Sale
     {
         return Sale::query()
             ->where('status', 'ACTIVE')
-            ->whereHas('buildings', function ($q) use ($buildingId) {
-                $q->where('buildings.id', $buildingId)
-                  ->where('sale_buildings.is_active', true);
+            ->when($buildingId, function ($q) use ($buildingId) {
+                $q->whereHas('buildings', function ($bQ) use ($buildingId) {
+                    $bQ->where('buildings.id', $buildingId)
+                      ->where('sale_buildings.is_active', true);
+                });
             })
             ->withCount(['leads as active_leads_count' => function ($q) {
                 $q->whereIn('status', [LeadStatus::NEW, LeadStatus::NEGOTIATING]);
@@ -220,9 +226,9 @@ class LeadService
     {
         $salesId = $data['assigned_sales_id'] ?? ($user instanceof Sale ? $user->id : null);
 
-        // Nếu chưa gán sales và có building_id, tự động tìm sales
-        if (!$salesId && !empty($data['building_id'])) {
-            $optimal = $this->findOptimalSales($data['building_id']);
+        // Nếu chưa gán sales, tự động tìm sales theo tòa nhà hoặc toàn hệ thống
+        if (!$salesId) {
+            $optimal = $this->findOptimalSales($data['building_id'] ?? null);
             $salesId = $optimal?->id;
         }
 
@@ -276,7 +282,11 @@ class LeadService
         $buildingId = $data['building_id'] ?? $lead->building_id;
         $unitId = $data['unit_id'] ?? $lead->unit_id;
 
-        if ($unitId && $buildingId) {
+        if ($unitId) {
+            if (!$buildingId) {
+                throw new BusinessException('Không thể gán mặt bằng khi chưa chọn tòa nhà.', 422);
+            }
+
             $unitExists = Unit::query()
                 ->where('id', $unitId)
                 ->where('building_id', $buildingId)

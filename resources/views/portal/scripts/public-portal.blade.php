@@ -296,10 +296,10 @@
     function openBuildingDetail(buildingId) {
       const b = BUILDINGS_DATA.find(x => String(x.id) === String(buildingId));
       if (b && (b.slug || b.id)) {
-        window.location.href = '/toa-nha/' + (b.slug || b.id);
+        window.location.href = '/buildings/' + (b.slug || b.id);
         return;
       }
-      window.location.href = '/toa-nha/' + buildingId;
+      window.location.href = '/buildings/' + buildingId;
     }
 
     function scrollThumbs(dir) {

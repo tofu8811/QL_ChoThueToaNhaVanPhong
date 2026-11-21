@@ -75,9 +75,9 @@
       const currentHash = window.location.hash ? window.location.hash.replace(/^#\/?/, '').trim() : '';
       if (currentHash !== cleanRoute) {
         if (replace) {
-          history.replaceState({ route: cleanRoute }, '', '#' + cleanRoute);
+          history.replaceState({ route: cleanRoute }, '', window.location.pathname + '#' + cleanRoute);
         } else {
-          history.pushState({ route: cleanRoute }, '', '#' + cleanRoute);
+          history.pushState({ route: cleanRoute }, '', window.location.pathname + '#' + cleanRoute);
         }
       }
     }
@@ -98,59 +98,59 @@
 
     // Hàm điều hướng tuyến SPA khi nạp trang (F5) hoặc khi bấm nút Back / Forward trên trình duyệt
     function handleAppRouting(isHistoryNavigation = false) {
-      // Nếu đang ở các trang SSR độc lập (ví dụ /quan-ly-hop-dong, /cong-khach-thue, /quan-ly-leads, /toa-nha/...)
-      // thì không can thiệp điều hướng SPA của trang chủ
-      if (window.location.pathname !== '/' && window.location.pathname !== '') {
+      if (window.location.pathname === '/' || window.location.pathname === '') {
+        let hash = window.location.hash ? window.location.hash.replace(/^#\/?/, '').trim() : '';
+        if (hash.startsWith('admin') || hash.startsWith('pm')) {
+          window.location.href = '/admin' + (hash ? '#' + hash : '');
+          return;
+        }
+        if (hash.startsWith('tenant')) {
+          window.location.href = '/tenant/portal';
+          return;
+        }
+        if (hash.startsWith('building/')) {
+          const bId = hash.replace('building/', '').trim();
+          window.location.href = '/buildings/' + bId;
+          return;
+        }
+        if (hash === 'quote') {
+          window.location.href = '/quotes';
+          return;
+        }
+        if (hash === 'portal' || hash === 'home') {
+          history.replaceState(null, '', window.location.pathname);
+        }
         return;
       }
+
+      // Nếu đang ở các trang con độc lập khác
+      if (!window.location.pathname.startsWith('/admin')) {
+        return;
+      }
+
       let hash = window.location.hash ? window.location.hash.replace(/^#\/?/, '').trim() : '';
 
       if (isHistoryNavigation) {
         closeAllOpenModalsOnHistoryNav();
-        // Khi người dùng bấm Back/Forward trên trình duyệt, đồng bộ lại last_active_route theo URL hiện tại
-        localStorage.setItem('last_active_route', hash || 'portal');
+        localStorage.setItem('last_active_route', hash || 'admin/dashboard');
       } else if (!hash) {
-        // Chỉ khi mới tải trang (F5) mà chưa có hash thì mới khôi phục route nội bộ gần nhất
-        const savedToken = localStorage.getItem('auth_token');
         const savedLastRoute = localStorage.getItem('last_active_route') || '';
-
-        // Nếu trước đó đang ở một tab nội bộ (khác portal/home) và người dùng F5 thì giữ nguyên tab làm việc
-        if (savedToken && savedLastRoute && savedLastRoute !== 'portal' && savedLastRoute !== 'home') {
+        if (savedLastRoute && savedLastRoute.startsWith('admin')) {
           hash = savedLastRoute;
-          history.replaceState({ route: hash }, '', '#' + hash);
         } else {
-          // Mặc định khi truy cập URL gốc '/' hoặc vừa bấm Logo về trang chủ: luôn hiển thị Cổng thông tin công khai
-          hash = 'portal';
-          localStorage.setItem('last_active_route', 'portal');
+          hash = 'admin/dashboard';
         }
       }
 
-      // 0. Chốt chặn bảo mật phiên đăng nhập (Auth Route Guard)
-      // Nếu cố tình truy cập các phân hệ nội bộ (admin, pm, tenant) mà chưa đăng nhập
+      // Chốt chặn bảo mật phiên đăng nhập
       const currentToken = localStorage.getItem('auth_token');
-      if ((hash.startsWith('admin') || hash.startsWith('pm') || hash.startsWith('tenant')) && !currentToken) {
-        console.warn('[Auth Guard] Truy cập phân hệ nội bộ khi chưa đăng nhập. Chuyển hướng về Cổng thông tin.');
-        updateAppRoute('portal', true);
-        switchView('portal-view', false);
-        if (typeof showPublicPage === 'function') showPublicPage('page-home', false);
-        if (typeof openLoginModal === 'function') {
-          setTimeout(() => openLoginModal(), 200);
-        }
+      if (!currentToken) {
+        window.location.replace('/?auth=required');
         return;
       }
 
-      // 1. Cổng thông tin công khai (Portal)
-      if (!hash || hash === 'portal' || hash === 'home') {
-        switchView('portal-view', false);
-        if (typeof showPublicPage === 'function') showPublicPage('page-home', false);
-        return;
-      }
-
-      if (hash.startsWith('building/')) {
-        const bId = hash.replace('building/', '').trim();
-        switchView('portal-view', false);
-        if (typeof openBuildingDetail === 'function') openBuildingDetail(bId, false);
-        return;
+      if (!hash || hash === 'portal' || hash === 'home' || hash === 'admin') {
+        hash = 'admin/dashboard';
       }
 
       if (hash === 'quote') {
@@ -161,21 +161,8 @@
 
       // 2. Cổng Khách Thuê (Tenant Workspace)
       if (hash.startsWith('tenant')) {
-        const savedRole = String(localStorage.getItem('auth_role') || '').toUpperCase();
-        if (savedRole && savedRole !== 'TENANT' && savedRole !== 'ADMIN' && savedRole !== 'SUPER_ADMIN') {
-          alert('Tài khoản nhân sự không truy cập Cổng Khách thuê. Hệ thống chuyển bạn về không gian làm việc tương ứng.');
-          handleGoToWorkspace();
-          return;
-        }
-
-        handleRoleSwitch('tenant', false);
-        if (hash === 'tenant/tickets') {
-          switchFilamentTab('tab-tenant-tickets', document.querySelector('.filament-link[onclick*="tab-tenant-tickets"]'), false);
-        } else if (hash === 'tenant/bills') {
-          switchFilamentTab('tab-tenant-bills', document.querySelector('.filament-link[onclick*="tab-tenant-bills"]'), false);
-        } else {
-          switchFilamentTab('tab-tenant-workspace', document.querySelector('.filament-link[onclick*="tab-tenant-workspace"]'), false);
-        }
+        const tenantId = localStorage.getItem('tenant_id') || '';
+        window.location.replace('/tenant/portal' + (tenantId ? '?tenant_id=' + tenantId : ''));
         return;
       }
 
@@ -183,9 +170,8 @@
       if (hash.startsWith('pm')) {
         const savedRole = String(localStorage.getItem('auth_role') || '').toUpperCase();
         if (savedRole === 'TENANT') {
-          alert('Tài khoản Khách thuê không có quyền truy cập trang quản lý.');
-          handleRoleSwitch('tenant', false);
-          switchFilamentTab('tab-tenant-workspace', document.querySelector('#nav-group-tenant .filament-link'), true);
+          const tenantId = localStorage.getItem('tenant_id') || '';
+          window.location.replace('/tenant/portal' + (tenantId ? '?tenant_id=' + tenantId : ''));
           return;
         }
         if (savedRole === 'SALES' || savedRole === 'ACCOUNTANT') {
@@ -204,11 +190,10 @@
       // 4. Phân hệ Admin / Sales / Kế toán
       if (hash.startsWith('admin')) {
         const savedRole = String(localStorage.getItem('auth_role') || '').toUpperCase();
-        // RBAC Chặn Khách thuê không được truy cập phân hệ quản trị
+        // RBAC Chặn Khách thuê không được truy cập phân hệ quản trị BMS
         if (savedRole === 'TENANT') {
-          alert('Tài khoản Khách thuê không có quyền truy cập trang quản trị.');
-          handleRoleSwitch('tenant', false);
-          switchFilamentTab('tab-tenant-workspace', document.querySelector('#nav-group-tenant .filament-link'), true);
+          const tenantId = localStorage.getItem('tenant_id') || '';
+          window.location.replace('/tenant/portal' + (tenantId ? '?tenant_id=' + tenantId : ''));
           return;
         }
 
@@ -266,47 +251,26 @@
     });
 
     function switchView(viewType, updateRoute = true) {
-      const portal = document.getElementById("portal-wrapper");
-      const admin = document.getElementById("admin-wrapper");
-
-      if (!admin && !portal) return;
-
-      if (!admin) {
-        if (portal) portal.style.display = 'block';
-        return;
-      }
-      if (!portal) {
-        if (admin) admin.style.display = 'block';
-        return;
-      }
-
       if (viewType === 'admin-view') {
-        portal.style.display = 'none';
-        admin.style.display = 'block';
+        const portal = document.getElementById("portal-wrapper");
+        const admin = document.getElementById("admin-wrapper");
+        if (portal) portal.style.display = 'none';
+        if (admin) admin.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        renderAdminTables();
+        if (typeof renderAdminTables === 'function') renderAdminTables();
       } else {
-        admin.style.display = 'none';
-        portal.style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        if (updateRoute) updateAppRoute('portal');
+        window.location.href = '/';
       }
     }
 
     /**
      * Điều hướng khi nhấn Logo ở trang Public Portal:
-     * - Trở về Cổng thông tin công khai (portal-view)
-     * - Hiển thị Trang chủ tìm kiếm tòa nhà (page-home)
-     * - Cập nhật Route URL về '#portal'
+     * - Trở về Cổng thông tin công khai
      * - Cuộn mượt lên đầu trang
      */
     function handlePublicLogoClick(event) {
-      localStorage.setItem('last_active_route', 'portal');
-
-      // Nếu đang ở các trang con SSR độc lập (/nhan-bao-gia, /toa-nha/..., /quan-ly-...)
-      // thì chuyển hướng trình duyệt về '/#portal'
       if (window.location.pathname !== '/' && window.location.pathname !== '') {
-        window.location.href = '/#portal';
+        window.location.href = '/';
         if (event && typeof event.preventDefault === 'function') {
           event.preventDefault();
         }
@@ -316,14 +280,8 @@
       if (event && typeof event.preventDefault === 'function') {
         event.preventDefault();
       }
-      if (typeof switchView === 'function') {
-        switchView('portal-view', false);
-      }
       if (typeof showPublicPage === 'function') {
         showPublicPage('page-home', false);
-      }
-      if (typeof updateAppRoute === 'function') {
-        updateAppRoute('portal', false);
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return false;
@@ -420,21 +378,22 @@
     function handleGoToWorkspace() {
       const role = String(localStorage.getItem('auth_role') || '').toUpperCase();
       if (!role) {
-        openLoginModal();
+        if (typeof openLoginModal === 'function') openLoginModal();
         return;
       }
-      if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
-        handleRoleSwitch('admin');
-      } else if (role === 'PM' || role === 'PROPERTY_MANAGER') {
-        handleRoleSwitch('pm');
-      } else if (role === 'SALES') {
-        handleRoleSwitch('sales');
-      } else if (role === 'ACCOUNTANT') {
-        handleRoleSwitch('accountant');
-      } else if (role === 'TENANT') {
-        handleRoleSwitch('tenant');
+      if (role === 'TENANT') {
+        window.location.href = '/tenant/portal';
+        return;
+      }
+      if (window.location.pathname.startsWith('/admin')) {
+        const rMap = {
+          'ADMIN': 'admin', 'SUPER_ADMIN': 'admin',
+          'PM': 'pm', 'PROPERTY_MANAGER': 'pm',
+          'SALES': 'sales', 'ACCOUNTANT': 'accountant'
+        };
+        handleRoleSwitch(rMap[role] || 'admin');
       } else {
-        handleRoleSwitch('admin');
+        window.location.href = '/admin';
       }
     }
 
@@ -471,6 +430,11 @@
       accountant: 'tab-admin-billing',
       tenant: 'tab-tenant-profile'
     };
+
+    ALLOWED_TABS_BY_ROLE.super_admin = ALLOWED_TABS_BY_ROLE.admin;
+    ALLOWED_TABS_BY_ROLE.property_manager = ALLOWED_TABS_BY_ROLE.pm;
+    DEFAULT_TAB_BY_ROLE.super_admin = 'tab-admin-dashboard';
+    DEFAULT_TAB_BY_ROLE.property_manager = 'tab-admin-dashboard';
 
     function handleRoleSwitch(role, updateRoute = true) {
       window.currentUiRole = role;
@@ -604,7 +568,16 @@
         if (navTickets) navTickets.style.display = 'flex';
         const navStaffBldAdmin = document.getElementById('nav-item-bld-staff');
         if (navStaffBldAdmin) navStaffBldAdmin.style.display = 'none'; // Super Admin quản lý tập trung tại mục "Nhân sự & Phân quyền RBAC"
-        if (groupSales) groupSales.style.display = 'none'; // Phân hệ kinh doanh chỉ dành riêng cho Sales
+        if (groupSales) groupSales.style.display = 'block'; // Super Admin / Admin quản lý cả Phân hệ Kinh doanh & Leads CRM
+        const navSalesPerfAdmin = document.getElementById('nav-sales-performance');
+        if (navSalesPerfAdmin) navSalesPerfAdmin.style.display = 'none';
+        const navSalesBldAdmin = document.getElementById('nav-sales-buildings');
+        if (navSalesBldAdmin) navSalesBldAdmin.style.display = 'none';
+        const navLeadsAdmin = document.getElementById('nav-item-leads');
+        if (navLeadsAdmin) navLeadsAdmin.style.display = 'flex';
+        const navQuotesAdmin = document.getElementById('nav-item-quotes');
+        if (navQuotesAdmin) navQuotesAdmin.style.display = 'flex';
+        if (groupSystem) groupSystem.style.display = 'block';
         if (groupTenant) groupTenant.style.display = 'none';
 
         // Ẩn sub-tab Admins nếu không phải Super Admin
@@ -650,10 +623,18 @@
         // Sales chỉ thấy phân hệ Kinh doanh (Báo cáo cá nhân, Leads, Báo giá & LOI, Mặt bằng chào thuê)
         if (groupAdmin) groupAdmin.style.display = 'none';
         if (groupSales) groupSales.style.display = 'block';
+        const navSalesPerf = document.getElementById('nav-sales-performance');
+        if (navSalesPerf) navSalesPerf.style.display = 'flex';
+        const navSalesBld = document.getElementById('nav-sales-buildings');
+        if (navSalesBld) navSalesBld.style.display = 'flex';
+        const navLeads = document.getElementById('nav-item-leads');
+        if (navLeads) navLeads.style.display = 'flex';
+        const navQuotes = document.getElementById('nav-item-quotes');
+        if (navQuotes) navQuotes.style.display = 'flex';
         if (groupSystem) groupSystem.style.display = 'none'; // Ẩn Nhân sự RBAC
         if (groupTenant) groupTenant.style.display = 'none';
-        const navSalesPerf = document.getElementById('nav-sales-performance') || document.getElementById('nav-item-leads');
-        if (updateRoute) switchFilamentTab('tab-sales-performance', navSalesPerf, true);
+        const navSalesPerfTarget = navSalesPerf || navLeads;
+        if (updateRoute) switchFilamentTab('tab-sales-performance', navSalesPerfTarget, true);
       } else if (role === 'accountant') {
         const authedUser = realUser || (function() { try { return JSON.parse(localStorage.getItem('auth_user') || 'null'); } catch(e) { return null; } })();
         window.currentStaffUser = authedUser || ((typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.accountants) ? SERVER_STAFF.accountants[0] : null);
@@ -773,26 +754,26 @@
       }
 
       if (tabId === 'tab-admin-tickets' || tabId === 'tab-tenant-tickets') {
-        loadTicketsList();
+        if (typeof loadTicketsList === 'function') loadTicketsList();
       }
       if (tabId === 'tab-admin-staff') {
         if (typeof preloadAllStaffData === 'function') preloadAllStaffData();
         if (typeof switchStaffSubTab === 'function') switchStaffSubTab(currentStaffTab, null, updateRoute);
       }
       if (tabId === 'tab-admin-buildings') {
-        loadAdminBuildingsList();
+        if (typeof loadAdminBuildingsList === 'function') loadAdminBuildingsList();
       }
       if (tabId === 'tab-sales-leads' || tabId === 'tab-sales-pipeline') {
-        loadCrmLeads();
+        if (typeof loadCrmLeads === 'function') loadCrmLeads();
       }
       if (tabId === 'tab-admin-tenants') {
-        loadTenantsList();
+        if (typeof loadTenantsList === 'function') loadTenantsList();
       }
       if (tabId === 'tab-admin-contracts') {
-        loadContractsList();
+        if (typeof loadContractsList === 'function') loadContractsList();
       }
       if (tabId === 'tab-tenant-workspace') {
-        loadTenantWorkspaceContracts();
+        if (typeof loadTenantWorkspaceContracts === 'function') loadTenantWorkspaceContracts();
         if (typeof syncTenantPortalData === 'function') syncTenantPortalData();
       }
       if (tabId === 'tab-tenant-profile' || tabId === 'tab-tenant-bills') {
@@ -1043,13 +1024,13 @@
        ========================================================================== */
     function renderAdminTables() {
       // 1. Admin Buildings Table từ RESTful API
-      loadAdminBuildingsList();
+      if (typeof loadAdminBuildingsList === 'function') loadAdminBuildingsList();
 
       // 2 & 4: Load and render Tickets from API
-      loadTicketsList();
+      if (typeof loadTicketsList === 'function') loadTicketsList();
 
       // 3. Sales Leads Table
-      loadAdminLeadsList();
+      if (typeof loadAdminLeadsList === 'function') loadAdminLeadsList();
     }
 
     async function loadAdminLeadsList() {

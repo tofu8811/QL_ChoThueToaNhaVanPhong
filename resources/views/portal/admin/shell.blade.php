@@ -1,4 +1,4 @@
-<div id="admin-wrapper" style="display: none;">
+<div id="admin-wrapper" style="display: block;">
     <div class="filament-shell">
       <!-- VIETOFFICE BMS - PROPTECH CORE SIDEBAR (KẾT HỢP HÌNH 1 & HÌNH 2) -->
       <aside class="filament-sidebar" id="bms-main-sidebar">
@@ -117,42 +117,11 @@
           </a>
         </div>
 
-        <!-- Section 4: CỔNG KHÁCH THUÊ (Tenant Portal) -->
-        <div class="filament-nav-section" id="nav-group-tenant">
-          <div class="filament-section-heading">CỔNG DOANH NGHIỆP THUÊ</div>
-          <a class="filament-link" id="nav-tenant-profile" data-breadcrumb="Hồ sơ doanh nghiệp, pháp lý & nhân viên" onclick="switchFilamentTab('tab-tenant-profile', this)">
-            <div class="filament-link-content">
-              <i class="fa-solid fa-id-card-clip"></i>
-              <span>Hồ sơ & Nhân viên</span>
-            </div>
-          </a>
-          <a class="filament-link" id="nav-tenant-workspace" data-breadcrumb="Hợp đồng thuê, lịch tăng giá & bàn giao" onclick="switchFilamentTab('tab-tenant-workspace', this)">
-            <div class="filament-link-content">
-              <i class="fa-solid fa-file-contract"></i>
-              <span>Hợp đồng & Bàn giao</span>
-            </div>
-          </a>
-          <a class="filament-link" id="nav-tenant-tickets" data-breadcrumb="Yêu cầu hỗ trợ kỹ thuật & đăng ký thi công" onclick="switchFilamentTab('tab-tenant-tickets', this)">
-            <div class="filament-link-content">
-              <i class="fa-solid fa-screwdriver-wrench"></i>
-              <span>Ticket & Thi công</span>
-            </div>
-            <span class="filament-nav-badge" id="nav-tenant-badge-tickets" style="background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.3);">1</span>
-          </a>
-          <a class="filament-link" id="nav-tenant-bills" data-breadcrumb="Cước phí hàng tháng & tải lên ủy nhiệm chi" onclick="switchFilamentTab('tab-tenant-bills', this)">
-            <div class="filament-link-content">
-              <i class="fa-solid fa-file-invoice-dollar"></i>
-              <span>Cước phí & Ủy nhiệm chi</span>
-            </div>
-            <span class="filament-nav-badge" style="background:rgba(245,158,11,0.16);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);">Kỳ 11</span>
-          </a>
-        </div>
-
         <!-- Sidebar Bottom Action -->
         <div style="margin-top:auto;padding:12px 14px 16px;display:flex;flex-direction:column;gap:8px;border-top:1px solid #1e293b;">
-          <button class="btn-mo-outline" style="width:100%;justify-content:center;background:transparent;border-color:#334155;color:#94a3b8;font-size:12px;padding:7px 12px;border-radius:7px;" onclick="switchView('portal-view')">
+          <a href="{{ route('home') }}" class="btn-mo-outline" style="width:100%;justify-content:center;background:transparent;border-color:#334155;color:#94a3b8;font-size:12px;padding:7px 12px;border-radius:7px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
             <i class="fa-solid fa-arrow-left"></i> Về Cổng Thông Tin
-          </button>
+          </a>
         </div>
       </aside>
 
@@ -242,7 +211,6 @@
           @include('portal.admin.tabs.contracts')
           @include('portal.admin.tabs.tenants')
           @include('portal.admin.tabs.sales')
-          @include('portal.admin.tabs.tenant')
           @include('portal.admin.tabs.staff-rbac')
           @include('portal.admin.tabs.billing')
         </div>

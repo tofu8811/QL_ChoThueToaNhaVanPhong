@@ -29,7 +29,7 @@ class TenantPortalWorkspace extends Component
 
     public function mount(?string $tenantId = null): void
     {
-        $requested = $tenantId ?: (request('tenant_id') ?: request('tenant'));
+        $requested = $tenantId ?: (request('tenant_id') ?: (request('tenant') ?: request()->cookie('tenant_id')));
         if ($requested) {
             $matched = Tenant::where('id', $requested)
                 ->orWhere('tenant_code', $requested)
@@ -41,9 +41,31 @@ class TenantPortalWorkspace extends Component
             }
         }
 
+        // Kiểm tra Sanctum Token từ cookie hoặc header
+        $token = request()->bearerToken() ?? request()->cookie('auth_token');
+        if ($token) {
+            $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
+            if ($accessToken && $accessToken->tokenable instanceof Tenant) {
+                $this->tenantId = $accessToken->tokenable->id;
+                Auth::guard('tenant')->setUser($accessToken->tokenable);
+                return;
+            }
+        }
+
         $user = Auth::guard('tenant')->user() ?? Auth::user();
         if ($user instanceof Tenant) {
             $this->tenantId = $user->id;
+            return;
+        }
+
+        // Mặc định demo tenant nếu chưa xác định được để luôn hiển thị giao diện mẫu đầy đủ
+        if (!$this->tenantId) {
+            $demoTenant = Tenant::where('login_email', 'tenant.demo@officeleasing.vn')->first()
+                ?? Tenant::where('status', 'ACTIVE')->has('contracts')->first()
+                ?? Tenant::first();
+            if ($demoTenant) {
+                $this->tenantId = $demoTenant->id;
+            }
         }
     }
 

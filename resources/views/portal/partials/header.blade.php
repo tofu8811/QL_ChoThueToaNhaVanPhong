@@ -413,7 +413,6 @@
           <!-- 7. Nhận Báo Giá -->
           <a href="{{ route('quote.page') }}" 
              class="mo-nav-item {{ request()->routeIs('quote.page') ? 'active' : '' }}" 
-             onclick="if(window.location.pathname==='/'||window.location.pathname===''){ if(typeof showPublicPage==='function'){ showPublicPage('page-quote'); updateAppRoute('quote'); return false; } }"
              style="text-decoration:none;">Nhận Báo Giá</a>
 
         </nav>

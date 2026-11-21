@@ -300,55 +300,5 @@ Route::prefix('v1')->group(function () {
 
 // Nhóm Endpoint kiểm thử hệ thống bắt lỗi tập trung (Global Exception Handling)
 if (app()->environment('local', 'testing')) {
-    Route::prefix('test-errors')->group(function () {
-        Route::get('model-not-found', function () {
-            $exception = new \Illuminate\Database\Eloquent\ModelNotFoundException();
-            $exception->setModel(\App\Models\Unit::class, ['fake-id-123']);
-            throw $exception;
-        });
-
-        Route::post('validation-error', function (\Illuminate\Http\Request $request) {
-            $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
-                'building_id' => 'required',
-                'price_per_m2' => 'required|numeric|min:1',
-            ], [
-                'building_id.required' => 'Mã tòa nhà là bắt buộc.',
-                'price_per_m2.required' => 'Đơn giá thuê là bắt buộc.',
-                'price_per_m2.min' => 'Đơn giá thuê phải lớn hơn 0.',
-            ]);
-
-            if ($validator->fails()) {
-                throw new \Illuminate\Validation\ValidationException($validator);
-            }
-
-            return response()->json(['message' => 'Hợp lệ']);
-        });
-
-        Route::get('business-error', function () {
-            throw new \App\Exceptions\BusinessException('Mặt bằng này đã có hợp đồng thuê hiệu lực trong khoảng thời gian đã chọn.', 422);
-        });
-
-        Route::get('db-error', function () {
-            $pdoException = new \PDOException('SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry', 23000);
-            $pdoException->errorInfo = ['23000', 1062, "Duplicate entry 'VP-301' for key 'units_unit_code_unique'"];
-
-            throw new \Illuminate\Database\QueryException('mysql', 'insert into units ...', [], $pdoException);
-        });
-
-        Route::get('auth-error', function () {
-            throw new \Illuminate\Auth\AuthenticationException('Chưa đăng nhập hoặc phiên làm việc đã hết hạn.');
-        });
-
-        Route::get('success-sample', function () {
-            $controller = new class {
-                use \App\Traits\ApiResponse;
-            };
-
-            return $controller->successResponse([
-                'unit_code' => 'VP-301',
-                'area' => 125.5,
-                'status' => 'available',
-            ], 'Lấy thông tin mặt bằng thành công.');
-        });
-    });
+    require __DIR__ . '/test_errors.php';
 }

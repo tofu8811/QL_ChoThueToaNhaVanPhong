@@ -413,7 +413,6 @@
           <!-- 7. Nhận Báo Giá -->
           <a href="{{ route('quote.page') }}" 
              class="mo-nav-item {{ request()->routeIs('quote.page') ? 'active' : '' }}" 
-             onclick="if(window.location.pathname==='/'||window.location.pathname===''){ if(typeof showPublicPage==='function'){ showPublicPage('page-quote'); updateAppRoute('quote'); return false; } }"
              style="text-decoration:none;">Nhận Báo Giá</a>
 
         </nav>
@@ -458,7 +457,7 @@
                 <a href="#" class="user-dropdown-item" id="dropdown-workspace-link" onclick="handleGoToWorkspace(); closeUserDropdown(); return false;">
                   <i class="fa-solid fa-desktop" style="color:#6366f1;"></i> <span id="dropdown-workspace-text">Không Gian Làm Việc Số</span>
                 </a>
-                <a href="/admin" target="_blank" class="user-dropdown-item" id="dropdown-filament-link" style="display:none;">
+                <a href="/filament" target="_blank" class="user-dropdown-item" id="dropdown-filament-link" style="display:none;">
                   <i class="fa-solid fa-gear" style="color:#ea580c;"></i> Quản Trị Filament Gốc
                 </a>
                 <div class="user-dropdown-divider"></div>
@@ -638,7 +637,7 @@
           <!-- 7. Nhận Báo Giá Link -->
           <a href="{{ route('quote.page') }}"
              class="mo-drawer-link {{ request()->routeIs('quote.page') ? 'active' : '' }}"
-             onclick="closeMobileMenu(); if(window.location.pathname==='/'||window.location.pathname===''){ if(typeof showPublicPage==='function'){ showPublicPage('page-quote'); updateAppRoute('quote'); return false; } }">
+             onclick="closeMobileMenu();">
             <i class="fa-solid fa-file-invoice-dollar" style="color: #f97316; width: 18px;"></i>
             <span>Tư Vấn Miễn Phí & Khảo Sát</span>
           </a>

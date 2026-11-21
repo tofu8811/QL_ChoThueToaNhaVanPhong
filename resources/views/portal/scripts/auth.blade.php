@@ -139,23 +139,31 @@
           localStorage.setItem('auth_role', authData.role);
           localStorage.setItem('auth_user', JSON.stringify(authData.user));
 
+          // Thiết lập cookie ngay lập tức để đồng bộ với SSR
+          document.cookie = 'auth_token=' + authData.access_token + '; path=/; max-age=86400; SameSite=Lax';
+          if (authData.user && authData.user.id) {
+            localStorage.setItem('tenant_id', authData.user.id);
+            document.cookie = 'tenant_id=' + authData.user.id + '; path=/; max-age=86400; SameSite=Lax';
+          }
+
           closeLoginModal();
           updateAuthUI(authData.user, authData.role);
 
-          // Tự động chuyển view phù hợp theo đúng Role ngay lập tức
+          // Tự động chuyển trang phù hợp theo đúng Role
           const upperRole = String(authData.role || '').toUpperCase();
-          if (upperRole === 'ADMIN' || upperRole === 'SUPER_ADMIN') {
-            handleRoleSwitch('admin');
-          } else if (upperRole === 'PM' || upperRole === 'PROPERTY_MANAGER') {
-            handleRoleSwitch('pm');
-          } else if (upperRole === 'SALES') {
-            handleRoleSwitch('sales');
-          } else if (upperRole === 'ACCOUNTANT') {
-            handleRoleSwitch('accountant');
-          } else if (upperRole === 'TENANT') {
-            handleRoleSwitch('tenant');
+          if (upperRole === 'TENANT') {
+            window.location.href = '/tenant/portal' + (authData.user?.id ? '?tenant_id=' + authData.user.id : '');
           } else {
-            handleRoleSwitch('admin');
+            if (window.location.pathname.startsWith('/admin')) {
+              const rMap = {
+                'ADMIN': 'admin', 'SUPER_ADMIN': 'admin',
+                'PM': 'pm', 'PROPERTY_MANAGER': 'pm',
+                'SALES': 'sales', 'ACCOUNTANT': 'accountant'
+              };
+              handleRoleSwitch(rMap[upperRole] || 'admin');
+            } else {
+              window.location.href = '/admin';
+            }
           }
         } else {
           const msg = result.message || 'Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại.';
@@ -176,8 +184,6 @@
     }
 
     async function handleLogout() {
-      if (!confirm('Bạn có chắc chắn muốn đăng xuất tài khoản?')) return;
-
       const token = localStorage.getItem('auth_token');
       if (token) {
         try {
@@ -196,10 +202,15 @@
       localStorage.removeItem('auth_token');
       localStorage.removeItem('auth_role');
       localStorage.removeItem('auth_user');
+      localStorage.removeItem('tenant_id');
+      document.cookie = 'auth_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = 'tenant_id=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 
       updateAuthUI(null, null);
-      switchView('portal-view');
-      alert('Đã đăng xuất tài khoản thành công.');
+      if (typeof switchView === 'function') {
+        switchView('portal-view');
+      }
+      window.location.href = '/';
     }
 
     function updateAuthUI(user, role) {

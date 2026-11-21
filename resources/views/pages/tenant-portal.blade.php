@@ -1,35 +1,22 @@
-@extends('layouts.portal')
+@extends('layouts.tenant')
 
-@section('title', 'Cổng Khách Thuê Doanh Nghiệp | Quản Lý Mặt Bằng & Cước Phí')
+@section('title', 'Cổng Khách Thuê Doanh Nghiệp | Tenant Portal')
 
 @section('meta')
   <meta name="description" content="Cổng thông tin tự phục vụ dành cho doanh nghiệp thuê văn phòng: theo dõi hợp đồng, xem chi tiết mặt bằng, nhận thông báo cước phí và tra cứu công nợ.">
-  <meta property="og:title" content="Cổng Khách Thuê Doanh Nghiệp">
-  <meta property="og:type" content="website">
 @endsection
 
 @section('content')
-  <script>
-    if (!localStorage.getItem('auth_token')) {
-      window.location.replace('/#portal');
-    }
-  </script>
-  <div id="portal-wrapper">
-    @include('portal.components.header')
-
-    <main class="page-section active">
-      <div class="container" style="padding-top: 30px; padding-bottom: 60px;">
-        <div class="mo-breadcrumbs" style="margin-bottom: 20px;">
-          <a href="{{ route('home') }}">Trang chủ</a>
-          <i class="fa-solid fa-chevron-right" style="font-size:10px;"></i>
-          <span>Cổng khách thuê văn phòng (Tenant Portal)</span>
-        </div>
-
-        <!-- Nhúng Livewire 3 TenantPortalWorkspace Component -->
-        <livewire:tenant-portal-workspace :tenant-id="request('tenant_id')" />
+  <main class="page-section active" style="min-height: calc(100vh - 64px); padding: 30px 0 60px;">
+    <div class="container">
+      <div class="mo-breadcrumbs" style="margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
+        <a href="{{ route('home') }}" style="color: #64748b; text-decoration: none; font-size: 13.5px;"><i class="fa-solid fa-globe"></i> Trang chủ</a>
+        <i class="fa-solid fa-chevron-right" style="font-size:10px; color: #94a3b8;"></i>
+        <span style="color: #0f172a; font-weight: 600; font-size: 13.5px;">Cổng khách thuê (Tenant Workspace)</span>
       </div>
-    </main>
 
-    @include('portal.components.footer')
-  </div>
+      <!-- Nhúng Livewire 3 TenantPortalWorkspace Component -->
+      <livewire:tenant-portal-workspace :tenant-id="$tenantId ?? request('tenant_id')" />
+    </div>
+  </main>
 @endsection

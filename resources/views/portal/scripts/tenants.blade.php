@@ -322,6 +322,11 @@
       }
     }
 
+    function doTenantSearch() {
+      const inp = document.getElementById('tenant-search-input');
+      handleTenantSearch(inp ? inp.value : '');
+    }
+
     function handleTenantSearch(val) {
       currentTenantSearch = val.trim();
       loadTenantsList();

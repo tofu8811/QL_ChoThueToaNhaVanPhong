@@ -1,4 +1,17 @@
 <div>
+    @if(isset($rentedBuildings) && $rentedBuildings->isNotEmpty())
+    <script>
+      window.TENANT_RENTED_BUILDINGS = [
+        @foreach($rentedBuildings as $bld)
+          { id: "{{ $bld->id }}", name: "{{ $bld->name }}", district: "{{ $bld->district ?? 'TP.HCM' }}" },
+        @endforeach
+      ];
+      if (typeof updateTenantBuildingDropdowns === 'function') {
+        updateTenantBuildingDropdowns();
+      }
+    </script>
+    @endif
+
     <!-- Tenant Portal Sub-Navigation Tabs -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid #e2e8f0;padding-bottom:12px;flex-wrap:wrap;gap:12px;">
         <div style="display:flex;gap:8px;">
@@ -22,6 +35,17 @@
                 @if($pendingCount > 0)
                     <span style="background:#ef4444;color:#fff;border-radius:9999px;font-size:11px;padding:2px 6px;">
                         {{ $pendingCount }}
+                    </span>
+                @endif
+            </button>
+            <button wire:click="switchTab('tickets')" 
+                style="cursor:pointer;padding:8px 16px;border-radius:6px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:6px;border:none;
+                background: {{ $activeTab === 'tickets' ? 'var(--mo-primary)' : '#f1f5f9' }};
+                color: {{ $activeTab === 'tickets' ? '#fff' : '#475569' }};">
+                <i class="fa-solid fa-screwdriver-wrench"></i> Yêu Cầu Hỗ Trợ & Thi Công
+                @if($openTicketsCount > 0)
+                    <span style="background:#7e22ce;color:#fff;border-radius:9999px;font-size:11px;padding:2px 7px;font-weight:700;">
+                        {{ $openTicketsCount }}
                     </span>
                 @endif
             </button>
@@ -121,6 +145,17 @@
                         <i class="fa-solid fa-clock"></i> {{ $latestDebitNote?->status === 'PAID' ? 'Đã thanh toán' : 'Hạn nộp: ' . ($latestDebitNote?->due_date ? \Carbon\Carbon::parse($latestDebitNote->due_date)->format('d/m/Y') : '15 hàng tháng') }}
                     </div>
                 </div>
+
+                <!-- Stat 5: Yêu cầu & Ticket hỗ trợ -->
+                <div class="filament-stat-card" style="background:#fff;padding:18px;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05);cursor:pointer;" wire:click="switchTab('tickets')" title="Bấm để xem danh sách Ticket">
+                    <div class="filament-stat-label" style="font-size:12.5px;color:#64748b;margin-bottom:4px;">Yêu cầu hỗ trợ kỹ thuật</div>
+                    <div class="filament-stat-value" style="color:#7e22ce;font-size:20px;font-weight:700;margin-bottom:4px;">
+                        {{ sprintf('%02d', $openTicketsCount) }} <span style="font-size:14px;color:#64748b;font-weight:500;">việc đang xử lý</span>
+                    </div>
+                    <div style="font-size:12px;color:#6d28d9;font-weight:600;">
+                        <i class="fa-solid fa-headset"></i> Cam kết SLA: Phản hồi &lt; 30p
+                    </div>
+                </div>
             </div>
 
             <!-- Two Columns Section -->
@@ -205,6 +240,18 @@
                                 <li>Hóa đơn cước sẽ được gửi tự động qua email <strong>{{ $tenant->billing_email }}</strong> vào ngày 01 đầu tháng.</li>
                             </ul>
                         </div>
+
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid #f1f5f9;">
+                            <button type="button" class="btn-mo-primary" style="background:#2563eb;padding:7px 12px;font-size:12.5px;border-radius:6px;display:inline-flex;align-items:center;gap:6px;" onclick="openTenantTicketModal()">
+                                <i class="fa-solid fa-plus"></i> Tạo Ticket kỹ thuật
+                            </button>
+                            <button type="button" class="btn-mo-outline" style="background:#eff6ff;color:#2563eb;border-color:#93c5fd;font-weight:600;padding:7px 12px;font-size:12.5px;border-radius:6px;display:inline-flex;align-items:center;gap:6px;" onclick="openTenantAfterHoursModal()">
+                                <i class="fa-solid fa-clock"></i> Đăng ký thi công ngoài giờ
+                            </button>
+                            <button type="button" class="btn-mo-outline" style="font-size:12.5px;padding:7px 12px;border-radius:6px;display:inline-flex;align-items:center;gap:6px;" wire:click="switchTab('tickets')">
+                                <i class="fa-solid fa-list-check"></i> Xem danh sách ticket ({{ $totalTicketsCount }})
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -276,6 +323,248 @@
                                     <td colspan="7" style="text-align:center;padding:40px 20px;color:#94a3b8;">
                                         <i class="fa-solid fa-file-invoice" style="font-size:36px;margin-bottom:12px;display:block;"></i>
                                         Chưa có thông báo cước nào phát hành cho doanh nghiệp.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        <!-- TAB 3: YÊU CẦU HỖ TRỢ KỸ THUẬT & ĐĂNG KÝ THI CÔNG NGOÀI GIỜ -->
+        @elseif($activeTab === 'tickets')
+            <div class="filament-page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
+                <div>
+                    <div class="filament-breadcrumbs" style="font-size:12px;color:#64748b;">Cổng khách thuê / Dịch vụ & CSKH</div>
+                    <h1 class="filament-page-title" style="font-size:22px;font-weight:700;color:var(--mo-primary);margin:0;">
+                        <i class="fa-solid fa-headset"></i> Yêu Cầu Hỗ Trợ, Sửa Chữa & Đăng Ký Thi Công
+                    </h1>
+                    <p style="font-size:13px;color:#64748b;margin:4px 0 0 0;">
+                        Báo cáo sự cố kỹ thuật (điện, nước, điều hòa, vệ sinh) hoặc nộp đơn xin đăng ký thi công nội thất ngoài giờ; theo dõi tiến độ xử lý và đánh giá chất lượng dịch vụ CSAT.
+                    </p>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button wire:click="$refresh" type="button" class="btn-mo-outline" style="background:#fff;padding:8px 14px;font-size:13px;border-radius:6px;">
+                        <i class="fa-solid fa-arrows-rotate"></i> Làm mới
+                    </button>
+                    <button type="button" class="btn-mo-outline" style="background:#eff6ff;color:#2563eb;border-color:#93c5fd;font-weight:700;padding:8px 16px;font-size:13px;border-radius:6px;" onclick="openTenantAfterHoursModal()">
+                        <i class="fa-solid fa-clock"></i> Đăng ký thi công ngoài giờ
+                    </button>
+                    <button type="button" class="btn-mo-primary" style="background:#2563eb;padding:8px 16px;font-size:13px;border-radius:6px;font-weight:600;" onclick="openTenantTicketModal()">
+                        <i class="fa-solid fa-plus"></i> Tạo Ticket kỹ thuật
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4 Thẻ KPI thống kê Ticket -->
+            <div class="filament-widgets-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:16px;margin-bottom:20px;">
+                <div class="filament-stat-card" style="background:#fff;padding:16px 18px;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                    <div style="font-size:12.5px;color:#64748b;margin-bottom:4px;">Tổng số yêu cầu</div>
+                    <div style="font-size:22px;font-weight:800;color:#0f172a;">{{ $totalTicketsCount }} <span style="font-size:13px;font-weight:500;color:#64748b;">phiếu</span></div>
+                    <div style="font-size:12px;color:#64748b;margin-top:4px;"><i class="fa-solid fa-receipt"></i> Tất cả các kỳ</div>
+                </div>
+
+                <div class="filament-stat-card" style="background:#fff;padding:16px 18px;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                    <div style="font-size:12.5px;color:#64748b;margin-bottom:4px;">Sự cố kỹ thuật</div>
+                    @php
+                        $maintCount = $tenantTickets->filter(function($t) {
+                            $c = is_object($t->category) ? ($t->category->value ?? $t->category) : $t->category;
+                            return in_array($c, ['MAINTENANCE', 'REPAIR', 'SECURITY_CLEANING']);
+                        })->count();
+                    @endphp
+                    <div style="font-size:22px;font-weight:800;color:#2563eb;">{{ $maintCount }} <span style="font-size:13px;font-weight:500;color:#64748b;">sự cố</span></div>
+                    <div style="font-size:12px;color:#2563eb;margin-top:4px;"><i class="fa-solid fa-wrench"></i> Điện, nước, HVAC</div>
+                </div>
+
+                <div class="filament-stat-card" style="background:#fff;padding:16px 18px;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                    <div style="font-size:12.5px;color:#64748b;margin-bottom:4px;">Đăng ký thi công</div>
+                    @php
+                        $constCount = $tenantTickets->filter(function($t) {
+                            $c = is_object($t->category) ? ($t->category->value ?? $t->category) : $t->category;
+                            return in_array($c, ['OVERTIME_CONSTRUCTION', 'CONSTRUCTION']);
+                        })->count();
+                    @endphp
+                    <div style="font-size:22px;font-weight:800;color:#d97706;">{{ $constCount }} <span style="font-size:13px;font-weight:500;color:#64748b;">đơn</span></div>
+                    <div style="font-size:12px;color:#d97706;margin-top:4px;"><i class="fa-solid fa-hammer"></i> Ngoài giờ & Nội thất</div>
+                </div>
+
+                <div class="filament-stat-card" style="background:#fff;padding:16px 18px;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                    <div style="font-size:12.5px;color:#64748b;margin-bottom:4px;">Đang xử lý / Chờ nghiệm thu</div>
+                    <div style="font-size:22px;font-weight:800;color:#7e22ce;">{{ $openTicketsCount }} <span style="font-size:13px;font-weight:500;color:#64748b;">phiếu</span></div>
+                    <div style="font-size:12px;color:#7e22ce;margin-top:4px;"><i class="fa-solid fa-clock-rotate-left"></i> BQL đang giải quyết</div>
+                </div>
+            </div>
+
+            <!-- Bộ lọc & Tìm kiếm Ticket với nút X bo tròn -->
+            <div class="filament-card" style="padding:16px 20px;margin-bottom:20px;background:#fff;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;">
+                    <div style="display:flex;gap:10px;align-items:center;flex:1;max-width:540px;">
+                        <div style="position:relative;flex:1;display:flex;align-items:center;">
+                            <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:13px;"></i>
+                            <input type="text" wire:model="ticketSearchKeyword" wire:keydown.enter="$refresh" placeholder="Tìm theo mã ticket, tiêu đề, mô tả sự cố..."
+                                style="width:100%;padding:8px 30px 8px 32px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;box-sizing:border-box;">
+                            @if(!empty($ticketSearchKeyword))
+                                <button type="button" wire:click="clearTicketSearch" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:19px;height:19px;border-radius:50%;background:#cbd5e1;color:#475569;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;padding:0;" title="Xóa tìm kiếm">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            @endif
+                        </div>
+                        <button type="button" wire:click="$refresh" style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
+                            <i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm
+                        </button>
+                    </div>
+
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <select wire:model.live="ticketCategory" style="padding:7px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;">
+                            <option value="ALL">Tất cả Phân Loại</option>
+                            <option value="MAINTENANCE">Sự cố kỹ thuật / Bảo trì</option>
+                            <option value="OVERTIME_CONSTRUCTION">Đăng ký thi công ngoài giờ</option>
+                            <option value="SECURITY_CLEANING">An ninh / Vệ sinh</option>
+                            <option value="SERVICE_COMPLAINT">Khiếu nại dịch vụ</option>
+                        </select>
+
+                        <select wire:model.live="ticketStatus" style="padding:7px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;color:#334155;">
+                            <option value="ALL">Tất cả Trạng Thái</option>
+                            <option value="NEW">Mới tiếp nhận</option>
+                            <option value="OPEN">BQL đã mở phiếu</option>
+                            <option value="IN_PROGRESS">Đang xử lý</option>
+                            <option value="WAITING_CONFIRMATION">Chờ nghiệm thu</option>
+                            <option value="RESOLVED">Đã khắc phục</option>
+                            <option value="COMPLETED">Khách đã nghiệm thu</option>
+                            <option value="CLOSED">Hoàn tất / Đã đóng</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bảng danh sách Ticket -->
+            <div class="filament-card" style="background:#fff;border-radius:8px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                <div style="overflow-x:auto;">
+                    <table class="mo-table" style="width:100%;border-collapse:collapse;text-align:left;font-size:13.5px;">
+                        <thead>
+                            <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;color:#475569;font-weight:600;">
+                                <th style="padding:12px 16px;">Mã Ticket</th>
+                                <th style="padding:12px 16px;">Phân Loại</th>
+                                <th style="padding:12px 16px;">Tiêu Đề / Nội Dung</th>
+                                <th style="padding:12px 16px;">Vị Trí & Tòa Nhà</th>
+                                <th style="padding:12px 16px;">Thời Gian Gửi</th>
+                                <th style="padding:12px 16px;">Mức Ưu Tiên</th>
+                                <th style="padding:12px 16px;">Tiến Độ Xử Lý</th>
+                                <th style="padding:12px 16px;text-align:right;">Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($tenantTickets as $tk)
+                                @php
+                                    $stRaw = is_object($tk->status) ? ($tk->status->value ?? 'NEW') : $tk->status;
+                                    $catRaw = is_object($tk->category) ? ($tk->category->value ?? 'MAINTENANCE') : $tk->category;
+                                    $priRaw = is_object($tk->priority) ? ($tk->priority->value ?? 'NORMAL') : $tk->priority;
+
+                                    $catName = match($catRaw) {
+                                        'OVERTIME_CONSTRUCTION' => 'Thi công ngoài giờ',
+                                        'SECURITY_CLEANING' => 'An ninh & Vệ sinh',
+                                        'SERVICE_COMPLAINT' => 'Khiếu nại dịch vụ',
+                                        default => 'Sự cố kỹ thuật',
+                                    };
+
+                                    $catBadge = match($catRaw) {
+                                        'OVERTIME_CONSTRUCTION' => 'warning',
+                                        'SECURITY_CLEANING' => 'info',
+                                        'SERVICE_COMPLAINT' => 'danger',
+                                        default => 'primary',
+                                    };
+
+                                    $stName = match($stRaw) {
+                                        'NEW' => 'Mới tiếp nhận',
+                                        'OPEN' => 'BQL đã mở',
+                                        'IN_PROGRESS' => 'Đang xử lý',
+                                        'ON_HOLD' => 'Tạm hoãn',
+                                        'WAITING_CONFIRMATION', 'RESOLVED' => 'Chờ nghiệm thu',
+                                        'COMPLETED' => 'Đã nghiệm thu',
+                                        'CLOSED' => 'Đã đóng',
+                                        default => $stRaw,
+                                    };
+
+                                    $stBadge = match($stRaw) {
+                                        'NEW' => 'badge-filament info',
+                                        'OPEN', 'IN_PROGRESS' => 'badge-filament warning',
+                                        'WAITING_CONFIRMATION', 'RESOLVED' => 'badge-filament purple',
+                                        'COMPLETED', 'CLOSED' => 'badge-filament success',
+                                        default => 'badge-filament secondary',
+                                    };
+
+                                    $priBadge = match($priRaw) {
+                                        'URGENT' => 'background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;',
+                                        'HIGH' => 'background:#fff7ed;color:#c2410c;border:1px solid #ffedd5;',
+                                        default => 'background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;',
+                                    };
+                                @endphp
+                                <tr style="border-bottom:1px solid #f1f5f9;">
+                                    <td style="padding:14px 16px;">
+                                        <strong style="color:var(--mo-primary);font-family:monospace;cursor:pointer;" onclick="openTicketDetail('{{ $tk->id }}')">
+                                            {{ $tk->ticket_code ?: '#TK-' . substr($tk->id, 0, 8) }}
+                                        </strong>
+                                    </td>
+                                    <td style="padding:14px 16px;">
+                                        <span class="badge-filament {{ $catBadge }}">{{ $catName }}</span>
+                                    </td>
+                                    <td style="padding:14px 16px;max-width:280px;">
+                                        <div style="font-weight:600;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $tk->title }}">
+                                            {{ $tk->title }}
+                                        </div>
+                                        <div style="font-size:12px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                            {{ $tk->description }}
+                                        </div>
+                                    </td>
+                                    <td style="padding:14px 16px;font-size:12.5px;color:#475569;">
+                                        <div><i class="fa-solid fa-building" style="color:#94a3b8;"></i> {{ $tk->building?->name ?? 'Tòa nhà văn phòng' }}</div>
+                                        @if($tk->unit)
+                                            <div style="font-size:11.5px;color:#64748b;">Mặt bằng: <strong>{{ $tk->unit->unit_code }}</strong> (Tầng {{ $tk->unit->floor_number }})</div>
+                                        @endif
+                                    </td>
+                                    <td style="padding:14px 16px;font-size:12.5px;color:#64748b;">
+                                        {{ $tk->created_at ? $tk->created_at->format('d/m/Y H:i') : 'Vừa xong' }}
+                                    </td>
+                                    <td style="padding:14px 16px;">
+                                        <span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;{{ $priBadge }}">
+                                            {{ $priRaw }}
+                                        </span>
+                                    </td>
+                                    <td style="padding:14px 16px;">
+                                        <span class="{{ $stBadge }}" style="font-size:12px;">{{ $stName }}</span>
+                                    </td>
+                                    <td style="padding:14px 16px;text-align:right;white-space:nowrap;">
+                                        <button type="button" class="btn-mo-primary" style="padding:5px 10px;font-size:12px;border-radius:6px;" onclick="openTicketDetail('{{ $tk->id }}')">
+                                            <i class="fa-solid fa-eye"></i> Chi tiết
+                                        </button>
+                                        @if(in_array($stRaw, ['WAITING_CONFIRMATION', 'RESOLVED']))
+                                            <button type="button" class="btn-mo-orange" style="padding:5px 10px;font-size:12px;border-radius:6px;margin-left:4px;" onclick="openConfirmTicketModal('{{ $tk->id }}')">
+                                                <i class="fa-solid fa-check"></i> Nghiệm thu
+                                            </button>
+                                        @endif
+                                        @if(in_array($stRaw, ['COMPLETED', 'CLOSED']))
+                                            <button type="button" class="btn-mo-outline" style="padding:5px 10px;font-size:12px;border-radius:6px;margin-left:4px;color:#d97706;border-color:#fde68a;" onclick="openRateTicketModal('{{ $tk->id }}')">
+                                                <i class="fa-solid fa-star"></i> Đánh giá CSAT
+                                            </button>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="8" style="text-align:center;padding:40px 20px;color:#64748b;">
+                                        <div style="width:54px;height:54px;border-radius:50%;background:#eff6ff;color:#2563eb;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px;">
+                                            <i class="fa-solid fa-circle-check"></i>
+                                        </div>
+                                        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px;">Hiện tại không có yêu cầu sự cố nào!</div>
+                                        <p style="font-size:13px;color:#64748b;margin:0 0 16px 0;">Văn phòng của bạn đang vận hành ổn định. Nếu gặp bất kỳ sự cố kỹ thuật hoặc cần đăng ký thi công, hãy gửi yêu cầu ngay.</p>
+                                        <div style="display:flex;justify-content:center;gap:10px;">
+                                            <button type="button" class="btn-mo-primary" style="background:#2563eb;padding:8px 16px;font-size:13px;border-radius:6px;" onclick="openTenantTicketModal()">
+                                                <i class="fa-solid fa-plus"></i> Tạo Ticket kỹ thuật
+                                            </button>
+                                            <button type="button" class="btn-mo-outline" style="padding:8px 16px;font-size:13px;border-radius:6px;" onclick="openTenantAfterHoursModal()">
+                                                <i class="fa-solid fa-clock"></i> Đăng ký thi công ngoài giờ
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforelse

@@ -79,6 +79,7 @@
   @include('portal.scripts.main')
   @include('portal.scripts.auth')
   @include('portal.scripts.tickets')
+  @include('portal.scripts.role-operations')
   @include('portal.scripts.init')
 
   @livewireScripts

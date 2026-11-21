@@ -135,7 +135,7 @@
       </div>
     </div>
 
-<!-- User Profile & Security Modal (Hồ Sơ Cá Nhân & Đổi Mật Khẩu - Endpoints 69, 70, 71) -->
+<!-- User Profile & Security Modal (Đổi Mật Khẩu & Bảo Mật - Endpoints 70, 71) -->
     <div id="profile-modal" class="mo-modal">
       <div class="profile-modal-box">
         <!-- Header -->
@@ -143,9 +143,9 @@
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
               <div class="login-header-badge">
-                <i class="fa-solid fa-id-card-clip"></i> Quản Trị Tài Khoản
+                <i class="fa-solid fa-shield-halved"></i> Quản Trị Tài Khoản
               </div>
-              <h3 class="login-modal-title" style="font-size:18px;">Hồ Sơ Cá Nhân & Bảo Mật</h3>
+              <h3 class="login-modal-title" style="font-size:18px;">Đổi Mật Khẩu & Bảo Mật Tài Khoản</h3>
             </div>
             <div class="login-modal-close" onclick="closeProfileModal()">
               <i class="fa-solid fa-xmark"></i>
@@ -154,65 +154,16 @@
 
           <!-- Tab Navigation -->
           <div class="profile-tabs-header">
-            <button class="profile-tab-btn active" id="btn-tab-profile-info" onclick="switchProfileModalTab('tab-profile-info', this)">
-              <i class="fa-solid fa-user-gear"></i> Thông Tin & Tòa Nhà
-            </button>
-            <button class="profile-tab-btn" id="btn-tab-profile-password" onclick="switchProfileModalTab('tab-profile-password', this)">
-              <i class="fa-solid fa-key"></i> Đổi Mật Khẩu
-            </button>
-            <button class="profile-tab-btn" id="btn-tab-profile-session" onclick="switchProfileModalTab('tab-profile-session', this)">
-              <i class="fa-solid fa-shield-halved"></i> Phiên Đăng Nhập
+            <button class="profile-tab-btn active" id="btn-tab-profile-password" onclick="switchProfileModalTab('tab-profile-password', this)">
+              <i class="fa-solid fa-key"></i> Đổi Mật Khẩu Cá Nhân
             </button>
           </div>
         </div>
 
         <!-- Body -->
         <div class="profile-modal-body">
-          <!-- TAB 1: THÔNG TIN HỒ SƠ & TÒA NHÀ PHỤ TRÁCH (Endpoint 69: GET /api/v1/auth/me) -->
-          <div id="tab-profile-info" class="profile-tab-pane active">
-            <!-- Loading Indicator -->
-            <div id="profile-loading" style="text-align:center; padding:30px 0; color:#64748b;">
-              <i class="fa-solid fa-spinner fa-spin" style="font-size:24px; color:#2563eb;"></i>
-              <div style="margin-top:8px; font-size:13px;">Đang tải hồ sơ từ máy chủ...</div>
-            </div>
-
-            <!-- Profile Content -->
-            <div id="profile-content" style="display:none;">
-              <!-- User Summary Card -->
-              <div class="profile-user-card">
-                <div class="profile-big-avatar" id="profile-avatar-display">AD</div>
-                <div class="profile-user-details">
-                  <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                    <h4 class="profile-user-name" id="profile-name-display">Đang tải...</h4>
-                    <span class="badge-role-pill" id="profile-role-badge">ROLE</span>
-                    <span class="badge-filament success" style="font-size:11px;" id="profile-status-badge">Đang hoạt động</span>
-                  </div>
-                  <div class="profile-meta-row">
-                    <span><i class="fa-solid fa-envelope"></i> <span id="profile-email-display">-</span></span>
-                    <span><i class="fa-solid fa-phone"></i> <span id="profile-phone-display">-</span></span>
-                    <span><i class="fa-solid fa-id-badge"></i> <span id="profile-code-display">-</span></span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Assigned Buildings Section -->
-              <div style="margin-top:20px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                  <h5 style="font-size:13.5px; font-weight:700; color:#0f3361; margin:0;">
-                    <i class="fa-solid fa-building-circle-check" style="color:#2563eb;"></i> Danh Sách Tòa Nhà Được Phân Công Phụ Trách
-                  </h5>
-                  <span style="font-size:12px; color:#64748b;" id="profile-buildings-count">0 tòa nhà</span>
-                </div>
-
-                <div class="profile-buildings-grid" id="profile-buildings-list">
-                  <!-- Rendered via JS -->
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB 2: ĐỔI MẬT KHẨU CÁ NHÂN (Endpoint 71: PUT /api/v1/auth/password) -->
-          <div id="tab-profile-password" class="profile-tab-pane" style="display:none;">
+          <!-- TAB: ĐỔI MẬT KHẨU CÁ NHÂN (Endpoint 71: PUT /api/v1/auth/password) -->
+          <div id="tab-profile-password" class="profile-tab-pane active" style="display:block;">
             <p style="color:#64748b; font-size:12.5px; margin-bottom:16px;">
               Để đảm bảo an toàn tài khoản, vui lòng đặt mật khẩu có độ dài tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.
             </p>
@@ -242,47 +193,6 @@
                 <i class="fa-solid fa-floppy-disk"></i> Cập Nhật Mật Khẩu Mới
               </button>
             </form>
-          </div>
-
-          <!-- TAB 3: PHIÊN ĐĂNG NHẬP & TOKEN (Endpoint 70: Refresh Token & Endpoint 68: Logout) -->
-          <div id="tab-profile-session" class="profile-tab-pane" style="display:none;">
-            <div class="session-info-box">
-              <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
-                <div style="width:40px; height:40px; border-radius:10px; background:#eff6ff; color:#2563eb; display:flex; align-items:center; justify-content:center; font-size:20px;">
-                  <i class="fa-solid fa-shield-halved"></i>
-                </div>
-                <div>
-                  <div style="font-weight:700; color:#0f3361; font-size:14px;">Phiên Đăng Nhập & Bảo Mật</div>
-                  <div style="font-size:12px; color:#64748b;">Mã hóa bảo mật phiên làm việc trực tuyến an toàn</div>
-                </div>
-              </div>
-
-              <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:12px 14px; font-size:12.5px; margin-bottom:16px;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                  <span style="color:#64748b;">Loại Token:</span>
-                  <strong style="color:#0f3361;">Bearer Token (Personal Access Token)</strong>
-                </div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                  <span style="color:#64748b;">Trạng thái phiên:</span>
-                  <span class="badge-filament success" style="font-size:10.5px;">Đang hoạt động (Active)</span>
-                </div>
-                <div style="display:flex; justify-content:space-between;">
-                  <span style="color:#64748b;">Thời gian kiểm tra:</span>
-                  <span id="session-login-time" style="color:#334155; font-weight:600;">Vừa xong</span>
-                </div>
-              </div>
-
-              <div id="refresh-token-alert" style="display:none; padding:10px 14px; border-radius:8px; font-size:12.5px; margin-bottom:14px;"></div>
-
-              <div style="display:flex; gap:10px;">
-                <button type="button" class="btn-mo-primary" style="flex:1; justify-content:center; background:#2563eb; color:#fff; font-size:13px; padding:10px;" onclick="handleRefreshTokenClick(this)">
-                  <i class="fa-solid fa-arrows-rotate"></i> Làm Mới Phiên (Refresh Token)
-                </button>
-                <button type="button" class="btn-logout" style="justify-content:center; font-size:13px; padding:10px 16px;" onclick="closeProfileModal(); handleLogout();">
-                  <i class="fa-solid fa-arrow-right-from-bracket"></i> Đăng Xuất
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </div>

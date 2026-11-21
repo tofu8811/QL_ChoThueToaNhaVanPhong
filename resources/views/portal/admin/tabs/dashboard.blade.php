@@ -46,14 +46,14 @@
       <div>
         <div class="bms-kpi-top">
           <div class="bms-kpi-title" id="dashboard-card1-title">QUY MÔ TÀI SẢN & SÀN</div>
-          <div class="bms-kpi-icon" style="background:#f1f5f9;color:#334155;">
+          <div class="bms-kpi-icon" style="background:#eff6ff;color:#2563eb;">
             <i class="fa-solid fa-city"></i>
           </div>
         </div>
         <div class="bms-kpi-main">
-          <span class="bms-kpi-number" id="dashboard-total-blds" style="color:#0f172a;">{{ $totalBlds }}</span>
+          <span class="bms-kpi-number" id="dashboard-total-blds" style="color:#2563eb;">{{ $totalBlds }}</span>
           <span id="dashboard-total-blds-sub" style="font-size:13.5px;font-weight:600;color:#64748b;">tòa nhà</span>
-          <span class="bms-kpi-pill" id="dashboard-total-units-sub" style="background:#f1f5f9;color:#334155;">{{ $totalU }} mặt bằng</span>
+          <span class="bms-kpi-pill" id="dashboard-total-units-sub" style="background:#eff6ff;color:#1d4ed8;">{{ $totalU }} mặt bằng</span>
         </div>
       </div>
       <div class="bms-kpi-foot">
@@ -104,13 +104,13 @@
       <div class="kpi-admin-content">
         <div class="bms-kpi-top">
           <div class="bms-kpi-title">DOANH THU & CÔNG NỢ KỲ</div>
-          <div class="bms-kpi-icon" style="background:#ecfdf5;color:#10b981;">
+          <div class="bms-kpi-icon" style="background:#eff6ff;color:#2563eb;">
             <i class="fa-solid fa-file-invoice-dollar"></i>
           </div>
         </div>
         <div class="bms-kpi-main">
-          <span class="bms-kpi-number" style="color:#10b981;font-size:28px;">{{ number_format(($stats['billing_total'] ?? 888387500) / 1000000, 1, ',', '.') }} Tr</span>
-          <span class="bms-kpi-pill" style="background:#ecfdf5;color:#047857;">Đã thu {{ $stats['billing_paid_pct'] ?? 50.2 }}%</span>
+          <span class="bms-kpi-number" style="color:#2563eb;font-size:28px;">{{ number_format(($stats['billing_total'] ?? 888387500) / 1000000, 1, ',', '.') }} Tr</span>
+          <span class="bms-kpi-pill" style="background:#eff6ff;color:#1d4ed8;">Đã thu {{ $stats['billing_paid_pct'] ?? 50.2 }}%</span>
         </div>
         <div class="bms-kpi-foot">
           <span>Đã đối soát:</span>
@@ -120,14 +120,14 @@
       <div class="kpi-pm-content" style="display:none;">
         <div class="bms-kpi-top">
           <div class="bms-kpi-title">TỔNG DIỆN TÍCH QUẢN LÝ</div>
-          <div class="bms-kpi-icon" style="background:#ecfdf5;color:#10b981;">
+          <div class="bms-kpi-icon" style="background:#eff6ff;color:#2563eb;">
             <i class="fa-solid fa-cube"></i>
           </div>
         </div>
         <div class="bms-kpi-main">
-          <span class="bms-kpi-number" id="pm-kpi-total-area" style="color:#10b981;font-size:26px;">199.230</span>
+          <span class="bms-kpi-number" id="pm-kpi-total-area" style="color:#2563eb;font-size:26px;">199.230</span>
           <span style="font-size:13.5px;font-weight:600;color:#64748b;">m²</span>
-          <span class="bms-kpi-pill" style="background:#ecfdf5;color:#047857;">Hạng A, B, C</span>
+          <span class="bms-kpi-pill" style="background:#eff6ff;color:#1d4ed8;">Hạng A, B, C</span>
         </div>
         <div class="bms-kpi-foot">
           <span>Diện tích còn trống:</span>

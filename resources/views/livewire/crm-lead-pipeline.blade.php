@@ -62,9 +62,19 @@
   <div class="filament-card" style="padding: 16px; margin-bottom: 20px;">
     <div style="display: grid; grid-template-columns: 2fr 1.5fr {{ $viewMode === 'table' ? '1fr' : '' }} auto; gap: 14px; align-items: center;">
       <!-- Tìm kiếm từ khóa -->
-      <div style="position: relative;">
-        <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8;"></i>
-        <input type="text" wire:model.live.debounce.300ms="searchKeyword" placeholder="Tìm theo tên khách, công ty, SĐT..." style="width:100%; padding:9px 12px 9px 36px; border:1px solid #cbd5e1; border-radius:6px; font-size:13.5px;">
+      <div style="display:flex; gap:8px; align-items:center;">
+        <div style="position: relative; flex:1;">
+          <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8;"></i>
+          <input type="text" wire:model="searchKeyword" wire:keydown.enter="$refresh" placeholder="Tìm theo tên khách, công ty, SĐT..." style="width:100%; padding:9px 32px 9px 36px; border:1px solid #cbd5e1; border-radius:6px; font-size:13.5px; box-sizing:border-box;">
+          @if(!empty($searchKeyword))
+            <button type="button" wire:click="$set('searchKeyword', '')" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); width:19px; height:19px; border-radius:50%; background:#cbd5e1; color:#475569; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:11px; padding:0;" title="Xóa tìm kiếm">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          @endif
+        </div>
+        <button type="button" wire:click="$refresh" style="background:#2563eb; color:#fff; border:none; border-radius:6px; padding:9px 14px; font-size:12.5px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; white-space:nowrap;">
+          <i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm
+        </button>
       </div>
 
       <!-- Lọc theo Tòa nhà -->

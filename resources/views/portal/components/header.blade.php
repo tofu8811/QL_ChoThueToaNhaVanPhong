@@ -419,7 +419,7 @@
 
         <div class="mo-header-actions">
           <!-- Nút Đăng Nhập / Thông tin User Auth -->
-          <div id="auth-actions-container" style="display: inline-flex; align-items: center; position: relative;">
+          <div id="auth-actions-container" style="display: inline-flex; align-items: center; justify-content: flex-start; width: 100%; position: relative;">
             <!-- Chưa đăng nhập: Nút mở Modal Login -->
             <button id="btn-open-login" class="btn-mo-primary" style="background:#0f3361; color:#fff; padding:7px 14px; border-radius:6px; font-weight:700; font-size:13px; white-space: nowrap; border: 1px solid #2563eb; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);" onclick="openLoginModal()">
               <i class="fa-solid fa-right-to-bracket"></i> Đăng Nhập
@@ -444,14 +444,8 @@
                   <div style="margin-top:5px;"><span class="badge-role-pill" id="dropdown-role-badge">ROLE</span></div>
                 </div>
                 <div class="user-dropdown-divider"></div>
-                <a href="#" class="user-dropdown-item" onclick="openProfileModal('tab-profile-info'); closeUserDropdown(); return false;">
-                  <i class="fa-solid fa-id-card-clip" style="color:#2563eb;"></i> Hồ Sơ & Tòa Nhà Phụ Trách
-                </a>
                 <a href="#" class="user-dropdown-item" onclick="openProfileModal('tab-profile-password'); closeUserDropdown(); return false;">
                   <i class="fa-solid fa-key" style="color:#f59e0b;"></i> Đổi Mật Khẩu Cá Nhân
-                </a>
-                <a href="#" class="user-dropdown-item" id="dropdown-session-link" style="display:none;" onclick="openProfileModal('tab-profile-session'); closeUserDropdown(); return false;">
-                  <i class="fa-solid fa-shield-halved" style="color:#10b981;"></i> Quản Trị Phiên & Token (Admin)
                 </a>
                 <div class="user-dropdown-divider"></div>
                 <a href="#" class="user-dropdown-item" id="dropdown-workspace-link" onclick="handleGoToWorkspace(); closeUserDropdown(); return false;">

@@ -16,8 +16,13 @@ use Livewire\Component;
  */
 class TenantPortalWorkspace extends Component
 {
-    public string $activeTab = 'workspace'; // 'workspace' | 'bills'
+    public string $activeTab = 'workspace'; // 'workspace' | 'bills' | 'tickets'
     public ?string $tenantId = null;
+
+    // Bộ lọc tab Tickets
+    public string $ticketSearchKeyword = '';
+    public string $ticketCategory = 'ALL';
+    public string $ticketStatus = 'ALL';
 
     // Modal chi tiết phiếu cước (Debit Note Detail)
     public bool $showDebitModal = false;
@@ -74,6 +79,21 @@ class TenantPortalWorkspace extends Component
         $this->activeTab = $tab;
     }
 
+    public function clearTicketSearch(): void
+    {
+        $this->ticketSearchKeyword = '';
+    }
+
+    public function filterTicketCategory(string $category): void
+    {
+        $this->ticketCategory = $category;
+    }
+
+    public function filterTicketStatus(string $status): void
+    {
+        $this->ticketStatus = $status;
+    }
+
     public function openDebitModal(string $debitNoteId): void
     {
         $this->selectedDebitNote = DebitNote::with(['building', 'contract', 'details.unit'])->findOrFail($debitNoteId);
@@ -104,6 +124,9 @@ class TenantPortalWorkspace extends Component
         $activeContract = null;
         $recentDebitNotes = collect();
         $latestDebitNote = null;
+        $tenantTickets = collect();
+        $openTicketsCount = 0;
+        $totalTicketsCount = 0;
 
         if ($this->tenantId) {
             $tenant = Tenant::with([
@@ -124,6 +147,45 @@ class TenantPortalWorkspace extends Component
                 $recentDebitNotes = $tenant->debitNotes;
                 $latestDebitNote = $recentDebitNotes->first();
             }
+
+            // Truy vấn danh sách Ticket hỗ trợ kỹ thuật và thi công ngoài giờ của Khách thuê
+            $ticketsQuery = \App\Models\Ticket::with(['building', 'unit', 'contract'])
+                ->where(function ($q) {
+                    $q->where('tenant_id', $this->tenantId)
+                      ->orWhere('creator_tenant_id', $this->tenantId);
+                });
+
+            $totalTicketsCount = (clone $ticketsQuery)->count();
+            $openTicketsCount = (clone $ticketsQuery)
+                ->whereIn('status', ['NEW', 'OPEN', 'IN_PROGRESS', 'WAITING_CONFIRMATION', 'RESOLVED'])
+                ->count();
+
+            if (!empty($this->ticketSearchKeyword)) {
+                $term = '%' . trim($this->ticketSearchKeyword) . '%';
+                $ticketsQuery->where(function ($q) use ($term) {
+                    $q->where('ticket_code', 'like', $term)
+                      ->orWhere('title', 'like', $term)
+                      ->orWhere('description', 'like', $term);
+                });
+            }
+
+            if ($this->ticketCategory !== 'ALL' && !empty($this->ticketCategory)) {
+                $ticketsQuery->where('category', $this->ticketCategory);
+            }
+
+            if ($this->ticketStatus !== 'ALL' && !empty($this->ticketStatus)) {
+                $ticketsQuery->where('status', $this->ticketStatus);
+            }
+
+            $tenantTickets = $ticketsQuery->latest()->get();
+        }
+
+        $rentedBuildings = collect();
+        if ($tenant && $tenant->contracts) {
+            $rentedBuildings = $tenant->contracts->pluck('building')->filter()->unique('id')->values();
+        }
+        if ($rentedBuildings->isEmpty() && isset($activeContract) && $activeContract?->building) {
+            $rentedBuildings = collect([$activeContract->building]);
         }
 
         return view('livewire.tenant-portal-workspace', [
@@ -131,6 +193,10 @@ class TenantPortalWorkspace extends Component
             'activeContract' => $activeContract,
             'recentDebitNotes' => $recentDebitNotes,
             'latestDebitNote' => $latestDebitNote,
+            'tenantTickets' => $tenantTickets,
+            'openTicketsCount' => $openTicketsCount,
+            'totalTicketsCount' => $totalTicketsCount,
+            'rentedBuildings' => $rentedBuildings,
         ]);
     }
 }

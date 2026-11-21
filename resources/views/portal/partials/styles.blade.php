@@ -204,7 +204,7 @@
       box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.12), 0 4px 6px -2px rgba(15, 23, 42, 0.05);
     }
     .mo-header .container {
-      gap: 12px;
+      gap: 10px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -255,8 +255,8 @@
       min-width: 0;
       display: flex;
       align-items: center;
-      justify-content: space-evenly;
-      margin: 0 clamp(8px, 1.5vw, 24px);
+      justify-content: space-between;
+      margin: 0 14px;
     }
     .mo-nav-item {
       white-space: nowrap !important;
@@ -692,8 +692,10 @@
       flex-shrink: 0;
       display: flex;
       align-items: center;
+      justify-content: flex-start;
+      min-width: 265px;
       gap: 10px;
-      padding-right: 2px;
+      padding-right: 0;
     }
 
     /* Mobile Hamburger Menu Toggle Button */
@@ -2066,6 +2068,32 @@
       font-size: 13px;
       color: #64748b;
     }
+    .bms-search-clear-btn {
+      display: none;
+      position: absolute;
+      right: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #cbd5e1;
+      color: #475569;
+      border: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 11px;
+      line-height: 1;
+      padding: 0;
+      transition: all 0.18s ease;
+      z-index: 5;
+    }
+    .bms-search-clear-btn:hover {
+      background: #94a3b8;
+      color: #ffffff;
+      transform: translateY(-50%) scale(1.08);
+    }
     .filament-search-mock kbd {
       background: #ffffff;
       border: 1px solid #cbd5e1;
@@ -2102,9 +2130,18 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 4px 8px;
-      border-radius: 8px;
+      padding: 4px 10px 4px 6px;
+      border-radius: 20px;
       cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .filament-user-pill:hover,
+    .filament-user-pill.active {
+      background: #f1f5f9;
+    }
+    .filament-user-pill.active .admin-user-dropdown-caret {
+      transform: rotate(180deg);
     }
     .filament-avatar {
       width: 36px;
@@ -2228,6 +2265,8 @@
     .badge-filament.warning { background: #fef3c7; color: #b45309; }
     .badge-filament.danger { background: #fee2e2; color: #b91c1c; }
     .badge-filament.info { background: #e0f2fe; color: #0369a1; }
+    .badge-filament.purple { background: #f3e8ff; color: #7e22ce; }
+    .badge-filament.primary { background: #eff6ff; color: #1d4ed8; }
 
     /* BMS Brand & Context Selector in Sidebar */
     .bms-brand-header {
@@ -2658,8 +2697,8 @@
         gap: 8px;
       }
       .mo-nav {
-        margin: 0 8px;
-        justify-content: space-evenly;
+        margin: 0 12px;
+        justify-content: space-between;
       }
       .mo-nav-item {
         font-size: 12.5px;
@@ -2668,14 +2707,26 @@
       .mo-logo-text h1 {
         font-size: 18px;
       }
+      .user-profile-pill {
+        padding: 4px 8px 4px 5px;
+      }
       .user-name-label {
-        max-width: 95px;
+        max-width: 155px;
+      }
+      .user-role-tag {
+        max-width: 155px;
+      }
+      .mo-header-actions {
+        min-width: 235px;
       }
     }
     @media (max-width: 1200px) {
       .mo-stats-strip { grid-template-columns: repeat(3, 1fr); }
     }
     @media (max-width: 1024px) {
+      .mo-header-actions {
+        min-width: auto;
+      }
       .mo-nav { display: none !important; }
       .mo-hamburger-btn { display: inline-flex !important; }
       .mo-topbar-right { display: none; }
@@ -2802,16 +2853,17 @@
       flex-shrink: 0;
       box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
       box-sizing: border-box;
-      max-width: 175px;
+      user-select: none;
     }
-    .user-profile-pill:hover {
+    .user-profile-pill:hover,
+    .user-profile-pill.active {
       background: #eff6ff;
       border-color: #93c5fd;
       box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
     }
     .user-avatar-circle {
-      width: 30px;
-      height: 30px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       background: linear-gradient(135deg, #0f3361, #2563eb);
       color: #ffffff;
@@ -2834,10 +2886,10 @@
       font-size: 12px;
       font-weight: 700;
       color: #0f3361;
-      max-width: 105px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      max-width: 175px;
       display: block;
     }
     .user-role-tag {
@@ -2850,13 +2902,14 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      max-width: 175px;
     }
     .user-dropdown-caret {
       font-size: 9.5px;
       color: #64748b;
-      transition: transform 0.2s;
+      transition: transform 0.2s ease;
       flex-shrink: 0;
-      margin-left: 1px;
+      margin-left: 2px;
     }
     .user-profile-pill.active .user-dropdown-caret {
       transform: rotate(180deg);
@@ -3803,5 +3856,58 @@
       border-radius: 9999px;
       font-size: 11px;
       white-space: nowrap;
+    }
+
+    /* Form inputs modernization & Validation UI */
+    .filament-input {
+      width: 100%;
+      padding: 9px 13px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #0f172a;
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      transition: all 0.2s ease-in-out;
+      outline: none;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+    .filament-input:focus {
+      border-color: #d97706;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
+    }
+    .filament-input::placeholder {
+      color: #94a3b8;
+      font-size: 12.5px;
+    }
+    .filament-input.is-invalid {
+      border-color: #ef4444 !important;
+      background-color: #fef2f2 !important;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18) !important;
+    }
+    .field-error-msg {
+      color: #dc2626;
+      font-size: 11.5px;
+      font-weight: 600;
+      margin-top: 5px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      line-height: 1.4;
+      animation: fieldErrorFadeIn 0.2s ease-in-out;
+    }
+    @keyframes fieldErrorFadeIn {
+      from { opacity: 0; transform: translateY(-3px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes valShake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    .val-shake {
+      animation: valShake 0.4s ease-in-out;
     }
   </style>

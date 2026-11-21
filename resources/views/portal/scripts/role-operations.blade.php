@@ -24,40 +24,6 @@ function goToBuildingStaffCoordination() {
   }
 }
 
-// Cắt / Gộp diện tích sàn (Split / Merge)
-function switchSplitMergeMode(mode) {
-  const panelSplit = document.getElementById('panel-unit-split');
-  const panelMerge = document.getElementById('panel-unit-merge');
-  const btnSplit = document.getElementById('btn-mode-split');
-  const btnMerge = document.getElementById('btn-mode-merge');
-  
-  if (mode === 'SPLIT') {
-    if (panelSplit) panelSplit.style.display = 'block';
-    if (panelMerge) panelMerge.style.display = 'none';
-    if (btnSplit) { btnSplit.classList.add('active'); btnSplit.style.borderColor = '#2563eb'; btnSplit.style.background = '#eff6ff'; }
-    if (btnMerge) { btnMerge.classList.remove('active'); btnMerge.style.borderColor = '#cbd5e1'; btnMerge.style.background = '#fff'; }
-  } else {
-    if (panelSplit) panelSplit.style.display = 'none';
-    if (panelMerge) panelMerge.style.display = 'block';
-    if (btnSplit) { btnSplit.classList.remove('active'); btnSplit.style.borderColor = '#cbd5e1'; btnSplit.style.background = '#fff'; }
-    if (btnMerge) { btnMerge.classList.add('active'); btnMerge.style.borderColor = '#2563eb'; btnMerge.style.background = '#eff6ff'; }
-  }
-}
-
-function handleSplitMergeSubmit(e) {
-  if (e) e.preventDefault();
-  const radSplit = document.getElementById('mode-split-radio');
-  const isSplit = radSplit ? radSplit.checked : true;
-  
-  if (isSplit) {
-    alert('Thao tác thành công!\nĐã cắt nhỏ diện tích sàn thành 2 mặt bằng độc lập (Mã: VP-1201A và VP-1201B) với công tơ điện nước riêng biệt và trạng thái "Trống sàng sàng giao".');
-  } else {
-    alert('Thao tác thành công!\nĐã gộp 2 mặt bằng liền kề thành 1 mặt bằng diện tích hợp nhất (550 m²) với trạng thái "Trống sàng sàng giao".');
-  }
-  closeModal('modal-split-merge-unit');
-  if (typeof loadAdminBuildingsList === 'function') loadAdminBuildingsList();
-}
-
 // Biên bản bàn giao mặt bằng
 function openContractHandoverModal(contractId, code) {
   const codeEl = document.getElementById('handover-contract-code');
@@ -458,14 +424,233 @@ function downloadHandoverProtocol() {
   alert('Đang tải về Bản scan Biên bản bàn giao mặt bằng hoàn thiện (PDF kèm chữ ký số 2 bên)!');
 }
 
+let ahFirstErrorField = null;
+
+function clearSingleFieldError(fieldId) {
+  const el = document.getElementById(fieldId);
+  if (el) el.classList.remove('is-invalid');
+  const errEl = document.getElementById('err-' + fieldId);
+  if (errEl) {
+    errEl.style.display = 'none';
+    errEl.innerHTML = '';
+  }
+}
+
+function clearAllAfterHoursErrors() {
+  const fields = ['ah-building-id', 'ah-title', 'ah-date', 'ah-time', 'ah-workers', 'ah-contractor', 'ah-worker-list', 'ah-agreement'];
+  fields.forEach(fid => clearSingleFieldError(fid));
+  ahFirstErrorField = null;
+}
+
+function updateTenantBuildingDropdowns() {
+  if (window.TENANT_RENTED_BUILDINGS && window.TENANT_RENTED_BUILDINGS.length > 0) {
+    const selects = ['ah-building-id', 'ticket-building-id'];
+    selects.forEach(selectId => {
+      const el = document.getElementById(selectId);
+      if (el) {
+        el.innerHTML = window.TENANT_RENTED_BUILDINGS.map((b, i) => 
+          `<option value="${b.id}" ${i === 0 ? 'selected' : ''}>${b.name} (${b.district})</option>`
+        ).join('');
+      }
+    });
+  }
+}
+
 function openTenantAfterHoursModal() {
+  clearAllAfterHoursErrors();
+  if (typeof updateTenantBuildingDropdowns === 'function') {
+    updateTenantBuildingDropdowns();
+  }
+
+  // Khởi tạo ngày thi công: min = hôm nay, mặc định = hôm nay
+  const dateInput = document.getElementById('ah-date');
+  if (dateInput) {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+    dateInput.min = todayStr;
+    if (!dateInput.value || dateInput.value < todayStr) {
+      dateInput.value = todayStr;
+    }
+  }
+
   openModal('modal-tenant-after-hours');
 }
 
-function handleSubmitAfterHours(e) {
+async function handleSubmitAfterHours(e) {
   if (e) e.preventDefault();
-  alert('Đơn đăng ký thi công ngoài giờ đã được nộp lên Ban Quản Lý tòa nhà!\nBQL sẽ thẩm duyệt an toàn PCCC và phê duyệt trong vòng 2 giờ.');
-  closeModal('modal-tenant-after-hours');
+  clearAllAfterHoursErrors();
+
+  const buildingEl = document.getElementById('ah-building-id');
+  const buildingId = buildingEl ? buildingEl.value : (document.getElementById('ticket-building-id')?.value || '0192e220-0010-7000-8000-000000000001');
+  const title = document.getElementById('ah-title')?.value?.trim() || '';
+  const date = document.getElementById('ah-date')?.value || '';
+  const time = document.getElementById('ah-time')?.value || '';
+  const workers = document.getElementById('ah-workers')?.value?.trim() || '';
+  const contractor = document.getElementById('ah-contractor')?.value?.trim() || '';
+  const workerList = document.getElementById('ah-worker-list')?.value?.trim() || '';
+  const agreement = document.getElementById('ah-agreement')?.checked;
+
+  // VALIDATION RULES
+  const errors = [];
+
+  if (!buildingId) {
+    errors.push({
+      fieldId: 'ah-building-id',
+      label: 'Tòa nhà áp dụng',
+      message: 'Vui lòng chọn tòa nhà văn phòng cần đăng ký thi công.'
+    });
+  }
+
+  if (!title || title.length < 6) {
+    errors.push({
+      fieldId: 'ah-title',
+      label: 'Hạng mục thi công',
+      message: 'Vui lòng nhập chi tiết nội dung / hạng mục thi công (tối thiểu 6 ký tự).'
+    });
+  }
+
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  if (!date) {
+    errors.push({
+      fieldId: 'ah-date',
+      label: 'Ngày thi công',
+      message: 'Vui lòng chọn ngày thi công dự kiến.'
+    });
+  } else if (date < todayStr) {
+    errors.push({
+      fieldId: 'ah-date',
+      label: 'Ngày thi công',
+      message: 'Không thể đăng ký ngày trong quá khứ (phải từ hôm nay trở đi).'
+    });
+  }
+
+  if (!time) {
+    errors.push({
+      fieldId: 'ah-time',
+      label: 'Khung giờ thi công',
+      message: 'Vui lòng chọn khung giờ thi công cụ thể.'
+    });
+  }
+
+  const numWorkers = parseInt(workers, 10);
+  if (!workers || isNaN(numWorkers) || numWorkers < 1 || numWorkers > 50) {
+    errors.push({
+      fieldId: 'ah-workers',
+      label: 'Số lượng công nhân',
+      message: 'Số lượng công nhân thi công phải từ 1 đến 50 người.'
+    });
+  }
+
+  if (!contractor || contractor.length < 3) {
+    errors.push({
+      fieldId: 'ah-contractor',
+      label: 'Đơn vị thi công',
+      message: 'Vui lòng nhập tên công ty hoặc đội thợ thi công (tối thiểu 3 ký tự).'
+    });
+  }
+
+  if (!workerList || workerList.length < 6) {
+    errors.push({
+      fieldId: 'ah-worker-list',
+      label: 'Danh sách CCCD công nhân',
+      message: 'Vui lòng cung cấp danh sách họ tên và số CCCD công nhân để BQL cấp thẻ vào cổng.'
+    });
+  }
+
+  if (!agreement) {
+    errors.push({
+      fieldId: 'ah-agreement',
+      label: 'Cam kết an toàn PCCC',
+      message: 'Bạn cần tích chọn xác nhận cam kết tuân thủ quy chuẩn PCCC và an toàn tòa nhà.'
+    });
+  }
+
+  // NẾU CÓ LỖI: HIỆN HẾT RA DƯỚI CÁC TRƯỜNG (BỎ POPUP THEO YÊU CẦU)
+  if (errors.length > 0) {
+    ahFirstErrorField = errors[0].fieldId;
+
+    // 1. Hiển thị viền đỏ và text lỗi đồng thời dưới TẤT CẢ các trường bị lỗi
+    errors.forEach(err => {
+      const inputEl = document.getElementById(err.fieldId);
+      if (inputEl) {
+        inputEl.classList.add('is-invalid');
+      }
+      const errEl = document.getElementById('err-' + err.fieldId);
+      if (errEl) {
+        errEl.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> <span>${err.message}</span>`;
+        errEl.style.display = 'flex';
+      }
+    });
+
+    // 2. Cuộn và focus vào trường lỗi đầu tiên trên form (KHÔNG dùng popup dialog)
+    const firstTarget = document.getElementById(ahFirstErrorField);
+    if (firstTarget) {
+      firstTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      firstTarget.focus();
+    }
+    return;
+  }
+
+  // NẾU HỢP LỆ -> TIẾN HÀNH GỬI YÊU CẦU
+  const submitBtn = document.getElementById('btn-submit-after-hours');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi BQL phê duyệt...`;
+  }
+
+  const fullDesc = `Ngày thi công: ${date} (${time}) | Số công nhân: ${workers} người | Nhà thầu: ${contractor}\nDanh sách CCCD: ${workerList}`;
+  const token = localStorage.getItem('auth_token');
+
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tenantId = urlParams.get('tenant_id') || localStorage.getItem('tenant_id') || '';
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-CSRF-TOKEN': csrfToken
+    };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    if (tenantId) headers['X-Tenant-Id'] = tenantId;
+
+    const res = await fetch('/api/v1/tenant/tickets', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({
+        tenant_id: tenantId,
+        building_id: buildingId,
+        title: '[Thi công ngoài giờ] ' + title,
+        description: fullDesc,
+        category: 'OVERTIME_CONSTRUCTION',
+        priority: 'NORMAL'
+      })
+    });
+
+    const json = await res.json();
+    if (res.ok && json.status === 'success') {
+      alert('Đơn đăng ký thi công ngoài giờ đã được nộp thành công lên Ban Quản Lý tòa nhà!\nMã phiếu: ' + (json.data?.ticket_code || 'Mới') + '\nBQL sẽ thẩm duyệt an toàn PCCC và phê duyệt trong vòng 2 giờ.');
+      closeModal('modal-tenant-after-hours');
+      if (typeof loadTicketsList === 'function') loadTicketsList('tenant');
+      if (typeof Livewire !== 'undefined') {
+        const comp = document.querySelector('[wire\\:id]');
+        if (comp) Livewire.find(comp.getAttribute('wire:id'))?.$refresh();
+      }
+    } else {
+      alert('Không thể nộp đơn: ' + (json.message || 'Dữ liệu không hợp lệ.'));
+    }
+  } catch(err) {
+    console.error('Error submitting overtime ticket:', err);
+    alert('Lỗi kết nối máy chủ khi gửi đơn đăng ký thi công.');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Gửi BQL Phê Duyệt`;
+    }
+  }
 }
 
 function openUploadUncModal(debitCode) {

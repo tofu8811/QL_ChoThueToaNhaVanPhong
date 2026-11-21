@@ -167,52 +167,144 @@
   </div>
 </div>
 
+@php
+  $activeTenantId = request('tenant_id')
+      ?? request()->cookie('tenant_id')
+      ?? (\Illuminate\Support\Facades\Auth::guard('tenant')->id() ?? \Illuminate\Support\Facades\Auth::id());
+  if (!$activeTenantId && request()->is('tenant*')) {
+      $demoTenant = \App\Models\Tenant::where('login_email', 'tenant.demo@officeleasing.vn')->first()
+          ?? \App\Models\Tenant::where('status', 'ACTIVE')->has('contracts')->first()
+          ?? \App\Models\Tenant::first();
+      $activeTenantId = $demoTenant?->id;
+  }
+
+  $tenantRentedBuildings = collect();
+  if ($activeTenantId) {
+      $tenantRentedBuildings = \App\Models\Building::whereHas('contracts', function($q) use ($activeTenantId) {
+          $q->where('tenant_id', $activeTenantId);
+      })->orderBy('name')->get();
+  }
+
+  if ($tenantRentedBuildings->isEmpty()) {
+      if (request()->is('tenant*')) {
+          $nexus = \App\Models\Building::where('name', 'like', '%Nexus%')->first();
+          $tenantRentedBuildings = $nexus ? collect([$nexus]) : \App\Models\Building::take(1)->get();
+      } else {
+          $tenantRentedBuildings = \App\Models\Building::orderBy('name')->get();
+      }
+  }
+@endphp
+
 <!-- MODAL 5: ĐĂNG KÝ THI CÔNG NGOÀI GIỜ (ROLE 2: TENANT -> ROLE 4: BQL DUYỆT) -->
-<div id="modal-tenant-after-hours" class="mo-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.65);backdrop-filter:blur(3px);z-index:9999;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:#fff;border-radius:12px;width:100%;max-width:560px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);overflow:hidden;border:1px solid #cbd5e1;">
-    <div style="background:linear-gradient(135deg,#0f172a,#d97706);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
-      <h3 style="margin:0;font-size:16px;font-weight:700;"><i class="fa-solid fa-clock"></i> Đăng Ký Giấy Phép Thi Công Ngoài Giờ</h3>
-      <button type="button" onclick="closeModal('modal-tenant-after-hours')" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">&times;</button>
+<div id="modal-tenant-after-hours" class="mo-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.65);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:580px;box-shadow:0 25px 60px -15px rgba(15,23,42,0.3);overflow:hidden;border:1px solid #cbd5e1;max-height:92vh;display:flex;flex-direction:column;">
+    <!-- Modal Header -->
+    <div style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 60%,#b45309 100%);color:#fff;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.4);display:flex;align-items:center;justify-content:center;color:#fbbf24;font-size:16px;">
+          <i class="fa-solid fa-clock"></i>
+        </div>
+        <div>
+          <h3 style="margin:0;font-size:16px;font-weight:800;letter-spacing:-0.2px;">Đăng Ký Giấy Phép Thi Công Ngoài Giờ</h3>
+          <span style="font-size:12px;opacity:0.85;display:block;margin-top:2px;">BQL thẩm định an toàn PCCC & phê duyệt trong vòng 2h làm việc</span>
+        </div>
+      </div>
+      <button type="button" onclick="closeModal('modal-tenant-after-hours')" style="background:rgba(255,255,255,0.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">&times;</button>
     </div>
-    <form onsubmit="handleSubmitAfterHours(event)" style="padding:20px;">
-      <div style="margin-bottom:12px;">
-        <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">NỘI DUNG / HẠNG MỤC THI CÔNG <span style="color:#ef4444;">*</span></label>
-        <input type="text" id="ah-title" class="filament-input" required placeholder="Lắp đặt vách kính cách âm phòng họp & đi dây mạng" style="width:100%;">
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-        <div>
-          <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">NGÀY THI CÔNG <span style="color:#ef4444;">*</span></label>
-          <input type="date" id="ah-date" class="filament-input" required value="2026-11-20" style="width:100%;">
-        </div>
-        <div>
-          <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">KHUNG GIỜ THI CÔNG <span style="color:#ef4444;">*</span></label>
-          <select id="ah-time" class="filament-input" style="width:100%;">
-            <option value="18:00 - 22:00">18:00 - 22:00 (Buổi tối ngày thường)</option>
-            <option value="22:00 - 06:00">22:00 - 06:00 (Xuyên đêm)</option>
-            <option value="08:00 - 18:00 T7/CN">08:00 - 18:00 (Thứ 7 & Chủ Nhật)</option>
-          </select>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-        <div>
-          <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">SỐ LƯỢNG CÔNG NHÂN</label>
-          <input type="number" id="ah-workers" class="filament-input" value="4" min="1" max="50" style="width:100%;">
-        </div>
-        <div>
-          <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">ĐƠN VỊ THI CÔNG (NHÀ THẦU)</label>
-          <input type="text" id="ah-contractor" class="filament-input" placeholder="Công ty Nội Thất An Cường" style="width:100%;">
-        </div>
-      </div>
+
+    <!-- Modal Form -->
+    <form id="form-tenant-after-hours" novalidate onsubmit="handleSubmitAfterHours(event)" style="padding:22px;overflow-y:auto;flex:1;">
+      <!-- Tòa nhà áp dụng (Chỉ hiển thị tòa nhà mà Tenant đang có hợp đồng thuê) -->
       <div style="margin-bottom:14px;">
-        <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">DANH SÁCH CCCD CÔNG NHÂN VÀO TÒA NHÀ</label>
-        <textarea id="ah-worker-list" class="filament-input" rows="2" placeholder="1. Nguyễn Văn Hùng - 079089001234&#10;2. Trần Văn Nam - 079090005678" style="width:100%;"></textarea>
+        <label style="font-size:12px;font-weight:700;color:#334155;display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+          <i class="fa-solid fa-building" style="color:#2563eb;"></i> TÒA NHÀ VĂN PHÒNG ÁP DỤNG <span style="color:#ef4444;">*</span>
+        </label>
+        <select id="ah-building-id" class="filament-input" style="width:100%;font-weight:600;" onchange="clearSingleFieldError('ah-building-id')">
+          @foreach($tenantRentedBuildings as $bld)
+            <option value="{{ $bld->id }}" selected>{{ $bld->name }} ({{ $bld->district ?? 'TP.HCM' }})</option>
+          @endforeach
+        </select>
+        <div id="err-ah-building-id" class="field-error-msg" style="display:none;"></div>
       </div>
-      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-bottom:16px;font-size:12px;color:#92400e;">
-        <i class="fa-solid fa-triangle-exclamation"></i> Doanh nghiệp cam kết tuân thủ quy chuẩn PCCC, không sử dụng hàn xì khi chưa có bình chữa cháy dự phòng và dọn dẹp vệ sinh trước 06:00 sáng.
+
+      <!-- Nội dung / Hạng mục thi công -->
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px;font-weight:700;color:#334155;display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+          <i class="fa-solid fa-screwdriver-wrench" style="color:#d97706;"></i> NỘI DUNG / HẠNG MỤC THI CÔNG <span style="color:#ef4444;">*</span>
+        </label>
+        <input type="text" id="ah-title" class="filament-input" placeholder="Ví dụ: Lắp đặt vách kính cách âm phòng họp & đi dây mạng" oninput="clearSingleFieldError('ah-title')" style="width:100%;">
+        <div id="err-ah-title" class="field-error-msg" style="display:none;"></div>
       </div>
-      <div style="display:flex;justify-content:flex-end;gap:10px;">
-        <button type="button" class="btn-mo-outline" onclick="closeModal('modal-tenant-after-hours')">Hủy</button>
-        <button type="submit" class="btn-mo-primary" style="background:#d97706;"><i class="fa-solid fa-paper-plane"></i> Gửi BQL Phê Duyệt</button>
+
+      <!-- Ngày thi công & Khung giờ -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div>
+          <label style="font-size:12px;font-weight:700;color:#334155;display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+            <i class="fa-solid fa-calendar-days" style="color:#0284c7;"></i> NGÀY THI CÔNG <span style="color:#ef4444;">*</span>
+          </label>
+          <input type="date" id="ah-date" class="filament-input" onchange="clearSingleFieldError('ah-date')" style="width:100%;">
+          <div id="err-ah-date" class="field-error-msg" style="display:none;"></div>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:#334155;display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+            <i class="fa-solid fa-business-time" style="color:#7c3aed;"></i> KHUNG GIỜ THI CÔNG <span style="color:#ef4444;">*</span>
+          </label>
+          <select id="ah-time" class="filament-input" onchange="clearSingleFieldError('ah-time')" style="width:100%;">
+            <option value="">-- Chọn khung giờ đăng ký --</option>
+            <option value="18:00 - 22:00">18:00 - 22:00 (Buổi tối ngày thường)</option>
+            <option value="22:00 - 06:00">22:00 - 06:00 (Xuyên đêm - Giám sát PCCC)</option>
+            <option value="08:00 - 18:00 T7/CN">08:00 - 18:00 (Thứ 7 & Chủ Nhật)</option>
+            <option value="18:00 - 06:00 T7/CN">18:00 - 06:00 (Xuyên đêm cuối tuần)</option>
+          </select>
+          <div id="err-ah-time" class="field-error-msg" style="display:none;"></div>
+        </div>
+      </div>
+
+      <!-- Số lượng công nhân & Đơn vị thi công -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div>
+          <label style="font-size:12px;font-weight:700;color:#334155;display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+            <i class="fa-solid fa-users" style="color:#059669;"></i> SỐ LƯỢNG CÔNG NHÂN <span style="color:#ef4444;">*</span>
+          </label>
+          <input type="number" id="ah-workers" class="filament-input" min="1" max="50" placeholder="Số người vào tòa nhà" oninput="clearSingleFieldError('ah-workers')" style="width:100%;">
+          <div id="err-ah-workers" class="field-error-msg" style="display:none;"></div>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:#334155;display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+            <i class="fa-solid fa-helmet-safety" style="color:#ea580c;"></i> ĐƠN VỊ THI CÔNG (NHÀ THẦU) <span style="color:#ef4444;">*</span>
+          </label>
+          <input type="text" id="ah-contractor" class="filament-input" placeholder="Ví dụ: Công ty Nội Thất An Cường" oninput="clearSingleFieldError('ah-contractor')" style="width:100%;">
+          <div id="err-ah-contractor" class="field-error-msg" style="display:none;"></div>
+        </div>
+      </div>
+
+      <!-- Danh sách CCCD công nhân -->
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px;font-weight:700;color:#334155;display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+          <i class="fa-solid fa-address-card" style="color:#475569;"></i> DANH SÁCH CCCD CÔNG NHÂN VÀO TÒA NHÀ <span style="color:#ef4444;">*</span>
+        </label>
+        <textarea id="ah-worker-list" class="filament-input" rows="3" placeholder="1. Nguyễn Văn Hùng - CCCD: 079089001234 - SĐT: 0908123456&#10;2. Trần Văn Nam - CCCD: 079090005678 - SĐT: 0912345678" oninput="clearSingleFieldError('ah-worker-list')" style="width:100%;"></textarea>
+        <div id="err-ah-worker-list" class="field-error-msg" style="display:none;"></div>
+      </div>
+
+      <!-- Hộp cam kết PCCC & Vệ sinh môi trường -->
+      <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:12px 14px;margin-bottom:18px;">
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin:0;">
+          <input type="checkbox" id="ah-agreement" style="width:18px;height:18px;margin-top:2px;accent-color:#d97706;cursor:pointer;flex-shrink:0;" onchange="clearSingleFieldError('ah-agreement')">
+          <span style="font-size:12px;color:#92400e;line-height:1.5;">
+            <strong style="color:#b45309;"><i class="fa-solid fa-shield-halved"></i> Cam kết PCCC & An ninh tòa nhà:</strong>
+            Doanh nghiệp và nhà thầu cam kết tuân thủ nghiêm ngặt quy chuẩn PCCC, không sử dụng hàn xì khi chưa có bình chữa cháy dự phòng, không gây tiếng ồn quá mức và dọn dẹp vệ sinh trước 06:00 sáng. <span style="color:#ef4444;font-weight:700;">*</span>
+          </span>
+        </label>
+        <div id="err-ah-agreement" class="field-error-msg" style="display:none;padding-left:28px;"></div>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div style="display:flex;justify-content:flex-end;gap:10px;border-top:1px solid #f1f5f9;padding-top:16px;">
+        <button type="button" class="btn-mo-outline" onclick="closeModal('modal-tenant-after-hours')" style="font-weight:600;padding:9px 18px;border-radius:8px;">Hủy bỏ</button>
+        <button type="submit" id="btn-submit-after-hours" class="btn-mo-primary" style="background:linear-gradient(135deg,#d97706,#b45309);font-weight:700;padding:9px 22px;border-radius:8px;box-shadow:0 4px 12px rgba(217,119,6,0.3);display:inline-flex;align-items:center;gap:8px;">
+          <i class="fa-solid fa-paper-plane"></i> Gửi BQL Phê Duyệt
+        </button>
       </div>
     </form>
   </div>

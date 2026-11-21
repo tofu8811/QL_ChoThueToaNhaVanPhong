@@ -37,10 +37,20 @@
         <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:14px;align-items:end;">
             <div>
                 <label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:6px;">Tìm kiếm khách thuê:</label>
-                <div style="position:relative;">
-                    <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:13px;"></i>
-                    <input type="text" wire:model.live.debounce.300ms="searchKeyword" placeholder="Nhập Tên công ty, MST, Mã khách, Người đại diện..."
-                        style="width:100%;padding:8px 12px 8px 32px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;box-sizing:border-box;">
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <div style="position:relative;flex:1;">
+                        <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:13px;"></i>
+                        <input type="text" wire:model="searchKeyword" wire:keydown.enter="$refresh" placeholder="Nhập Tên công ty, MST, Mã khách, Người đại diện..."
+                            style="width:100%;padding:8px 30px 8px 32px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;box-sizing:border-box;">
+                        @if(!empty($searchKeyword))
+                            <button type="button" wire:click="$set('searchKeyword', '')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:19px;height:19px;border-radius:50%;background:#cbd5e1;color:#475569;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;padding:0;" title="Xóa tìm kiếm">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        @endif
+                    </div>
+                    <button type="button" wire:click="$refresh" style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
+                        <i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm
+                    </button>
                 </div>
             </div>
 

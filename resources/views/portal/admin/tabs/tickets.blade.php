@@ -18,8 +18,11 @@
   <!-- Thanh lọc Ticket BQL (Endpoint 57) -->
   <div class="filament-card" style="margin-bottom:14px; padding:12px 18px;">
     <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
-      <div style="flex:1; min-width:200px;">
-        <input type="text" id="ticket-filter-keyword" class="filament-input-sm" placeholder="Tìm theo mã ticket, tiêu đề, phòng, tòa nhà, công ty..." oninput="loadTicketsList('admin')" onkeyup="if(event.key==='Enter') loadTicketsList('admin')" style="width:100%;">
+      <div style="flex:1; min-width:200px; position:relative; display:flex; align-items:center;">
+        <input type="text" id="ticket-filter-keyword" class="filament-input-sm" placeholder="Tìm theo mã ticket, tiêu đề, phòng, tòa nhà, công ty..." oninput="toggleSearchClearBtn(this)" onkeyup="if(event.key==='Enter') loadTicketsList('admin')" style="width:100%; padding-right:32px;">
+        <button type="button" class="bms-search-clear-btn" id="btn-clear-ticket-search" onclick="handleClearSearchInput('ticket-filter-keyword', () => loadTicketsList('admin'))" title="Xóa tìm kiếm">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
       <div>
         <select id="ticket-filter-status" class="filament-input-sm" onchange="loadTicketsList('admin')">

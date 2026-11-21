@@ -638,6 +638,11 @@
     }
 
     // 10. Bộ lọc & Tìm kiếm nhanh
+    function doCrmSearch() {
+      const inp = document.getElementById('crm-search-input');
+      handleCrmSearch(inp ? inp.value : '');
+    }
+
     function handleCrmSearch(val) {
       currentCrmSearch = val.trim();
       loadCrmLeads();

@@ -711,4 +711,61 @@
             </div>
         </div>
     @endif
+
+    {{-- MODAL BẮT BUỘC ĐỔI MẬT KHẨU LẦN ĐẦU (FIRST-TIME LOGIN SECURITY) --}}
+    @if($showForceChangeModal)
+        <div style="position:fixed;inset:0;background:rgba(15,23,42,0.75);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:10008;padding:16px;">
+            <div style="background:#fff;border-radius:12px;width:100%;max-width:480px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.35);overflow:hidden;border:1px solid #cbd5e1;">
+                <div style="background:linear-gradient(135deg, #ea580c, #c2410c);padding:18px 24px;color:#fff;display:flex;align-items:center;justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span style="display:inline-flex;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.2);align-items:center;justify-content:center;font-size:16px;">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </span>
+                        <div>
+                            <h3 style="margin:0;font-size:16.5px;font-weight:700;">Đổi Mật Khẩu Khởi Tạo Lần Đầu</h3>
+                            <p style="margin:2px 0 0 0;font-size:12px;color:#ffedd5;">Bảo vệ an toàn tài khoản Cổng Khách Thuê</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form wire:submit.prevent="updateInitialPassword" style="padding:22px 24px;">
+                    <div style="background:#fff7ed;border:1px solid #ffedd5;border-radius:8px;padding:12px 14px;font-size:12.5px;color:#9a3412;line-height:1.5;margin-bottom:16px;">
+                        <i class="fa-solid fa-lock"></i> <strong>Lưu ý bắt buộc:</strong> Tài khoản của Quý khách đang sử dụng mật khẩu khởi tạo ban đầu do Ban Quản Lý cấp. Vui lòng thiết lập mật khẩu cá nhân mới để kích hoạt đầy đủ quyền xem hợp đồng và hóa đơn cước.
+                    </div>
+
+                    @if($passwordFlashError)
+                        <div style="background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:14px;">
+                            <i class="fa-solid fa-circle-exclamation"></i> {{ $passwordFlashError }}
+                        </div>
+                    @endif
+
+                    <div style="margin-bottom:14px;">
+                        <label style="display:block;font-size:12.5px;font-weight:600;color:#334155;margin-bottom:4px;">Mật Khẩu Khởi Tạo Hiện Tại: <span style="color:red;">*</span></label>
+                        <input type="password" wire:model="current_password" placeholder="Nhập mật khẩu BQL vừa cấp"
+                            style="width:100%;padding:9px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13.5px;box-sizing:border-box;">
+                        @error('current_password') <span style="color:#dc2626;font-size:12px;">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div style="margin-bottom:14px;">
+                        <label style="display:block;font-size:12.5px;font-weight:600;color:#334155;margin-bottom:4px;">Mật Khẩu Mới: <span style="color:red;">*</span></label>
+                        <input type="password" wire:model="new_password" placeholder="Tối thiểu 8 ký tự (chữ hoa, số, ký hiệu)"
+                            style="width:100%;padding:9px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13.5px;box-sizing:border-box;">
+                        @error('new_password') <span style="color:#dc2626;font-size:12px;">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block;font-size:12.5px;font-weight:600;color:#334155;margin-bottom:4px;">Xác Nhận Mật Khẩu Mới: <span style="color:red;">*</span></label>
+                        <input type="password" wire:model="new_password_confirmation" placeholder="Nhập lại mật khẩu mới"
+                            style="width:100%;padding:9px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13.5px;box-sizing:border-box;">
+                    </div>
+
+                    <div style="display:flex;justify-content:flex-end;gap:10px;">
+                        <button type="submit" class="btn-mo-primary" style="background:#ea580c;border-color:#ea580c;padding:9px 20px;font-size:13px;font-weight:600;">
+                            <i class="fa-solid fa-check"></i> Lưu & Kích Hoạt Mật Khẩu Mới
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
 </div>

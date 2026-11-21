@@ -717,4 +717,101 @@
             </div>
         </div>
     @endif
+
+    {{-- MODAL BÀN GIAO TÀI KHOẢN KHÁCH THUÊ LẦN ĐẦU (ONE-TIME CREDENTIAL REVEAL) --}}
+    @if($showCredentialModal && !empty($issuedCredentials))
+        <div style="position:fixed;inset:0;background:rgba(15,23,42,0.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:10005;padding:16px;">
+            <div style="background:#fff;border-radius:12px;width:100%;max-width:620px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.35);overflow:hidden;border:1px solid #bbf7d0;"
+                 x-data="{
+                    copied: false,
+                    copiedPass: false,
+                    copyTemplate() {
+                        const text = `Kính gửi Quý Doanh nghiệp {{ $issuedCredentials['company_name'] ?? '' }},\n\nHợp đồng thuê văn phòng số {{ $issuedCredentials['contract_number'] ?? '' }} tại {{ $issuedCredentials['building_name'] ?? 'Tòa nhà' }} đã được ký duyệt chính thức.\n\nThông tin tài khoản Cổng Khách Thuê (Tenant Portal):\n- Đường dẫn đăng nhập: {{ route('tenant-portal.page') }}\n- Email đăng nhập: {{ $issuedCredentials['login_email'] ?? '' }}\n- Mã khách thuê: {{ $issuedCredentials['tenant_code'] ?? '' }}\n- Mật khẩu khởi tạo: {{ $issuedCredentials['password'] ?? '' }}\n\n(Lưu ý bảo mật: Quý khách vui lòng đổi mật khẩu mới ngay trong lần đầu tiên đăng nhập).\n\nTrân trọng,\nBan Quản Lý Tòa Nhà`;
+                        navigator.clipboard.writeText(text).then(() => {
+                            this.copied = true;
+                            setTimeout(() => this.copied = false, 3000);
+                        });
+                    },
+                    copyPasswordOnly() {
+                        navigator.clipboard.writeText('{{ $issuedCredentials['password'] ?? '' }}').then(() => {
+                            this.copiedPass = true;
+                            setTimeout(() => this.copiedPass = false, 2500);
+                        });
+                    }
+                 }">
+                <div style="background:linear-gradient(135deg, #15803d, #166534);padding:18px 24px;color:#fff;display:flex;align-items:center;justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span style="display:inline-flex;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);align-items:center;justify-content:center;font-size:18px;">
+                            <i class="fa-solid fa-key"></i>
+                        </span>
+                        <div>
+                            <h3 style="margin:0;font-size:17px;font-weight:700;">Hợp Đồng Đã Ký & Kích Hoạt Tài Khoản Khách Thuê</h3>
+                            <p style="margin:2px 0 0 0;font-size:12px;color:#bbf7d0;">Bàn giao tài khoản Cổng Khách Thuê (Tenant Portal)</p>
+                        </div>
+                    </div>
+                    <button wire:click="closeCredentialModal" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;">&times;</button>
+                </div>
+
+                <div style="padding:24px;">
+                    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:flex-start;gap:12px;">
+                        <i class="fa-solid fa-paper-plane" style="color:#15803d;font-size:18px;margin-top:2px;"></i>
+                        <div style="font-size:13px;color:#166534;line-height:1.5;">
+                            Hệ thống đã tự động đẩy tác vụ gửi email bàn giao tài khoản vào <strong>Laravel Queue</strong> tới hòm thư:
+                            <strong>{{ $issuedCredentials['login_email'] ?? '' }}</strong>
+                            @if(!empty($issuedCredentials['billing_email']) && $issuedCredentials['billing_email'] !== $issuedCredentials['login_email'])
+                                và CC: <strong>{{ $issuedCredentials['billing_email'] }}</strong>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;background:#f8fafc;margin-bottom:18px;">
+                        <div style="display:grid;grid-template-columns:140px 1fr;gap:10px;font-size:13.5px;align-items:center;margin-bottom:8px;">
+                            <span style="color:#64748b;font-weight:600;">Doanh nghiệp:</span>
+                            <span style="color:#0f172a;font-weight:700;">{{ $issuedCredentials['company_name'] ?? '---' }}</span>
+                        </div>
+
+                        <div style="display:grid;grid-template-columns:140px 1fr;gap:10px;font-size:13.5px;align-items:center;margin-bottom:8px;">
+                            <span style="color:#64748b;font-weight:600;">Mã khách thuê:</span>
+                            <span style="display:inline-block;background:#e2e8f0;padding:2px 8px;border-radius:4px;font-family:monospace;font-weight:700;color:#0f172a;width:max-content;">
+                                {{ $issuedCredentials['tenant_code'] ?? '---' }}
+                            </span>
+                        </div>
+
+                        <div style="display:grid;grid-template-columns:140px 1fr;gap:10px;font-size:13.5px;align-items:center;margin-bottom:8px;">
+                            <span style="color:#64748b;font-weight:600;">Email đăng nhập:</span>
+                            <span style="color:#0f172a;font-weight:600;">{{ $issuedCredentials['login_email'] ?? '---' }}</span>
+                        </div>
+
+                        <div style="display:grid;grid-template-columns:140px 1fr;gap:10px;font-size:13.5px;align-items:center;padding-top:8px;border-top:1px dashed #cbd5e1;">
+                            <span style="color:#b45309;font-weight:700;">Mật khẩu cấp lần đầu:</span>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span style="background:#fef3c7;border:1px solid #fde68a;color:#b45309;padding:6px 14px;border-radius:6px;font-family:monospace;font-size:16px;font-weight:800;letter-spacing:1px;">
+                                    {{ $issuedCredentials['password'] ?? '---' }}
+                                </span>
+                                <button type="button" @click="copyPasswordOnly()" style="background:#fff;border:1px solid #cbd5e1;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:#475569;">
+                                    <i :class="copiedPass ? 'fa-solid fa-check text-green-600' : 'fa-regular fa-copy'"></i>
+                                    <span x-text="copiedPass ? 'Đã sao chép!' : 'Chép mật khẩu'"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:10px 14px;font-size:12px;color:#92400e;line-height:1.5;">
+                        <i class="fa-solid fa-shield-halved"></i> <strong>Lưu ý an ninh:</strong> Mật khẩu này <strong>chỉ hiển thị 1 lần duy nhất</strong> tại màn hình này và đã được băm bảo mật trong CSDL. Khách thuê sẽ được hệ thống yêu cầu đổi mật khẩu mới ngay trong lần đầu đăng nhập.
+                    </div>
+                </div>
+
+                <div style="padding:16px 24px;border-top:1px solid #e2e8f0;background:#f8fafc;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+                    <button type="button" @click="copyTemplate()" class="btn-mo-outline" style="padding:9px 16px;display:inline-flex;align-items:center;gap:8px;font-size:13px;border-color:#15803d;color:#15803d;background:#f0fdf4;">
+                        <i :class="copied ? 'fa-solid fa-check text-green-600' : 'fa-solid fa-clipboard-list'"></i>
+                        <span x-text="copied ? '✓ Đã sao chép mẫu bàn giao Zalo/Email!' : '📋 Sao Chép Tin Nhắn Bàn Giao Mẫu'"></span>
+                    </button>
+
+                    <button type="button" wire:click="closeCredentialModal" class="btn-mo-primary" style="background:#15803d;border-color:#15803d;padding:9px 20px;font-size:13px;">
+                        <i class="fa-solid fa-check"></i> Đã Lưu & Đóng Cửa Sổ
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

@@ -34,6 +34,9 @@ class Tenant extends Authenticatable
         'billing_email', // Email chính nhận thông báo cước và hóa đơn VAT
         'contact_phone', // Số điện thoại liên hệ khẩn cấp
         'password', // Mật khẩu băm cổng Portal
+        'must_change_password', // Bắt buộc đổi mật khẩu lần đầu
+        'password_changed_at', // Thời điểm đổi mật khẩu gần nhất
+        'initial_password_issued_at', // Thời điểm cấp mật khẩu khởi tạo
         'status', // Trạng thái: ACTIVE | LOCKED | PENDING
         'last_login_at', // Thời điểm đăng nhập gần nhất
         'created_by_sales_id', // Sales chốt hợp đồng
@@ -59,7 +62,42 @@ class Tenant extends Authenticatable
         return [
             'last_login_at' => 'datetime',
             'password' => 'hashed',
+            'must_change_password' => 'boolean',
+            'password_changed_at' => 'datetime',
+            'initial_password_issued_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Xác định địa chỉ email nhận link khôi phục mật khẩu (Multi-guard Password Broker).
+     */
+    public function getEmailForPasswordReset(): string
+    {
+        return (string) ($this->login_email ?: $this->billing_email);
+    }
+
+    /**
+     * Định tuyến địa chỉ email nhận thông báo từ hệ thống qua Notifiable.
+     */
+    public function routeNotificationForMail($notification = null): string
+    {
+        return (string) ($this->login_email ?: $this->billing_email);
+    }
+
+    /**
+     * Accessor tạo thuộc tính email tương thích mặc định của Laravel.
+     */
+    public function getEmailAttribute(): ?string
+    {
+        return $this->login_email ?: $this->billing_email;
+    }
+
+    /**
+     * Gửi thông báo khôi phục mật khẩu kèm token có thời hạn.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new \App\Notifications\TenantResetPasswordNotification($token));
     }
 
     /**

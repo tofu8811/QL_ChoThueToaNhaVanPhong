@@ -32,6 +32,14 @@ class TenantPortalWorkspace extends Component
     public bool $showUnitModal = false;
     public ?Unit $selectedUnit = null;
 
+    // Bắt buộc đổi mật khẩu lần đầu (First-login password change)
+    public bool $showForceChangeModal = false;
+    public string $current_password = '';
+    public string $new_password = '';
+    public string $new_password_confirmation = '';
+    public ?string $passwordFlashError = null;
+    public ?string $passwordFlashSuccess = null;
+
     public function mount(?string $tenantId = null): void
     {
         $requested = $tenantId ?: (request('tenant_id') ?: (request('tenant') ?: request()->cookie('tenant_id')));
@@ -72,6 +80,55 @@ class TenantPortalWorkspace extends Component
                 $this->tenantId = $demoTenant->id;
             }
         }
+
+        // Tự động kích hoạt modal đổi mật khẩu nếu khách có cờ must_change_password
+        if ($this->tenantId) {
+            $t = Tenant::find($this->tenantId);
+            if ($t && $t->must_change_password) {
+                $this->showForceChangeModal = true;
+            }
+        }
+    }
+
+    // Đổi mật khẩu khởi tạo lần đầu cho khách thuê
+    public function updateInitialPassword(): void
+    {
+        $this->passwordFlashError = null;
+        $this->passwordFlashSuccess = null;
+
+        $this->validate([
+            'current_password' => ['required'],
+            'new_password' => ['required', 'string', 'min:8', 'confirmed'],
+        ], [
+            'current_password.required' => 'Vui lòng nhập mật khẩu khởi tạo hiện tại.',
+            'new_password.required' => 'Vui lòng nhập mật khẩu mới.',
+            'new_password.min' => 'Mật khẩu mới phải có tối thiểu 8 ký tự.',
+            'new_password.confirmed' => 'Xác nhận mật khẩu mới không khớp.',
+        ]);
+
+        $tenant = Tenant::find($this->tenantId);
+        if (!$tenant || !\Illuminate\Support\Facades\Hash::check($this->current_password, $tenant->password)) {
+            $this->passwordFlashError = 'Mật khẩu khởi tạo hiện tại không chính xác.';
+            return;
+        }
+
+        $tenant->update([
+            'password' => $this->new_password,
+            'must_change_password' => false,
+            'password_changed_at' => now(),
+        ]);
+
+        $this->passwordFlashSuccess = 'Đổi mật khẩu thành công! Quý khách đã bảo vệ an toàn cho tài khoản doanh nghiệp.';
+        $this->showForceChangeModal = false;
+        $this->current_password = '';
+        $this->new_password = '';
+        $this->new_password_confirmation = '';
+    }
+
+    public function closeForceChangeModal(): void
+    {
+        $this->showForceChangeModal = false;
+        $this->passwordFlashError = null;
     }
 
     public function switchTab(string $tab): void

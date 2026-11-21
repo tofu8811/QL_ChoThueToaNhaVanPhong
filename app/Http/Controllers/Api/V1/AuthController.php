@@ -146,4 +146,46 @@ class AuthController extends BaseApiController
             return $this->errorResponse('Không thể cập nhật mật khẩu mới.', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+    // Yêu cầu khôi phục mật khẩu cho Khách thuê qua email
+    public function tenantForgotPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => ['required', 'string'],
+        ], [
+            'email.required' => 'Vui lòng cung cấp địa chỉ email hoặc mã khách thuê.',
+        ]);
+
+        $this->authService->sendTenantPasswordResetLink($request->input('email'));
+
+        return $this->successResponse(
+            null,
+            'Yêu cầu khôi phục mật khẩu đã được tiếp nhận. Vui lòng kiểm tra hộp thư email của bạn.'
+        );
+    }
+
+    // Đặt lại mật khẩu mới cho Khách thuê bằng Token
+    public function tenantResetPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'token' => ['required', 'string'],
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ], [
+            'token.required' => 'Mã xác thực token là bắt buộc.',
+            'email.required' => 'Địa chỉ email là bắt buộc.',
+            'password.required' => 'Vui lòng nhập mật khẩu mới.',
+            'password.min' => 'Mật khẩu mới phải có tối thiểu 8 ký tự.',
+            'password.confirmed' => 'Xác nhận mật khẩu mới không khớp.',
+        ]);
+
+        $this->authService->resetTenantPassword(
+            $request->only('token', 'email', 'password', 'password_confirmation')
+        );
+
+        return $this->successResponse(
+            null,
+            'Đặt lại mật khẩu thành công. Quý khách có thể đăng nhập ngay với mật khẩu mới.'
+        );
+    }
 }

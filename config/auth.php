@@ -114,6 +114,13 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
+
+        'tenants' => [
+            'provider' => 'tenants',
+            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'expire' => 30, // 30 phút hiệu lực cho Tenant Portal
+            'throttle' => 60,
+        ],
     ],
 
     /*

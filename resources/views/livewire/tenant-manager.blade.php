@@ -127,6 +127,9 @@
                                     <button wire:click="openEditModal('{{ $t->id }}')" class="btn-mo-outline" style="padding:5px 8px;font-size:12px;color:#2563eb;border-color:#bfdbfe;" title="Chỉnh sửa">
                                         <i class="fa-solid fa-pen"></i>
                                     </button>
+                                    <button wire:click="openResetModal('{{ $t->id }}')" class="btn-mo-outline" style="padding:5px 8px;font-size:12px;color:#d97706;border-color:#fde68a;" title="Cấp lại mật khẩu tạm thời">
+                                        <i class="fa-solid fa-key"></i>
+                                    </button>
                                     @if($t->status === 'ACTIVE')
                                         <button wire:click="deactivateTenant('{{ $t->id }}')" 
                                             wire:confirm="Bạn có chắc chắn muốn vô hiệu hóa khách thuê này? Hành động này sẽ bị chặn nếu còn hợp đồng hoặc công nợ chưa giải quyết."
@@ -374,6 +377,85 @@
 
                 <div style="padding:16px 24px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;">
                     <button wire:click="closeDetailModal" class="btn-mo-outline" style="padding:8px 18px;">Đóng</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- MODAL CẤP LẠI MẬT KHẨU TẠM THỜI CHO KHÁCH THUÊ (ADMIN-ASSISTED RESET) --}}
+    @if($showResetModal && $resetTenant)
+        <div style="position:fixed;inset:0;background:rgba(15,23,42,0.7);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:10006;padding:16px;">
+            <div style="background:#fff;border-radius:12px;width:100%;max-width:560px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.3);overflow:hidden;border:1px solid #e2e8f0;"
+                 x-data="{
+                    copiedMsg: false,
+                    copyTemplate() {
+                        const text = `Kính gửi Quý Khách thuê {{ $resetTenant->company_name }},\n\nBan Quản Lý Tòa Nhà đã cấp lại mật khẩu tạm thời cho tài khoản Cổng Khách Thuê của Quý khách:\n- Email đăng nhập: {{ $resetTenant->login_email }}\n- Mã khách thuê: {{ $resetTenant->tenant_code }}\n- Mật khẩu tạm thời mới: {{ $generatedNewPassword }}\n- Đường dẫn đăng nhập: {{ route('tenant-portal.page') }}\n\n(Lưu ý: Quý khách vui lòng đổi lại mật khẩu cá nhân ngay sau khi đăng nhập).\n\nTrân trọng,\nBan Quản Lý Tòa Nhà`;
+                        navigator.clipboard.writeText(text).then(() => {
+                            this.copiedMsg = true;
+                            setTimeout(() => this.copiedMsg = false, 3000);
+                        });
+                    }
+                 }">
+                <div style="background:linear-gradient(135deg, #d97706, #b45309);padding:18px 24px;color:#fff;display:flex;align-items:center;justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span style="display:inline-flex;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.2);align-items:center;justify-content:center;font-size:16px;">
+                            <i class="fa-solid fa-key"></i>
+                        </span>
+                        <div>
+                            <h3 style="margin:0;font-size:17px;font-weight:700;">Cấp Lại Mật Khẩu Tạm Thời Khách Thuê</h3>
+                            <p style="margin:2px 0 0 0;font-size:12px;color:#fef3c7;">Hỗ trợ khách quên mật khẩu hoặc đổi nhân sự phụ trách</p>
+                        </div>
+                    </div>
+                    <button wire:click="closeResetModal" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;">&times;</button>
+                </div>
+
+                <div style="padding:22px 24px;">
+                    @if(empty($generatedNewPassword))
+                        <div style="margin-bottom:16px;font-size:14px;color:#334155;line-height:1.6;">
+                            Bạn có chắc chắn muốn cấp lại mật khẩu tạm thời cho doanh nghiệp:
+                            <strong style="color:#0f172a;display:block;margin-top:4px;font-size:15px;">{{ $resetTenant->company_name }}</strong>
+                            (Email: <code style="color:#2563eb;">{{ $resetTenant->login_email }}</code>)
+                        </div>
+
+                        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;font-size:12.5px;color:#92400e;line-height:1.5;margin-bottom:18px;">
+                            <i class="fa-solid fa-triangle-exclamation"></i> <strong>Quy trình xử lý an toàn:</strong>
+                            <ul style="margin:6px 0 0 18px;padding:0;">
+                                <li>Hệ thống sẽ tự động sinh mật khẩu ngẫu nhiên an toàn 10 ký tự.</li>
+                                <li>Thu hồi (Revoke) mọi phiên làm việc cũ của khách thuê.</li>
+                                <li>Đẩy thông báo email mới vào hàng đợi Queue gửi tới khách.</li>
+                                <li>Yêu cầu khách thuê đổi mật khẩu mới ở lần đăng nhập tiếp theo.</li>
+                            </ul>
+                        </div>
+
+                        <div style="display:flex;justify-content:flex-end;gap:10px;">
+                            <button type="button" wire:click="closeResetModal" class="btn-mo-outline" style="padding:8px 16px;">Hủy bỏ</button>
+                            <button type="button" wire:click="confirmResetPassword" class="btn-mo-primary" style="background:#d97706;border-color:#d97706;padding:8px 18px;">
+                                <i class="fa-solid fa-arrows-rotate"></i> Xác Nhận Cấp Mật Khẩu Mới
+                            </button>
+                        </div>
+                    @else
+                        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#166534;">
+                            <i class="fa-solid fa-circle-check"></i> Đã cấp lại mật khẩu mới và kích hoạt gửi email thông báo qua Queue!
+                        </div>
+
+                        <div style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;background:#f8fafc;margin-bottom:16px;">
+                            <div style="font-size:13px;color:#64748b;margin-bottom:6px;">Mật khẩu tạm thời mới (Chỉ hiển thị 1 lần):</div>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <span style="background:#fef3c7;border:1px solid #fde68a;color:#b45309;padding:6px 16px;border-radius:6px;font-family:monospace;font-size:18px;font-weight:800;letter-spacing:1px;">
+                                    {{ $generatedNewPassword }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+                            <button type="button" @click="copyTemplate()" class="btn-mo-outline" style="padding:8px 16px;border-color:#16a34a;color:#16a34a;background:#f0fdf4;font-size:13px;">
+                                <span x-text="copiedMsg ? '✓ Đã sao chép tin nhắn!' : '📋 Sao chép tin nhắn Zalo/Email'"></span>
+                            </button>
+                            <button type="button" wire:click="closeResetModal" class="btn-mo-primary" style="padding:8px 18px;font-size:13px;">
+                                Đã Lưu & Đóng
+                            </button>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

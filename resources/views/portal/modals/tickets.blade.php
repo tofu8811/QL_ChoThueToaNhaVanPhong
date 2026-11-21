@@ -2,61 +2,126 @@
      MODULE 4: TICKETS & MAINTENANCE MODALS (ENDPOINTS 58 - 66)
      ========================================================================== -->
 
+@php
+  $activeTenantIdForTicket = request('tenant_id')
+      ?? request()->cookie('tenant_id')
+      ?? (\Illuminate\Support\Facades\Auth::guard('tenant')->id() ?? \Illuminate\Support\Facades\Auth::id());
+  if (!$activeTenantIdForTicket && request()->is('tenant*')) {
+      $demoTenant = \App\Models\Tenant::where('login_email', 'tenant.demo@officeleasing.vn')->first()
+          ?? \App\Models\Tenant::where('status', 'ACTIVE')->has('contracts')->first()
+          ?? \App\Models\Tenant::first();
+      $activeTenantIdForTicket = $demoTenant?->id;
+  }
+
+  $tenantTicketBuildings = collect();
+  if ($activeTenantIdForTicket) {
+      $tenantTicketBuildings = \App\Models\Building::whereHas('contracts', function($q) use ($activeTenantIdForTicket) {
+          $q->where('tenant_id', $activeTenantIdForTicket);
+      })->orderBy('name')->get();
+  }
+
+  if ($tenantTicketBuildings->isEmpty()) {
+      if (request()->is('tenant*')) {
+          $nexus = \App\Models\Building::where('name', 'like', '%Nexus%')->first();
+          $tenantTicketBuildings = $nexus ? collect([$nexus]) : \App\Models\Building::take(1)->get();
+      } else {
+          $tenantTicketBuildings = \App\Models\Building::orderBy('name')->get();
+      }
+  }
+@endphp
+
 <!-- MODAL 58: TẠO YÊU CẦU HỖ TRỢ / SỰ CỐ MỚI (TENANT TICKET) -->
-<div id="ticket-modal" class="mo-modal">
-  <div class="mo-modal-box">
-    <div class="mo-modal-head">
-      <h3 style="font-size:17px;font-weight:700;"><i class="fa-solid fa-headset"></i> Gửi Yêu Cầu Hỗ Trợ & Sự Cố (Tenant Ticket)</h3>
-      <i class="fa-solid fa-xmark" style="cursor:pointer;font-size:20px;" onclick="closeModal('ticket-modal')"></i>
+<div id="ticket-modal" class="mo-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.65);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:580px;box-shadow:0 25px 60px -15px rgba(15,23,42,0.3);overflow:hidden;border:1px solid #cbd5e1;max-height:92vh;display:flex;flex-direction:column;">
+    <!-- Modal Header -->
+    <div style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 60%,#2563eb 100%);color:#fff;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(37,99,235,0.25);border:1px solid rgba(59,130,246,0.4);display:flex;align-items:center;justify-content:center;color:#60a5fa;font-size:16px;">
+          <i class="fa-solid fa-headset"></i>
+        </div>
+        <div>
+          <h3 style="margin:0;font-size:16px;font-weight:800;letter-spacing:-0.2px;">Gửi Yêu Cầu Hỗ Trợ & Sự Cố Kỹ Thuật</h3>
+          <span style="font-size:12px;opacity:0.85;display:block;margin-top:2px;">BQL & đội ngũ kỹ thuật tòa nhà tiếp nhận xử lý trong vòng 30 phút</span>
+        </div>
+      </div>
+      <button type="button" onclick="closeTenantTicketModal()" style="background:rgba(255,255,255,0.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">&times;</button>
     </div>
-    <div class="mo-modal-body">
-          <form onsubmit="handleTenantNewTicket(event)">
-            <div style="margin-bottom:14px;">
-              <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Tòa nhà văn phòng của bạn *</label>
-              <select id="ticket-building-id" required style="width:100%;padding:10px 14px;border:1px solid #cbd5e1;border-radius:6px;font-weight:600;">
-                <option value="0192e220-0010-7000-8000-000000000001">Tòa Nhà The Nexus Tower (Tôn Đức Thắng, Quận 1)</option>
-                <option value="0192e220-0010-7000-8000-000000000002">Tòa Nhà Saigon Centre Tower 2 (Lê Lợi, Quận 1)</option>
-                <option value="0192e220-0010-7000-8000-000000000003">Tòa Nhà Vietcombank Tower (Quận 1)</option>
-                <option value="0192e220-0010-7000-8000-000000000004">Tòa Nhà Deutsches Haus (Lê Duẩn, Quận 1)</option>
-              </select>
-            </div>
-            <div style="margin-bottom:14px;">
-              <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Tiêu đề sự cố / yêu cầu *</label>
-              <input type="text" id="ticket-title" required placeholder="VD: Hỏng bóng đèn led hành lang, Điều hòa phát tiếng kêu..." style="width:100%;padding:10px 14px;border:1px solid #cbd5e1;border-radius:6px;">
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-              <div>
-                <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Danh mục sự cố</label>
-                <select id="ticket-category" style="width:100%;padding:10px 14px;border:1px solid #cbd5e1;border-radius:6px;">
-                  <option value="MAINTENANCE" selected>Sửa chữa kỹ thuật / Điện lạnh</option>
-                  <option value="OVERTIME_CONSTRUCTION">Đăng ký thi công ngoài giờ</option>
-                  <option value="SECURITY_CLEANING">Vệ sinh & An ninh tòa nhà</option>
-                  <option value="SERVICE_COMPLAINT">Khiếu nại chất lượng dịch vụ</option>
-                </select>
-              </div>
-              <div>
-                <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Mức độ ưu tiên</label>
-                <select id="ticket-priority" style="width:100%;padding:10px 14px;border:1px solid #cbd5e1;border-radius:6px;">
-                  <option value="NORMAL">Bình thường</option>
-                  <option value="HIGH">Cao</option>
-                  <option value="URGENT">Khẩn cấp</option>
-                  <option value="LOW">Thấp</option>
-                </select>
-              </div>
-            </div>
-            <div style="margin-bottom:14px;">
-              <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Mô tả hiện trạng chi tiết *</label>
-              <textarea id="ticket-desc" required rows="3" placeholder="Mô tả cụ thể vị trí phòng, tầng, thời điểm bắt đầu xảy ra sự cố..." style="width:100%;padding:10px 14px;border:1px solid #cbd5e1;border-radius:6px;"></textarea>
-            </div>
-            <div style="margin-bottom:18px;">
-              <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Ảnh hiện trạng ban đầu (Link ảnh URL tùy chọn)</label>
-              <input type="url" id="ticket-image-url" placeholder="https://images.unsplash.com/... hoặc để trống" style="width:100%;padding:9px 14px;border:1px solid #cbd5e1;border-radius:6px;">
-            </div>
-            <button type="submit" id="btn-submit-create-ticket" class="btn-mo-orange" style="width:100%;justify-content:center;padding:12px;">
-              <i class="fa-solid fa-paper-plane"></i> Gửi Phiếu Sự Cố Đến Ban Quản Lý (Tạo Ticket)
-            </button>
-          </form>
-    </div>
+
+    <!-- Modal Form -->
+    <form id="form-create-ticket" novalidate onsubmit="handleTenantNewTicket(event)" style="padding:22px;overflow-y:auto;flex:1;">
+      <!-- Tòa nhà áp dụng (Chỉ hiển thị tòa nhà mà Tenant đang có hợp đồng thuê) -->
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px;font-weight:700;color:#334155;display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+          <i class="fa-solid fa-building" style="color:#2563eb;"></i> TÒA NHÀ VĂN PHÒNG ÁP DỤNG <span style="color:#ef4444;">*</span>
+        </label>
+        <select id="ticket-building-id" class="filament-input" style="width:100%;font-weight:600;" onchange="clearTicketSingleFieldError('ticket-building-id')">
+          @foreach($tenantTicketBuildings as $bld)
+            <option value="{{ $bld->id }}" selected>{{ $bld->name }} ({{ $bld->district ?? 'TP.HCM' }})</option>
+          @endforeach
+        </select>
+        <div id="err-ticket-building-id" class="field-error-msg" style="display:none;"></div>
+      </div>
+
+      <!-- Tiêu đề sự cố / yêu cầu -->
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px;font-weight:700;color:#334155;display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+          <i class="fa-solid fa-pen" style="color:#d97706;"></i> TIÊU ĐỀ SỰ CỐ / YÊU CẦU <span style="color:#ef4444;">*</span>
+        </label>
+        <input type="text" id="ticket-title" class="filament-input" placeholder="VD: Hỏng bóng đèn led hành lang, Điều hòa phát tiếng kêu..." oninput="clearTicketSingleFieldError('ticket-title')" style="width:100%;">
+        <div id="err-ticket-title" class="field-error-msg" style="display:none;"></div>
+      </div>
+
+      <!-- Danh mục & Mức độ ưu tiên -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div>
+          <label style="font-size:12px;font-weight:700;color:#334155;display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+            <i class="fa-solid fa-list-check" style="color:#7c3aed;"></i> PHÂN LOẠI SỰ CỐ
+          </label>
+          <select id="ticket-category" class="filament-input" style="width:100%;">
+            <option value="MAINTENANCE" selected>Sửa chữa kỹ thuật / Điện lạnh</option>
+            <option value="OVERTIME_CONSTRUCTION">Đăng ký thi công ngoài giờ</option>
+            <option value="SECURITY_CLEANING">Vệ sinh & An ninh tòa nhà</option>
+            <option value="SERVICE_COMPLAINT">Khiếu nại chất lượng dịch vụ</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:#334155;display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+            <i class="fa-solid fa-bolt" style="color:#ea580c;"></i> MỨC ĐỘ ƯU TIÊN
+          </label>
+          <select id="ticket-priority" class="filament-input" style="width:100%;">
+            <option value="NORMAL" selected>Bình thường</option>
+            <option value="HIGH">Cao</option>
+            <option value="URGENT">Khẩn cấp</option>
+            <option value="LOW">Thấp</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Mô tả hiện trạng chi tiết -->
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px;font-weight:700;color:#334155;display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+          <i class="fa-solid fa-align-left" style="color:#0284c7;"></i> MÔ TẢ HIỆN TRẠNG CHI TIẾT <span style="color:#ef4444;">*</span>
+        </label>
+        <textarea id="ticket-desc" class="filament-input" rows="3" placeholder="Mô tả cụ thể vị trí phòng, tầng, thời điểm bắt đầu xảy ra sự cố..." oninput="clearTicketSingleFieldError('ticket-desc')" style="width:100%;"></textarea>
+        <div id="err-ticket-desc" class="field-error-msg" style="display:none;"></div>
+      </div>
+
+      <!-- Ảnh hiện trạng ban đầu -->
+      <div style="margin-bottom:18px;">
+        <label style="font-size:12px;font-weight:700;color:#334155;display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+          <i class="fa-solid fa-image" style="color:#059669;"></i> ẢNH HIỆN TRẠNG (LINK ẢNH TÙY CHỌN)
+        </label>
+        <input type="url" id="ticket-image-url" class="filament-input" placeholder="https://images.unsplash.com/... hoặc để trống" style="width:100%;">
+      </div>
+
+      <!-- Footer Buttons -->
+      <div style="display:flex;justify-content:flex-end;gap:10px;border-top:1px solid #f1f5f9;padding-top:16px;">
+        <button type="button" class="btn-mo-outline" onclick="closeTenantTicketModal()" style="font-weight:600;padding:9px 18px;border-radius:8px;">Hủy bỏ</button>
+        <button type="submit" id="btn-submit-create-ticket" class="btn-mo-primary" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);font-weight:700;padding:9px 22px;border-radius:8px;box-shadow:0 4px 12px rgba(37,99,235,0.3);display:inline-flex;align-items:center;gap:8px;">
+          <i class="fa-solid fa-paper-plane"></i> Gửi Phiếu Sự Cố Đến Ban Quản Lý
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 

@@ -49,9 +49,12 @@
               <div class="filament-card" style="margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
                   <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                    <div style="position: relative; width: 260px;">
+                    <div style="position: relative; width: 260px; display: flex; align-items: center;">
                       <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
-                      <input type="text" id="filter-admin-keyword" placeholder="Tìm theo tên, email, SĐT..." class="form-control" style="padding-left: 34px; height: 38px; font-size: 13px; border-radius: 6px;" oninput="loadStaffAdmins(1)" onkeyup="if(event.key==='Enter') loadStaffAdmins(1)">
+                      <input type="text" id="filter-admin-keyword" placeholder="Tìm theo tên, email, SĐT..." class="form-control" style="padding-left: 34px; padding-right: 32px; height: 38px; font-size: 13px; border-radius: 6px; width: 100%;" oninput="toggleSearchClearBtn(this)" onkeyup="if(event.key==='Enter') loadStaffAdmins(1)">
+                      <button type="button" class="bms-search-clear-btn" id="btn-clear-filter-admin" onclick="handleClearSearchInput('filter-admin-keyword', () => loadStaffAdmins(1))" title="Xóa tìm kiếm">
+                        <i class="fa-solid fa-xmark"></i>
+                      </button>
                     </div>
                     <select id="filter-admin-status" class="form-control" style="height: 38px; font-size: 13px; width: 150px; border-radius: 6px;" onchange="loadStaffAdmins(1)">
                       <option value="">-- Trạng thái --</option>
@@ -147,9 +150,12 @@
               <div class="filament-card" style="margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
                   <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                    <div style="position: relative; width: 260px;">
+                    <div style="position: relative; width: 260px; display: flex; align-items: center;">
                       <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
-                      <input type="text" id="filter-sale-keyword" placeholder="Mã NV, tên, email, SĐT..." class="form-control" style="padding-left: 34px; height: 38px; font-size: 13px; border-radius: 6px;" oninput="loadStaffSales(1)" onkeyup="if(event.key==='Enter') loadStaffSales(1)">
+                      <input type="text" id="filter-sale-keyword" placeholder="Mã NV, tên, email, SĐT..." class="form-control" style="padding-left: 34px; padding-right: 32px; height: 38px; font-size: 13px; border-radius: 6px; width: 100%;" oninput="toggleSearchClearBtn(this)" onkeyup="if(event.key==='Enter') loadStaffSales(1)">
+                      <button type="button" class="bms-search-clear-btn" id="btn-clear-filter-sale" onclick="handleClearSearchInput('filter-sale-keyword', () => loadStaffSales(1))" title="Xóa tìm kiếm">
+                        <i class="fa-solid fa-xmark"></i>
+                      </button>
                     </div>
                     <select id="filter-sale-status" class="form-control" style="height: 38px; font-size: 13px; width: 150px; border-radius: 6px;" onchange="loadStaffSales(1)">
                       <option value="">-- Trạng thái --</option>
@@ -249,9 +255,12 @@
               <div class="filament-card" style="margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
                   <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                    <div style="position: relative; width: 260px;">
+                    <div style="position: relative; width: 260px; display: flex; align-items: center;">
                       <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
-                      <input type="text" id="filter-pm-keyword" placeholder="Mã BQL, tên, email, hotline..." class="form-control" style="padding-left: 34px; height: 38px; font-size: 13px; border-radius: 6px;" oninput="loadStaffPm(1)" onkeyup="if(event.key==='Enter') loadStaffPm(1)">
+                      <input type="text" id="filter-pm-keyword" placeholder="Mã BQL, tên, email, hotline..." class="form-control" style="padding-left: 34px; padding-right: 32px; height: 38px; font-size: 13px; border-radius: 6px; width: 100%;" oninput="toggleSearchClearBtn(this)" onkeyup="if(event.key==='Enter') loadStaffPm(1)">
+                      <button type="button" class="bms-search-clear-btn" id="btn-clear-filter-pm" onclick="handleClearSearchInput('filter-pm-keyword', () => loadStaffPm(1))" title="Xóa tìm kiếm">
+                        <i class="fa-solid fa-xmark"></i>
+                      </button>
                     </div>
                     <select id="filter-pm-department" class="form-control" style="height: 38px; font-size: 13px; width: 170px; border-radius: 6px;" onchange="loadStaffPm(1)">
                       <option value="">-- Bộ phận chuyên trách --</option>
@@ -362,9 +371,12 @@
               <div class="filament-card" style="margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
                   <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                    <div style="position: relative; width: 260px;">
+                    <div style="position: relative; width: 260px; display: flex; align-items: center;">
                       <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
-                      <input type="text" id="filter-acc-keyword" placeholder="Mã KT, tên, email, SĐT..." class="form-control" style="padding-left: 34px; height: 38px; font-size: 13px; border-radius: 6px;" oninput="loadStaffAccountants(1)" onkeyup="if(event.key==='Enter') loadStaffAccountants(1)">
+                      <input type="text" id="filter-acc-keyword" placeholder="Mã KT, tên, email, SĐT..." class="form-control" style="padding-left: 34px; padding-right: 32px; height: 38px; font-size: 13px; border-radius: 6px; width: 100%;" oninput="toggleSearchClearBtn(this)" onkeyup="if(event.key==='Enter') loadStaffAccountants(1)">
+                      <button type="button" class="bms-search-clear-btn" id="btn-clear-filter-acc" onclick="handleClearSearchInput('filter-acc-keyword', () => loadStaffAccountants(1))" title="Xóa tìm kiếm">
+                        <i class="fa-solid fa-xmark"></i>
+                      </button>
                     </div>
                     <select id="filter-acc-adjustment" class="form-control" style="height: 38px; font-size: 13px; width: 170px; border-radius: 6px;" onchange="loadStaffAccountants(1)">
                       <option value="">-- Quyền duyệt cước --</option>

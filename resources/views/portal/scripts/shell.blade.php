@@ -691,6 +691,24 @@
         switchView('portal-view', updateRoute);
       }
 
+      // Cập nhật dropdown Admin khi chuyển vai trò UI
+      const adminDropFullName = document.getElementById("admin-dropdown-full-name");
+      const adminDropEmail = document.getElementById("admin-dropdown-email");
+      const adminDropRoleBadge = document.getElementById("admin-dropdown-role-badge");
+      const adminDropSessionLink = document.getElementById("admin-dropdown-session-link");
+      if (adminDropFullName && userName) adminDropFullName.innerText = userName.innerText;
+      if (adminDropEmail && userSub) {
+        const subParts = userSub.innerText.split('•');
+        const emailPart = subParts.length > 1 ? subParts[1].trim() : (subParts[0].includes('@') ? subParts[0].trim() : '');
+        if (emailPart) adminDropEmail.innerText = emailPart;
+      }
+      if (adminDropRoleBadge && sidebarRoleBadge) {
+        adminDropRoleBadge.innerText = sidebarRoleBadge.innerText.toUpperCase();
+      }
+      if (adminDropSessionLink) {
+        adminDropSessionLink.style.display = "none";
+      }
+
       // Tự động tải lại danh sách Tòa nhà theo đúng phạm vi phân công của vai trò
       if (typeof loadAdminBuildingsList === 'function') {
         loadAdminBuildingsList();
@@ -737,6 +755,9 @@
       if (bcEl) {
         bcEl.innerText = el?.getAttribute('data-breadcrumb') || TAB_BREADCRUMB_MAP[tabId] || 'Quản lý trạng thái mặt bằng';
       }
+
+      // Tự động kiểm tra và ẩn thanh tìm kiếm tổng nếu trang/tab này đã có ô tìm kiếm riêng
+      updateGlobalSearchVisibility(tabId);
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -860,7 +881,73 @@
         sidebarEl.addEventListener('scroll', showScrollbarTemporary, { passive: true });
         sidebarEl.addEventListener('wheel', showScrollbarTemporary, { passive: true });
       }
+
+      // Khởi tạo ẩn/hiện thanh tìm kiếm tổng dựa trên tab hiện tại
+      const activePane = document.querySelector('.filament-tab-pane.active');
+      if (activePane) {
+        updateGlobalSearchVisibility(activePane.id);
+      }
     });
+
+    // Cập nhật trạng thái hiển thị nút X xóa nhanh trên ô tìm kiếm
+    function toggleSearchClearBtn(inputEl, clearBtnId) {
+      if (!inputEl) return;
+      let btn = clearBtnId ? document.getElementById(clearBtnId) : null;
+      if (!btn && inputEl.parentElement) {
+        btn = inputEl.parentElement.querySelector('.bms-search-clear-btn');
+      }
+      if (!btn) return;
+      if (inputEl.value && inputEl.value.trim().length > 0) {
+        btn.style.display = 'flex';
+      } else {
+        btn.style.display = 'none';
+      }
+    }
+
+    // Xử lý khi click vào nút X xóa nhanh
+    function handleClearSearchInput(inputId, onClearCallback) {
+      const inputEl = document.getElementById(inputId);
+      if (!inputEl) return;
+      inputEl.value = '';
+      toggleSearchClearBtn(inputEl);
+      if (typeof onClearCallback === 'function') {
+        onClearCallback();
+      }
+      inputEl.focus();
+    }
+
+    // Ẩn thanh tìm kiếm tổng ở Topbar nếu tab hiện tại đã có ô tìm kiếm riêng
+    function updateGlobalSearchVisibility(tabId) {
+      const topbarSearch = document.getElementById('bms-topbar-search-wrapper');
+      if (!topbarSearch) return;
+
+      const tabsWithOwnSearch = [
+        'tab-admin-buildings',
+        'tab-admin-tenants',
+        'tab-admin-contracts',
+        'tab-sales-leads',
+        'tab-sales-pipeline',
+        'tab-admin-staff',
+        'tab-admin-tickets'
+      ];
+
+      let hasLocalSearch = tabsWithOwnSearch.includes(tabId);
+      if (!hasLocalSearch && tabId) {
+        const pane = document.getElementById(tabId);
+        if (pane) {
+          const localInput = pane.querySelector(
+            'input[id*="search"], input[id*="filter-keyword"], input[id*="filter-admin"], input[id*="filter-sale"], input[id*="filter-pm"], input[id*="filter-acc"]'
+          );
+          if (localInput) hasLocalSearch = true;
+        }
+      }
+
+      if (hasLocalSearch) {
+        topbarSearch.style.display = 'none';
+      } else {
+        topbarSearch.style.display = 'block';
+      }
+    }
 
     // Xử lý tìm kiếm nhanh đồng bộ toàn cục trên Topbar
     function handleTopbarQuickSearch(keyword) {
@@ -1330,6 +1417,7 @@
     // Điều khiển Dropdown Thông báo Vận hành trên Topbar
     function toggleBmsNotificationDropdown(e) {
       if (e) e.stopPropagation();
+      if (typeof closeAdminUserDropdown === 'function') closeAdminUserDropdown();
       const currentRole = window.currentUiRole || String(localStorage.getItem('auth_role') || 'admin').toLowerCase();
       if (currentRole === 'tenant' && typeof updateTenantTopbarNotifications === 'function') {
         updateTenantTopbarNotifications('tenant', (typeof CURRENT_TICKETS_CACHE !== 'undefined' && CURRENT_TICKETS_CACHE) ? CURRENT_TICKETS_CACHE : []);

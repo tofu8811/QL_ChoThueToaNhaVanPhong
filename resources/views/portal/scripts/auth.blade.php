@@ -85,10 +85,35 @@
       if (trigger) trigger.classList.remove("active");
     }
 
+    function toggleAdminUserDropdown(event) {
+      if (event) event.stopPropagation();
+      const menu = document.getElementById("admin-user-dropdown-menu");
+      const trigger = document.getElementById("admin-user-profile-trigger");
+      const caret = document.getElementById("admin-user-caret");
+      const notifMenu = document.getElementById("bms-notif-dropdown");
+      if (notifMenu) notifMenu.style.display = "none";
+      if (!menu) return;
+      const isShowing = menu.classList.toggle("show");
+      if (trigger) trigger.classList.toggle("active", isShowing);
+      if (caret) caret.style.transform = isShowing ? "rotate(180deg)" : "rotate(0deg)";
+    }
+
+    function closeAdminUserDropdown() {
+      const menu = document.getElementById("admin-user-dropdown-menu");
+      const trigger = document.getElementById("admin-user-profile-trigger");
+      const caret = document.getElementById("admin-user-caret");
+      if (menu) menu.classList.remove("show");
+      if (trigger) trigger.classList.remove("active");
+      if (caret) caret.style.transform = "rotate(0deg)";
+    }
+
     // Đóng dropdown & modal khi click bên ngoài backdrop
     window.addEventListener("click", (e) => {
       if (!e.target.closest("#user-logged-box")) {
         closeUserDropdown();
+      }
+      if (!e.target.closest("#admin-user-box")) {
+        closeAdminUserDropdown();
       }
       if (e.target.id === 'login-modal') closeLoginModal();
       if (e.target.id === 'profile-modal') closeProfileModal();
@@ -276,13 +301,9 @@
           else dropWorkspaceTxt.innerText = "Không Gian Làm Việc Số";
         }
 
-        // Phân quyền Tab & Link Quản Trị Token Sanctum (Chỉ Super Admin được thấy)
-        if (dropSessionLink) {
-          dropSessionLink.style.display = isAdmin ? "flex" : "none";
-        }
-        if (btnTabSession) {
-          btnTabSession.style.display = isAdmin ? "inline-flex" : "none";
-        }
+        // Ẩn Tab & Link Quản Trị Token Sanctum
+        if (dropSessionLink) dropSessionLink.style.display = "none";
+        if (btnTabSession) btnTabSession.style.display = "none";
 
         // Cập nhật profile trên sidebar Admin Shell
         const sideName = document.getElementById("filament-user-name");
@@ -291,6 +312,17 @@
         if (sideName) sideName.innerText = rawName;
         if (sideSub) sideSub.innerText = `${prettyRole} • ${user.login_email || user.email || ''}`;
         if (sideAvatar) sideAvatar.innerText = initials;
+
+        // Cập nhật dropdown Admin
+        const adminDropFullName = document.getElementById("admin-dropdown-full-name");
+        const adminDropEmail = document.getElementById("admin-dropdown-email");
+        const adminDropRoleBadge = document.getElementById("admin-dropdown-role-badge");
+        const adminDropSessionLink = document.getElementById("admin-dropdown-session-link");
+
+        if (adminDropFullName) adminDropFullName.innerText = rawName;
+        if (adminDropEmail) adminDropEmail.innerText = user.login_email || user.email || user.billing_email || '';
+        if (adminDropRoleBadge) adminDropRoleBadge.innerText = prettyRole.toUpperCase();
+        if (adminDropSessionLink) adminDropSessionLink.style.display = "none";
 
         if (typeof syncTenantPortalData === 'function') syncTenantPortalData();
       } else {
@@ -328,16 +360,16 @@
     /* ==========================================================================
        2.1. USER PROFILE, ASSIGNED BUILDINGS & SECURITY (API 69, 70, 71)
        ========================================================================== */
-    function openProfileModal(tabName = 'tab-profile-info') {
+    function openProfileModal(tabName = 'tab-profile-password') {
       const modal = document.getElementById("profile-modal");
       if (!modal) return;
 
       const role = String(localStorage.getItem('auth_role') || '').toUpperCase();
       const isAdmin = (role === 'ADMIN' || role === 'SUPER_ADMIN');
 
-      // Nếu không phải Admin mà yêu cầu mở tab session -> chuyển sang tab info
-      if (tabName === 'tab-profile-session' && !isAdmin) {
-        tabName = 'tab-profile-info';
+      // Fallback về tab-profile-password
+      if (tabName === 'tab-profile-info' || tabName === 'tab-profile-session' || !tabName) {
+        tabName = 'tab-profile-password';
       }
 
       modal.classList.add("show");

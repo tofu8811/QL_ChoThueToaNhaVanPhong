@@ -73,9 +73,12 @@
         <!-- Search Keyword -->
         <div class="mo-filter-group">
           <label class="mo-filter-label"><i class="fa-solid fa-magnifying-glass"></i> Tên tòa nhà hoặc đường</label>
-          <div class="mo-input-wrap">
+          <div class="mo-input-wrap" style="position:relative;">
             <i class="fa-solid fa-search"></i>
-            <input type="text" x-model="keyword" wire:keydown.enter="applySearch" placeholder="Ví dụ: Capital Place, Keangnam, Nexus, Pegasus...">
+            <input type="text" x-model="keyword" wire:keydown.enter="applySearch" placeholder="Ví dụ: Capital Place, Keangnam, Nexus, Pegasus..." style="padding-right:32px;">
+            <button type="button" x-show="keyword && keyword.trim().length > 0" @click="keyword = ''; $wire.set('keyword', ''); applySearch();" style="display:none; position:absolute; right:10px; top:50%; transform:translateY(-50%); width:19px; height:19px; border-radius:50%; background:#cbd5e1; color:#475569; border:none; align-items:center; justify-content:center; cursor:pointer; font-size:11px; padding:0; z-index:5;" title="Xóa tìm kiếm">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
           </div>
         </div>
 

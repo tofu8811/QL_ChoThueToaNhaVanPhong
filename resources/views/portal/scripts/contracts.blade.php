@@ -854,6 +854,11 @@
       }
     }
 
+    function doContractSearch() {
+      const inp = document.getElementById('contract-search-input');
+      handleContractSearch(inp ? inp.value : '');
+    }
+
     function handleContractSearch(val) {
       currentContractSearch = val.trim();
       loadContractsList();

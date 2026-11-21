@@ -25,6 +25,7 @@ class StoreTenantTicketRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'tenant_id'   => ['nullable', 'string', 'uuid', 'exists:tenants,id'],
             'building_id' => ['required', 'string', 'uuid', 'exists:buildings,id'],
             'title'       => ['required', 'string', 'max:200'],
             'description' => ['required', 'string'],

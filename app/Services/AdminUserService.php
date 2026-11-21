@@ -25,7 +25,7 @@ class AdminUserService
         $query = Admin::query();
 
         // 1. Tìm kiếm theo từ khóa (Họ tên, email, số điện thoại)
-        $keyword = $filters['keyword'] ?? $filters['q'] ?? null;
+        $keyword = $filters['keyword'] ?? $filters['search'] ?? $filters['q'] ?? null;
         if (!empty($keyword)) {
             $term = '%' . trim($keyword) . '%';
             $query->where(function ($q) use ($term) {

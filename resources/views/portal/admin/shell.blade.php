@@ -138,9 +138,12 @@
           <div class="filament-topbar-actions">
             <!-- Ô tìm kiếm nhanh đồng bộ toàn cục trên Topbar -->
             <div style="position:relative;" id="bms-topbar-search-wrapper">
-              <div class="filament-search-mock" style="width:280px;padding:6px 12px;background:#f8fafc;">
+              <div class="filament-search-mock" style="width:280px;padding:6px 30px 6px 12px;background:#f8fafc;position:relative;">
                 <i class="fa-solid fa-magnifying-glass" style="color:#94a3b8;font-size:12.5px;"></i>
-                <input type="text" id="bms-topbar-search-input" placeholder="Tìm tòa nhà, khách thuê, HĐ, ticket..." oninput="handleTopbarQuickSearch(this.value)" onfocus="if(this.value.trim()) handleTopbarQuickSearch(this.value)" style="border:none;background:transparent;outline:none;width:100%;font-size:12.5px;color:#334155;">
+                <input type="text" id="bms-topbar-search-input" placeholder="Tìm tòa nhà, khách thuê, HĐ, ticket..." oninput="toggleSearchClearBtn(this); handleTopbarQuickSearch(this.value)" onfocus="if(this.value.trim()) handleTopbarQuickSearch(this.value)" style="border:none;background:transparent;outline:none;width:100%;font-size:12.5px;color:#334155;">
+                <button type="button" class="bms-search-clear-btn" id="btn-clear-topbar-search" onclick="handleClearSearchInput('bms-topbar-search-input', () => handleTopbarQuickSearch(''))" title="Xóa tìm kiếm">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
               </div>
               <!-- Dropdown kết quả tìm kiếm nhanh toàn cục -->
               <div id="bms-topbar-search-results" style="display:none;position:absolute;top:calc(100% + 6px);left:0;width:360px;max-height:380px;overflow-y:auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 12px 30px rgba(15,23,42,0.14);z-index:999;padding:8px;"></div>
@@ -191,14 +194,33 @@
               </div>
             </div>
 
-            <!-- Thông tin tài khoản đang đăng nhập -->
-            <div class="filament-user-pill" onclick="openProfileModal('tab-profile-info')" style="cursor:pointer;padding:4px 6px 4px 10px;border-left:1px solid #f1f5f9;" title="Bấm để xem hồ sơ và đổi mật khẩu">
-              <div class="filament-avatar" id="filament-user-avatar" style="background:#dbeafe;color:#1d4ed8;font-size:13px;">AD</div>
-              <div>
-                <div style="font-weight:700;font-size:13px;color:#0f172a;line-height:1.25;" id="filament-user-name">Nguyễn Quản Trị</div>
-                <div style="font-size:11px;color:#64748b;" id="filament-user-sub">Super Admin • Toàn hệ thống</div>
+            <!-- Thông tin tài khoản đang đăng nhập & Dropdown Menu -->
+            <div id="admin-user-box" style="position: relative; display: inline-flex; align-items: center;">
+              <div class="filament-user-pill" id="admin-user-profile-trigger" onclick="toggleAdminUserDropdown(event)" style="border-left:1px solid #f1f5f9;" title="Tài khoản & Thiết lập">
+                <div class="filament-avatar" id="filament-user-avatar" style="background:#dbeafe;color:#1d4ed8;font-size:13px;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">AD</div>
+                <div style="text-align:left;min-width:0;">
+                  <div style="font-weight:700;font-size:13px;color:#0f172a;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;" id="filament-user-name">Nguyễn Quản Trị</div>
+                  <div style="font-size:11px;color:#64748b;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;" id="filament-user-sub">Super Admin • Toàn hệ thống</div>
+                </div>
+                <i class="fa-solid fa-chevron-down admin-user-dropdown-caret" id="admin-user-caret" style="font-size:10px;color:#94a3b8;margin-left:4px;transition:transform 0.2s;flex-shrink:0;"></i>
               </div>
-              <i class="fa-solid fa-chevron-down" style="font-size:10px;color:#94a3b8;margin-left:2px;"></i>
+
+              <!-- Admin User Dropdown Menu (Giống hệt cổng Public) -->
+              <div id="admin-user-dropdown-menu" class="user-nav-dropdown" style="top: calc(100% + 8px); right: 0; width: 260px;">
+                <div class="user-dropdown-header">
+                  <div style="font-weight:700; color:#0f3361; font-size:13.5px;" id="admin-dropdown-full-name">Nguyễn Quản Trị</div>
+                  <div style="font-size:11.5px; color:#64748b;" id="admin-dropdown-email">admin.demo@officeleasing.vn</div>
+                  <div style="margin-top:6px;"><span class="badge-role-pill" id="admin-dropdown-role-badge">SUPER ADMIN</span></div>
+                </div>
+                <div class="user-dropdown-divider"></div>
+                <a href="#" class="user-dropdown-item" onclick="openProfileModal('tab-profile-password'); closeAdminUserDropdown(); return false;">
+                  <i class="fa-solid fa-key" style="color:#f59e0b;"></i> Đổi Mật Khẩu Cá Nhân
+                </a>
+                <div class="user-dropdown-divider"></div>
+                <a href="#" class="user-dropdown-item text-danger" onclick="handleLogout(); closeAdminUserDropdown(); return false;">
+                  <i class="fa-solid fa-arrow-right-from-bracket" style="color:#dc2626;"></i> Đăng Xuất (Thoát)
+                </a>
+              </div>
             </div>
           </div>
         </header>

@@ -164,8 +164,16 @@
   <!-- Bộ lọc nhanh & Tìm kiếm -->
   <div class="filament-card" style="margin-bottom:16px;padding:16px;">
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;">
-      <div style="display:flex;gap:10px;align-items:center;flex:1;max-width:500px;">
-        <input type="text" id="crm-search-input" class="filament-input-sm" placeholder="Tìm theo tên khách, SĐT, công ty..." oninput="handleCrmSearch(this.value)" style="width:100%;">
+      <div style="display:flex;gap:10px;align-items:center;flex:1;max-width:540px;">
+        <div style="position:relative;flex:1;display:flex;align-items:center;">
+          <input type="text" id="crm-search-input" class="filament-input-sm" placeholder="Tìm theo tên khách, SĐT, công ty..." oninput="toggleSearchClearBtn(this)" onkeydown="if(event.key==='Enter'){ event.preventDefault(); doCrmSearch(); }" style="width:100%;padding-right:32px;">
+          <button type="button" class="bms-search-clear-btn" id="btn-clear-crm-search" onclick="handleClearSearchInput('crm-search-input', doCrmSearch)" title="Xóa tìm kiếm">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <button type="button" class="btn-mo-primary" onclick="doCrmSearch()" style="background:#2563eb;padding:6px 14px;font-size:12.5px;display:flex;align-items:center;gap:6px;white-space:nowrap;border:none;border-radius:6px;cursor:pointer;">
+          <i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm
+        </button>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn-mo-outline crm-status-btn active" data-status="ALL" onclick="handleCrmStatusFilter('ALL')" style="font-size:12px;padding:4px 10px;">Tất cả</button>

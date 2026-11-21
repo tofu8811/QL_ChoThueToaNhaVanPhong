@@ -220,24 +220,111 @@
       }).join('');
     }
 
+    let ticketFirstErrorField = null;
+
+    function clearTicketSingleFieldError(fieldId) {
+      const el = document.getElementById(fieldId);
+      if (el) el.classList.remove('is-invalid');
+      const errEl = document.getElementById('err-' + fieldId);
+      if (errEl) {
+        errEl.style.display = 'none';
+        errEl.innerHTML = '';
+      }
+    }
+
+    function clearAllTicketErrors() {
+      const fields = ['ticket-building-id', 'ticket-title', 'ticket-desc'];
+      fields.forEach(fid => clearTicketSingleFieldError(fid));
+      ticketFirstErrorField = null;
+    }
+
+    function openTenantTicketModal() {
+      clearAllTicketErrors();
+      if (typeof updateTenantBuildingDropdowns === 'function') {
+        updateTenantBuildingDropdowns();
+      }
+      if (typeof openModal === 'function') {
+        openModal("ticket-modal");
+      } else {
+        const modal = document.getElementById("ticket-modal");
+        if (modal) {
+          modal.classList.add("show");
+          modal.style.display = "flex";
+        }
+      }
+    }
+
+    function closeTenantTicketModal() {
+      if (typeof closeModal === 'function') {
+        closeModal("ticket-modal");
+      } else {
+        const modal = document.getElementById("ticket-modal");
+        if (modal) {
+          modal.classList.remove("show");
+          modal.style.display = "none";
+        }
+      }
+    }
+
     // 58. POST /api/v1/tenant/tickets: Tạo Ticket mới
     async function handleTenantNewTicket(e) {
-      e.preventDefault();
+      if (e) e.preventDefault();
+      clearAllTicketErrors();
+
       const building_id = document.getElementById("ticket-building-id")?.value;
-      const title = document.getElementById("ticket-title").value.trim();
-      const category = document.getElementById("ticket-category").value;
-      const priority = document.getElementById("ticket-priority").value;
-      const description = document.getElementById("ticket-desc").value.trim();
+      const title = document.getElementById("ticket-title")?.value?.trim() || '';
+      const category = document.getElementById("ticket-category")?.value || 'MAINTENANCE';
+      const priority = document.getElementById("ticket-priority")?.value || 'NORMAL';
+      const description = document.getElementById("ticket-desc")?.value?.trim() || '';
       const imgUrl = document.getElementById("ticket-image-url")?.value?.trim();
       const btn = document.getElementById("btn-submit-create-ticket");
 
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        alert("Vui lòng đăng nhập với tư cách Khách thuê (Tenant) để gửi phiếu sự cố!");
-        closeTenantTicketModal();
-        openLoginModal();
+      // Validate các trường bắt buộc
+      const errors = [];
+      if (!building_id) {
+        errors.push({
+          fieldId: 'ticket-building-id',
+          message: 'Vui lòng chọn tòa nhà văn phòng của bạn.'
+        });
+      }
+      if (!title || title.length < 6) {
+        errors.push({
+          fieldId: 'ticket-title',
+          message: 'Vui lòng nhập tiêu đề sự cố / yêu cầu (tối thiểu 6 ký tự).'
+        });
+      }
+      if (!description || description.length < 10) {
+        errors.push({
+          fieldId: 'ticket-desc',
+          message: 'Vui lòng mô tả hiện trạng chi tiết vị trí sự cố (tối thiểu 10 ký tự).'
+        });
+      }
+
+      // NẾU CÓ LỖI: HIỆN HẾT RA DƯỚI TỪNG TRƯỜNG & KHÔNG DÙNG POPUP
+      if (errors.length > 0) {
+        ticketFirstErrorField = errors[0].fieldId;
+        errors.forEach(err => {
+          const inputEl = document.getElementById(err.fieldId);
+          if (inputEl) inputEl.classList.add('is-invalid');
+          const errEl = document.getElementById('err-' + err.fieldId);
+          if (errEl) {
+            errEl.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> <span>${err.message}</span>`;
+            errEl.style.display = 'flex';
+          }
+        });
+
+        const firstEl = document.getElementById(ticketFirstErrorField);
+        if (firstEl) {
+          firstEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          firstEl.focus();
+        }
         return;
       }
+
+      const token = localStorage.getItem('auth_token');
+      const urlParams = new URLSearchParams(window.location.search);
+      const tenantId = urlParams.get('tenant_id') || localStorage.getItem('tenant_id') || '';
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
       if (btn) {
         btn.disabled = true;
@@ -246,6 +333,7 @@
 
       try {
         const payload = {
+          tenant_id: tenantId,
           building_id: building_id,
           title: title,
           category: category,
@@ -254,13 +342,17 @@
           images: imgUrl ? [imgUrl] : []
         };
 
+        const headers = {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': csrfToken
+        };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        if (tenantId) headers['X-Tenant-Id'] = tenantId;
+
         const res = await fetch('/api/v1/tenant/tickets', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': 'Bearer ' + token
-          },
+          headers: headers,
           body: JSON.stringify(payload)
         });
 
@@ -271,7 +363,11 @@
           document.getElementById("ticket-title").value = '';
           document.getElementById("ticket-desc").value = '';
           if (document.getElementById("ticket-image-url")) document.getElementById("ticket-image-url").value = '';
-          loadTicketsList();
+          if (typeof loadTicketsList === 'function') loadTicketsList('tenant');
+          if (typeof Livewire !== 'undefined') {
+            const comp = document.querySelector('[wire\\:id]');
+            if (comp) Livewire.find(comp.getAttribute('wire:id'))?.$refresh();
+          }
         } else {
           alert("Lỗi khi tạo ticket: " + (json.message || 'Dữ liệu không hợp lệ'));
         }
@@ -281,7 +377,7 @@
       } finally {
         if (btn) {
           btn.disabled = false;
-          btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Gửi Phiếu Sự Cố Đến Ban Quản Lý (Tạo Ticket)`;
+          btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Gửi Phiếu Sự Cố Đến Ban Quản Lý`;
         }
       }
     }

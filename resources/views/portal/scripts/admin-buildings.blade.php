@@ -702,6 +702,11 @@
       }
     }
 
+    function doBuildingSearch() {
+      const inp = document.getElementById('admin-building-search');
+      handleAdminBuildingSearch(inp ? inp.value : '');
+    }
+
     function handleAdminBuildingSearch(val) {
       currentAdminBuildingSearch = val.trim();
       loadAdminBuildingsList();

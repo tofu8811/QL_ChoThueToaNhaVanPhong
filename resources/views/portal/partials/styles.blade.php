@@ -46,6 +46,8 @@
     html {
       scroll-behavior: smooth;
       overflow-x: clip;
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
     }
     body {
       margin: 0 !important;
@@ -1799,40 +1801,93 @@
        6. LEAD & QUOTE FORM (Phân hệ tiếp nhận Báo giá / Khảo sát)
        ========================================================================== */
     .lead-form-wrap {
-      max-width: 840px;
+      max-width: 980px;
       margin: 0 auto 50px;
       background: #ffffff;
       border: 1px solid var(--mo-border);
       border-radius: var(--radius-lg);
-      padding: 36px;
+      padding: 40px;
       box-shadow: var(--shadow-lg);
     }
     .lead-form-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
+      grid-template-columns: calc(50% - 12px) calc(50% - 12px);
+      row-gap: 8px;
+      column-gap: 24px;
       margin-top: 20px;
+      width: 100%;
+      box-sizing: border-box;
     }
     .form-field {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
+      min-width: 0;
+      max-width: 100%;
+      width: 100%;
+      box-sizing: border-box;
     }
     .form-field.full {
       grid-column: 1 / -1;
+    }
+    .field-error-slot {
+      height: 18px;
+      min-height: 18px;
+      max-height: 18px;
+      font-size: 12px;
+      line-height: 18px;
+      color: #ef4444;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      box-sizing: border-box;
+      transition: all 0.15s ease-in-out;
     }
     .form-field label {
       font-size: 13.5px;
       font-weight: 700;
       color: #334155;
+      height: 24px;
+      min-height: 24px;
+      max-height: 24px;
+      line-height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-sizing: border-box;
     }
-    .form-field input, .form-field select, .form-field textarea {
+    .form-field input:not([type="checkbox"]):not([type="radio"]), 
+    .form-field select {
       width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      height: 44px !important;
+      min-height: 44px !important;
+      max-height: 44px !important;
+      padding: 10px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      line-height: 22px;
+      background: #fff;
+      box-sizing: border-box !important;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .form-field textarea {
+      width: 100%;
+      min-height: 90px;
       padding: 11px 14px;
       border: 1px solid #cbd5e1;
       border-radius: var(--radius-sm);
       font-size: 14px;
       background: #fff;
+      box-sizing: border-box;
     }
     .form-field input:focus, .form-field select:focus, .form-field textarea:focus {
       border-color: var(--mo-orange);
@@ -2699,6 +2754,8 @@
       .filament-widgets-grid { grid-template-columns: 1fr; }
       .mo-stats-strip { grid-template-columns: repeat(2, 1fr); }
       .lead-form-grid { grid-template-columns: 1fr; }
+      .lead-form-wrap { padding: 24px 18px; }
+      .form-field label { white-space: normal; height: auto; min-height: 20px; }
       .mo-footer-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 480px) {

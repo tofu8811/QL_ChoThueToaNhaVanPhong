@@ -22,7 +22,8 @@ class AssignLeadSalesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'sales_id' => ['required', 'uuid', 'exists:sales,id'],
+            'sales_id' => ['required_without:assigned_sales_id', 'nullable', 'uuid', 'exists:sales,id'],
+            'assigned_sales_id' => ['required_without:sales_id', 'nullable', 'uuid', 'exists:sales,id'],
             'assignment_note' => ['nullable', 'string', 'max:500'],
         ];
     }
@@ -35,8 +36,10 @@ class AssignLeadSalesRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'sales_id.required' => 'Chuyên viên kinh doanh được phân công là bắt buộc.',
+            'sales_id.required_without' => 'Chuyên viên kinh doanh được phân công là bắt buộc.',
             'sales_id.exists' => 'Chuyên viên kinh doanh không tồn tại trong hệ thống.',
+            'assigned_sales_id.required_without' => 'Chuyên viên kinh doanh được phân công là bắt buộc.',
+            'assigned_sales_id.exists' => 'Chuyên viên kinh doanh không tồn tại trong hệ thống.',
         ];
     }
 }

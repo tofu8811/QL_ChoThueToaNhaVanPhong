@@ -16,6 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Miễn trừ mã hóa Cookie đối với auth_token và tenant_id để tương thích phiên đồng bộ JavaScript & SSR
+        $middleware->encryptCookies(except: [
+            'auth_token',
+            'tenant_id',
+        ]);
+
         // Nhóm middleware áp dụng cho toàn bộ API routes (/api/*)
         $middleware->api(prepend: [
             ForceJsonResponseMiddleware::class,
@@ -27,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.catch'   => GlobalExceptionMiddleware::class,
             'super_admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
             'role'        => \App\Http\Middleware\EnsureUserRole::class,
+            'role.web'    => \App\Http\Middleware\EnsureWebRole::class,
         ]);
 
         $middleware->redirectGuestsTo('/admin/login');

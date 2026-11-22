@@ -107,9 +107,10 @@ class CrmLeadApiController extends BaseApiController
     public function assign(AssignLeadSalesRequest $request, string $id): JsonResponse
     {
         $lead = Lead::findOrFail($id);
+        $salesId = (string) ($request->input('sales_id') ?? $request->input('assigned_sales_id'));
         $updated = $this->leadService->assignSales(
             $lead,
-            $request->input('sales_id'),
+            $salesId,
             $request->input('assignment_note')
         );
 

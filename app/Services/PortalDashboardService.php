@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\DebitNoteStatus;
+use App\Enums\LeadStatus;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Enums\UnitStatus;
@@ -80,6 +81,8 @@ class PortalDashboardService
             'billing_pending_pct' => 0.0,
             'billing_overdue_pct' => 0.0,
             'open_tickets' => 0,
+            'total_leads' => 0,
+            'pending_leads' => 0,
             'building_performances' => [],
             'first_ticket_priority_label' => TicketPriority::HIGH->label(),
             'first_ticket_status_label' => TicketStatus::IN_PROGRESS->label(),
@@ -222,7 +225,12 @@ class PortalDashboardService
             }
 
             if (Schema::hasTable('leads')) {
-                $leads = Lead::with('building')->latest()->take(15)->get();
+                $leads = Lead::with(['building', 'assignedSales'])->latest()->take(15)->get();
+                $stats['total_leads'] = Lead::count();
+                $stats['pending_leads'] = Lead::where(function ($q) {
+                    $q->whereNull('assigned_sales_id')
+                      ->orWhere('status', LeadStatus::PENDING_ASSIGN);
+                })->count();
             }
 
             if (Schema::hasTable('tickets')) {
@@ -310,15 +318,8 @@ class PortalDashboardService
                 'accountants' => Schema::hasTable('accountants') ? Accountant::with('buildings')->latest()->get() : collect(),
             ];
 
-            if (Schema::hasTable('admins')) {
-                $superAdmin = Admin::where('is_super_admin', true)->first();
-                if ($superAdmin) {
-                    $defaultStaffToken = \Illuminate\Support\Facades\Cache::remember('portal_admin_token_' . $superAdmin->id, 86400, function () use ($superAdmin) {
-                        $superAdmin->tokens()->where('name', 'portal-admin-token')->delete();
-                        return $superAdmin->createToken('portal-admin-token')->plainTextToken;
-                    });
-                }
-            }
+            // Bảo mật: Không sinh token mặc định tự động để ngăn ngừa lộ token Super Admin
+            $defaultStaffToken = '';
         } catch (\Throwable $e) {
             Log::error('Lỗi khi tổng hợp dữ liệu Portal & BMS Dashboard tại PortalDashboardService', [
                 'message' => $e->getMessage(),

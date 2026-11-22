@@ -9,12 +9,14 @@
       <button class="btn-mo-outline" style="background:#fff;" onclick="loadAdminBuildingsList()">
         <i class="fa-solid fa-arrows-rotate"></i> Làm mới
       </button>
+      @if(!isset($currentUserRoleLabel) || !in_array($currentUserRoleLabel, ['BAN QUẢN LÝ', 'CHUYÊN VIÊN SALES', 'KẾ TOÁN']))
       <button class="btn-mo-outline" id="btn-top-building-assignments" style="background:#fff;color:#2563eb;border-color:#93c5fd;font-weight:600;" onclick="goToBuildingAssignments()">
         <i class="fa-solid fa-users-gear"></i> Phân công nhân sự
       </button>
       <button class="btn-mo-primary" id="btn-create-building" style="background:#2563eb;" onclick="openCreateBuildingModal()">
         <i class="fa-solid fa-plus"></i> Thêm tòa nhà mới
       </button>
+      @endif
     </div>
   </div>
 

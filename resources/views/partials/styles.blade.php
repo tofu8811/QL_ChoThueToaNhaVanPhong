@@ -2574,6 +2574,18 @@
       color: #0f172a;
       font-weight: 700;
     }
+    .kpi-pm-content,
+    .kpi-admin-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+      width: 100%;
+    }
+    .kpi-pm-content > .bms-kpi-foot,
+    .kpi-admin-content > .bms-kpi-foot {
+      margin-top: auto;
+    }
 
     /* BMS Analytics Row (Donut + Building Performance) */
     .bms-analytics-grid {

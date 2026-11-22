@@ -95,10 +95,13 @@ class CrmLeadApiController extends BaseApiController
     protected function authorizeSalesAccess(mixed $user, Lead $lead): void
     {
         if ($user instanceof \App\Models\Sale) {
-            $isAssigned = $lead->assigned_sales_id === $user->id;
-            $isBuildingAssigned = $lead->building_id && $user->buildings()->where('buildings.id', $lead->building_id)->exists();
-            if (!$isAssigned && !$isBuildingAssigned) {
-                throw new \App\Exceptions\BusinessException('Bạn không có quyền truy cập hồ sơ khách hàng tiềm năng này.', 403);
+            $isAssigned = (string) $lead->assigned_sales_id === (string) $user->id;
+            $isUnassignedForMyBuilding = empty($lead->assigned_sales_id) &&
+                $lead->building_id &&
+                $user->buildings()->where('buildings.id', $lead->building_id)->exists();
+
+            if (!$isAssigned && !$isUnassignedForMyBuilding) {
+                throw new \App\Exceptions\BusinessException('Bạn không có quyền truy cập hồ sơ khách hàng tiềm năng của nhân viên khác.', 403);
             }
         }
     }

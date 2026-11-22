@@ -103,9 +103,18 @@
         const areaNeeded = lead.expected_area ? `${lead.expected_area} m²` : '---';
         const contactName = lead.contact_name || lead.contact_full_name || 'Khách hàng';
 
-        const assignBtn = !hasSales
-          ? `<button class="btn-mo-primary" style="padding:4px 10px;font-size:12px;background:#2563eb;color:#fff;margin-left:4px;font-weight:600;border:none;border-radius:6px;cursor:pointer;" onclick="openAssignLeadSalesModal('${lead.id}', '${escapeHtml(contactName)}')" title="Gán Sales ngay"><i class="fa-solid fa-user-plus"></i> Gán Sales</button>`
-          : `<button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#6366f1;border-color:#c7d2fe;margin-left:4px;" onclick="openAssignLeadSalesModal('${lead.id}', '${escapeHtml(contactName)}')" title="Đổi Sales phụ trách"><i class="fa-solid fa-user-gear"></i> Đổi</button>`;
+        const isAdmin = window.location.pathname.startsWith('/admin') || (window.currentUiRole === 'admin') || (localStorage.getItem('auth_role') === 'admin');
+
+        let assignBtn = '';
+        if (isAdmin) {
+          assignBtn = !hasSales
+            ? `<button class="btn-mo-primary" style="padding:4px 10px;font-size:12px;background:#2563eb;color:#fff;margin-left:4px;font-weight:600;border:none;border-radius:6px;cursor:pointer;" onclick="openAssignLeadSalesModal('${lead.id}', '${escapeHtml(contactName)}')" title="Gán Sales ngay"><i class="fa-solid fa-user-plus"></i> Gán Sales</button>`
+            : `<button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#6366f1;border-color:#c7d2fe;margin-left:4px;" onclick="openAssignLeadSalesModal('${lead.id}', '${escapeHtml(contactName)}')" title="Đổi Sales phụ trách"><i class="fa-solid fa-user-gear"></i> Đổi</button>`;
+        }
+
+        const deleteBtn = isAdmin
+          ? `<button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#ef4444;border-color:#fecaca;margin-left:4px;" onclick="deleteLead('${lead.id}')" title="Xóa"><i class="fa-solid fa-trash"></i></button>`
+          : '';
 
         return `
           <tr>
@@ -144,9 +153,7 @@
                   <i class="fa-solid fa-arrow-right-to-bracket"></i> Chốt
                 </button>
               ` : ''}
-              <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#ef4444;border-color:#fecaca;margin-left:4px;" onclick="deleteLead('${lead.id}')" title="Xóa">
-                <i class="fa-solid fa-trash"></i>
-              </button>
+              ${deleteBtn}
             </td>
           </tr>
         `;

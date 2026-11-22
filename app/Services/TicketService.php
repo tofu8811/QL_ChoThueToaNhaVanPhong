@@ -233,6 +233,8 @@ class TicketService
             throw new BusinessException('Bạn không có quyền truy cập phiếu yêu cầu hỗ trợ này.', 403);
         }
 
+        $this->authorizePmAccess($user, $ticket);
+
         return $ticket;
     }
 
@@ -308,6 +310,7 @@ class TicketService
 
         return DB::transaction(function () use ($id, $data, $user) {
             $ticket = Ticket::lockForUpdate()->findOrFail($id);
+            $this->authorizePmAccess($user, $ticket);
             $fromStatus = $ticket->status instanceof \BackedEnum ? $ticket->status : TicketStatus::from($ticket->status);
 
             $ticket->assigned_pm_id = $data['assigned_pm_id'];
@@ -351,6 +354,7 @@ class TicketService
 
         return DB::transaction(function () use ($id, $data, $user) {
             $ticket = Ticket::lockForUpdate()->findOrFail($id);
+            $this->authorizePmAccess($user, $ticket);
             $fromStatus = $ticket->status instanceof \BackedEnum ? $ticket->status : TicketStatus::from($ticket->status);
 
             $rawStatus = strtoupper(trim($data['status']));
@@ -415,6 +419,8 @@ class TicketService
         if ($user instanceof Tenant && $ticket->tenant_id !== $user->id && $ticket->creator_tenant_id !== $user->id) {
             throw new BusinessException('Bạn không có quyền tải ảnh cho phiếu yêu cầu hỗ trợ này.', 403);
         }
+
+        $this->authorizePmAccess($user, $ticket);
 
         $proofType = TicketProofType::normalize($data['proof_type']);
         $caption = $data['caption'] ?? null;
@@ -542,5 +548,21 @@ class TicketService
         }
 
         return null;
+    }
+
+    /**
+     * Xác thực phân quyền dữ liệu cho Ban Quản Lý: Chỉ thao tác trên Ticket thuộc tòa nhà được phân công.
+     */
+    protected function authorizePmAccess(mixed $user, Ticket $ticket): void
+    {
+        if ($user instanceof PropertyManager) {
+            $hasAccess = DB::table('manager_buildings')
+                ->where('pm_id', $user->id)
+                ->where('building_id', $ticket->building_id)
+                ->exists();
+            if (!$hasAccess) {
+                throw new BusinessException('Bạn không có quyền thao tác trên phiếu yêu cầu thuộc tòa nhà này.', 403);
+            }
+        }
     }
 }

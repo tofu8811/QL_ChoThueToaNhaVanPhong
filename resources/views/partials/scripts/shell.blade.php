@@ -497,10 +497,20 @@
       // Cập nhật giao diện Dashboard nghiệp vụ theo Role (Admin vs PM theo feature/frontend)
       const isPmRole = (role === 'pm');
       document.querySelectorAll('.kpi-admin-content').forEach(el => {
-        el.style.display = isPmRole ? 'none' : (el.classList.contains('bms-alert-card') ? 'flex' : 'block');
+        el.style.display = isPmRole ? 'none' : 'flex';
+        if (!isPmRole) {
+          el.style.flexDirection = 'column';
+          el.style.justifyContent = 'space-between';
+          el.style.height = '100%';
+        }
       });
       document.querySelectorAll('.kpi-pm-content').forEach(el => {
-        el.style.display = isPmRole ? (el.classList.contains('bms-alert-card') ? 'flex' : 'block') : 'none';
+        el.style.display = isPmRole ? 'flex' : 'none';
+        if (isPmRole) {
+          el.style.flexDirection = 'column';
+          el.style.justifyContent = 'space-between';
+          el.style.height = '100%';
+        }
       });
 
       const secPm = document.getElementById('dashboard-section-pm');
@@ -508,48 +518,50 @@
       if (secPm) secPm.style.display = isPmRole ? 'block' : 'none';
       if (secAdmin) secAdmin.style.display = isPmRole ? 'none' : 'block';
 
-      const totalBldsEl = document.getElementById('dashboard-total-blds');
-      const totalBldsSub = document.getElementById('dashboard-total-blds-sub');
-      const totalUnitsSub = document.getElementById('dashboard-total-units-sub');
+      if (!window.location.pathname.startsWith('/pm')) {
+        const totalBldsEl = document.getElementById('dashboard-total-blds');
+        const totalBldsSub = document.getElementById('dashboard-total-blds-sub');
+        const totalUnitsSub = document.getElementById('dashboard-total-units-sub');
 
-      // Tính toán động số lượng tòa nhà và mặt bằng thực tế
-      let pmBldCount = 10;
-      let pmUnitsCount = 32;
-      let pmAreaSum = 199230;
-      if (isPmRole) {
-        if (typeof adminBuildingsList !== 'undefined' && adminBuildingsList.length > 0) {
-          pmBldCount = adminBuildingsList.length;
-          pmUnitsCount = adminBuildingsList.reduce((acc, b) => acc + (parseInt(b.units_count) || 0), 0) || (pmBldCount * 3);
-          pmAreaSum = adminBuildingsList.reduce((acc, b) => acc + (parseFloat(b.total_leasable_area_sqm) || 0), 0) || 199230;
-        } else if (realUser && Array.isArray(realUser.assigned_buildings) && realUser.assigned_buildings.length > 0) {
-          pmBldCount = realUser.assigned_buildings.length;
-          pmUnitsCount = pmBldCount * 3;
-        } else if (realUser && Array.isArray(realUser.assigned_building_ids) && realUser.assigned_building_ids.length > 0) {
-          pmBldCount = realUser.assigned_building_ids.length;
-          pmUnitsCount = pmBldCount * 3;
+        // Tính toán động số lượng tòa nhà và mặt bằng thực tế
+        let pmBldCount = 10;
+        let pmUnitsCount = 32;
+        let pmAreaSum = 199230;
+        if (isPmRole) {
+          if (typeof adminBuildingsList !== 'undefined' && adminBuildingsList.length > 0) {
+            pmBldCount = adminBuildingsList.length;
+            pmUnitsCount = adminBuildingsList.reduce((acc, b) => acc + (parseInt(b.units_count) || 0), 0) || (pmBldCount * 3);
+            pmAreaSum = adminBuildingsList.reduce((acc, b) => acc + (parseFloat(b.total_leasable_area_sqm) || 0), 0) || 199230;
+          } else if (realUser && Array.isArray(realUser.assigned_buildings) && realUser.assigned_buildings.length > 0) {
+            pmBldCount = realUser.assigned_buildings.length;
+            pmUnitsCount = pmBldCount * 3;
+          } else if (realUser && Array.isArray(realUser.assigned_building_ids) && realUser.assigned_building_ids.length > 0) {
+            pmBldCount = realUser.assigned_building_ids.length;
+            pmUnitsCount = pmBldCount * 3;
+          }
         }
-      }
 
-      if (totalBldsEl) totalBldsEl.innerText = isPmRole ? String(pmBldCount) : '22';
-      if (totalBldsSub) totalBldsSub.innerText = isPmRole ? 'tòa phụ trách' : 'tòa nhà';
-      if (totalUnitsSub) totalUnitsSub.innerText = isPmRole ? `${pmUnitsCount} mặt bằng` : '65 mặt bằng';
+        if (totalBldsEl) totalBldsEl.innerText = isPmRole ? String(pmBldCount) : '22';
+        if (totalBldsSub) totalBldsSub.innerText = isPmRole ? 'tòa phụ trách' : 'tòa nhà';
+        if (totalUnitsSub) totalUnitsSub.innerText = isPmRole ? `${pmUnitsCount} mặt bằng` : '65 mặt bằng';
 
-      const card1Title = document.getElementById('dashboard-card1-title');
-      const card1FootLabel = document.getElementById('dashboard-card1-foot-label');
-      const card1FootVal = document.getElementById('dashboard-card1-foot-val');
-      if (card1Title) card1Title.innerText = isPmRole ? 'TỔNG SỐ TÒA NHÀ PHỤ TRÁCH' : 'QUY MÔ TÀI SẢN & SÀN';
-      if (card1FootLabel) card1FootLabel.innerText = isPmRole ? 'Đang hoạt động:' : 'Tổng diện tích quản lý:';
-      if (card1FootVal) card1FootVal.innerText = isPmRole ? `${pmBldCount}/${pmBldCount} cao ốc` : '428.430 m²';
+        const card1Title = document.getElementById('dashboard-card1-title');
+        const card1FootLabel = document.getElementById('dashboard-card1-foot-label');
+        const card1FootVal = document.getElementById('dashboard-card1-foot-val');
+        if (card1Title) card1Title.innerText = isPmRole ? 'TỔNG SỐ TÒA NHÀ PHỤ TRÁCH' : 'QUY MÔ TÀI SẢN & SÀN';
+        if (card1FootLabel) card1FootLabel.innerText = isPmRole ? 'Đang hoạt động:' : 'Tổng diện tích quản lý:';
+        if (card1FootVal) card1FootVal.innerText = isPmRole ? `${pmBldCount}/${pmBldCount} cao ốc` : '428.430 m²';
 
-      const dashTitle = document.getElementById('dashboard-page-title');
-      const dashSub = document.getElementById('dashboard-page-subtitle');
-      if (dashTitle) {
-        dashTitle.innerText = isPmRole ? 'Tổng Quan Vận Hành & Lấp Đầy Cao Ốc' : 'Tổng Quan Vận Hành & Kinh Doanh Tòa Nhà';
-      }
-      if (dashSub) {
-        dashSub.innerText = isPmRole
-          ? 'Bức tranh toàn cảnh về hiện trạng tòa nhà, tỷ lệ lấp đầy, tiến độ xử lý sự cố kỹ thuật và phê duyệt vận hành.'
-          : 'Bức tranh toàn cảnh về quy mô tài sản, hợp đồng thuê, doanh thu công nợ và trạng thái vận hành toàn hệ thống.';
+        const dashTitle = document.getElementById('dashboard-page-title');
+        const dashSub = document.getElementById('dashboard-page-subtitle');
+        if (dashTitle) {
+          dashTitle.innerText = isPmRole ? 'Tổng Quan Vận Hành & Lấp Đầy Cao Ốc' : 'Tổng Quan Vận Hành & Kinh Doanh Tòa Nhà';
+        }
+        if (dashSub) {
+          dashSub.innerText = isPmRole
+            ? 'Bức tranh toàn cảnh về hiện trạng tòa nhà, tỷ lệ lấp đầy, tiến độ xử lý sự cố kỹ thuật và phê duyệt vận hành.'
+            : 'Bức tranh toàn cảnh về quy mô tài sản, hợp đồng thuê, doanh thu công nợ và trạng thái vận hành toàn hệ thống.';
+        }
       }
 
       if (role === 'admin') {

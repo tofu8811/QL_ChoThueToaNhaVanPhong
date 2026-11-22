@@ -128,7 +128,8 @@
         @empty
           <tr>
             <td colspan="6" style="text-align:center;padding:24px;color:#94a3b8;">
-              Chưa có deal nào trong hệ thống CRM.
+              <i class="fa-solid fa-folder-open" style="font-size:24px;margin-bottom:8px;display:block;color:#cbd5e1;"></i>
+              Chưa có deal nào trong danh sách phụ trách cá nhân của bạn.
             </td>
           </tr>
         @endforelse

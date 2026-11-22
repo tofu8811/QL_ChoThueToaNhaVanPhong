@@ -42,6 +42,15 @@ class MailSettingSecurityTest extends TestCase
         $this->adminToken = $this->admin->createToken('admin_sec_token', ['admin'])->plainTextToken;
     }
 
+    protected function tearDown(): void
+    {
+        $testFile = storage_path('app/mail_settings_testing.json');
+        if (file_exists($testFile)) {
+            @unlink($testFile);
+        }
+        parent::tearDown();
+    }
+
     /**
      * 1. Guest (Chưa đăng nhập) bị chặn 401 trên toàn bộ các route cấu hình email.
      */

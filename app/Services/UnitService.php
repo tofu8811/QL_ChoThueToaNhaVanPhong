@@ -19,6 +19,9 @@ use Illuminate\Support\Str;
  */
 class UnitService
 {
+    public function __construct(
+        protected BuildingService $buildingService
+    ) {}
     /**
      * Lấy danh sách mặt bằng văn phòng chào thuê trên Public Portal.
      *
@@ -205,7 +208,10 @@ class UnitService
 
         $data['last_status_changed_at'] = now();
 
-        return Unit::create($data);
+        $unit = Unit::create($data);
+        $this->buildingService->syncRentPriceRange($unit->building_id);
+
+        return $unit;
     }
 
     /**
@@ -220,7 +226,21 @@ class UnitService
      */
     public function updateUnit(Unit $unit, array $data, ?string $pmId = null): Unit
     {
-        // Kiểm tra mã phòng trùng nếu có đổi unit_code
+        // 1. Kiểm tra hợp đồng còn hiệu lực: Khóa toàn diện mọi hành vi chỉnh sửa (Total Freeze)
+        $hasActiveLease = ContractUnit::where('unit_id', $unit->id)
+            ->whereHas('contract', function ($q) {
+                $q->whereNotIn('status', ['TERMINATED', 'EXPIRED']);
+            })
+            ->exists();
+
+        if ($hasActiveLease) {
+            throw new BusinessException(
+                "Mặt bằng [{$unit->unit_code}] đang có hợp đồng thuê còn hiệu lực. Nghiêm cấm chỉnh sửa thông tin.",
+                422
+            );
+        }
+
+        // 2. Kiểm tra mã phòng trùng nếu có đổi unit_code
         if (!empty($data['unit_code']) && $data['unit_code'] !== $unit->unit_code) {
             $exists = Unit::withTrashed()
                 ->where('building_id', $unit->building_id)
@@ -233,27 +253,13 @@ class UnitService
             }
         }
 
-        // Kiểm tra sửa diện tích khi đang có hợp đồng
-        if (isset($data['area_sqm']) && (float) $data['area_sqm'] !== (float) $unit->area_sqm) {
-            $hasActiveLease = ContractUnit::where('unit_id', $unit->id)
-                ->whereHas('contract', function ($q) {
-                    $q->whereNotIn('status', ['TERMINATED', 'EXPIRED']);
-                })
-                ->exists();
-
-            if ($hasActiveLease) {
-                throw new BusinessException(
-                    "Mặt bằng [{$unit->unit_code}] đang có hợp đồng thuê còn hiệu lực. Nghiêm cấm chỉnh sửa diện tích cho thuê.",
-                    422
-                );
-            }
-        }
-
         if ($pmId) {
             $data['updated_by_pm_id'] = $pmId;
         }
 
         $unit->update($data);
+        $this->buildingService->syncRentPriceRange($unit->building_id);
+
         return $unit->fresh(['building.provinceRelation', 'images', 'primaryImage']);
     }
 
@@ -280,7 +286,13 @@ class UnitService
             );
         }
 
-        return (bool) $unit->delete();
+        $buildingId = $unit->building_id;
+        $deleted = (bool) $unit->delete();
+        if ($deleted) {
+            $this->buildingService->syncRentPriceRange($buildingId);
+        }
+
+        return $deleted;
     }
 
     /**
@@ -299,20 +311,18 @@ class UnitService
             throw new BusinessException("Trạng thái mặt bằng [{$newStatus}] không hợp lệ.", 422);
         }
 
-        // Nếu chuyển sang AVAILABLE, kiểm tra xem còn hợp đồng hiệu lực không
-        if ($statusEnum === UnitStatus::AVAILABLE) {
-            $hasActiveLease = ContractUnit::where('unit_id', $unit->id)
-                ->whereHas('contract', function ($q) {
-                    $q->whereNotIn('status', ['TERMINATED', 'EXPIRED']);
-                })
-                ->exists();
+        // Nếu mặt bằng đang có hợp đồng hiệu lực: Chặn chuyển sang bất kỳ trạng thái nào khác LEASED
+        $hasActiveLease = ContractUnit::where('unit_id', $unit->id)
+            ->whereHas('contract', function ($q) {
+                $q->whereNotIn('status', ['TERMINATED', 'EXPIRED']);
+            })
+            ->exists();
 
-            if ($hasActiveLease) {
-                throw new BusinessException(
-                    "Không thể chuyển mặt bằng [{$unit->unit_code}] sang trạng thái 'Đang trống' vì hợp đồng thuê hiện tại chưa được thanh lý.",
-                    422
-                );
-            }
+        if ($hasActiveLease && $statusEnum !== UnitStatus::LEASED) {
+            throw new BusinessException(
+                "Mặt bằng [{$unit->unit_code}] đang có hợp đồng thuê còn hiệu lực. Nghiêm cấm thay đổi trạng thái khi chưa hoàn tất thanh lý hợp đồng.",
+                422
+            );
         }
 
         $unit->update([

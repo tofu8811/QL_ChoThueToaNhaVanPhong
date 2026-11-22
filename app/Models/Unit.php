@@ -51,6 +51,30 @@ class Unit extends Model
     ];
 
     /**
+     * Tự động đồng bộ khoảng giá thuê của tòa nhà cha mỗi khi mặt bằng được lưu, xóa hoặc khôi phục.
+     */
+    protected static function booted(): void
+    {
+        static::saved(function (Unit $unit) {
+            if ($unit->building_id) {
+                app(\App\Services\BuildingService::class)->syncRentPriceRange($unit->building_id);
+            }
+        });
+
+        static::deleted(function (Unit $unit) {
+            if ($unit->building_id) {
+                app(\App\Services\BuildingService::class)->syncRentPriceRange($unit->building_id);
+            }
+        });
+
+        static::restored(function (Unit $unit) {
+            if ($unit->building_id) {
+                app(\App\Services\BuildingService::class)->syncRentPriceRange($unit->building_id);
+            }
+        });
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

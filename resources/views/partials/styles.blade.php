@@ -1814,22 +1814,22 @@
       background: #ffffff;
       border: 1px solid var(--mo-border);
       border-radius: var(--radius-lg);
-      padding: 40px;
+      padding: 36px 40px;
       box-shadow: var(--shadow-lg);
     }
     .lead-form-grid {
       display: grid;
       grid-template-columns: calc(50% - 12px) calc(50% - 12px);
-      row-gap: 8px;
+      row-gap: 6px;
       column-gap: 24px;
-      margin-top: 20px;
+      margin-top: 16px;
       width: 100%;
       box-sizing: border-box;
     }
     .form-field {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
       min-width: 0;
       max-width: 100%;
       width: 100%;
@@ -1839,31 +1839,33 @@
       grid-column: 1 / -1;
     }
     .field-error-slot {
-      min-height: 18px;
-      font-size: 11.5px;
-      line-height: 1.35;
-      color: #ef4444;
-      font-weight: 500;
-      display: flex;
-      align-items: flex-start;
-      gap: 5px;
-      box-sizing: border-box;
+      height: 16px !important;
+      min-height: 16px !important;
+      max-height: 16px !important;
+      line-height: 16px !important;
+      font-size: 11.5px !important;
+      color: #ef4444 !important;
+      font-weight: 500 !important;
+      display: flex !important;
+      align-items: center !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+      margin-top: 1px !important;
       word-break: break-word;
-      margin-top: 3px;
       transition: all 0.15s ease-in-out;
     }
     .form-field label {
       font-size: 13.5px;
       font-weight: 700;
       color: #334155;
-      height: 24px;
-      min-height: 24px;
-      max-height: 24px;
-      line-height: 24px;
+      height: 20px;
+      min-height: 20px;
+      max-height: 20px;
+      line-height: 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 2px;
+      margin-bottom: 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -1900,6 +1902,15 @@
     .form-field input:focus, .form-field select:focus, .form-field textarea:focus {
       border-color: var(--mo-orange);
       box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
+    }
+    .lead-form-grid .input-error,
+    .lead-form-grid input.input-error,
+    .lead-form-grid select.input-error,
+    .lead-form-grid textarea.input-error,
+    .lead-form-grid .custom-select-trigger.input-error {
+      border-color: #cbd5e1 !important;
+      background-color: #fff !important;
+      box-shadow: none !important;
     }
 
     /* ==========================================================================
@@ -2927,7 +2938,7 @@
       .mo-stats-strip { grid-template-columns: repeat(2, 1fr); }
       .lead-form-grid { grid-template-columns: 1fr; }
       .lead-form-wrap { padding: 24px 18px; }
-      .form-field label { white-space: normal; height: auto; min-height: 20px; }
+      .form-field label { white-space: normal; height: auto; min-height: 20px; max-height: none; }
       .mo-footer-grid { grid-template-columns: 1fr; }
       .mo-filter-grid { grid-template-columns: 1fr !important; }
       .mo-building-grid { grid-template-columns: 1fr !important; }
@@ -3364,20 +3375,29 @@
       border-color: #2563eb;
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
     }
-    .input-error {
+    .input-error,
+    .filament-input-sm.input-error,
+    select.filament-input-sm.input-error,
+    input.input-error,
+    select.input-error,
+    textarea.input-error {
       border-color: #ef4444 !important;
-      background-color: #fff5f5 !important;
-      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+      background-color: #ffffff !important;
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.12) !important;
     }
     .field-error-slot {
-      min-height: 18px;
-      font-size: 11.5px;
-      line-height: 1.35;
-      color: #ef4444;
-      margin-top: 4px;
-      display: flex;
-      align-items: flex-start;
-      gap: 5px;
+      height: 16px !important;
+      min-height: 16px !important;
+      max-height: 16px !important;
+      line-height: 16px !important;
+      font-size: 11.5px !important;
+      color: #ef4444 !important;
+      font-weight: 500 !important;
+      margin-top: 1px !important;
+      display: flex !important;
+      align-items: center !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
       word-break: break-word;
     }
     .input-icon-wrapper .toggle-pwd-btn {

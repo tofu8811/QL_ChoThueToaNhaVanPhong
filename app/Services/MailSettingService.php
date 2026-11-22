@@ -23,6 +23,10 @@ class MailSettingService
      */
     protected function getFilePath(): string
     {
+        if (app()->environment('testing')) {
+            return storage_path('app/mail_settings_testing.json');
+        }
+
         return storage_path('app/mail_settings.json');
     }
 

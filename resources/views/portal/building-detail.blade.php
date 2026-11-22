@@ -149,27 +149,35 @@
             <table class="detail-specs-table">
               <tr>
                 <td><i class="fa-solid fa-layer-group"></i> Kết cấu tòa nhà</td>
-                <td>{{ ($building->total_floors ?: 25) }} Tầng nổi - {{ ($building->total_basements ?: 3) }} Tầng hầm</td>
+                <td>{{ ($building->total_floors ?: 15) }} Tầng nổi - {{ ($building->total_basements ?: 2) }} Tầng hầm</td>
               </tr>
               <tr>
-                <td><i class="fa-solid fa-expand"></i> Diện tích sàn điển hình</td>
-                <td>{{ number_format($building->total_leasable_area_sqm ? $building->total_leasable_area_sqm / ($building->total_floors ?: 25) : 1000) }} m² / sàn</td>
+                <td><i class="fa-solid fa-expand"></i> Diện tích sàn khả dụng</td>
+                <td>{{ number_format($building->total_leasable_area_sqm ?: 10000, 0, ',', '.') }} m²</td>
               </tr>
               <tr>
-                <td><i class="fa-solid fa-ruler-vertical"></i> Chiều cao trần</td>
-                <td>2.75 mét (tiêu chuẩn quốc tế)</td>
+                <td><i class="fa-solid fa-compass"></i> Hướng chính diện</td>
+                <td>{{ $building->direction ?: 'Đông Nam' }}</td>
+              </tr>
+              <tr>
+                <td><i class="fa-solid fa-ruler-vertical"></i> Chiều cao trần tiêu chuẩn</td>
+                <td>{{ $building->ceiling_height_meters ? $building->ceiling_height_meters . ' m' : '2.70 m' }}</td>
               </tr>
               <tr>
                 <td><i class="fa-solid fa-elevator"></i> Hệ thống thang máy</td>
-                <td>Tốc độ cao có phân tầng thông minh</td>
+                <td>{{ $building->elevators_count ? $building->elevators_count . ' Thang máy tốc độ cao' : 'Thang máy phân tầng' }}</td>
               </tr>
               <tr>
                 <td><i class="fa-solid fa-snowflake"></i> Hệ thống điều hòa</td>
-                <td>Máy lạnh trung tâm Chiller Carrier thông minh</td>
+                <td>{{ $building->air_conditioner_spec ?: 'Điều hòa trung tâm VRV / Chiller' }}</td>
               </tr>
               <tr>
-                <td><i class="fa-solid fa-shield-virus"></i> Máy phát điện dự phòng</td>
-                <td>100% Công suất tự động chuyển mạch</td>
+                <td><i class="fa-solid fa-bolt"></i> Máy phát điện dự phòng</td>
+                <td>{{ $building->backup_generator_spec ?: '100% công suất tải 24/7' }}</td>
+              </tr>
+              <tr>
+                <td><i class="fa-solid fa-clock"></i> Giờ làm việc tiêu chuẩn</td>
+                <td>{{ $building->working_hours_desc ?: 'Thứ 2 - 6: 08:00 - 18:00, T7: 08:00 - 12:00' }}</td>
               </tr>
             </table>
 

@@ -6,7 +6,7 @@
  * ==============================================================================
  */
 
-// 1. Quản lý trạng thái lỗi trên giao diện (Visual Error Slots)
+// 1. Quản lý trạng thái lỗi trên giao diện (Visual Error Slots - Zero Layout Shift)
 function moSetFieldError(inputId, slotId, msg) {
   const input = document.getElementById(inputId);
   const slot = document.getElementById(slotId);
@@ -16,7 +16,7 @@ function moSetFieldError(inputId, slotId, msg) {
   }
   if (slot) {
     slot.style.display = 'flex';
-    slot.innerHTML = `<i class="fa-solid fa-circle-exclamation" style="font-size:11px;flex-shrink:0;"></i> <span>${msg}</span>`;
+    slot.innerHTML = `<span>${msg}</span>`;
   }
 }
 
@@ -28,7 +28,6 @@ function moClearFieldError(inputId, slotId) {
     input.classList.remove('is-invalid');
   }
   if (slot) {
-    slot.style.display = 'none';
     slot.innerHTML = '';
   }
 }

@@ -176,21 +176,24 @@
       <h3 style="margin:0;font-size:16px;font-weight:700;"><i class="fa-solid fa-bolt"></i> Nhập Chỉ Số Điện, Nước & Gửi Xe Để Xuất Thông Báo Phí</h3>
       <button type="button" onclick="closeModal('modal-record-utilities')" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">&times;</button>
     </div>
-    <form onsubmit="handleCalculateUtilities(event)" style="padding:20px;">
+    <form id="form-record-utilities" onsubmit="handleCalculateUtilities(event)" style="padding:20px;">
       <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:12px;margin-bottom:14px;">
-        <div>
+        <div class="form-field">
           <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">KHÁCH THUÊ DOANH NGHIỆP <span style="color:#ef4444;">*</span></label>
-          <select id="util-tenant" class="filament-input" style="width:100%;">
+          <select id="util-tenant" class="filament-input" style="width:100%;" onchange="moClearFieldError('util-tenant', 'err-util-tenant')">
+            <option value="">-- Chọn khách thuê xuất cước --</option>
             @forelse($recentContracts ?? [] as $c)
               <option value="{{ $c->tenant?->company_name }}">{{ $c->tenant?->company_name ?? 'Khách thuê' }} - {{ $c->building?->name ?? 'Tòa nhà' }}</option>
             @empty
               <option value="">Chưa có khách thuê nào có hợp đồng trong hệ thống</option>
             @endforelse
           </select>
+          <div class="field-error-slot" id="err-util-tenant"></div>
         </div>
-        <div>
-          <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">KỲ TÍNH CƯỚC <span style="color:#ef4444;">*</span></label>
-          <input type="text" id="util-month" class="filament-input" value="11/2026" style="width:100%;">
+        <div class="form-field">
+          <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">KỲ TÍNH CƯỚC (MM/YYYY) <span style="color:#ef4444;">*</span></label>
+          <input type="text" id="util-month" class="filament-input" value="11/2026" placeholder="VD: 11/2026" style="width:100%;" oninput="moClearFieldError('util-month', 'err-util-month')">
+          <div class="field-error-slot" id="err-util-month"></div>
         </div>
       </div>
 
@@ -198,16 +201,18 @@
       <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:12px;">
         <strong style="font-size:13px;color:#0f172a;display:block;margin-bottom:8px;"><i class="fa-solid fa-plug" style="color:#2563eb;"></i> 1. Tiêu Thụ Điện Năng (Đơn giá: 3.500 đ / kWh)</strong>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-          <div>
-            <label style="font-size:11px;color:#64748b;">Số đầu kỳ (kWh)</label>
-            <input type="number" id="elec-start" class="filament-input" value="12450" oninput="recalcUtilPreview()">
+          <div class="form-field">
+            <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px;">Số đầu kỳ (kWh) <span style="color:#ef4444;">*</span></label>
+            <input type="number" id="elec-start" class="filament-input" value="12450" min="0" oninput="moClearFieldError('elec-start', 'err-elec-start'); recalcUtilPreview()">
+            <div class="field-error-slot" id="err-elec-start"></div>
           </div>
-          <div>
-            <label style="font-size:11px;color:#64748b;">Số cuối kỳ (kWh)</label>
-            <input type="number" id="elec-end" class="filament-input" value="15700" oninput="recalcUtilPreview()">
+          <div class="form-field">
+            <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px;">Số cuối kỳ (kWh) <span style="color:#ef4444;">*</span></label>
+            <input type="number" id="elec-end" class="filament-input" value="15700" min="0" oninput="moClearFieldError('elec-end', 'err-elec-end'); recalcUtilPreview()">
+            <div class="field-error-slot" id="err-elec-end"></div>
           </div>
-          <div>
-            <label style="font-size:11px;color:#64748b;">Thành tiền điện (đ)</label>
+          <div class="form-field">
+            <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px;">Thành tiền điện (đ)</label>
             <input type="text" id="elec-total" class="filament-input" value="11.375.000 đ" readonly style="background:#f1f5f9;font-weight:700;">
           </div>
         </div>
@@ -217,16 +222,18 @@
       <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:12px;">
         <strong style="font-size:13px;color:#0f172a;display:block;margin-bottom:8px;"><i class="fa-solid fa-droplet" style="color:#0284c7;"></i> 2. Tiêu Thụ Nước Sinh Hoạt (Đơn giá: 18.000 đ / m³)</strong>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-          <div>
-            <label style="font-size:11px;color:#64748b;">Số khối đầu kỳ (m³)</label>
-            <input type="number" id="water-start" class="filament-input" value="420" oninput="recalcUtilPreview()">
+          <div class="form-field">
+            <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px;">Số khối đầu kỳ (m³) <span style="color:#ef4444;">*</span></label>
+            <input type="number" id="water-start" class="filament-input" value="420" min="0" oninput="moClearFieldError('water-start', 'err-water-start'); recalcUtilPreview()">
+            <div class="field-error-slot" id="err-water-start"></div>
           </div>
-          <div>
-            <label style="font-size:11px;color:#64748b;">Số khối cuối kỳ (m³)</label>
-            <input type="number" id="water-end" class="filament-input" value="465" oninput="recalcUtilPreview()">
+          <div class="form-field">
+            <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px;">Số khối cuối kỳ (m³) <span style="color:#ef4444;">*</span></label>
+            <input type="number" id="water-end" class="filament-input" value="465" min="0" oninput="moClearFieldError('water-end', 'err-water-end'); recalcUtilPreview()">
+            <div class="field-error-slot" id="err-water-end"></div>
           </div>
-          <div>
-            <label style="font-size:11px;color:#64748b;">Thành tiền nước (đ)</label>
+          <div class="form-field">
+            <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px;">Thành tiền nước (đ)</label>
             <input type="text" id="water-total" class="filament-input" value="810.000 đ" readonly style="background:#f1f5f9;font-weight:700;">
           </div>
         </div>
@@ -236,16 +243,18 @@
       <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:16px;">
         <strong style="font-size:13px;color:#0f172a;display:block;margin-bottom:8px;"><i class="fa-solid fa-motorcycle" style="color:#d97706;"></i> 3. Phí Trông Giữ Xe Hàng Tháng</strong>
         <div style="display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:10px;">
-          <div>
-            <label style="font-size:11px;color:#64748b;">Số lượng Ô tô (2.2Tr/xe)</label>
-            <input type="number" id="park-cars" class="filament-input" value="2" oninput="recalcUtilPreview()">
+          <div class="form-field">
+            <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px;">Số lượng Ô tô (2.2Tr/xe)</label>
+            <input type="number" id="park-cars" class="filament-input" value="2" min="0" oninput="moClearFieldError('park-cars', 'err-park-cars'); recalcUtilPreview()">
+            <div class="field-error-slot" id="err-park-cars"></div>
           </div>
-          <div>
-            <label style="font-size:11px;color:#64748b;">Số lượng Xe máy (180k/xe)</label>
-            <input type="number" id="park-motos" class="filament-input" value="25" oninput="recalcUtilPreview()">
+          <div class="form-field">
+            <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px;">Số lượng Xe máy (180k/xe)</label>
+            <input type="number" id="park-motos" class="filament-input" value="25" min="0" oninput="moClearFieldError('park-motos', 'err-park-motos'); recalcUtilPreview()">
+            <div class="field-error-slot" id="err-park-motos"></div>
           </div>
-          <div>
-            <label style="font-size:11px;color:#64748b;">Tổng tiền gửi xe (đ)</label>
+          <div class="form-field">
+            <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px;">Tổng tiền gửi xe (đ)</label>
             <input type="text" id="park-total" class="filament-input" value="8.900.000 đ" readonly style="background:#f1f5f9;font-weight:700;">
           </div>
         </div>
@@ -253,7 +262,7 @@
 
       <div style="display:flex;justify-content:flex-end;gap:10px;">
         <button type="button" class="btn-mo-outline" onclick="closeModal('modal-record-utilities')">Hủy</button>
-        <button type="submit" class="btn-mo-primary" style="background:#059669;"><i class="fa-solid fa-paper-plane"></i> Tự Động Xuất Thông Báo Phí (Debit Note)</button>
+        <button type="submit" id="btn-submit-util" class="btn-mo-primary" style="background:#059669;"><i class="fa-solid fa-paper-plane"></i> Tự Động Xuất Thông Báo Phí (Debit Note)</button>
       </div>
     </form>
   </div>

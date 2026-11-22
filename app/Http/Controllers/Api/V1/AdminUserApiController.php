@@ -101,7 +101,7 @@ class AdminUserApiController extends BaseApiController
 
         $nextCode = match ($role) {
             'sales', 'sale' => (function () {
-                $codes = \App\Models\Sale::whereNotNull('employee_code')->pluck('employee_code');
+                $codes = \App\Models\Sale::withTrashed()->whereNotNull('employee_code')->pluck('employee_code');
                 $max = 0;
                 foreach ($codes as $c) {
                     if (preg_match('/(\d+)$/', (string) $c, $m)) {
@@ -114,7 +114,7 @@ class AdminUserApiController extends BaseApiController
                 return sprintf('NV-SALE-%03d', $max + 1);
             })(),
             'pm', 'property_manager', 'property-manager' => (function () {
-                $codes = \App\Models\PropertyManager::whereNotNull('employee_code')->pluck('employee_code');
+                $codes = \App\Models\PropertyManager::withTrashed()->whereNotNull('employee_code')->pluck('employee_code');
                 $max = 0;
                 foreach ($codes as $c) {
                     if (preg_match('/(\d+)$/', (string) $c, $m)) {
@@ -127,7 +127,7 @@ class AdminUserApiController extends BaseApiController
                 return sprintf('NV-BQL-%03d', $max + 1);
             })(),
             'accountant', 'accountants', 'kt' => (function () {
-                $codes = \App\Models\Accountant::whereNotNull('employee_code')->pluck('employee_code');
+                $codes = \App\Models\Accountant::withTrashed()->whereNotNull('employee_code')->pluck('employee_code');
                 $max = 0;
                 foreach ($codes as $c) {
                     if (preg_match('/(\d+)$/', (string) $c, $m)) {

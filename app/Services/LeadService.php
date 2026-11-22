@@ -167,13 +167,25 @@ class LeadService
         $query = Lead::query()
             ->with(['building', 'unit', 'assignedSales', 'convertedTenant']);
 
-        // Phân quyền dữ liệu theo vai trò (Data Isolation)
+        // Phân quyền dữ liệu theo vai trò (Data Isolation cá nhân cho Sales)
         if ($user instanceof Sale) {
-            $query->where(function ($q) use ($user) {
-                $q->where('assigned_sales_id', $user->id)
-                  ->orWhereHas('building.sales', function ($b) use ($user) {
-                      $b->where('sales.id', $user->id);
-                  });
+            $query->where(function ($q) use ($user, $filters) {
+                // Kiểm tra xem Sales có đang chủ động xem tab "Chờ phân bổ" để nhận lead không
+                $rawStatus = $filters['status'] ?? $filters['pipeline_status'] ?? null;
+                $statusValue = is_string($rawStatus) ? strtoupper($rawStatus) : ($rawStatus?->value ?? '');
+                $isUnassignedTab = !empty($filters['unassigned']) || $statusValue === 'PENDING_ASSIGN' || $statusValue === 'UNASSIGNED';
+
+                if ($isUnassignedTab) {
+                    $q->where(function ($sub) {
+                        $sub->whereNull('assigned_sales_id')
+                            ->orWhere('status', LeadStatus::PENDING_ASSIGN);
+                    })->whereHas('building.sales', function ($b) use ($user) {
+                        $b->where('sales.id', $user->id);
+                    });
+                } else {
+                    // Mặc định hoặc xem các tiến trình pipeline khác: CHỈ hiển thị lead do chính cá nhân Sales này phụ trách
+                    $q->where('assigned_sales_id', $user->id);
+                }
             });
         }
 

@@ -66,6 +66,7 @@ class BuildingApiController extends BaseApiController
     public function update(UpdateBuildingRequest $request, string $id): JsonResponse
     {
         $building = Building::findOrFail($id);
+        $this->authorizePmBuildingAccess($request->user(), $building);
         $updated = $this->buildingService->updateBuilding($building, $request->validated());
 
         return $this->successResponse($updated, 'Cập nhật thông tin tòa nhà thành công.');
@@ -94,6 +95,7 @@ class BuildingApiController extends BaseApiController
         ]);
 
         $building = Building::findOrFail($id);
+        $this->authorizePmBuildingAccess($request->user(), $building);
         $uploaded = $this->buildingService->uploadImages(
             $building,
             $request->file('images'),
@@ -107,6 +109,7 @@ class BuildingApiController extends BaseApiController
     public function deleteImage(string $id, int $imageId): JsonResponse
     {
         $building = Building::findOrFail($id);
+        $this->authorizePmBuildingAccess(request()->user(), $building);
         $this->buildingService->deleteImage($building, $imageId);
 
         return $this->successResponse(null, 'Đã xóa hình ảnh tòa nhà thành công.');
@@ -116,8 +119,22 @@ class BuildingApiController extends BaseApiController
     public function setPrimaryImage(string $id, int $imageId): JsonResponse
     {
         $building = Building::findOrFail($id);
+        $this->authorizePmBuildingAccess(request()->user(), $building);
         $image = $this->buildingService->setPrimaryImage($building, $imageId);
 
         return $this->successResponse($image, 'Đã đặt hình ảnh làm ảnh đại diện chính thành công.');
+    }
+
+    /**
+     * Xác thực phân quyền tòa nhà cho Ban Quản Lý (PM).
+     */
+    protected function authorizePmBuildingAccess(mixed $user, Building $building): void
+    {
+        if ($user instanceof \App\Models\PropertyManager) {
+            $hasAccess = $user->buildings()->where('buildings.id', $building->id)->exists();
+            if (!$hasAccess) {
+                throw new \App\Exceptions\BusinessException('Bạn không có quyền quản lý tòa nhà văn phòng này.', 403);
+            }
+        }
     }
 }

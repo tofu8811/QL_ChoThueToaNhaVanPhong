@@ -26,10 +26,38 @@
   <!-- Header Tổng quan vận hành & kinh doanh tòa nhà -->
   <div class="filament-page-header" style="align-items:center;margin-bottom:22px;">
     <div>
-      <h1 class="filament-page-title" id="dashboard-page-title" style="font-size:23px;margin-bottom:4px;">Tổng Quan Vận Hành & Kinh Doanh Tòa Nhà</h1>
-      <p id="dashboard-page-subtitle" style="font-size:13.5px;color:#64748b;margin:0;">Bức tranh toàn cảnh về quy mô tài sản, hợp đồng thuê, doanh thu công nợ và trạng thái vận hành toàn hệ thống.</p>
+      <h1 class="filament-page-title" id="dashboard-page-title" style="font-size:23px;margin-bottom:4px;">
+        @if(($selectedBuildingId ?? 'ALL') !== 'ALL' && isset($selectedBuilding))
+          Tổng Quan Vận Hành: {{ $selectedBuilding->name }}
+        @else
+          Tổng Quan Vận Hành & Kinh Doanh Tòa Nhà
+        @endif
+      </h1>
+      <p id="dashboard-page-subtitle" style="font-size:13.5px;color:#64748b;margin:0;">
+        @if(($selectedBuildingId ?? 'ALL') !== 'ALL' && isset($selectedBuilding))
+          Bức tranh toàn cảnh về quy mô tài sản, hợp đồng thuê và trạng thái vận hành tại {{ $selectedBuilding->name }}.
+        @else
+          Bức tranh toàn cảnh về quy mô tài sản, hợp đồng thuê, doanh thu công nợ và trạng thái vận hành toàn hệ thống.
+        @endif
+      </p>
     </div>
-    <div style="display:flex;gap:10px;align-items:center;">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      @if(isset($assignedBuildings) && count($assignedBuildings) > 0)
+      <div style="display:inline-flex;align-items:center;gap:8px;background:#ffffff;border:1.5px solid #cbd5e1;padding:6px 12px;border-radius:8px;box-shadow:0 1px 3px rgba(15,23,42,0.05);">
+        <i class="fa-solid fa-city" style="color:#2563eb;font-size:13px;"></i>
+        <label for="pm-dashboard-building-select" style="font-size:12.5px;font-weight:700;color:#475569;margin:0;white-space:nowrap;">Tòa nhà:</label>
+        <select id="pm-dashboard-building-select" style="border:none;background:transparent;font-size:13px;font-weight:600;color:#0f172a;cursor:pointer;outline:none;padding:2px 4px;" onchange="window.location.href = window.location.pathname + (this.value === 'ALL' ? '' : '?building_id=' + encodeURIComponent(this.value));">
+          <option value="ALL" {{ ($selectedBuildingId ?? 'ALL') === 'ALL' ? 'selected' : '' }}>
+            Tất cả tòa nhà phụ trách ({{ count($assignedBuildings) }} tòa)
+          </option>
+          @foreach($assignedBuildings as $ab)
+            <option value="{{ $ab->id }}" {{ ($selectedBuildingId ?? '') === $ab->id ? 'selected' : '' }}>
+              {{ $ab->name }}
+            </option>
+          @endforeach
+        </select>
+      </div>
+      @endif
       <button type="button" class="btn-mo-outline" style="background:#fff;padding:8px 15px;font-size:13px;border-radius:8px;display:inline-flex;align-items:center;gap:7px;" onclick="window.location.reload();">
         <i class="fa-solid fa-arrows-rotate"></i> Làm mới
       </button>
@@ -64,108 +92,120 @@
 
     <!-- KPI 2: Hợp đồng & Khách thuê (Admin) / Tỷ lệ lấp đầy trung bình (PM theo feature/frontend) -->
     <div class="bms-kpi-card" style="cursor:pointer;" onclick="switchFilamentTab('tab-admin-contracts', document.getElementById('nav-item-contracts'))">
-      <div class="kpi-admin-content">
-        <div class="bms-kpi-top">
-          <div class="bms-kpi-title">HỢP ĐỒNG & KHÁCH THUÊ</div>
-          <div class="bms-kpi-icon" style="background:#eff6ff;color:#2563eb;">
-            <i class="fa-solid fa-file-contract"></i>
+      <div class="kpi-admin-content" style="display:flex;flex-direction:column;justify-content:space-between;height:100%;">
+        <div>
+          <div class="bms-kpi-top">
+            <div class="bms-kpi-title">HỢP ĐỒNG & KHÁCH THUÊ</div>
+            <div class="bms-kpi-icon" style="background:#eff6ff;color:#2563eb;">
+              <i class="fa-solid fa-file-contract"></i>
+            </div>
           </div>
-        </div>
-        <div class="bms-kpi-main">
-          <span class="bms-kpi-number" style="color:#2563eb;">{{ sprintf('%02d', count($recentContracts ?? [])) }}</span>
-          <span style="font-size:13.5px;font-weight:600;color:#64748b;">hợp đồng</span>
-          <span class="bms-kpi-pill" style="background:#eff6ff;color:#1d4ed8;">{{ $stats['total_tenants'] ?? 10 }} DN thuê</span>
+          <div class="bms-kpi-main">
+            <span class="bms-kpi-number" style="color:#2563eb;">{{ sprintf('%02d', count($recentContracts ?? [])) }}</span>
+            <span style="font-size:13.5px;font-weight:600;color:#64748b;">hợp đồng</span>
+            <span class="bms-kpi-pill" style="background:#eff6ff;color:#1d4ed8;">{{ $stats['total_tenants'] ?? 10 }} DN thuê</span>
+          </div>
         </div>
         <div class="bms-kpi-foot">
           <span>Diện tích đang khai thác:</span>
           <strong>{{ number_format($rentedArea, 0, ',', '.') }} m²</strong>
         </div>
       </div>
-      <div class="kpi-pm-content" style="display:none;">
-        <div class="bms-kpi-top">
-          <div class="bms-kpi-title">TỶ LỆ LẤP ĐẦY TRUNG BÌNH</div>
-          <div class="bms-kpi-icon" style="background:#eff6ff;color:#2563eb;">
-            <i class="fa-solid fa-arrow-trend-up"></i>
+      <div class="kpi-pm-content" style="display:none;flex-direction:column;justify-content:space-between;height:100%;">
+        <div>
+          <div class="bms-kpi-top">
+            <div class="bms-kpi-title">TỶ LỆ LẤP ĐẦY TRUNG BÌNH</div>
+            <div class="bms-kpi-icon" style="background:#eff6ff;color:#2563eb;">
+              <i class="fa-solid fa-arrow-trend-up"></i>
+            </div>
           </div>
-        </div>
-        <div class="bms-kpi-main">
-          <span class="bms-kpi-number" id="pm-kpi-occupancy-rate" style="color:#2563eb;">84,6%</span>
-          <span class="bms-kpi-pill" style="background:#ecfdf5;color:#047857;">+4,2% so tháng trước</span>
+          <div class="bms-kpi-main">
+            <span class="bms-kpi-number" id="pm-kpi-occupancy-rate" style="color:#2563eb;">{{ $rentedPct }}%</span>
+            <span class="bms-kpi-pill" style="background:#ecfdf5;color:#047857;">+4,2% so tháng trước</span>
+          </div>
         </div>
         <div class="bms-kpi-foot">
           <span>Diện tích đang khai thác:</span>
-          <strong id="pm-kpi-exploiting-area">168.549 m²</strong>
+          <strong id="pm-kpi-exploiting-area">{{ number_format($rentedArea, 0, ',', '.') }} m²</strong>
         </div>
       </div>
     </div>
 
     <!-- KPI 3: Doanh thu & Công nợ kỳ (Admin) / Tổng diện tích đang quản lý (PM theo feature/frontend) -->
     <div class="bms-kpi-card" style="cursor:pointer;" onclick="if(window.currentUiRole==='admin'||window.currentUiRole==='super_admin'){ switchFilamentTab('tab-admin-billing', document.getElementById('nav-item-billing')); } else { switchFilamentTab('tab-admin-buildings', document.getElementById('nav-item-buildings')); }">
-      <div class="kpi-admin-content">
-        <div class="bms-kpi-top">
-          <div class="bms-kpi-title">DOANH THU & CÔNG NỢ KỲ</div>
-          <div class="bms-kpi-icon" style="background:#eff6ff;color:#2563eb;">
-            <i class="fa-solid fa-file-invoice-dollar"></i>
+      <div class="kpi-admin-content" style="display:flex;flex-direction:column;justify-content:space-between;height:100%;">
+        <div>
+          <div class="bms-kpi-top">
+            <div class="bms-kpi-title">DOANH THU & CÔNG NỢ KỲ</div>
+            <div class="bms-kpi-icon" style="background:#eff6ff;color:#2563eb;">
+              <i class="fa-solid fa-file-invoice-dollar"></i>
+            </div>
           </div>
-        </div>
-        <div class="bms-kpi-main">
-          <span class="bms-kpi-number" style="color:#2563eb;font-size:28px;">{{ number_format(($stats['billing_total'] ?? 888387500) / 1000000, 1, ',', '.') }} Tr</span>
-          <span class="bms-kpi-pill" style="background:#eff6ff;color:#1d4ed8;">Đã thu {{ $stats['billing_paid_pct'] ?? 50.2 }}%</span>
+          <div class="bms-kpi-main">
+            <span class="bms-kpi-number" style="color:#2563eb;font-size:28px;">{{ number_format(($stats['billing_total'] ?? 888387500) / 1000000, 1, ',', '.') }} Tr</span>
+            <span class="bms-kpi-pill" style="background:#eff6ff;color:#1d4ed8;">Đã thu {{ $stats['billing_paid_pct'] ?? 50.2 }}%</span>
+          </div>
         </div>
         <div class="bms-kpi-foot">
           <span>Đã đối soát:</span>
           <strong>{{ number_format(($stats['billing_paid'] ?? 445720000) / 1000000, 1, ',', '.') }} Tr ({{ count($recentDebitNotes ?? []) }} phiếu)</strong>
         </div>
       </div>
-      <div class="kpi-pm-content" style="display:none;">
-        <div class="bms-kpi-top">
-          <div class="bms-kpi-title">TỔNG DIỆN TÍCH QUẢN LÝ</div>
-          <div class="bms-kpi-icon" style="background:#eff6ff;color:#2563eb;">
-            <i class="fa-solid fa-cube"></i>
+      <div class="kpi-pm-content" style="display:none;flex-direction:column;justify-content:space-between;height:100%;">
+        <div>
+          <div class="bms-kpi-top">
+            <div class="bms-kpi-title">TỔNG DIỆN TÍCH QUẢN LÝ</div>
+            <div class="bms-kpi-icon" style="background:#eff6ff;color:#2563eb;">
+              <i class="fa-solid fa-cube"></i>
+            </div>
           </div>
-        </div>
-        <div class="bms-kpi-main">
-          <span class="bms-kpi-number" id="pm-kpi-total-area" style="color:#2563eb;font-size:26px;">199.230</span>
-          <span style="font-size:13.5px;font-weight:600;color:#64748b;">m²</span>
-          <span class="bms-kpi-pill" style="background:#eff6ff;color:#1d4ed8;">Hạng A, B, C</span>
+          <div class="bms-kpi-main">
+            <span class="bms-kpi-number" id="pm-kpi-total-area" style="color:#2563eb;font-size:26px;">{{ number_format($totalUnitsArea, 0, ',', '.') }}</span>
+            <span style="font-size:13.5px;font-weight:600;color:#64748b;">m²</span>
+            <span class="bms-kpi-pill" style="background:#eff6ff;color:#1d4ed8;">Hạng A, B, C</span>
+          </div>
         </div>
         <div class="bms-kpi-foot">
           <span>Diện tích còn trống:</span>
-          <strong id="pm-kpi-vacant-area" style="color:#0284c7;">30.681 m²</strong>
+          <strong id="pm-kpi-vacant-area" style="color:#0284c7;">{{ number_format($availArea, 0, ',', '.') }} m²</strong>
         </div>
       </div>
     </div>
 
     <!-- KPI 4: Bảo trì & Leads mới (Admin) / Ticket bảo trì đang mở (PM theo feature/frontend) -->
     <div class="bms-kpi-card" style="cursor:pointer;" onclick="switchFilamentTab('tab-admin-tickets', document.getElementById('nav-item-tickets'))">
-      <div class="kpi-admin-content">
-        <div class="bms-kpi-top">
-          <div class="bms-kpi-title">SỰ CỐ & BẢO TRÌ KỸ THUẬT</div>
-          <div class="bms-kpi-icon" style="background:#fef2f2;color:#e11d48;">
-            <i class="fa-solid fa-screwdriver-wrench"></i>
+      <div class="kpi-admin-content" style="display:flex;flex-direction:column;justify-content:space-between;height:100%;">
+        <div>
+          <div class="bms-kpi-top">
+            <div class="bms-kpi-title">SỰ CỐ & BẢO TRÌ KỸ THUẬT</div>
+            <div class="bms-kpi-icon" style="background:#fef2f2;color:#e11d48;">
+              <i class="fa-solid fa-screwdriver-wrench"></i>
+            </div>
           </div>
-        </div>
-        <div class="bms-kpi-main">
-          <span class="bms-kpi-number" style="color:#e11d48;">{{ sprintf('%02d', $stats['open_tickets'] ?? 1) }}</span>
-          <span style="font-size:13.5px;font-weight:600;color:#64748b;">phiếu sự cố</span>
-          <span class="bms-kpi-pill" style="background:#fef2f2;color:#b91c1c;">Cần xử lý</span>
+          <div class="bms-kpi-main">
+            <span class="bms-kpi-number" style="color:#e11d48;">{{ sprintf('%02d', $stats['open_tickets'] ?? 1) }}</span>
+            <span style="font-size:13.5px;font-weight:600;color:#64748b;">phiếu sự cố</span>
+            <span class="bms-kpi-pill" style="background:#fef2f2;color:#b91c1c;">Cần xử lý</span>
+          </div>
         </div>
         <div class="bms-kpi-foot">
           <span>Mặt bằng cần chú ý:</span>
           <strong>{{ $expU }} sàn ({{ number_format($expArea, 0, ',', '.') }} m²)</strong>
         </div>
       </div>
-      <div class="kpi-pm-content" style="display:none;">
-        <div class="bms-kpi-top">
-          <div class="bms-kpi-title">TICKET BẢO TRÌ ĐANG MỞ</div>
-          <div class="bms-kpi-icon" style="background:#fef2f2;color:#e11d48;">
-            <i class="fa-solid fa-screwdriver-wrench"></i>
+      <div class="kpi-pm-content" style="display:none;flex-direction:column;justify-content:space-between;height:100%;">
+        <div>
+          <div class="bms-kpi-top">
+            <div class="bms-kpi-title">TICKET BẢO TRÌ ĐANG MỞ</div>
+            <div class="bms-kpi-icon" style="background:#fef2f2;color:#e11d48;">
+              <i class="fa-solid fa-screwdriver-wrench"></i>
+            </div>
           </div>
-        </div>
-        <div class="bms-kpi-main">
-          <span class="bms-kpi-number" style="color:#e11d48;">{{ sprintf('%02d', $stats['open_tickets'] ?? 1) }}</span>
-          <span style="font-size:13.5px;font-weight:600;color:#64748b;">phiếu sự cố</span>
-          <span class="bms-kpi-pill" style="background:#fee2e2;color:#b91c1c;">Xử lý trong ngày</span>
+          <div class="bms-kpi-main">
+            <span class="bms-kpi-number" style="color:#e11d48;">{{ sprintf('%02d', $stats['open_tickets'] ?? 1) }}</span>
+            <span style="font-size:13.5px;font-weight:600;color:#64748b;">phiếu sự cố</span>
+            <span class="bms-kpi-pill" style="background:#fee2e2;color:#b91c1c;">Xử lý trong ngày</span>
+          </div>
         </div>
         <div class="bms-kpi-foot">
           <span>Mặt bằng cần chú ý:</span>
@@ -173,6 +213,7 @@
         </div>
       </div>
     </div>
+  </div>
   </div>
 
   <!-- PHÂN HỆ VẬN HÀNH DÀNH RIÊNG CHO BAN QUẢN LÝ (PM WORKFLOW THEO FEATURE/FRONTEND) -->
@@ -185,18 +226,24 @@
             <h3 style="font-size:16px;font-weight:800;color:#0f172a;margin:0 0 4px 0;display:flex;align-items:center;gap:8px;">
               <i class="fa-solid fa-chart-column" style="color:#2563eb;"></i> Tỷ Lệ Lấp Đầy & Diện Tích Thuê (6 Tháng Gần Nhất)
             </h3>
-            <p id="dashboard-pm-chart-sub" style="font-size:12px;color:#64748b;margin:0;">Thống kê tiến độ phủ đầy mặt bằng tại 10 cao ốc Ban Quản Lý phụ trách</p>
+            <p id="dashboard-pm-chart-sub" style="font-size:12px;color:#64748b;margin:0;">
+              @if(($selectedBuildingId ?? 'ALL') !== 'ALL' && isset($selectedBuilding))
+                Thống kê tiến độ phủ đầy mặt bằng tại {{ $selectedBuilding->name }}
+              @else
+                Thống kê tiến độ phủ đầy mặt bằng tại {{ $totalBlds }} cao ốc Ban Quản Lý phụ trách
+              @endif
+            </p>
           </div>
           <span class="badge-filament info" style="font-weight:700;">Năm 2026</span>
         </div>
 
         <div style="padding:10px 0 16px;">
-          <div style="display:flex;align-items:flex-end;gap:16px;height:210px;padding-top:20px;border-bottom:1px solid #e2e8f0;">
+          <div style="display:flex;align-items:flex-end;gap:16px;height:210px;padding-top:20px;border-bottom:1px solid #e2e8f0;justify-content:center;">
             @forelse($stats['building_performances'] ?? [] as $bp)
-              <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;{{ count($stats['building_performances'] ?? []) === 1 ? 'max-width:240px;' : '' }}">
                 <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;">{{ $bp['occupancy_pct'] }}%</div>
                 <div style="width:100%;height:{{ max(12, $bp['occupancy_pct']) }}%;background:linear-gradient(180deg,#bfdbfe,{{ $bp['bar_color'] }});border-radius:6px 6px 0 0;"></div>
-                <div style="font-size:11px;margin-top:8px;color:#0f172a;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px;" title="{{ $bp['name'] }}">{{ Str::limit($bp['name'], 10) }}</div>
+                <div style="font-size:11px;margin-top:8px;color:#0f172a;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:{{ count($stats['building_performances'] ?? []) === 1 ? '220px' : '90px' }};" title="{{ $bp['name'] }}">{{ Str::limit($bp['name'], count($stats['building_performances'] ?? []) === 1 ? 26 : 10) }}</div>
               </div>
             @empty
               <div style="width:100%;text-align:center;color:#94a3b8;padding:40px 0;">Chưa có dữ liệu thống kê lấp đầy.</div>
@@ -206,7 +253,7 @@
 
         <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:#64748b;">
           <span><i class="fa-solid fa-chart-simple" style="color:#16a34a;"></i> Tỷ lệ lấp đầy theo từng tòa nhà</span>
-          <strong style="color:#0f172a;">{{ count($serverBuildings ?? []) }} tòa nhà đang quản trị</strong>
+          <strong style="color:#0f172a;">{{ count($serverBuildings ?? []) }} tòa nhà đang {{ ($selectedBuildingId ?? 'ALL') !== 'ALL' ? 'hiển thị' : 'quản trị' }}</strong>
         </div>
       </div>
 

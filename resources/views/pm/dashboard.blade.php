@@ -11,7 +11,16 @@
   <style>
     #tab-admin-dashboard { display: block !important; }
     .kpi-admin-content { display: none !important; }
-    .kpi-pm-content { display: flex !important; }
+    .kpi-pm-content {
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      height: 100% !important;
+      width: 100% !important;
+    }
+    .kpi-pm-content > .bms-kpi-foot {
+      margin-top: auto !important;
+    }
     #dashboard-section-admin { display: none !important; }
     #dashboard-section-pm { display: block !important; }
   </style>

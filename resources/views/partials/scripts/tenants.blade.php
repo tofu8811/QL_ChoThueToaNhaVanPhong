@@ -123,19 +123,77 @@
 
     async function submitCreateTenant(e) {
       if (e) e.preventDefault();
+      const form = document.getElementById('form-create-tenant');
+
+      moClearFieldError('tenant-company-name', 'err-tenant-company-name');
+      moClearFieldError('tenant-tax-code', 'err-tenant-tax-code');
+      moClearFieldError('tenant-rep-name', 'err-tenant-rep-name');
+      moClearFieldError('tenant-contact-phone', 'err-tenant-contact-phone');
+      moClearFieldError('tenant-contact-email', 'err-tenant-contact-email');
+
+      const companyName = document.getElementById('tenant-company-name')?.value.trim() || '';
+      const taxCode = document.getElementById('tenant-tax-code')?.value.trim() || '';
+      const repName = document.getElementById('tenant-rep-name')?.value.trim() || '';
+      const contactPhone = document.getElementById('tenant-contact-phone')?.value.trim() || '';
+      const contactEmail = document.getElementById('tenant-contact-email')?.value.trim() || '';
+      const businessAddress = document.getElementById('tenant-address')?.value.trim() || '';
+      const status = document.getElementById('tenant-status')?.value || 'ACTIVE';
+
+      // 1. Validation 0ms
+      if (!companyName || companyName.length < 2) {
+        moSetFieldError('tenant-company-name', 'err-tenant-company-name', 'Tên doanh nghiệp / công ty là bắt buộc (tối thiểu 2 ký tự).');
+        document.getElementById('tenant-company-name')?.focus();
+        return;
+      }
+
+      if (taxCode) {
+        const mstRegex = /^[0-9]{10}(-[0-9]{3})?$/;
+        if (!mstRegex.test(taxCode)) {
+          moSetFieldError('tenant-tax-code', 'err-tenant-tax-code', 'Mã số thuế phải có 10 hoặc 13 chữ số (VD: 0312345678 hoặc 0312345678-001).');
+          document.getElementById('tenant-tax-code')?.focus();
+          return;
+        }
+      }
+
+      if (repName && repName.length < 2) {
+        moSetFieldError('tenant-rep-name', 'err-tenant-rep-name', 'Họ tên người đại diện tối thiểu 2 ký tự.');
+        document.getElementById('tenant-rep-name')?.focus();
+        return;
+      }
+
+      if (contactPhone) {
+        const vPhone = moValidatePhone(contactPhone);
+        if (!vPhone.valid) {
+          moSetFieldError('tenant-contact-phone', 'err-tenant-contact-phone', vPhone.message);
+          document.getElementById('tenant-contact-phone')?.focus();
+          return;
+        }
+      }
+
+      if (contactEmail) {
+        const vEmail = moValidateEmail(contactEmail);
+        if (!vEmail.valid) {
+          moSetFieldError('tenant-contact-email', 'err-tenant-contact-email', vEmail.message);
+          document.getElementById('tenant-contact-email')?.focus();
+          return;
+        }
+      }
+
       const payload = {
-        company_name: document.getElementById('tenant-company-name').value.trim(),
-        tax_code: document.getElementById('tenant-tax-code').value.trim() || null,
-        representative_name: document.getElementById('tenant-rep-name').value.trim() || null,
-        contact_phone: document.getElementById('tenant-contact-phone').value.trim() || null,
-        contact_email: document.getElementById('tenant-contact-email').value.trim() || null,
-        business_address: document.getElementById('tenant-address').value.trim() || null,
-        status: document.getElementById('tenant-status').value || 'ACTIVE'
+        company_name: companyName,
+        tax_code: taxCode || null,
+        representative_name: repName || null,
+        contact_phone: contactPhone || null,
+        contact_email: contactEmail || null,
+        business_address: businessAddress || null,
+        status: status
       };
 
-      if (!payload.company_name) {
-        alert('Vui lòng nhập tên công ty / doanh nghiệp.');
-        return;
+      const btn = document.getElementById('btn-submit-create-tenant');
+      const originalHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu hồ sơ...';
       }
 
       try {
@@ -147,14 +205,29 @@
 
         const json = await res.json();
         if (res.ok) {
-          alert('Tạo hồ sơ khách thuê doanh nghiệp thành công!');
+          moToast(`Đã tạo hồ sơ khách thuê [${companyName}] thành công!`, 'success');
           closeCreateTenantModal();
+          form?.reset();
           loadTenantsList();
         } else {
-          alert('Lỗi tạo khách thuê: ' + (json.message || ''));
+          if (json.errors) {
+            moMapServerErrors(json.errors, {
+              company_name: ['tenant-company-name', 'err-tenant-company-name'],
+              tax_code: ['tenant-tax-code', 'err-tenant-tax-code'],
+              representative_name: ['tenant-rep-name', 'err-tenant-rep-name'],
+              contact_phone: ['tenant-contact-phone', 'err-tenant-contact-phone'],
+              contact_email: ['tenant-contact-email', 'err-tenant-contact-email']
+            });
+          }
+          moToast(json.message || 'Lỗi tạo khách thuê. Vui lòng kiểm tra lại.', 'error');
         }
       } catch (err) {
-        alert('Lỗi kết nối máy chủ API.');
+        moToast('Lỗi kết nối máy chủ API: ' + (err.message || 'Lỗi mạng'), 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        }
       }
     }
 
@@ -164,6 +237,13 @@
       currentEditTenantId = tenantId;
       const modal = document.getElementById('modal-edit-tenant');
       if (!modal) return;
+
+      moClearFieldError('edit-tenant-company-name', 'err-edit-tenant-company-name');
+      moClearFieldError('edit-tenant-tax-code', 'err-edit-tenant-tax-code');
+      moClearFieldError('edit-tenant-rep-name', 'err-edit-tenant-rep-name');
+      moClearFieldError('edit-tenant-contact-phone', 'err-edit-tenant-contact-phone');
+      moClearFieldError('edit-tenant-contact-email', 'err-edit-tenant-contact-email');
+
       modal.style.display = 'flex';
 
       try {
@@ -173,7 +253,7 @@
         });
         const json = await res.json();
         if (!res.ok) {
-          alert('Lỗi tải thông tin khách thuê: ' + (json.message || ''));
+          moToast('Lỗi tải thông tin khách thuê: ' + (json.message || ''), 'error');
           closeEditTenantModal();
           return;
         }
@@ -187,7 +267,7 @@
         document.getElementById('edit-tenant-address').value = t.headquarter_address || t.business_address || '';
         document.getElementById('edit-tenant-status').value = t.status || 'ACTIVE';
       } catch (err) {
-        alert('Lỗi kết nối khi tải hồ sơ khách thuê.');
+        moToast('Lỗi kết nối khi tải hồ sơ khách thuê.', 'error');
         closeEditTenantModal();
       }
     }
@@ -202,15 +282,76 @@
       if (e) e.preventDefault();
       if (!currentEditTenantId) return;
 
+      moClearFieldError('edit-tenant-company-name', 'err-edit-tenant-company-name');
+      moClearFieldError('edit-tenant-tax-code', 'err-edit-tenant-tax-code');
+      moClearFieldError('edit-tenant-rep-name', 'err-edit-tenant-rep-name');
+      moClearFieldError('edit-tenant-contact-phone', 'err-edit-tenant-contact-phone');
+      moClearFieldError('edit-tenant-contact-email', 'err-edit-tenant-contact-email');
+
+      const companyName = document.getElementById('edit-tenant-company-name')?.value.trim() || '';
+      const taxCode = document.getElementById('edit-tenant-tax-code')?.value.trim() || '';
+      const repName = document.getElementById('edit-tenant-rep-name')?.value.trim() || '';
+      const contactPhone = document.getElementById('edit-tenant-contact-phone')?.value.trim() || '';
+      const contactEmail = document.getElementById('edit-tenant-contact-email')?.value.trim() || '';
+      const businessAddress = document.getElementById('edit-tenant-address')?.value.trim() || '';
+      const status = document.getElementById('edit-tenant-status')?.value || 'ACTIVE';
+
+      // 1. Validation 0ms
+      if (!companyName || companyName.length < 2) {
+        moSetFieldError('edit-tenant-company-name', 'err-edit-tenant-company-name', 'Tên doanh nghiệp / công ty là bắt buộc (tối thiểu 2 ký tự).');
+        document.getElementById('edit-tenant-company-name')?.focus();
+        return;
+      }
+
+      if (taxCode) {
+        const mstRegex = /^[0-9]{10}(-[0-9]{3})?$/;
+        if (!mstRegex.test(taxCode)) {
+          moSetFieldError('edit-tenant-tax-code', 'err-edit-tenant-tax-code', 'Mã số thuế phải có 10 hoặc 13 chữ số (VD: 0312345678 hoặc 0312345678-001).');
+          document.getElementById('edit-tenant-tax-code')?.focus();
+          return;
+        }
+      }
+
+      if (repName && repName.length < 2) {
+        moSetFieldError('edit-tenant-rep-name', 'err-edit-tenant-rep-name', 'Họ tên người đại diện tối thiểu 2 ký tự.');
+        document.getElementById('edit-tenant-rep-name')?.focus();
+        return;
+      }
+
+      if (contactPhone) {
+        const vPhone = moValidatePhone(contactPhone);
+        if (!vPhone.valid) {
+          moSetFieldError('edit-tenant-contact-phone', 'err-edit-tenant-contact-phone', vPhone.message);
+          document.getElementById('edit-tenant-contact-phone')?.focus();
+          return;
+        }
+      }
+
+      if (contactEmail) {
+        const vEmail = moValidateEmail(contactEmail);
+        if (!vEmail.valid) {
+          moSetFieldError('edit-tenant-contact-email', 'err-edit-tenant-contact-email', vEmail.message);
+          document.getElementById('edit-tenant-contact-email')?.focus();
+          return;
+        }
+      }
+
       const payload = {
-        company_name: document.getElementById('edit-tenant-company-name').value.trim(),
-        tax_code: document.getElementById('edit-tenant-tax-code').value.trim() || null,
-        representative_name: document.getElementById('edit-tenant-rep-name').value.trim() || null,
-        contact_phone: document.getElementById('edit-tenant-contact-phone').value.trim() || null,
-        contact_email: document.getElementById('edit-tenant-contact-email').value.trim() || null,
-        business_address: document.getElementById('edit-tenant-address').value.trim() || null,
-        status: document.getElementById('edit-tenant-status').value || 'ACTIVE'
+        company_name: companyName,
+        tax_code: taxCode || null,
+        representative_name: repName || null,
+        contact_phone: contactPhone || null,
+        contact_email: contactEmail || null,
+        business_address: businessAddress || null,
+        status: status
       };
+
+      const btn = document.getElementById('btn-submit-edit-tenant');
+      const originalHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang cập nhật...';
+      }
 
       try {
         const res = await fetch(`/api/v1/admin/tenants/${currentEditTenantId}`, {
@@ -221,14 +362,28 @@
 
         const json = await res.json();
         if (res.ok) {
-          alert('Cập nhật thông tin khách thuê thành công!');
+          moToast(`Đã cập nhật hồ sơ khách thuê [${companyName}] thành công!`, 'success');
           closeEditTenantModal();
           loadTenantsList();
         } else {
-          alert('Lỗi cập nhật: ' + (json.message || ''));
+          if (json.errors) {
+            moMapServerErrors(json.errors, {
+              company_name: ['edit-tenant-company-name', 'err-edit-tenant-company-name'],
+              tax_code: ['edit-tenant-tax-code', 'err-edit-tenant-tax-code'],
+              representative_name: ['edit-tenant-rep-name', 'err-edit-tenant-rep-name'],
+              contact_phone: ['edit-tenant-contact-phone', 'err-edit-tenant-contact-phone'],
+              contact_email: ['edit-tenant-contact-email', 'err-edit-tenant-contact-email']
+            });
+          }
+          moToast(json.message || 'Lỗi cập nhật. Vui lòng kiểm tra lại.', 'error');
         }
       } catch (err) {
-        alert('Lỗi kết nối cập nhật khách thuê.');
+        moToast('Lỗi kết nối cập nhật khách thuê: ' + (err.message || 'Lỗi mạng'), 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        }
       }
     }
 
@@ -237,7 +392,8 @@
       currentUploadLicenseTenantId = tenantId;
       const modal = document.getElementById('modal-upload-license');
       if (!modal) return;
-      document.getElementById('upload-license-company-name').innerText = companyName;
+      const compNameEl = document.getElementById('upload-license-company-name');
+      if (compNameEl) compNameEl.innerText = companyName;
       document.getElementById('form-upload-license')?.reset();
       modal.style.display = 'flex';
     }
@@ -334,10 +490,31 @@
 
     function handleTenantStatusFilter(status) {
       currentTenantStatus = status;
+      const sel = document.getElementById('tenant-status-select');
+      if (sel && sel.value !== status) sel.value = status;
       document.querySelectorAll('.tenant-status-btn').forEach(b => {
         b.classList.remove('active');
         if (b.getAttribute('data-status') === status) b.classList.add('active');
       });
       loadTenantsList();
     }
+
+    function resetTenantFilters() {
+      const inp = document.getElementById('tenant-search-input');
+      if (inp) inp.value = '';
+      const clrBtn = document.getElementById('btn-clear-tenant-search');
+      if (clrBtn) clrBtn.style.display = 'none';
+      const sel = document.getElementById('tenant-status-select');
+      if (sel) sel.value = 'ALL';
+      currentTenantSearch = '';
+      currentTenantStatus = 'ALL';
+      document.querySelectorAll('.tenant-status-btn').forEach(b => {
+        b.classList.remove('active');
+        if (b.getAttribute('data-status') === 'ALL') b.classList.add('active');
+      });
+      loadTenantsList();
+    }
+
+    window.handleTenantStatusFilter = handleTenantStatusFilter;
+    window.resetTenantFilters = resetTenantFilters;
 </script>

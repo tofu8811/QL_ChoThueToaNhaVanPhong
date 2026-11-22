@@ -173,12 +173,9 @@
               </tr>
             </table>
 
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-              <a href="{{ route('quote.page', ['building_id' => $building->id]) }}" class="btn-mo-orange" style="flex: 1; justify-content: center; text-decoration: none;">
-                <i class="fa-regular fa-calendar-check"></i> Đặt Lịch Khảo Sát
-              </a>
-              <a href="{{ route('quote.page', ['building_id' => $building->id]) }}" class="btn-mo-outline" style="text-decoration: none;">
-                <i class="fa-solid fa-file-pdf"></i> Nhận Báo Giá Chi Tiết
+            <div style="margin-top: 20px;">
+              <a href="{{ route('quote.page', ['building_id' => $building->id]) }}" class="btn-mo-orange" style="width: 100%; justify-content: center; text-decoration: none; padding: 12px 20px; font-size: 15px; font-weight: 700; border-radius: 8px; box-sizing: border-box;">
+                <i class="fa-solid fa-file-invoice-dollar"></i> Nhận Báo Giá & Đặt Lịch Khảo Sát
               </a>
             </div>
           </div>

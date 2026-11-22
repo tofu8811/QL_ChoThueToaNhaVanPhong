@@ -497,10 +497,20 @@
       // Cập nhật giao diện Dashboard nghiệp vụ theo Role (Admin vs PM theo feature/frontend)
       const isPmRole = (role === 'pm');
       document.querySelectorAll('.kpi-admin-content').forEach(el => {
-        el.style.display = isPmRole ? 'none' : (el.classList.contains('bms-alert-card') ? 'flex' : 'block');
+        el.style.display = isPmRole ? 'none' : 'flex';
+        if (!isPmRole) {
+          el.style.flexDirection = 'column';
+          el.style.justifyContent = 'space-between';
+          el.style.height = '100%';
+        }
       });
       document.querySelectorAll('.kpi-pm-content').forEach(el => {
-        el.style.display = isPmRole ? (el.classList.contains('bms-alert-card') ? 'flex' : 'block') : 'none';
+        el.style.display = isPmRole ? 'flex' : 'none';
+        if (isPmRole) {
+          el.style.flexDirection = 'column';
+          el.style.justifyContent = 'space-between';
+          el.style.height = '100%';
+        }
       });
 
       const secPm = document.getElementById('dashboard-section-pm');
@@ -508,48 +518,50 @@
       if (secPm) secPm.style.display = isPmRole ? 'block' : 'none';
       if (secAdmin) secAdmin.style.display = isPmRole ? 'none' : 'block';
 
-      const totalBldsEl = document.getElementById('dashboard-total-blds');
-      const totalBldsSub = document.getElementById('dashboard-total-blds-sub');
-      const totalUnitsSub = document.getElementById('dashboard-total-units-sub');
+      if (!window.location.pathname.startsWith('/pm')) {
+        const totalBldsEl = document.getElementById('dashboard-total-blds');
+        const totalBldsSub = document.getElementById('dashboard-total-blds-sub');
+        const totalUnitsSub = document.getElementById('dashboard-total-units-sub');
 
-      // Tính toán động số lượng tòa nhà và mặt bằng thực tế
-      let pmBldCount = 10;
-      let pmUnitsCount = 32;
-      let pmAreaSum = 199230;
-      if (isPmRole) {
-        if (typeof adminBuildingsList !== 'undefined' && adminBuildingsList.length > 0) {
-          pmBldCount = adminBuildingsList.length;
-          pmUnitsCount = adminBuildingsList.reduce((acc, b) => acc + (parseInt(b.units_count) || 0), 0) || (pmBldCount * 3);
-          pmAreaSum = adminBuildingsList.reduce((acc, b) => acc + (parseFloat(b.total_leasable_area_sqm) || 0), 0) || 199230;
-        } else if (realUser && Array.isArray(realUser.assigned_buildings) && realUser.assigned_buildings.length > 0) {
-          pmBldCount = realUser.assigned_buildings.length;
-          pmUnitsCount = pmBldCount * 3;
-        } else if (realUser && Array.isArray(realUser.assigned_building_ids) && realUser.assigned_building_ids.length > 0) {
-          pmBldCount = realUser.assigned_building_ids.length;
-          pmUnitsCount = pmBldCount * 3;
+        // Tính toán động số lượng tòa nhà và mặt bằng thực tế
+        let pmBldCount = 10;
+        let pmUnitsCount = 32;
+        let pmAreaSum = 199230;
+        if (isPmRole) {
+          if (typeof adminBuildingsList !== 'undefined' && adminBuildingsList.length > 0) {
+            pmBldCount = adminBuildingsList.length;
+            pmUnitsCount = adminBuildingsList.reduce((acc, b) => acc + (parseInt(b.units_count) || 0), 0) || (pmBldCount * 3);
+            pmAreaSum = adminBuildingsList.reduce((acc, b) => acc + (parseFloat(b.total_leasable_area_sqm) || 0), 0) || 199230;
+          } else if (realUser && Array.isArray(realUser.assigned_buildings) && realUser.assigned_buildings.length > 0) {
+            pmBldCount = realUser.assigned_buildings.length;
+            pmUnitsCount = pmBldCount * 3;
+          } else if (realUser && Array.isArray(realUser.assigned_building_ids) && realUser.assigned_building_ids.length > 0) {
+            pmBldCount = realUser.assigned_building_ids.length;
+            pmUnitsCount = pmBldCount * 3;
+          }
         }
-      }
 
-      if (totalBldsEl) totalBldsEl.innerText = isPmRole ? String(pmBldCount) : '22';
-      if (totalBldsSub) totalBldsSub.innerText = isPmRole ? 'tòa phụ trách' : 'tòa nhà';
-      if (totalUnitsSub) totalUnitsSub.innerText = isPmRole ? `${pmUnitsCount} mặt bằng` : '65 mặt bằng';
+        if (totalBldsEl) totalBldsEl.innerText = isPmRole ? String(pmBldCount) : '22';
+        if (totalBldsSub) totalBldsSub.innerText = isPmRole ? 'tòa phụ trách' : 'tòa nhà';
+        if (totalUnitsSub) totalUnitsSub.innerText = isPmRole ? `${pmUnitsCount} mặt bằng` : '65 mặt bằng';
 
-      const card1Title = document.getElementById('dashboard-card1-title');
-      const card1FootLabel = document.getElementById('dashboard-card1-foot-label');
-      const card1FootVal = document.getElementById('dashboard-card1-foot-val');
-      if (card1Title) card1Title.innerText = isPmRole ? 'TỔNG SỐ TÒA NHÀ PHỤ TRÁCH' : 'QUY MÔ TÀI SẢN & SÀN';
-      if (card1FootLabel) card1FootLabel.innerText = isPmRole ? 'Đang hoạt động:' : 'Tổng diện tích quản lý:';
-      if (card1FootVal) card1FootVal.innerText = isPmRole ? `${pmBldCount}/${pmBldCount} cao ốc` : '428.430 m²';
+        const card1Title = document.getElementById('dashboard-card1-title');
+        const card1FootLabel = document.getElementById('dashboard-card1-foot-label');
+        const card1FootVal = document.getElementById('dashboard-card1-foot-val');
+        if (card1Title) card1Title.innerText = isPmRole ? 'TỔNG SỐ TÒA NHÀ PHỤ TRÁCH' : 'QUY MÔ TÀI SẢN & SÀN';
+        if (card1FootLabel) card1FootLabel.innerText = isPmRole ? 'Đang hoạt động:' : 'Tổng diện tích quản lý:';
+        if (card1FootVal) card1FootVal.innerText = isPmRole ? `${pmBldCount}/${pmBldCount} cao ốc` : '428.430 m²';
 
-      const dashTitle = document.getElementById('dashboard-page-title');
-      const dashSub = document.getElementById('dashboard-page-subtitle');
-      if (dashTitle) {
-        dashTitle.innerText = isPmRole ? 'Tổng Quan Vận Hành & Lấp Đầy Cao Ốc' : 'Tổng Quan Vận Hành & Kinh Doanh Tòa Nhà';
-      }
-      if (dashSub) {
-        dashSub.innerText = isPmRole
-          ? 'Bức tranh toàn cảnh về hiện trạng tòa nhà, tỷ lệ lấp đầy, tiến độ xử lý sự cố kỹ thuật và phê duyệt vận hành.'
-          : 'Bức tranh toàn cảnh về quy mô tài sản, hợp đồng thuê, doanh thu công nợ và trạng thái vận hành toàn hệ thống.';
+        const dashTitle = document.getElementById('dashboard-page-title');
+        const dashSub = document.getElementById('dashboard-page-subtitle');
+        if (dashTitle) {
+          dashTitle.innerText = isPmRole ? 'Tổng Quan Vận Hành & Lấp Đầy Cao Ốc' : 'Tổng Quan Vận Hành & Kinh Doanh Tòa Nhà';
+        }
+        if (dashSub) {
+          dashSub.innerText = isPmRole
+            ? 'Bức tranh toàn cảnh về hiện trạng tòa nhà, tỷ lệ lấp đầy, tiến độ xử lý sự cố kỹ thuật và phê duyệt vận hành.'
+            : 'Bức tranh toàn cảnh về quy mô tài sản, hợp đồng thuê, doanh thu công nợ và trạng thái vận hành toàn hệ thống.';
+        }
       }
 
       if (role === 'admin') {
@@ -560,10 +572,10 @@
         if (roleSwitcherContainer) roleSwitcherContainer.style.display = isAdmin ? 'inline-flex' : 'none';
         if (sidebarFilamentBtn) sidebarFilamentBtn.style.display = isAdmin ? 'inline-flex' : 'none';
 
-        sidebarRoleBadge.innerText = isSuper ? 'Super Admin' : 'Admin';
-        userName.innerText = rawName || (isSuper ? 'Nguyễn Quản Trị Hệ Thống' : 'Phạm Quản Trị');
-        userSub.innerText = isSuper ? 'Super Admin • Toàn hệ thống' : 'Quản trị viên • Vận hành';
-        userAvatar.innerText = isSuper ? 'SA' : 'AD';
+        if (sidebarRoleBadge) sidebarRoleBadge.innerText = isSuper ? 'Super Admin' : 'Admin';
+        if (userName) userName.innerText = rawName || (isSuper ? 'Nguyễn Quản Trị Hệ Thống' : 'Phạm Quản Trị');
+        if (userSub) userSub.innerText = isSuper ? 'Super Admin • Toàn hệ thống' : 'Quản trị viên • Vận hành';
+        if (userAvatar) userAvatar.innerText = isSuper ? 'SA' : 'AD';
         if (groupAdmin) groupAdmin.style.display = 'block';
         if (navDashboard) navDashboard.style.display = 'flex';
         if (navBuildings) navBuildings.style.display = 'flex';
@@ -599,10 +611,10 @@
         if (roleSwitcherContainer) roleSwitcherContainer.style.display = (realRole === 'ADMIN' || realRole === 'SUPER_ADMIN') ? 'inline-flex' : 'none';
         if (sidebarFilamentBtn) sidebarFilamentBtn.style.display = 'none';
 
-        sidebarRoleBadge.innerText = 'Ban Quản Lý';
-        userName.innerText = rawName || authedUser?.full_name || 'Ban Quản Lý';
-        userSub.innerText = authedUser?.email || 'Vận hành & Kỹ thuật tòa nhà';
-        userAvatar.innerText = (rawName || authedUser?.full_name || 'PM').substring(0, 2).toUpperCase();
+        if (sidebarRoleBadge) sidebarRoleBadge.innerText = 'Ban Quản Lý';
+        if (userName) userName.innerText = rawName || authedUser?.full_name || 'Ban Quản Lý';
+        if (userSub) userSub.innerText = authedUser?.email || 'Vận hành & Kỹ thuật tòa nhà';
+        if (userAvatar) userAvatar.innerText = (rawName || authedUser?.full_name || 'PM').substring(0, 2).toUpperCase();
         if (groupAdmin) groupAdmin.style.display = 'block';
         if (navDashboard) navDashboard.style.display = 'flex';
         if (navBuildings) navBuildings.style.display = 'flex';
@@ -623,10 +635,10 @@
         if (roleSwitcherContainer) roleSwitcherContainer.style.display = (realRole === 'ADMIN' || realRole === 'SUPER_ADMIN') ? 'inline-flex' : 'none';
         if (sidebarFilamentBtn) sidebarFilamentBtn.style.display = 'none';
 
-        sidebarRoleBadge.innerText = 'Chuyên Viên Sales';
-        userName.innerText = rawName || authedUser?.full_name || 'Chuyên Viên Sales';
-        userSub.innerText = authedUser?.email || 'Chuyên viên Leasing & Báo giá';
-        userAvatar.innerText = (rawName || authedUser?.full_name || 'SL').substring(0, 2).toUpperCase();
+        if (sidebarRoleBadge) sidebarRoleBadge.innerText = 'Chuyên Viên Sales';
+        if (userName) userName.innerText = rawName || authedUser?.full_name || 'Chuyên Viên Sales';
+        if (userSub) userSub.innerText = authedUser?.email || 'Chuyên viên Leasing & Báo giá';
+        if (userAvatar) userAvatar.innerText = (rawName || authedUser?.full_name || 'SL').substring(0, 2).toUpperCase();
         // Sales chỉ thấy phân hệ Kinh doanh (Báo cáo cá nhân, Leads, Báo giá & LOI, Mặt bằng chào thuê)
         if (groupAdmin) groupAdmin.style.display = 'none';
         if (groupSales) groupSales.style.display = 'block';
@@ -649,10 +661,10 @@
         if (roleSwitcherContainer) roleSwitcherContainer.style.display = (realRole === 'ADMIN' || realRole === 'SUPER_ADMIN') ? 'inline-flex' : 'none';
         if (sidebarFilamentBtn) sidebarFilamentBtn.style.display = 'none';
 
-        sidebarRoleBadge.innerText = 'Kế Toán';
-        userName.innerText = rawName || authedUser?.full_name || 'Kế Toán Tòa Nhà';
-        userSub.innerText = authedUser?.email || 'Kế toán công nợ & Đối soát';
-        userAvatar.innerText = (rawName || authedUser?.full_name || 'KT').substring(0, 2).toUpperCase();
+        if (sidebarRoleBadge) sidebarRoleBadge.innerText = 'Kế Toán';
+        if (userName) userName.innerText = rawName || authedUser?.full_name || 'Kế Toán Tòa Nhà';
+        if (userSub) userSub.innerText = authedUser?.email || 'Kế toán công nợ & Đối soát';
+        if (userAvatar) userAvatar.innerText = (rawName || authedUser?.full_name || 'KT').substring(0, 2).toUpperCase();
         // Kế toán xem Công nợ & Thanh toán, Hợp đồng, Khách hàng, Tòa nhà
         if (groupAdmin) groupAdmin.style.display = 'block';
         if (navDashboard) navDashboard.style.display = 'none';
@@ -672,10 +684,10 @@
         if (sidebarFilamentBtn) sidebarFilamentBtn.style.display = 'none';
 
         const tenantDisplayName = rawName || realUser?.company_name || 'Doanh Nghiệp Khách Thuê';
-        sidebarRoleBadge.innerText = 'Khách Thuê';
-        userName.innerText = tenantDisplayName;
-        userSub.innerText = realUser?.login_email || realUser?.billing_email || realUser?.email || 'Khách thuê';
-        userAvatar.innerText = tenantDisplayName.substring(0, 2).toUpperCase();
+        if (sidebarRoleBadge) sidebarRoleBadge.innerText = 'Khách Thuê';
+        if (userName) userName.innerText = tenantDisplayName;
+        if (userSub) userSub.innerText = realUser?.login_email || realUser?.billing_email || realUser?.email || 'Khách thuê';
+        if (userAvatar) userAvatar.innerText = tenantDisplayName.substring(0, 2).toUpperCase();
         if (groupAdmin) groupAdmin.style.display = 'none';
         if (groupSales) groupSales.style.display = 'none';
         if (groupSystem) groupSystem.style.display = 'none';

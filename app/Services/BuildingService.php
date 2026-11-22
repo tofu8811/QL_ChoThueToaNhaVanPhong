@@ -262,7 +262,7 @@ class BuildingService
             $slugBase = Str::slug($data['name']);
             $slug = $slugBase;
             $counter = 1;
-            while (Building::where('slug', $slug)->exists()) {
+            while (Building::withTrashed()->where('slug', $slug)->exists()) {
                 $slug = "{$slugBase}-{$counter}";
                 $counter++;
             }
@@ -294,7 +294,7 @@ class BuildingService
                 $slugBase = Str::slug($data['name']);
                 $slug = $slugBase;
                 $counter = 1;
-                while (Building::where('slug', $slug)->where('id', '!=', $building->id)->exists()) {
+                while (Building::withTrashed()->where('slug', $slug)->where('id', '!=', $building->id)->exists()) {
                     $slug = "{$slugBase}-{$counter}";
                     $counter++;
                 }

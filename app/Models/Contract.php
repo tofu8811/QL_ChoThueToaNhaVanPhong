@@ -294,6 +294,11 @@ class Contract extends Model
         return $deposit > 0 ? (float) round($deposit / 3) : 0.0;
     }
 
+    public function getMonthlyRentAttribute(): float
+    {
+        return $this->rent_amount;
+    }
+
     /**
      * Định dạng tổng tiền thuê hàng tháng chuẩn VNĐ/tháng.
      *

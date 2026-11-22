@@ -128,7 +128,8 @@
         @empty
           <tr>
             <td colspan="6" style="text-align:center;padding:24px;color:#94a3b8;">
-              Chưa có deal nào trong hệ thống CRM.
+              <i class="fa-solid fa-folder-open" style="font-size:24px;margin-bottom:8px;display:block;color:#cbd5e1;"></i>
+              Chưa có deal nào trong danh sách phụ trách cá nhân của bạn.
             </td>
           </tr>
         @endforelse
@@ -164,32 +165,39 @@
   </div>
 
   <!-- Bộ lọc nhanh & Tìm kiếm -->
-  <div class="filament-card" style="margin-bottom:16px;padding:16px;">
+  <div class="filament-card" style="margin-bottom:16px;padding:14px 18px;">
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;">
-      <div style="display:flex;gap:10px;align-items:center;flex:1;max-width:540px;">
+      <div style="display:flex;gap:10px;align-items:center;flex:1;min-width:320px;">
         <div style="position:relative;flex:1;display:flex;align-items:center;">
-          <input type="text" id="crm-search-input" class="filament-input-sm" placeholder="Tìm theo tên khách, SĐT, công ty..." oninput="toggleSearchClearBtn(this)" onkeydown="if(event.key==='Enter'){ event.preventDefault(); doCrmSearch(); }" style="width:100%;padding-right:32px;">
+          <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:12px;color:#94a3b8;font-size:13px;pointer-events:none;"></i>
+          <input type="text" id="crm-search-input" class="filament-input-sm" placeholder="Tìm theo tên khách, số điện thoại, công ty..." oninput="toggleSearchClearBtn(this)" onkeydown="if(event.key==='Enter'){ event.preventDefault(); doCrmSearch(); }" style="width:100%;padding-left:34px;padding-right:32px;height:38px;font-size:13px;border-radius:6px;">
           <button type="button" class="bms-search-clear-btn" id="btn-clear-crm-search" onclick="handleClearSearchInput('crm-search-input', doCrmSearch)" title="Xóa tìm kiếm">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
-        <button type="button" class="btn-mo-primary" onclick="doCrmSearch()" style="background:#2563eb;padding:6px 14px;font-size:12.5px;display:flex;align-items:center;gap:6px;white-space:nowrap;border:none;border-radius:6px;cursor:pointer;">
+        <button type="button" class="btn-mo-primary" onclick="doCrmSearch()" style="background:#2563eb;height:38px;padding:0 16px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;white-space:nowrap;border:none;border-radius:6px;cursor:pointer;">
           <i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm
         </button>
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="btn-mo-outline crm-status-btn active" data-status="ALL" onclick="handleCrmStatusFilter('ALL')" style="font-size:12px;padding:4px 10px;">Tất cả</button>
-        <button class="btn-mo-outline crm-status-btn" data-status="PENDING_ASSIGN" onclick="handleCrmStatusFilter('PENDING_ASSIGN')" style="font-size:12px;padding:4px 10px;color:#d97706;border-color:#fde68a;background:#fffbeb;">
-          <i class="fa-solid fa-triangle-exclamation"></i> Chờ phân bổ (<span id="crm-pending-count">0</span>)
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <label for="crm-status-select" style="font-size:12.5px;font-weight:600;color:#64748b;white-space:nowrap;margin:0;">Trạng thái:</label>
+          <select id="crm-status-select" class="filament-input-sm" onchange="handleCrmStatusFilter(this.value)" style="height:38px;font-size:13px;border-radius:6px;min-width:190px;cursor:pointer;">
+            <option value="ALL">-- Tất cả trạng thái --</option>
+            <option value="PENDING_ASSIGN" id="opt-pending-assign">⚠️ Chờ phân bổ</option>
+            <option value="NEW">1. Tiếp nhận</option>
+            <option value="CONTACTED">Đã gọi điện</option>
+            <option value="SITE_VISIT">2. Đi xem mặt bằng</option>
+            <option value="NEGOTIATING">3. Gửi LOI / Thương lượng</option>
+            <option value="WON">4. Chốt hợp đồng (Won)</option>
+            <option value="LOST">Thất bại (Lost)</option>
+          </select>
+        </div>
+        <button type="button" class="btn-mo-outline" onclick="resetCrmFilters()" style="height:38px;padding:0 14px;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;border-radius:6px;cursor:pointer;background:#fff;" title="Đặt lại bộ lọc & hiển thị toàn bộ Leads">
+          <i class="fa-solid fa-rotate-left"></i> Đặt lại
         </button>
-        <button class="btn-mo-outline crm-status-btn" data-status="NEW" onclick="handleCrmStatusFilter('NEW')" style="font-size:12px;padding:4px 10px;">1. Tiếp nhận</button>
-        <button class="btn-mo-outline crm-status-btn" data-status="CONTACTED" onclick="handleCrmStatusFilter('CONTACTED')" style="font-size:12px;padding:4px 10px;">Đã gọi điện</button>
-        <button class="btn-mo-outline crm-status-btn" data-status="SITE_VISIT" onclick="handleCrmStatusFilter('SITE_VISIT')" style="font-size:12px;padding:4px 10px;">2. Đi xem mặt bằng</button>
-        <button class="btn-mo-outline crm-status-btn" data-status="NEGOTIATING" onclick="handleCrmStatusFilter('NEGOTIATING')" style="font-size:12px;padding:4px 10px;">3. Gửi LOI / Thương lượng</button>
-        <button class="btn-mo-outline crm-status-btn" data-status="WON" onclick="handleCrmStatusFilter('WON')" style="font-size:12px;padding:4px 10px;">4. Chốt hợp đồng (Won)</button>
-        <button class="btn-mo-outline crm-status-btn" data-status="LOST" onclick="handleCrmStatusFilter('LOST')" style="font-size:12px;padding:4px 10px;">Thất bại (Lost)</button>
+        <span style="font-size:13px;color:#64748b;margin-left:4px;white-space:nowrap;">Tổng cộng: <strong id="crm-leads-count" style="color:#0f172a;">0</strong> leads</span>
       </div>
-      <span style="font-size:13px;color:#64748b;">Tổng cộng: <strong id="crm-leads-count" style="color:#0f172a;">0</strong> leads</span>
     </div>
   </div>
 

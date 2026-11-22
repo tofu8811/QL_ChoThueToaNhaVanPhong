@@ -164,6 +164,7 @@ class LeadQuotationForm extends Component
         }
 
         $this->isSubmitted = true;
+        $this->dispatch('mo-toast', message: $this->resultMessage, type: $this->resultType, title: $this->resultTitle);
     }
 
     /**

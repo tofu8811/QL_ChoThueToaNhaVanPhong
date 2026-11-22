@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Models\Contract;
 use App\Models\Sale;
 use App\Services\PortalDashboardService;
 use Illuminate\Http\Request;
@@ -61,28 +62,44 @@ class SaleWebController extends Controller
     protected function getSalesViewData(Request $request, string $activeTab, string $breadcrumb): array
     {
         $user = $request->attributes->get('current_web_user') ?? auth()->user();
+        if (!$user) {
+            $user = Sale::where('email', 'sales.demo@officeleasing.vn')->first();
+        }
+
         $viewData = $this->portalDashboardService->getDashboardPortalData();
 
         $activeLeadsCount = 0;
 
         if ($user instanceof Sale) {
-            $userLeads = $user->leads()->get();
+            // Lấy danh sách Leads do chính Sales cá nhân này phụ trách
+            $userLeads = $user->leads()
+                ->with(['building', 'unit', 'assignedSales'])
+                ->latest()
+                ->get();
             $activeLeadsCount = $userLeads->whereNotIn('status', ['WON', 'LOST'])->count();
-            if ($userLeads->count() > 0) {
-                $viewData['leads'] = $userLeads;
-            }
+
+            // Luôn ghi đè dữ liệu Leads bằng danh sách cá nhân (không fallback dữ liệu toàn công ty)
+            $viewData['leads'] = $userLeads;
+
+            // Lọc hợp đồng cá nhân do chính Sales này tạo/chốt
+            $userContracts = Contract::where('created_by_sales_id', $user->id)
+                ->orWhereHas('tenant', fn ($t) => $t->where('created_by_sales_id', $user->id))
+                ->with(['tenant', 'building', 'units'])
+                ->latest()
+                ->get();
+            $viewData['recentContracts'] = $userContracts;
         } elseif ($user instanceof Admin && $user->is_super_admin) {
             // Case 1: Super Admin kiểm tra phân hệ Sales (Xem tổng hợp toàn công ty)
             $activeLeadsCount = count($viewData['leads'] ?? []);
         }
 
-        $viewData['currentUserName'] = $user?->full_name ?? $user?->name ?? 'Trần Quốc Huy';
-        $viewData['currentUserEmail'] = $user?->email ?? 'sales.huy@officeleasing.vn';
+        $viewData['currentUserName'] = $user?->full_name ?? $user?->name ?? 'Phạm Kinh Doanh (Sales Demo)';
+        $viewData['currentUserEmail'] = $user?->email ?? 'sales.demo@officeleasing.vn';
         $viewData['currentUserSub'] = 'Chuyên viên Leasing & Báo giá';
         $viewData['currentUserRoleLabel'] = 'CHUYÊN VIÊN SALES';
-        $viewData['avatarInitial'] = 'SL';
+        $viewData['avatarInitial'] = 'KD';
         $viewData['roleBadge'] = 'Chuyên Viên Sales';
-        $viewData['activeLeadsCount'] = $activeLeadsCount ?: 3;
+        $viewData['activeLeadsCount'] = $activeLeadsCount;
         $viewData['activeTab'] = $activeTab;
         $viewData['breadcrumb'] = $breadcrumb;
 

@@ -97,6 +97,14 @@ class Sale extends Authenticatable
     {
         return $this->hasMany(Tenant::class, 'created_by_sales_id');
     }
+
+    /**
+     * Hợp đồng do Sales tạo hoặc giữ chỗ.
+     */
+    public function contracts(): HasMany
+    {
+        return $this->hasMany(Contract::class, 'created_by_sales_id');
+    }
     public function createdTickets(): HasMany
     {
         return $this->hasMany(Ticket::class, 'creator_sale_id');

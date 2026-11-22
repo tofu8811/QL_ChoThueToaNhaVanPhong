@@ -49,7 +49,7 @@
               <div class="filament-card" style="margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
                   <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                    <div style="position: relative; width: 260px; display: flex; align-items: center;">
+                    <div style="position: relative; width: 300px; display: flex; align-items: center;">
                       <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
                       <input type="text" id="filter-admin-keyword" placeholder="Tìm theo tên, email, SĐT..." class="form-control" style="padding-left: 34px; padding-right: 32px; height: 38px; font-size: 13px; border-radius: 6px; width: 100%;" oninput="toggleSearchClearBtn(this)" onkeyup="if(event.key==='Enter') loadStaffAdmins(1)">
                       <button type="button" class="bms-search-clear-btn" id="btn-clear-filter-admin" onclick="handleClearSearchInput('filter-admin-keyword', () => loadStaffAdmins(1))" title="Xóa tìm kiếm">
@@ -64,6 +64,9 @@
                     </select>
                     <button class="btn-mo-primary" style="height: 38px; padding: 0 16px; font-size: 13px; border-radius: 6px;" onclick="loadStaffAdmins(1)">
                       <i class="fa-solid fa-filter"></i> Lọc
+                    </button>
+                    <button type="button" class="btn-mo-outline" style="height: 38px; padding: 0 14px; font-size: 12.5px; border-radius: 6px; background: #fff;" onclick="resetStaffAdminFilters()" title="Đặt lại bộ lọc">
+                      <i class="fa-solid fa-rotate-left"></i> Đặt lại
                     </button>
                   </div>
                   <div>
@@ -153,7 +156,7 @@
               <div class="filament-card" style="margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
                   <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                    <div style="position: relative; width: 260px; display: flex; align-items: center;">
+                    <div style="position: relative; width: 300px; display: flex; align-items: center;">
                       <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
                       <input type="text" id="filter-sale-keyword" placeholder="Mã NV, tên, email, SĐT..." class="form-control" style="padding-left: 34px; padding-right: 32px; height: 38px; font-size: 13px; border-radius: 6px; width: 100%;" oninput="toggleSearchClearBtn(this)" onkeyup="if(event.key==='Enter') loadStaffSales(1)">
                       <button type="button" class="bms-search-clear-btn" id="btn-clear-filter-sale" onclick="handleClearSearchInput('filter-sale-keyword', () => loadStaffSales(1))" title="Xóa tìm kiếm">
@@ -168,6 +171,9 @@
                     </select>
                     <button class="btn-mo-primary" style="height: 38px; padding: 0 16px; font-size: 13px; border-radius: 6px;" onclick="loadStaffSales(1)">
                       <i class="fa-solid fa-filter"></i> Lọc
+                    </button>
+                    <button type="button" class="btn-mo-outline" style="height: 38px; padding: 0 14px; font-size: 12.5px; border-radius: 6px; background: #fff;" onclick="resetStaffSaleFilters()" title="Đặt lại bộ lọc">
+                      <i class="fa-solid fa-rotate-left"></i> Đặt lại
                     </button>
                   </div>
                   <div>
@@ -215,7 +221,7 @@
                                   <span style="background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:700;">+{{ count($blds) - 2 }} tòa</span>
                                 @endif
                               @else
-                                <span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span>
+                                <span style="color:#b45309; background:#fef3c7; padding:2px 8px; border-radius:6px; font-size:11.5px; font-weight:600;">Chưa phân công</span>
                               @endif
                             </div>
                           </td>
@@ -261,7 +267,7 @@
               <div class="filament-card" style="margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
                   <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                    <div style="position: relative; width: 260px; display: flex; align-items: center;">
+                    <div style="position: relative; width: 300px; display: flex; align-items: center;">
                       <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
                       <input type="text" id="filter-pm-keyword" placeholder="Mã BQL, tên, email, hotline..." class="form-control" style="padding-left: 34px; padding-right: 32px; height: 38px; font-size: 13px; border-radius: 6px; width: 100%;" oninput="toggleSearchClearBtn(this)" onkeyup="if(event.key==='Enter') loadStaffPm(1)">
                       <button type="button" class="bms-search-clear-btn" id="btn-clear-filter-pm" onclick="handleClearSearchInput('filter-pm-keyword', () => loadStaffPm(1))" title="Xóa tìm kiếm">
@@ -283,6 +289,9 @@
                     </select>
                     <button class="btn-mo-primary" style="height: 38px; padding: 0 16px; font-size: 13px; border-radius: 6px;" onclick="loadStaffPm(1)">
                       <i class="fa-solid fa-filter"></i> Lọc
+                    </button>
+                    <button type="button" class="btn-mo-outline" style="height: 38px; padding: 0 14px; font-size: 12.5px; border-radius: 6px; background: #fff;" onclick="resetStaffPmFilters()" title="Đặt lại bộ lọc">
+                      <i class="fa-solid fa-rotate-left"></i> Đặt lại
                     </button>
                   </div>
                   <div>
@@ -338,7 +347,7 @@
                                   <span style="background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:700; white-space:nowrap;">+{{ count($blds) - 2 }} tòa</span>
                                 @endif
                               @else
-                                <span style="color:#94a3b8; font-size:11.5px;">Chưa phân công</span>
+                                <span style="color:#b45309; background:#fef3c7; padding:2px 8px; border-radius:6px; font-size:11.5px; font-weight:600;">Chưa phân công</span>
                               @endif
                             </div>
                           </td>
@@ -380,7 +389,7 @@
               <div class="filament-card" style="margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
                   <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                    <div style="position: relative; width: 260px; display: flex; align-items: center;">
+                    <div style="position: relative; width: 300px; display: flex; align-items: center;">
                       <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
                       <input type="text" id="filter-acc-keyword" placeholder="Mã KT, tên, email, SĐT..." class="form-control" style="padding-left: 34px; padding-right: 32px; height: 38px; font-size: 13px; border-radius: 6px; width: 100%;" oninput="toggleSearchClearBtn(this)" onkeyup="if(event.key==='Enter') loadStaffAccountants(1)">
                       <button type="button" class="bms-search-clear-btn" id="btn-clear-filter-acc" onclick="handleClearSearchInput('filter-acc-keyword', () => loadStaffAccountants(1))" title="Xóa tìm kiếm">
@@ -400,6 +409,9 @@
                     </select>
                     <button class="btn-mo-primary" style="height: 38px; padding: 0 16px; font-size: 13px; border-radius: 6px;" onclick="loadStaffAccountants(1)">
                       <i class="fa-solid fa-filter"></i> Lọc
+                    </button>
+                    <button type="button" class="btn-mo-outline" style="height: 38px; padding: 0 14px; font-size: 12.5px; border-radius: 6px; background: #fff;" onclick="resetStaffAccFilters()" title="Đặt lại bộ lọc">
+                      <i class="fa-solid fa-rotate-left"></i> Đặt lại
                     </button>
                   </div>
                   <div>
@@ -453,7 +465,7 @@
                                   <span style="background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:700; white-space:nowrap;">+{{ count($blds) - 2 }} tòa</span>
                                 @endif
                               @else
-                                <span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span>
+                                <span style="color:#b45309; background:#fef3c7; padding:2px 8px; border-radius:6px; font-size:11.5px; font-weight:600;">Chưa phân công</span>
                               @endif
                             </div>
                           </td>
@@ -535,7 +547,7 @@
                     <p style="margin:0; font-size:12.5px; color:#64748b;">Nhân viên Sales phụ trách tiếp nhận Leads khách thuê có nhu cầu tại tòa nhà này.</p>
                   </div>
                   <div>
-                    <button class="btn-mo-orange" style="font-size:12.5px; padding:7px 14px;" onclick="openAssignSalesModal()">
+                    <button class="btn-mo-orange" style="font-size:12.5px; padding:7px 14px;" onclick="openAssignBuildingSalesModal()">
                       <i class="fa-solid fa-user-plus"></i> Phân Công Sales Vào Tòa Nhà
                     </button>
                   </div>

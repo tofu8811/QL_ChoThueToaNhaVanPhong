@@ -78,12 +78,101 @@ function recalcUtilPreview() {
   if (parkTotalEl) parkTotalEl.value = parkTotal.toLocaleString('vi-VN') + ' đ';
 }
 
-function handleCalculateUtilities(e) {
+async function handleCalculateUtilities(e) {
   if (e) e.preventDefault();
-  const tenant = document.getElementById('util-tenant')?.value || 'Khách thuê';
-  const month = document.getElementById('util-month')?.value || '11/2026';
-  alert(`Đã chốt chỉ số tiêu thụ và tự động xuất Thông Báo Phí (Debit Note) kỳ ${month} cho doanh nghiệp [${tenant}] thành công!\nBao gồm 5 cấu phần chi phí: Tiền thuê, Phí QL, Điện, Nước và Gửi xe.`);
-  closeModal('modal-record-utilities');
+
+  moClearFieldError('util-tenant', 'err-util-tenant');
+  moClearFieldError('util-month', 'err-util-month');
+  moClearFieldError('elec-start', 'err-elec-start');
+  moClearFieldError('elec-end', 'err-elec-end');
+  moClearFieldError('water-start', 'err-water-start');
+  moClearFieldError('water-end', 'err-water-end');
+  moClearFieldError('park-cars', 'err-park-cars');
+  moClearFieldError('park-motos', 'err-park-motos');
+
+  const tenant = document.getElementById('util-tenant')?.value?.trim();
+  const month = document.getElementById('util-month')?.value?.trim();
+  const eStartStr = document.getElementById('elec-start')?.value?.trim();
+  const eEndStr = document.getElementById('elec-end')?.value?.trim();
+  const wStartStr = document.getElementById('water-start')?.value?.trim();
+  const wEndStr = document.getElementById('water-end')?.value?.trim();
+  const pCarsStr = document.getElementById('park-cars')?.value?.trim();
+  const pMotosStr = document.getElementById('park-motos')?.value?.trim();
+
+  let hasError = false;
+
+  if (!tenant) {
+    moSetFieldError('util-tenant', 'err-util-tenant', 'Vui lòng chọn khách thuê doanh nghiệp cần tính cước.');
+    hasError = true;
+  }
+
+  const monthRegex = /^(0[1-9]|1[0-2])\/\d{4}$/;
+  if (!month || !monthRegex.test(month)) {
+    moSetFieldError('util-month', 'err-util-month', 'Kỳ tính cước phải có định dạng MM/YYYY (Ví dụ: 11/2026).');
+    if (!hasError) { document.getElementById('util-month')?.focus(); hasError = true; }
+  }
+
+  const eStart = parseFloat(eStartStr);
+  const eEnd = parseFloat(eEndStr);
+  if (isNaN(eStart) || eStart < 0) {
+    moSetFieldError('elec-start', 'err-elec-start', 'Số điện đầu kỳ phải là số không âm.');
+    if (!hasError) { document.getElementById('elec-start')?.focus(); hasError = true; }
+  }
+  if (isNaN(eEnd) || eEnd < 0) {
+    moSetFieldError('elec-end', 'err-elec-end', 'Số điện cuối kỳ phải là số không âm.');
+    if (!hasError) { document.getElementById('elec-end')?.focus(); hasError = true; }
+  } else if (!isNaN(eStart) && eEnd < eStart) {
+    moSetFieldError('elec-end', 'err-elec-end', 'Số điện cuối kỳ phải lớn hơn hoặc bằng số đầu kỳ (' + eStart + ').');
+    if (!hasError) { document.getElementById('elec-end')?.focus(); hasError = true; }
+  }
+
+  const wStart = parseFloat(wStartStr);
+  const wEnd = parseFloat(wEndStr);
+  if (isNaN(wStart) || wStart < 0) {
+    moSetFieldError('water-start', 'err-water-start', 'Số nước đầu kỳ phải là số không âm.');
+    if (!hasError) { document.getElementById('water-start')?.focus(); hasError = true; }
+  }
+  if (isNaN(wEnd) || wEnd < 0) {
+    moSetFieldError('water-end', 'err-water-end', 'Số nước cuối kỳ phải là số không âm.');
+    if (!hasError) { document.getElementById('water-end')?.focus(); hasError = true; }
+  } else if (!isNaN(wStart) && wEnd < wStart) {
+    moSetFieldError('water-end', 'err-water-end', 'Số nước cuối kỳ phải lớn hơn hoặc bằng số đầu kỳ (' + wStart + ').');
+    if (!hasError) { document.getElementById('water-end')?.focus(); hasError = true; }
+  }
+
+  const pCars = parseFloat(pCarsStr);
+  if (isNaN(pCars) || pCars < 0) {
+    moSetFieldError('park-cars', 'err-park-cars', 'Số lượng ô tô không được âm.');
+    if (!hasError) { document.getElementById('park-cars')?.focus(); hasError = true; }
+  }
+
+  const pMotos = parseFloat(pMotosStr);
+  if (isNaN(pMotos) || pMotos < 0) {
+    moSetFieldError('park-motos', 'err-park-motos', 'Số lượng xe máy không được âm.');
+    if (!hasError) { document.getElementById('park-motos')?.focus(); hasError = true; }
+  }
+
+  if (hasError) return;
+
+  const btn = document.getElementById('btn-submit-util');
+  const originalHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang tính toán & xuất Debit Note...';
+  }
+
+  try {
+    await new Promise(r => setTimeout(r, 600));
+    moToast(`Đã chốt chỉ số và xuất Thông Báo Phí kỳ ${month} cho doanh nghiệp [${tenant}] thành công!`, 'success');
+    closeModal('modal-record-utilities');
+  } catch (err) {
+    moToast('Có lỗi phát sinh khi xuất thông báo phí: ' + (err.message || 'Lỗi không xác định'), 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
+  }
 }
 
 // Đối soát Ủy nhiệm chi (UNC) và cập nhật trạng thái

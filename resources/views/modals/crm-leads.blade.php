@@ -5,36 +5,41 @@
       <h3 style="margin:0;font-size:16px;font-weight:700;"><i class="fa-solid fa-user-plus"></i> Tiếp Nhận Khách Hàng Tiềm Năng Mới</h3>
       <button type="button" onclick="closeCreateLeadModal()" style="background:none;border:none;color:#ffffff;font-size:18px;cursor:pointer;">&times;</button>
     </div>
-    <form id="form-create-lead" onsubmit="submitCreateLead(event)" style="padding:20px;">
+    <form id="form-create-lead" onsubmit="submitCreateLead(event)" novalidate style="padding:20px;">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Họ và Tên <span style="color:#ef4444;">*</span></label>
-          <input type="text" id="lead-contact-name" class="filament-input-sm" required placeholder="Nguyễn Văn A">
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Họ và Tên <span style="color:#ef4444;">*</span></label>
+          <input type="text" id="lead-contact-name" class="filament-input-sm" placeholder="Nguyễn Văn A" oninput="moClearFieldError('lead-contact-name', 'err-lead-contact-name')">
+          <div class="field-error-slot" id="err-lead-contact-name"></div>
         </div>
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Số Điện Thoại <span style="color:#ef4444;">*</span></label>
-          <input type="tel" id="lead-contact-phone" class="filament-input-sm" required placeholder="0901234567">
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Số Điện Thoại <span style="color:#ef4444;">*</span></label>
+          <input type="tel" id="lead-contact-phone" class="filament-input-sm" placeholder="0901234567" oninput="moClearFieldError('lead-contact-phone', 'err-lead-contact-phone')">
+          <div class="field-error-slot" id="err-lead-contact-phone"></div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Email</label>
-          <input type="email" id="lead-contact-email" class="filament-input-sm" placeholder="khachhang@company.vn">
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Email</label>
+          <input type="email" id="lead-contact-email" class="filament-input-sm" placeholder="khachhang@company.vn" oninput="moClearFieldError('lead-contact-email', 'err-lead-contact-email')">
+          <div class="field-error-slot" id="err-lead-contact-email"></div>
         </div>
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Tên Doanh Nghiệp / Công Ty</label>
-          <input type="text" id="lead-company-name" class="filament-input-sm" placeholder="Công ty TNHH Giải Pháp AI">
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Tên Doanh Nghiệp / Công Ty</label>
+          <input type="text" id="lead-company-name" class="filament-input-sm" placeholder="Công ty TNHH Giải Pháp AI" oninput="moClearFieldError('lead-company-name', 'err-lead-company-name')">
+          <div class="field-error-slot" id="err-lead-company-name"></div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Tòa Nhà Quan Tâm</label>
-          <select id="create-lead-building" class="filament-input-sm">
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Tòa Nhà Quan Tâm</label>
+          <select id="create-lead-building" class="filament-input-sm" onchange="moClearFieldError('create-lead-building', 'err-create-lead-building')">
             <!-- Rendered via JS -->
           </select>
+          <div class="field-error-slot" id="err-create-lead-building"></div>
         </div>
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Nguồn Tiếp Cận</label>
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Nguồn Tiếp Cận</label>
           <select id="lead-source" class="filament-input-sm">
             <option value="DIRECT_CALL">Hotline / Gọi Trực Tiếp</option>
             <option value="WEBSITE">Form Đăng Ký Website</option>
@@ -45,21 +50,23 @@
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Diện Tích Cần Thuê (m²)</label>
-          <input type="number" step="0.1" id="lead-expected-area" class="filament-input-sm" placeholder="VD: 150">
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Diện Tích Cần Thuê (m²)</label>
+          <input type="number" step="0.1" id="lead-expected-area" class="filament-input-sm" placeholder="VD: 150" min="0" oninput="moClearFieldError('lead-expected-area', 'err-lead-expected-area')">
+          <div class="field-error-slot" id="err-lead-expected-area"></div>
         </div>
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Ngân Sách Tối Đa ($/tháng)</label>
-          <input type="number" step="1" id="lead-expected-budget" class="filament-input-sm" placeholder="VD: 5000">
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Ngân Sách Tối Đa ($/tháng)</label>
+          <input type="number" step="1" id="lead-expected-budget" class="filament-input-sm" placeholder="VD: 5000" min="0" oninput="moClearFieldError('lead-expected-budget', 'err-lead-expected-budget')">
+          <div class="field-error-slot" id="err-lead-expected-budget"></div>
         </div>
       </div>
       <div class="form-field" style="margin-bottom:16px;">
-        <label style="font-size:12px;font-weight:600;color:#334155;">Ghi Chú Nhu Cầu Cụ Thể</label>
+        <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Ghi Chú Nhu Cầu Cụ Thể</label>
         <textarea id="lead-notes" rows="2" class="filament-input-sm" placeholder="Yêu cầu hướng đẹp, bàn giao thô hoặc hoàn thiện..."></textarea>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #f1f5f9;padding-top:14px;">
         <button type="button" class="btn-mo-outline" onclick="closeCreateLeadModal()">Hủy Bỏ</button>
-        <button type="submit" class="btn-mo-orange"><i class="fa-solid fa-check"></i> Lưu Hồ Sơ Lead</button>
+        <button type="submit" id="btn-submit-create-lead" class="btn-mo-orange"><i class="fa-solid fa-check"></i> Lưu Hồ Sơ Lead</button>
       </div>
     </form>
   </div>

@@ -66,7 +66,7 @@
         const buildings = s.sale_buildings || s.buildings || [];
         const bldHtml = buildings.length > 0
           ? `<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">` + buildings.slice(0, 2).map(b => `<span style="background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:600; white-space:nowrap;">${escapeHtml(b.name || 'Tòa nhà')}</span>`).join('') + (buildings.length > 2 ? `<span style="background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:700; white-space:nowrap;">+${buildings.length - 2} tòa</span>` : '') + `</div>`
-          : '<span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span>';
+          : '<span style="color:#b45309; background:#fef3c7; padding:2px 8px; border-radius:6px; font-size:11.5px; font-weight:600;">Chưa phân công</span>';
 
         const statusClass = (s.status === 'ACTIVE') ? 'success' : 'danger';
         const statusText = (s.status === 'ACTIVE') ? 'Hoạt động' : 'Tạm khóa';
@@ -120,7 +120,7 @@
         const buildings = p.manager_buildings || p.buildings || [];
         const bldHtml = buildings.length > 0
           ? `<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">` + buildings.slice(0, 2).map(b => `<span style="background:#fef3c7; color:#92400e; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:600; white-space:nowrap;">${escapeHtml(b.name || 'Tòa nhà')}</span>`).join('') + (buildings.length > 2 ? `<span style="background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:700; white-space:nowrap;">+${buildings.length - 2} tòa</span>` : '') + `</div>`
-          : '<span style="color:#94a3b8; font-size:11.5px;">Chưa phân công</span>';
+          : '<span style="color:#b45309; background:#fef3c7; padding:2px 8px; border-radius:6px; font-size:11.5px; font-weight:600;">Chưa phân công</span>';
 
         const statusClass = (p.status === 'ACTIVE') ? 'success' : 'danger';
         const statusText = (p.status === 'ACTIVE') ? 'Hoạt động' : 'Tạm khóa';
@@ -167,7 +167,7 @@
         const buildings = a.account_buildings || a.buildings || [];
         const bldHtml = buildings.length > 0
           ? `<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">` + buildings.slice(0, 2).map(b => `<span style="background:#ecfdf5; color:#065f46; padding:3px 8px; border-radius:6px; font-size:11.5px; font-weight:600; white-space:nowrap;">${escapeHtml(b.name || 'Tòa nhà')}</span>`).join('') + (buildings.length > 2 ? `<span style="background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:700; white-space:nowrap;">+${buildings.length - 2} tòa</span>` : '') + `</div>`
-          : '<span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span>';
+          : '<span style="color:#b45309; background:#fef3c7; padding:2px 8px; border-radius:6px; font-size:11.5px; font-weight:600;">Chưa phân công</span>';
 
         const canAdjustHtml = a.can_approve_adjustment
           ? '<span style="background:#dcfce7; color:#15803d; font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:9999px; white-space:nowrap;"><i class="fa-solid fa-check"></i> Được phép</span>'
@@ -1100,9 +1100,12 @@
         phone: phone || null,
         max_concurrent_leads: parseInt(document.getElementById('sale-form-max-leads').value) || 10,
         commission_rate: parseFloat(document.getElementById('sale-form-commission').value) || null,
-        status: document.getElementById('sale-form-status').value,
-        building_ids: []
+        status: document.getElementById('sale-form-status').value
       };
+
+      if (mode === 'create') {
+        payload.building_ids = [];
+      }
 
       if (pwd) payload.password = pwd;
 
@@ -1221,7 +1224,7 @@
             <div style="display:flex; flex-wrap:wrap; gap:6px;">
               ${buildings.length > 0 
                 ? buildings.map(b => `<span style="background:#e0e7ff; color:#3730a3; padding:4px 8px; border-radius:6px; font-size:12px;"><i class="fa-regular fa-building"></i> ${escapeHtml(b.name || 'Tòa nhà')}</span>`).join('')
-                : '<span style="color:#94a3b8; font-size:12px;">Được tiếp cận toàn bộ tòa nhà trong hệ thống.</span>'}
+                : '<span style="color:#b45309; background:#fef3c7; padding:3px 8px; border-radius:6px; font-size:12px; font-weight:600;">Chưa phân công tòa nhà phụ trách.</span>'}
             </div>
           </div>
 
@@ -1336,8 +1339,6 @@
       moClearFieldError('pm-form-password', 'err-pm-password');
 
       await fetchNextEmployeeCode('pm', 'pm-form-code');
-      await fetchStaffBuildingsList();
-      renderBuildingCheckboxes('pm-form-buildings', []);
       openModal('staff-pm-modal');
     }
 
@@ -1373,10 +1374,6 @@
         document.getElementById('pm-form-password').value = '';
         document.getElementById('pm-form-password-req').style.display = 'none';
         document.getElementById('pm-form-password-hint').style.display = 'block';
-
-        await fetchStaffBuildingsList();
-        const assignedIds = (p.manager_buildings || p.buildings || []).map(b => b.id || b.building_id);
-        renderBuildingCheckboxes('pm-form-buildings', assignedIds);
 
         document.getElementById('staff-pm-modal-title').innerHTML = '<i class="fa-solid fa-user-pen"></i> Cập Nhật Nhân Sự BQL';
         openModal('staff-pm-modal');
@@ -1450,9 +1447,12 @@
         phone: phone || null,
         emergency_hotline: hotline || null,
         department: document.getElementById('pm-form-department').value,
-        status: document.getElementById('pm-form-status').value,
-        building_ids: getSelectedBuildingIds('pm-form-buildings')
+        status: document.getElementById('pm-form-status').value
       };
+
+      if (mode === 'create') {
+        payload.building_ids = [];
+      }
 
       if (pwd) payload.password = pwd;
 
@@ -1562,7 +1562,7 @@
             <div style="display:flex; flex-wrap:wrap; gap:6px;">
               ${buildings.length > 0 
                 ? buildings.map(b => `<span style="background:#fef3c7; color:#92400e; padding:4px 8px; border-radius:6px; font-size:12px;"><i class="fa-regular fa-building"></i> ${escapeHtml(b.name || 'Tòa nhà')}</span>`).join('')
-                : '<span style="color:#94a3b8; font-size:12px;">Chưa phân công tòa nhà phụ trách cụ thể.</span>'}
+                : '<span style="color:#b45309; background:#fef3c7; padding:3px 8px; border-radius:6px; font-size:12px; font-weight:600;">Chưa phân công tòa nhà phụ trách cụ thể.</span>'}
             </div>
           </div>
 
@@ -1676,8 +1676,6 @@
       moClearFieldError('acc-form-password', 'err-acc-password');
 
       await fetchNextEmployeeCode('accountant', 'acc-form-code');
-      await fetchStaffBuildingsList();
-      renderBuildingCheckboxes('acc-form-buildings', []);
       openModal('staff-accountant-modal');
     }
 
@@ -1711,10 +1709,6 @@
         document.getElementById('acc-form-password').value = '';
         document.getElementById('acc-form-password-req').style.display = 'none';
         document.getElementById('acc-form-password-hint').style.display = 'block';
-
-        await fetchStaffBuildingsList();
-        const assignedIds = (a.account_buildings || a.buildings || []).map(b => b.id || b.building_id);
-        renderBuildingCheckboxes('acc-form-buildings', assignedIds);
 
         document.getElementById('staff-accountant-modal-title').innerHTML = '<i class="fa-solid fa-user-pen"></i> Cập Nhật Kế Toán';
         openModal('staff-accountant-modal');
@@ -1776,9 +1770,12 @@
         email: email,
         phone: phone || null,
         can_approve_adjustment: document.getElementById('acc-form-can-adjust').checked,
-        status: document.getElementById('acc-form-status').value,
-        building_ids: getSelectedBuildingIds('acc-form-buildings')
+        status: document.getElementById('acc-form-status').value
       };
+
+      if (mode === 'create') {
+        payload.building_ids = [];
+      }
 
       if (pwd) payload.password = pwd;
 
@@ -1887,7 +1884,7 @@
             <div style="display:flex; flex-wrap:wrap; gap:6px;">
               ${buildings.length > 0 
                 ? buildings.map(b => `<span style="background:#ecfdf5; color:#065f46; padding:4px 8px; border-radius:6px; font-size:12px;"><i class="fa-regular fa-building"></i> ${escapeHtml(b.name || 'Tòa nhà')}</span>`).join('')
-                : '<span style="color:#94a3b8; font-size:12px;">Theo dõi công nợ toàn hệ thống.</span>'}
+                : '<span style="color:#b45309; background:#fef3c7; padding:3px 8px; border-radius:6px; font-size:12px; font-weight:600;">Chưa phân công tòa nhà phụ trách.</span>'}
             </div>
           </div>
 
@@ -2035,4 +2032,52 @@
     }
 
     // Dữ liệu nhân sự sẽ được nạp theo cơ chế lazy load khi người dùng mở tab Nhân Sự trong Admin Panel
+    function resetStaffAdminFilters() {
+      const kw = document.getElementById('filter-admin-keyword');
+      if (kw) kw.value = '';
+      const clrBtn = document.getElementById('btn-clear-filter-admin');
+      if (clrBtn) clrBtn.style.display = 'none';
+      const st = document.getElementById('filter-admin-status');
+      if (st) st.value = '';
+      loadStaffAdmins(1);
+    }
+
+    function resetStaffSaleFilters() {
+      const kw = document.getElementById('filter-sale-keyword');
+      if (kw) kw.value = '';
+      const clrBtn = document.getElementById('btn-clear-filter-sale');
+      if (clrBtn) clrBtn.style.display = 'none';
+      const st = document.getElementById('filter-sale-status');
+      if (st) st.value = '';
+      loadStaffSales(1);
+    }
+
+    function resetStaffPmFilters() {
+      const kw = document.getElementById('filter-pm-keyword');
+      if (kw) kw.value = '';
+      const clrBtn = document.getElementById('btn-clear-filter-pm');
+      if (clrBtn) clrBtn.style.display = 'none';
+      const dep = document.getElementById('filter-pm-department');
+      if (dep) dep.value = '';
+      const st = document.getElementById('filter-pm-status');
+      if (st) st.value = '';
+      loadStaffPm(1);
+    }
+
+    function resetStaffAccFilters() {
+      const kw = document.getElementById('filter-acc-keyword');
+      if (kw) kw.value = '';
+      const clrBtn = document.getElementById('btn-clear-filter-acc');
+      if (clrBtn) clrBtn.style.display = 'none';
+      const adj = document.getElementById('filter-acc-adjustment');
+      if (adj) adj.value = '';
+      const st = document.getElementById('filter-acc-status');
+      if (st) st.value = '';
+      loadStaffAccountants(1);
+    }
+
+    window.resetStaffAdminFilters = resetStaffAdminFilters;
+    window.resetStaffSaleFilters = resetStaffSaleFilters;
+    window.resetStaffPmFilters = resetStaffPmFilters;
+    window.resetStaffAccFilters = resetStaffAccFilters;
   </script>

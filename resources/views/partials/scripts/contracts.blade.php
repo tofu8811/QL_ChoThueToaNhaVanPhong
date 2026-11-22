@@ -164,24 +164,109 @@
 
     async function submitCreateContract(e) {
       if (e) e.preventDefault();
+
+      moClearFieldError('contract-tenant-select', 'err-contract-tenant');
+      moClearFieldError('contract-building-select', 'err-contract-building');
+      moClearFieldError('contract-code-input', 'err-contract-code');
+      moClearFieldError('contract-start-date', 'err-contract-start-date');
+      moClearFieldError('contract-end-date', 'err-contract-end-date');
+      moClearFieldError('contract-rent', 'err-contract-rent');
+      moClearFieldError('contract-service-fee', 'err-contract-service-fee');
+      moClearFieldError('contract-deposit', 'err-contract-deposit');
+      moClearFieldError('contract-handover-date', 'err-contract-handover-date');
+      moClearFieldError('contract-billing-cycle', 'err-contract-billing-cycle');
+      moClearFieldError('contract-payment-day', 'err-contract-payment-day');
+
+      const tenantId = document.getElementById('contract-tenant-select')?.value;
+      const buildingId = document.getElementById('contract-building-select')?.value;
+      const contractCode = document.getElementById('contract-code-input')?.value.trim();
+      const startDate = document.getElementById('contract-start-date')?.value;
+      const endDate = document.getElementById('contract-end-date')?.value;
+      const handoverDate = document.getElementById('contract-handover-date')?.value || null;
+      const rentStr = document.getElementById('contract-rent')?.value?.trim();
+      const feeStr = document.getElementById('contract-service-fee')?.value?.trim();
+      const depositStr = document.getElementById('contract-deposit')?.value?.trim();
+      const cycleStr = document.getElementById('contract-billing-cycle')?.value?.trim();
+      const payDayStr = document.getElementById('contract-payment-day')?.value?.trim();
+      const notes = document.getElementById('contract-notes')?.value.trim() || null;
+
+      let hasError = false;
+
+      if (!tenantId) {
+        moSetFieldError('contract-tenant-select', 'err-contract-tenant', 'Vui lòng chọn khách thuê doanh nghiệp ký hợp đồng.');
+        hasError = true;
+      }
+
+      if (!buildingId) {
+        moSetFieldError('contract-building-select', 'err-contract-building', 'Vui lòng chọn tòa nhà văn phòng cho thuê.');
+        if (!hasError) { document.getElementById('contract-building-select')?.focus(); hasError = true; }
+      }
+
+      if (!startDate) {
+        moSetFieldError('contract-start-date', 'err-contract-start-date', 'Vui lòng chọn ngày bắt đầu hợp đồng.');
+        if (!hasError) { document.getElementById('contract-start-date')?.focus(); hasError = true; }
+      }
+
+      if (!endDate) {
+        moSetFieldError('contract-end-date', 'err-contract-end-date', 'Vui lòng chọn ngày kết thúc hợp đồng.');
+        if (!hasError) { document.getElementById('contract-end-date')?.focus(); hasError = true; }
+      } else if (startDate && new Date(endDate) <= new Date(startDate)) {
+        moSetFieldError('contract-end-date', 'err-contract-end-date', 'Ngày kết thúc thuê phải sau ngày bắt đầu.');
+        if (!hasError) { document.getElementById('contract-end-date')?.focus(); hasError = true; }
+      }
+
+      const rentAmount = rentStr ? parseFloat(rentStr) : 0;
+      if (rentStr && (isNaN(rentAmount) || rentAmount < 0)) {
+        moSetFieldError('contract-rent', 'err-contract-rent', 'Tiền thuê sàn phải là số không âm.');
+        if (!hasError) { document.getElementById('contract-rent')?.focus(); hasError = true; }
+      }
+
+      const serviceFee = feeStr ? parseFloat(feeStr) : 0;
+      if (feeStr && (isNaN(serviceFee) || serviceFee < 0)) {
+        moSetFieldError('contract-service-fee', 'err-contract-service-fee', 'Phí dịch vụ phải là số không âm.');
+        if (!hasError) { document.getElementById('contract-service-fee')?.focus(); hasError = true; }
+      }
+
+      const depositAmount = depositStr ? parseFloat(depositStr) : 0;
+      if (depositStr && (isNaN(depositAmount) || depositAmount < 0)) {
+        moSetFieldError('contract-deposit', 'err-contract-deposit', 'Tiền cọc bảo đảm phải là số không âm.');
+        if (!hasError) { document.getElementById('contract-deposit')?.focus(); hasError = true; }
+      }
+
+      const billingCycle = cycleStr ? parseInt(cycleStr) : 1;
+      if (cycleStr && (isNaN(billingCycle) || billingCycle < 1)) {
+        moSetFieldError('contract-billing-cycle', 'err-contract-billing-cycle', 'Kỳ thanh toán tối thiểu 1 tháng.');
+        if (!hasError) { document.getElementById('contract-billing-cycle')?.focus(); hasError = true; }
+      }
+
+      const paymentDueDay = payDayStr ? parseInt(payDayStr) : 5;
+      if (payDayStr && (isNaN(paymentDueDay) || paymentDueDay < 1 || paymentDueDay > 28)) {
+        moSetFieldError('contract-payment-day', 'err-contract-payment-day', 'Hạn đóng tiền hợp lệ từ ngày 1 đến ngày 28.');
+        if (!hasError) { document.getElementById('contract-payment-day')?.focus(); hasError = true; }
+      }
+
+      if (hasError) return;
+
       const payload = {
-        tenant_id: document.getElementById('contract-tenant-select').value,
-        building_id: document.getElementById('contract-building-select').value,
-        contract_code: document.getElementById('contract-code-input').value.trim() || undefined,
-        start_date: document.getElementById('contract-start-date').value,
-        end_date: document.getElementById('contract-end-date').value,
-        handover_date: document.getElementById('contract-handover-date').value || null,
-        deposit_amount: parseFloat(document.getElementById('contract-deposit').value) || 0,
-        rent_amount: parseFloat(document.getElementById('contract-rent').value) || 0,
-        service_fee_amount: parseFloat(document.getElementById('contract-service-fee').value) || 0,
-        billing_cycle_months: parseInt(document.getElementById('contract-billing-cycle').value) || 1,
-        payment_due_day: parseInt(document.getElementById('contract-payment-day').value) || 5,
-        notes: document.getElementById('contract-notes').value.trim() || null
+        tenant_id: tenantId,
+        building_id: buildingId,
+        contract_code: contractCode || undefined,
+        start_date: startDate,
+        end_date: endDate,
+        handover_date: handoverDate,
+        deposit_amount: depositAmount,
+        rent_amount: rentAmount,
+        service_fee_amount: serviceFee,
+        billing_cycle_months: billingCycle,
+        payment_due_day: paymentDueDay,
+        notes: notes
       };
 
-      if (!payload.tenant_id || !payload.building_id || !payload.start_date || !payload.end_date) {
-        alert('Vui lòng điền đầy đủ Khách thuê, Tòa nhà, Ngày bắt đầu và Ngày kết thúc thuê.');
-        return;
+      const btn = document.getElementById('btn-submit-create-contract');
+      const originalHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang tạo hợp đồng...';
       }
 
       try {
@@ -193,14 +278,31 @@
 
         const json = await res.json();
         if (res.ok) {
-          alert('Tạo hợp đồng thuê bản nháp (DRAFT) thành công! Hãy gán mặt bằng và ký duyệt.');
+          moToast('Khởi tạo hợp đồng thuê bản nháp (DRAFT) thành công! Hãy gán mặt bằng và ký duyệt.', 'success');
           closeCreateContractModal();
+          document.getElementById('form-create-contract')?.reset();
           loadContractsList();
         } else {
-          alert('Lỗi tạo hợp đồng: ' + (json.message || 'Dữ liệu không hợp lệ.'));
+          if (json.errors) {
+            moMapServerErrors(json.errors, {
+              tenant_id: ['contract-tenant-select', 'err-contract-tenant'],
+              building_id: ['contract-building-select', 'err-contract-building'],
+              contract_code: ['contract-code-input', 'err-contract-code'],
+              start_date: ['contract-start-date', 'err-contract-start-date'],
+              end_date: ['contract-end-date', 'err-contract-end-date'],
+              rent_amount: ['contract-rent', 'err-contract-rent'],
+              deposit_amount: ['contract-deposit', 'err-contract-deposit']
+            });
+          }
+          moToast(json.message || 'Lỗi tạo hợp đồng. Vui lòng kiểm tra lại thông tin.', 'error');
         }
       } catch (err) {
-        alert('Lỗi kết nối máy chủ API.');
+        moToast('Lỗi kết nối máy chủ API: ' + (err.message || 'Lỗi mạng'), 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        }
       }
     }
 
@@ -525,8 +627,10 @@
       currentRenewContractId = contractId;
       const modal = document.getElementById('modal-renew-contract');
       if (!modal) return;
-      document.getElementById('renew-contract-code').innerText = code;
-      document.getElementById('renew-current-end-date').innerText = currentEndDate;
+      const renewCodeEl = document.getElementById('renew-contract-code');
+      if (renewCodeEl) renewCodeEl.innerText = code;
+      const renewDateEl = document.getElementById('renew-current-end-date');
+      if (renewDateEl) renewDateEl.innerText = currentEndDate;
       modal.style.display = 'flex';
     }
 
@@ -577,8 +681,10 @@
       currentTerminateContractId = contractId;
       const modal = document.getElementById('modal-terminate-contract');
       if (!modal) return;
-      document.getElementById('terminate-contract-code').innerText = code;
-      document.getElementById('terminate-deposit-held').innerText = `$${depositAmount.toLocaleString()}`;
+      const termCodeEl = document.getElementById('terminate-contract-code');
+      if (termCodeEl) termCodeEl.innerText = code;
+      const termDepositEl = document.getElementById('terminate-deposit-held');
+      if (termDepositEl) termDepositEl.innerText = `$${depositAmount.toLocaleString()}`;
       document.getElementById('terminate-refund-amount').value = depositAmount;
       modal.style.display = 'flex';
     }
@@ -866,10 +972,31 @@
 
     function handleContractStatusFilter(status) {
       currentContractStatus = status;
+      const sel = document.getElementById('contract-status-select');
+      if (sel && sel.value !== status) sel.value = status;
       document.querySelectorAll('.contract-status-btn').forEach(b => {
         b.classList.remove('active');
         if (b.getAttribute('data-status') === status) b.classList.add('active');
       });
       loadContractsList();
     }
+
+    function resetContractFilters() {
+      const inp = document.getElementById('contract-search-input');
+      if (inp) inp.value = '';
+      const clrBtn = document.getElementById('btn-clear-contract-search');
+      if (clrBtn) clrBtn.style.display = 'none';
+      const sel = document.getElementById('contract-status-select');
+      if (sel) sel.value = 'ALL';
+      currentContractSearch = '';
+      currentContractStatus = 'ALL';
+      document.querySelectorAll('.contract-status-btn').forEach(b => {
+        b.classList.remove('active');
+        if (b.getAttribute('data-status') === 'ALL') b.classList.add('active');
+      });
+      loadContractsList();
+    }
+
+    window.handleContractStatusFilter = handleContractStatusFilter;
+    window.resetContractFilters = resetContractFilters;
 </script>

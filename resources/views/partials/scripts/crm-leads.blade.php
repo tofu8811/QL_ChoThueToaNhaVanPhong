@@ -85,6 +85,8 @@
       const pendingLeads = crmLeadsList.filter(l => l.pipeline_status === 'PENDING_ASSIGN' || (!l.assigned_sales && !l.assignedSales));
       const pendingCountEl = document.getElementById('crm-pending-count');
       if (pendingCountEl) pendingCountEl.innerText = pendingLeads.length;
+      const optPending = document.getElementById('opt-pending-assign');
+      if (optPending) optPending.innerText = `⚠️ Chờ phân bổ (${pendingLeads.length})`;
 
       if (!tbody) return;
       if (crmLeadsList.length === 0) {
@@ -101,9 +103,18 @@
         const areaNeeded = lead.expected_area ? `${lead.expected_area} m²` : '---';
         const contactName = lead.contact_name || lead.contact_full_name || 'Khách hàng';
 
-        const assignBtn = !hasSales
-          ? `<button class="btn-mo-primary" style="padding:4px 10px;font-size:12px;background:#2563eb;color:#fff;margin-left:4px;font-weight:600;border:none;border-radius:6px;cursor:pointer;" onclick="openAssignSalesModal('${lead.id}', '${escapeHtml(contactName)}')" title="Gán Sales ngay"><i class="fa-solid fa-user-plus"></i> Gán Sales</button>`
-          : `<button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#6366f1;border-color:#c7d2fe;margin-left:4px;" onclick="openAssignSalesModal('${lead.id}', '${escapeHtml(contactName)}')" title="Đổi Sales phụ trách"><i class="fa-solid fa-user-gear"></i> Đổi</button>`;
+        const isAdmin = window.location.pathname.startsWith('/admin') || (window.currentUiRole === 'admin') || (localStorage.getItem('auth_role') === 'admin');
+
+        let assignBtn = '';
+        if (isAdmin) {
+          assignBtn = !hasSales
+            ? `<button class="btn-mo-primary" style="padding:4px 10px;font-size:12px;background:#2563eb;color:#fff;margin-left:4px;font-weight:600;border:none;border-radius:6px;cursor:pointer;" onclick="openAssignLeadSalesModal('${lead.id}', '${escapeHtml(contactName)}')" title="Gán Sales ngay"><i class="fa-solid fa-user-plus"></i> Gán Sales</button>`
+            : `<button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#6366f1;border-color:#c7d2fe;margin-left:4px;" onclick="openAssignLeadSalesModal('${lead.id}', '${escapeHtml(contactName)}')" title="Đổi Sales phụ trách"><i class="fa-solid fa-user-gear"></i> Đổi</button>`;
+        }
+
+        const deleteBtn = isAdmin
+          ? `<button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#ef4444;border-color:#fecaca;margin-left:4px;" onclick="deleteLead('${lead.id}')" title="Xóa"><i class="fa-solid fa-trash"></i></button>`
+          : '';
 
         return `
           <tr>
@@ -142,9 +153,7 @@
                   <i class="fa-solid fa-arrow-right-to-bracket"></i> Chốt
                 </button>
               ` : ''}
-              <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#ef4444;border-color:#fecaca;margin-left:4px;" onclick="deleteLead('${lead.id}')" title="Xóa">
-                <i class="fa-solid fa-trash"></i>
-              </button>
+              ${deleteBtn}
             </td>
           </tr>
         `;
@@ -230,21 +239,85 @@
       const form = document.getElementById('form-create-lead');
       if (!form) return;
 
+      moClearFieldError('lead-contact-name', 'err-lead-contact-name');
+      moClearFieldError('lead-contact-phone', 'err-lead-contact-phone');
+      moClearFieldError('lead-contact-email', 'err-lead-contact-email');
+      moClearFieldError('lead-company-name', 'err-lead-company-name');
+      moClearFieldError('create-lead-building', 'err-create-lead-building');
+      moClearFieldError('lead-expected-area', 'err-lead-expected-area');
+      moClearFieldError('lead-expected-budget', 'err-lead-expected-budget');
+
+      const contactName = document.getElementById('lead-contact-name')?.value?.trim() || '';
+      const contactPhone = document.getElementById('lead-contact-phone')?.value?.trim() || '';
+      const contactEmail = document.getElementById('lead-contact-email')?.value?.trim() || '';
+      const companyName = document.getElementById('lead-company-name')?.value?.trim() || '';
+      const buildingId = document.getElementById('create-lead-building')?.value || null;
+      const expectedAreaStr = document.getElementById('lead-expected-area')?.value?.trim() || '';
+      const expectedBudgetStr = document.getElementById('lead-expected-budget')?.value?.trim() || '';
+      const notes = document.getElementById('lead-notes')?.value?.trim() || null;
+      const leadSource = document.getElementById('lead-source')?.value || 'DIRECT_CALL';
+
+      let hasError = false;
+
+      // 1. Validation 0ms
+      const vName = moValidateFullName(contactName, 2);
+      if (!vName.valid) {
+        moSetFieldError('lead-contact-name', 'err-lead-contact-name', vName.message);
+        document.getElementById('lead-contact-name')?.focus();
+        hasError = true;
+      }
+
+      const vPhone = moValidatePhone(contactPhone);
+      if (!vPhone.valid) {
+        moSetFieldError('lead-contact-phone', 'err-lead-contact-phone', vPhone.message);
+        if (!hasError) { document.getElementById('lead-contact-phone')?.focus(); hasError = true; }
+      }
+
+      if (contactEmail) {
+        const vEmail = moValidateEmail(contactEmail);
+        if (!vEmail.valid) {
+          moSetFieldError('lead-contact-email', 'err-lead-contact-email', vEmail.message);
+          if (!hasError) { document.getElementById('lead-contact-email')?.focus(); hasError = true; }
+        }
+      }
+
+      let expectedArea = null;
+      if (expectedAreaStr) {
+        expectedArea = parseFloat(expectedAreaStr);
+        if (isNaN(expectedArea) || expectedArea <= 0) {
+          moSetFieldError('lead-expected-area', 'err-lead-expected-area', 'Diện tích cần thuê phải là số lớn hơn 0 m².');
+          if (!hasError) { document.getElementById('lead-expected-area')?.focus(); hasError = true; }
+        }
+      }
+
+      let expectedBudget = null;
+      if (expectedBudgetStr) {
+        expectedBudget = parseFloat(expectedBudgetStr);
+        if (isNaN(expectedBudget) || expectedBudget <= 0) {
+          moSetFieldError('lead-expected-budget', 'err-lead-expected-budget', 'Ngân sách tối đa phải là số lớn hơn 0.');
+          if (!hasError) { document.getElementById('lead-expected-budget')?.focus(); hasError = true; }
+        }
+      }
+
+      if (hasError) return;
+
       const payload = {
-        contact_name: document.getElementById('lead-contact-name').value.trim(),
-        contact_phone: document.getElementById('lead-contact-phone').value.trim(),
-        contact_email: document.getElementById('lead-contact-email').value.trim() || null,
-        company_name: document.getElementById('lead-company-name').value.trim() || null,
-        building_id: document.getElementById('create-lead-building').value || null,
-        expected_area: parseFloat(document.getElementById('lead-expected-area').value) || null,
-        expected_budget: parseFloat(document.getElementById('lead-expected-budget').value) || null,
-        notes: document.getElementById('lead-notes').value.trim() || null,
-        lead_source: document.getElementById('lead-source').value || 'DIRECT_CALL'
+        contact_name: contactName,
+        contact_phone: contactPhone,
+        contact_email: contactEmail || null,
+        company_name: companyName || null,
+        building_id: buildingId,
+        expected_area: expectedArea,
+        expected_budget: expectedBudget,
+        notes: notes,
+        lead_source: leadSource
       };
 
-      if (!payload.contact_name || !payload.contact_phone) {
-        alert('Vui lòng nhập Họ tên và Số điện thoại khách hàng.');
-        return;
+      const btn = document.getElementById('btn-submit-create-lead');
+      const originalHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu hồ sơ...';
       }
 
       try {
@@ -256,14 +329,30 @@
 
         const json = await res.json();
         if (res.ok) {
-          alert('Tạo khách hàng tiềm năng thành công!');
+          moToast(`Đã tiếp nhận khách hàng tiềm năng [${contactName}] thành công!`, 'success');
           closeCreateLeadModal();
+          form.reset();
           loadCrmLeads();
         } else {
-          alert('Lỗi tạo Lead: ' + (json.message || 'Dữ liệu không hợp lệ.'));
+          if (json.errors) {
+            moMapServerErrors(json.errors, {
+              contact_name: ['lead-contact-name', 'err-lead-contact-name'],
+              contact_phone: ['lead-contact-phone', 'err-lead-contact-phone'],
+              contact_email: ['lead-contact-email', 'err-lead-contact-email'],
+              company_name: ['lead-company-name', 'err-lead-company-name'],
+              expected_area: ['lead-expected-area', 'err-lead-expected-area'],
+              expected_budget: ['lead-expected-budget', 'err-lead-expected-budget']
+            });
+          }
+          moToast(json.message || 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.', 'error');
         }
       } catch (err) {
-        alert('Lỗi kết nối khi gửi dữ liệu tạo Lead.');
+        moToast('Lỗi kết nối khi gửi dữ liệu tạo Lead: ' + (err.message || 'Lỗi mạng'), 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        }
       }
     }
 
@@ -518,14 +607,15 @@
       if (select) updateLeadStatus(leadId, select.value);
     }
 
-    // 7. Phân công nhân viên Sales phụ trách: POST /api/v1/crm/leads/{id}/assign
+    // 7. Phân công nhân viên Sales phụ trách Lead CRM: POST /api/v1/crm/leads/{id}/assign
     let currentAssignLeadId = null;
-    async function openAssignSalesModal(leadId, contactName) {
+    async function openAssignLeadSalesModal(leadId, contactName) {
       currentAssignLeadId = leadId;
       const modal = document.getElementById('modal-assign-lead-sales');
       if (!modal) return;
 
-      document.getElementById('assign-lead-contact-name').innerText = contactName;
+      const nameEl = document.getElementById('assign-lead-contact-name');
+      if (nameEl) nameEl.innerText = contactName;
       const sSelect = document.getElementById('assign-sales-select');
       sSelect.innerHTML = '<option value="">Đang tải danh sách Sales...</option>';
       modal.style.display = 'flex';
@@ -548,6 +638,23 @@
         sSelect.innerHTML = '<option value="">Lỗi tải danh sách Sales</option>';
       }
     }
+
+    window.openAssignLeadSalesModal = openAssignLeadSalesModal;
+    window.closeAssignSalesModal = closeAssignSalesModal;
+
+    // Hỗ trợ tương thích: Nếu gọi openAssignSalesModal với leadId thì gán cho Lead, nếu không thì phân công tòa nhà
+    const _prevAssignSalesModal = window.openAssignSalesModal;
+    window.openAssignSalesModal = function(leadId, contactName) {
+      if (leadId) {
+        return openAssignLeadSalesModal(leadId, contactName);
+      }
+      if (typeof window.openAssignBuildingSalesModal === 'function') {
+        return window.openAssignBuildingSalesModal();
+      }
+      if (typeof _prevAssignSalesModal === 'function') {
+        return _prevAssignSalesModal();
+      }
+    };
 
     function closeAssignSalesModal() {
       const modal = document.getElementById('modal-assign-lead-sales');
@@ -593,7 +700,8 @@
       const modal = document.getElementById('modal-convert-lead');
       if (!modal) return;
 
-      document.getElementById('convert-lead-name').innerText = contactName;
+      const leadNameEl = document.getElementById('convert-lead-name');
+      if (leadNameEl) leadNameEl.innerText = contactName;
       document.getElementById('convert-company-name').value = companyName || '';
       document.getElementById('convert-tax-code').value = '';
       modal.style.display = 'flex';
@@ -673,10 +781,31 @@
 
     function handleCrmStatusFilter(status) {
       currentCrmStatusFilter = status;
+      const sel = document.getElementById('crm-status-select');
+      if (sel && sel.value !== status) sel.value = status;
       document.querySelectorAll('.crm-status-btn').forEach(b => {
         b.classList.remove('active');
         if (b.getAttribute('data-status') === status) b.classList.add('active');
       });
       loadCrmLeads();
     }
+
+    function resetCrmFilters() {
+      const inp = document.getElementById('crm-search-input');
+      if (inp) inp.value = '';
+      const clrBtn = document.getElementById('btn-clear-crm-search');
+      if (clrBtn) clrBtn.style.display = 'none';
+      const sel = document.getElementById('crm-status-select');
+      if (sel) sel.value = 'ALL';
+      currentCrmSearch = '';
+      currentCrmStatusFilter = 'ALL';
+      document.querySelectorAll('.crm-status-btn').forEach(b => {
+        b.classList.remove('active');
+        if (b.getAttribute('data-status') === 'ALL') b.classList.add('active');
+      });
+      loadCrmLeads();
+    }
+
+    window.handleCrmStatusFilter = handleCrmStatusFilter;
+    window.resetCrmFilters = resetCrmFilters;
 </script>

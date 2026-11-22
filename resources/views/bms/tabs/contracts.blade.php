@@ -19,28 +19,37 @@
   </div>
 
   <!-- Bộ lọc nhanh & Tìm kiếm -->
-  <div class="filament-card" style="margin-bottom:16px;padding:16px;">
+  <div class="filament-card" style="margin-bottom:16px;padding:14px 18px;">
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;">
-      <div style="display:flex;gap:10px;align-items:center;flex:1;max-width:540px;">
+      <div style="display:flex;gap:10px;align-items:center;flex:1;min-width:320px;">
         <div style="position:relative;flex:1;display:flex;align-items:center;">
-          <input type="text" id="contract-search-input" class="filament-input-sm" placeholder="Tìm theo Mã HĐ, Tên doanh nghiệp..." oninput="toggleSearchClearBtn(this)" onkeydown="if(event.key==='Enter'){ event.preventDefault(); doContractSearch(); }" style="width:100%;padding-right:32px;">
+          <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:12px;color:#94a3b8;font-size:13px;pointer-events:none;"></i>
+          <input type="text" id="contract-search-input" class="filament-input-sm" placeholder="Tìm theo Mã HĐ, Tên doanh nghiệp..." oninput="toggleSearchClearBtn(this)" onkeydown="if(event.key==='Enter'){ event.preventDefault(); doContractSearch(); }" style="width:100%;padding-left:34px;padding-right:32px;height:38px;font-size:13px;border-radius:6px;">
           <button type="button" class="bms-search-clear-btn" id="btn-clear-contract-search" onclick="handleClearSearchInput('contract-search-input', doContractSearch)" title="Xóa tìm kiếm">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
-        <button type="button" class="btn-mo-primary" onclick="doContractSearch()" style="background:#2563eb;padding:6px 14px;font-size:12.5px;display:flex;align-items:center;gap:6px;white-space:nowrap;border:none;border-radius:6px;cursor:pointer;">
+        <button type="button" class="btn-mo-primary" onclick="doContractSearch()" style="background:#2563eb;height:38px;padding:0 16px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;white-space:nowrap;border:none;border-radius:6px;cursor:pointer;">
           <i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm
         </button>
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="btn-mo-outline contract-status-btn active" data-status="ALL" onclick="handleContractStatusFilter('ALL')" style="font-size:12px;padding:4px 10px;">Tất cả</button>
-        <button class="btn-mo-outline contract-status-btn" data-status="DRAFT" onclick="handleContractStatusFilter('DRAFT')" style="font-size:12px;padding:4px 10px;">Bản nháp</button>
-        <button class="btn-mo-outline contract-status-btn" data-status="RESERVED" onclick="handleContractStatusFilter('RESERVED')" style="font-size:12px;padding:4px 10px;">Giữ chỗ</button>
-        <button class="btn-mo-outline contract-status-btn" data-status="ACTIVE" onclick="handleContractStatusFilter('ACTIVE')" style="font-size:12px;padding:4px 10px;">Hiệu lực</button>
-        <button class="btn-mo-outline contract-status-btn" data-status="EXPIRING_SOON" onclick="handleContractStatusFilter('EXPIRING_SOON')" style="font-size:12px;padding:4px 10px;">Sắp hết hạn</button>
-        <button class="btn-mo-outline contract-status-btn" data-status="TERMINATED" onclick="handleContractStatusFilter('TERMINATED')" style="font-size:12px;padding:4px 10px;">Đã thanh lý</button>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <label for="contract-status-select" style="font-size:12.5px;font-weight:600;color:#64748b;white-space:nowrap;margin:0;">Trạng thái:</label>
+          <select id="contract-status-select" class="filament-input-sm" onchange="handleContractStatusFilter(this.value)" style="height:38px;font-size:13px;border-radius:6px;min-width:180px;cursor:pointer;">
+            <option value="ALL">-- Tất cả trạng thái --</option>
+            <option value="DRAFT">Bản nháp (DRAFT)</option>
+            <option value="RESERVED">Giữ chỗ (RESERVED)</option>
+            <option value="ACTIVE">Hiệu lực (ACTIVE)</option>
+            <option value="EXPIRING_SOON">Sắp hết hạn (EXPIRING_SOON)</option>
+            <option value="TERMINATED">Đã thanh lý (TERMINATED)</option>
+          </select>
+        </div>
+        <button type="button" class="btn-mo-outline" onclick="resetContractFilters()" style="height:38px;padding:0 14px;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;border-radius:6px;cursor:pointer;background:#fff;" title="Đặt lại bộ lọc & hiển thị toàn bộ Hợp đồng">
+          <i class="fa-solid fa-rotate-left"></i> Đặt lại
+        </button>
+        <span style="font-size:13px;color:#64748b;margin-left:4px;white-space:nowrap;">Tổng cộng: <strong id="admin-contracts-count" style="color:#0f172a;">0</strong> hợp đồng</span>
       </div>
-      <span style="font-size:13px;color:#64748b;">Tổng cộng: <strong id="admin-contracts-count" style="color:#0f172a;">0</strong> hợp đồng</span>
     </div>
   </div>
 

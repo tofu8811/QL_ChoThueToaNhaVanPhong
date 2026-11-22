@@ -16,16 +16,17 @@
   </div>
 
   <!-- Thanh lọc Ticket BQL (Endpoint 57) -->
-  <div class="filament-card" style="margin-bottom:14px; padding:12px 18px;">
-    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
-      <div style="flex:1; min-width:200px; position:relative; display:flex; align-items:center;">
-        <input type="text" id="ticket-filter-keyword" class="filament-input-sm" placeholder="Tìm theo mã ticket, tiêu đề, phòng, tòa nhà, công ty..." oninput="toggleSearchClearBtn(this)" onkeyup="if(event.key==='Enter') loadTicketsList('admin')" style="width:100%; padding-right:32px;">
+  <div class="filament-card" style="margin-bottom:14px; padding:14px 18px;">
+    <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+      <div style="flex:1; min-width:300px; position:relative; display:flex; align-items:center;">
+        <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:12px;color:#94a3b8;font-size:13px;pointer-events:none;"></i>
+        <input type="text" id="ticket-filter-keyword" class="filament-input-sm" placeholder="Tìm theo mã ticket, tiêu đề, phòng, tòa nhà, công ty..." oninput="toggleSearchClearBtn(this)" onkeyup="if(event.key==='Enter') loadTicketsList('admin')" style="width:100%; padding-left:34px; padding-right:32px; height:38px; font-size:13px; border-radius:6px;">
         <button type="button" class="bms-search-clear-btn" id="btn-clear-ticket-search" onclick="handleClearSearchInput('ticket-filter-keyword', () => loadTicketsList('admin'))" title="Xóa tìm kiếm">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
       <div>
-        <select id="ticket-filter-status" class="filament-input-sm" onchange="loadTicketsList('admin')">
+        <select id="ticket-filter-status" class="filament-input-sm" onchange="loadTicketsList('admin')" style="height:38px; font-size:13px; border-radius:6px; min-width:170px; cursor:pointer;">
           <option value="">Tất cả Trạng thái</option>
           <option value="OPEN">Mới tiếp nhận (OPEN)</option>
           <option value="IN_PROGRESS">Đang xử lý (IN_PROGRESS)</option>
@@ -35,7 +36,7 @@
         </select>
       </div>
       <div>
-        <select id="ticket-filter-priority" class="filament-input-sm" onchange="loadTicketsList('admin')">
+        <select id="ticket-filter-priority" class="filament-input-sm" onchange="loadTicketsList('admin')" style="height:38px; font-size:13px; border-radius:6px; min-width:160px; cursor:pointer;">
           <option value="">Tất cả Mức ưu tiên</option>
           <option value="URGENT">Khẩn cấp</option>
           <option value="HIGH">Cao</option>
@@ -43,8 +44,11 @@
           <option value="LOW">Thấp</option>
         </select>
       </div>
-      <button class="btn-mo-orange" style="padding:6px 14px; font-size:12.5px;" onclick="loadTicketsList('admin')">
+      <button type="button" class="btn-mo-primary" style="background:#2563eb; height:38px; padding:0 16px; font-size:13px; font-weight:600; border-radius:6px; display:inline-flex; align-items:center; gap:6px; cursor:pointer; border:none;" onclick="loadTicketsList('admin')">
         <i class="fa-solid fa-filter"></i> Lọc Ticket
+      </button>
+      <button type="button" class="btn-mo-outline" onclick="resetTicketFilters('admin')" style="height:38px; padding:0 14px; font-size:12.5px; font-weight:600; display:inline-flex; align-items:center; gap:6px; border-radius:6px; cursor:pointer; background:#fff;" title="Đặt lại bộ lọc & tải lại danh sách">
+        <i class="fa-solid fa-rotate-left"></i> Đặt lại
       </button>
     </div>
   </div>

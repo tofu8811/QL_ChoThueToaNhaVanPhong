@@ -2,19 +2,11 @@
 
 namespace App\Http\Requests\V1\Lead;
 
+use App\Http\Requests\V1\BaseApiRequest;
 use App\Rules\VietnamesePhoneNumber;
-use Illuminate\Foundation\Http\FormRequest;
 
-class ConvertLeadToTenantRequest extends FormRequest
+class ConvertLeadToTenantRequest extends BaseApiRequest
 {
-    /**
-     * Xác định quyền chuyển đổi Lead thành khách thuê chính thức.
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     /**
      * Quy tắc xác thực chuyển đổi Lead sang Khách thuê chính thức (Tenant).
      *

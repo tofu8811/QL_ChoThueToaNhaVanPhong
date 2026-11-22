@@ -2,38 +2,32 @@
 
 namespace App\Http\Requests\V1\Ticket;
 
-use App\Enums\TicketCategory;
-use App\Enums\TicketPriority;
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-
-class UpdateTicketRequest extends FormRequest
+class UpdateTicketRequest extends StoreTenantTicketRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
-
+    /**
+     * Quy tắc cập nhật thông tin phiếu yêu cầu kỹ thuật.
+     * Kế thừa từ StoreTenantTicketRequest và chỉ cho phép cập nhật các trường được phép sửa.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
     public function rules(): array
     {
-        return [
-            'title'       => ['sometimes', 'required', 'string', 'max:200'],
-            'description' => ['sometimes', 'required', 'string'],
-            'category'    => ['sometimes', 'required', 'string', Rule::in(TicketCategory::values())],
-            'priority'    => ['sometimes', 'nullable', 'string', Rule::in(TicketPriority::values())],
-            'unit_id'     => ['sometimes', 'nullable', 'string', 'uuid', 'exists:units,id'],
-        ];
-    }
+        $allowedFields = ['title', 'description', 'category', 'priority', 'unit_id'];
+        $parentRules = parent::rules();
+        $rules = [];
 
-    public function messages(): array
-    {
-        return [
-            'title.required'       => 'Tiêu đề phiếu yêu cầu không được để trống.',
-            'title.max'            => 'Tiêu đề không được vượt quá 200 ký tự.',
-            'description.required' => 'Mô tả chi tiết sự cố không được để trống.',
-            'category.in'          => 'Danh mục sự cố không hợp lệ.',
-            'priority.in'          => 'Mức độ ưu tiên không hợp lệ.',
-            'unit_id.exists'       => 'Mặt bằng được chọn không tồn tại trong hệ thống.',
-        ];
+        foreach ($allowedFields as $field) {
+            if (isset($parentRules[$field])) {
+                $fieldRules = $parentRules[$field];
+                $rules[$field] = is_array($fieldRules)
+                    ? array_map(fn ($r) => $r === 'required' ? 'sometimes' : $r, $fieldRules)
+                    : $fieldRules;
+                if (!in_array('sometimes', $rules[$field], true)) {
+                    array_unshift($rules[$field], 'sometimes');
+                }
+            }
+        }
+
+        return $rules;
     }
 }

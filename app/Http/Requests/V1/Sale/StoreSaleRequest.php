@@ -2,35 +2,25 @@
 
 namespace App\Http\Requests\V1\Sale;
 
-use App\Rules\VietnamesePhoneNumber;
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
+use App\Http\Requests\V1\BaseApiRequest;
+use App\Http\Requests\V1\Traits\HasStaffRules;
 
-class StoreSaleRequest extends FormRequest
+class StoreSaleRequest extends BaseApiRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
+    use HasStaffRules;
 
     /**
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
-        return [
-            'employee_code'        => ['nullable', 'string', 'max:30', 'unique:sales,employee_code'],
-            'full_name'            => ['required', 'string', 'max:120'],
-            'email'                => ['required', 'string', 'email', 'max:150', 'unique:sales,email'],
-            'phone'                => ['nullable', 'string', new VietnamesePhoneNumber, 'unique:sales,phone'],
-            'password'             => ['required', 'string', Password::min(8)],
-            'commission_rate'      => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'max_concurrent_leads' => ['nullable', 'integer', 'min:1'],
-            'status'               => ['nullable', 'string', 'in:ACTIVE,LOCKED,PENDING'],
-            'building_ids'         => ['nullable', 'array'],
-            'building_ids.*'       => ['string', 'uuid', 'exists:buildings,id'],
-        ];
+        return array_merge(
+            $this->staffAccountRules('sales', null, false, true, false),
+            [
+                'commission_rate'      => ['nullable', 'numeric', 'min:0', 'max:100'],
+                'max_concurrent_leads' => ['nullable', 'integer', 'min:1'],
+            ]
+        );
     }
 
     /**
@@ -38,16 +28,6 @@ class StoreSaleRequest extends FormRequest
      */
     public function messages(): array
     {
-        return [
-            'full_name.required' => 'Họ và tên nhân viên Sales là bắt buộc.',
-            'full_name.max'      => 'Họ và tên không được vượt quá 120 ký tự.',
-            'email.required'     => 'Email đăng nhập là bắt buộc.',
-            'email.email'        => 'Email không đúng định dạng.',
-            'email.unique'       => 'Email này đã được sử dụng bởi một nhân viên khác.',
-            'phone.unique'       => 'Số điện thoại này đã được sử dụng bởi một nhân viên khác.',
-            'password.required'  => 'Mật khẩu là bắt buộc.',
-            'password.min'       => 'Mật khẩu phải có tối thiểu 8 ký tự.',
-            'building_ids.*.exists' => 'Mã tòa nhà được phân công không tồn tại trong hệ thống.',
-        ];
+        return $this->staffAccountMessages('nhân viên Sales');
     }
 }

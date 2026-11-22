@@ -2,15 +2,10 @@
 
 namespace App\Http\Requests\V1\Ticket;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\V1\BaseApiRequest;
 
-class ConfirmTicketRequest extends FormRequest
+class ConfirmTicketRequest extends BaseApiRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     public function rules(): array
     {
         return [
@@ -23,8 +18,6 @@ class ConfirmTicketRequest extends FormRequest
     {
         return [
             'confirmed.required' => 'Trạng thái xác nhận nghiệm thu (confirmed: true/false) là bắt buộc.',
-            'confirmed.boolean'  => 'Giá trị xác nhận phải là boolean (true hoặc false).',
-            'feedback.max'       => 'Ý kiến phản hồi không được vượt quá 500 ký tự.',
         ];
     }
 }

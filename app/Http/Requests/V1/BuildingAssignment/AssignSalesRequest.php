@@ -2,32 +2,19 @@
 
 namespace App\Http\Requests\V1\BuildingAssignment;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\V1\BaseApiRequest;
+use App\Http\Requests\V1\Traits\NormalizesArrayInput;
 
-class AssignSalesRequest extends FormRequest
+class AssignSalesRequest extends BaseApiRequest
 {
-    /**
-     * Xác định người dùng có quyền thực hiện request này hay không.
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
+    use NormalizesArrayInput;
 
     /**
      * Chuẩn bị dữ liệu trước khi validate (hỗ trợ cả sales_id đơn lẻ lẫn sales_ids mảng).
      */
     protected function prepareForValidation(): void
     {
-        $salesIds = $this->input('sales_ids');
-
-        if (!$salesIds) {
-            $singleId = $this->input('sales_id') ?? $this->input('sale_id');
-            if ($singleId) {
-                $salesIds = is_array($singleId) ? $singleId : [$singleId];
-                $this->merge(['sales_ids' => $salesIds]);
-            }
-        }
+        $this->normalizeArrayField('sales_ids', ['sales_id', 'sale_id']);
     }
 
     /**
@@ -53,12 +40,8 @@ class AssignSalesRequest extends FormRequest
     {
         return [
             'sales_ids.required' => 'Vui lòng chọn ít nhất một nhân viên Sales để phân công.',
-            'sales_ids.array' => 'Danh sách Sales phải là một mảng.',
             'sales_ids.min' => 'Danh sách Sales phải có ít nhất một nhân viên.',
-            'sales_ids.*.required' => 'Mã định danh Sales không được để trống.',
-            'sales_ids.*.uuid' => 'Mã định danh Sales không đúng định dạng UUID.',
             'sales_ids.*.exists' => 'Nhân viên Sales không tồn tại trong hệ thống.',
-            'is_active.boolean' => 'Trạng thái hoạt động phải là true hoặc false.',
         ];
     }
 }

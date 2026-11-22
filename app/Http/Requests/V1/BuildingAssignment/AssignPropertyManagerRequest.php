@@ -2,18 +2,10 @@
 
 namespace App\Http\Requests\V1\BuildingAssignment;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\V1\BaseApiRequest;
 
-class AssignPropertyManagerRequest extends FormRequest
+class AssignPropertyManagerRequest extends BaseApiRequest
 {
-    /**
-     * Xác định người dùng có quyền thực hiện request này hay không.
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     /**
      * Chuẩn bị dữ liệu trước khi validate.
      * Hỗ trợ alias property_manager_id -> pm_id và is_head_manager -> is_primary.
@@ -53,10 +45,7 @@ class AssignPropertyManagerRequest extends FormRequest
     {
         return [
             'pm_id.required' => 'Vui lòng chọn nhân viên Ban Quản Lý (PM) để phân công.',
-            'pm_id.uuid' => 'Mã định danh BQL không đúng định dạng UUID.',
             'pm_id.exists' => 'Nhân viên Ban Quản Lý không tồn tại trong hệ thống.',
-            'is_primary.boolean' => 'Cờ Trưởng ban quản lý phải là true hoặc false.',
-            'is_head_manager.boolean' => 'Cờ Trưởng ban quản lý phải là true hoặc false.',
         ];
     }
 }

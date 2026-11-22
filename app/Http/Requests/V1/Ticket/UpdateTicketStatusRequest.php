@@ -2,15 +2,10 @@
 
 namespace App\Http\Requests\V1\Ticket;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\V1\BaseApiRequest;
 
-class UpdateTicketStatusRequest extends FormRequest
+class UpdateTicketStatusRequest extends BaseApiRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     public function rules(): array
     {
         return [

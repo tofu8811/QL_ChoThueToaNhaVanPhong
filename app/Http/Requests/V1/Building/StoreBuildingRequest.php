@@ -2,18 +2,10 @@
 
 namespace App\Http\Requests\V1\Building;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\V1\BaseApiRequest;
 
-class StoreBuildingRequest extends FormRequest
+class StoreBuildingRequest extends BaseApiRequest
 {
-    /**
-     * Xác định xem người dùng có quyền thực hiện request này hay không.
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     /**
      * Quy tắc xác thực dữ liệu đầu vào khi tạo mới Tòa nhà văn phòng.
      *
@@ -58,30 +50,17 @@ class StoreBuildingRequest extends FormRequest
     }
 
     /**
-     * Thông báo lỗi tiếng Việt thân thiện.
+     * Thông báo lỗi tiếng Việt tùy biến.
      *
      * @return array<string, string>
      */
     public function messages(): array
     {
         return [
-            'building_code.required' => 'Mã định danh tòa nhà là bắt buộc.',
             'building_code.unique' => 'Mã định danh tòa nhà đã tồn tại trên hệ thống.',
-            'name.required' => 'Tên tòa nhà văn phòng là bắt buộc.',
-            'address.required' => 'Địa chỉ tòa nhà là bắt buộc.',
-            'district.required' => 'Quận / Huyện là bắt buộc.',
-            'province.required' => 'Tỉnh / Thành phố là bắt buộc.',
-            'province_code.required' => 'Mã tỉnh/thành phố hành chính là bắt buộc.',
             'province_code.exists' => 'Mã tỉnh/thành phố không tồn tại trong danh mục.',
-            'total_floors.required' => 'Tổng số tầng nổi là bắt buộc và phải từ 1 trở lên.',
-            'total_leasable_area_sqm.required' => 'Tổng diện tích sàn cho thuê là bắt buộc.',
-            'electricity_unit_price.required' => 'Đơn giá điện là bắt buộc.',
-            'water_unit_price.required' => 'Đơn giá nước là bắt buộc.',
-            'default_service_fee_per_sqm.required' => 'Phí quản lý dịch vụ mặc định là bắt buộc.',
-            'min_rent_price_per_sqm.required' => 'Giá thuê sàn tối thiểu là bắt buộc.',
-            'max_rent_price_per_sqm.required' => 'Giá thuê sàn tối đa là bắt buộc.',
+            'total_floors.min' => 'Tổng số tầng nổi phải từ 1 trở lên.',
             'max_rent_price_per_sqm.gte' => 'Giá thuê tối đa phải lớn hơn hoặc bằng giá thuê tối thiểu.',
-            'grade.required' => 'Phân hạng văn phòng (A, B, C) là bắt buộc.',
             'grade.in' => 'Phân hạng văn phòng chỉ chấp nhận hạng A, B hoặc C.',
         ];
     }

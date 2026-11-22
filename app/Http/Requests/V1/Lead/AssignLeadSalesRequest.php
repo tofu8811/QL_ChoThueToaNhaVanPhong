@@ -2,18 +2,10 @@
 
 namespace App\Http\Requests\V1\Lead;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\V1\BaseApiRequest;
 
-class AssignLeadSalesRequest extends FormRequest
+class AssignLeadSalesRequest extends BaseApiRequest
 {
-    /**
-     * Xác định quyền điều phối Sales của người dùng.
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     /**
      * Quy tắc xác thực khi chỉ định / điều phối Sales cho Lead.
      *

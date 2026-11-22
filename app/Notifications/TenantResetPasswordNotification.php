@@ -35,7 +35,8 @@ class TenantResetPasswordNotification extends Notification implements ShouldQueu
      */
     public function via(mixed $notifiable): array
     {
-        return ['mail'];
+        // Chỉ gửi email khi Admin đã cấu hình và tính năng gửi email đang BẬT
+        return app(\App\Services\MailSettingService::class)->isEnabled() ? ['mail'] : [];
     }
 
     /**

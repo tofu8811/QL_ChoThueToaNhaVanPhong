@@ -357,6 +357,12 @@ class AuthService
             ]);
         }
 
+        if (!app(\App\Services\MailSettingService::class)->isEnabled()) {
+            throw ValidationException::withMessages([
+                'email' => ['Hệ thống hiện đang tạm tắt dịch vụ gửi email thông báo. Quý khách vui lòng liên hệ trực tiếp Ban Quản Lý Tòa Nhà để được hỗ trợ cấp lại mật khẩu.'],
+            ]);
+        }
+
         // Tạo token và phát Notification gửi email qua Queue
         $token = \Illuminate\Support\Facades\Password::broker('tenants')->createToken($tenant);
         $tenant->sendPasswordResetNotification($token);

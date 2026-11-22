@@ -10,6 +10,7 @@
       'tab-admin-billing': 'admin/billing',
       'tab-admin-tickets': 'admin/tickets',
       'tab-admin-staff': 'admin/staff',
+      'tab-admin-mail-settings': 'admin/mail-settings',
       'tab-sales-performance': 'admin/sales-performance',
       'tab-sales-leads': 'admin/sales-leads',
       'tab-sales-appointments': 'admin/sales-appointments',
@@ -30,6 +31,7 @@
       'admin/billing': 'tab-admin-billing',
       'admin/tickets': 'tab-admin-tickets',
       'admin/staff': 'tab-admin-staff',
+      'admin/mail-settings': 'tab-admin-mail-settings',
       'pm/dashboard': 'tab-admin-dashboard',
       'pm': 'tab-admin-dashboard',
       'pm/buildings': 'tab-admin-buildings',
@@ -56,6 +58,7 @@
       'tab-admin-billing': 'Kế toán, nhập chỉ số & công nợ tòa nhà',
       'tab-admin-tickets': 'Tiếp nhận & Xử lý Ticket sự cố, thi công',
       'tab-admin-staff': 'Quản trị nhân sự & phân quyền RBAC',
+      'tab-admin-mail-settings': 'Thiết lập email',
       'tab-sales-performance': 'Báo cáo hiệu suất kinh doanh cá nhân',
       'tab-sales-leads': 'Quản lý Leads Khách hàng & Pipeline CRM',
       'tab-sales-appointments': 'Quản lý lịch hẹn khảo sát thực tế',
@@ -403,7 +406,7 @@
         'tab-admin-dashboard', 'tab-admin-buildings', 'tab-admin-tenants',
         'tab-admin-contracts', 'tab-admin-billing', 'tab-admin-tickets',
         'tab-sales-performance', 'tab-sales-leads', 'tab-sales-appointments',
-        'tab-sales-quotes', 'tab-sales-pipeline', 'tab-admin-staff',
+        'tab-sales-quotes', 'tab-sales-pipeline', 'tab-admin-staff', 'tab-admin-mail-settings',
         'tab-tenant-profile', 'tab-tenant-workspace', 'tab-tenant-tickets', 'tab-tenant-bills'
       ],
       pm: [
@@ -462,6 +465,7 @@
       const navBilling = document.getElementById("nav-item-billing");
       const navTickets = document.getElementById("nav-item-tickets");
       const navStaff = document.getElementById("nav-item-staff");
+      const navMailSettings = document.getElementById("nav-item-mail-settings");
 
       // Lấy thông tin user đăng nhập thực tế nếu có
       const authUserStr = localStorage.getItem('auth_user');
@@ -480,6 +484,7 @@
       const navStaffBld = document.getElementById('nav-item-bld-staff');
       if (navStaffBld) navStaffBld.style.display = (role === 'pm') ? 'flex' : 'none';
       if (navStaff) navStaff.style.display = (role === 'admin') ? 'flex' : 'none';
+      if (navMailSettings) navMailSettings.style.display = (role === 'admin') ? 'flex' : 'none';
       if (groupSystem) groupSystem.style.display = (role === 'admin') ? 'block' : 'none';
       if (buildingSwitcher) buildingSwitcher.style.display = (role === 'tenant') ? 'none' : 'flex';
 
@@ -578,6 +583,7 @@
         const navQuotesAdmin = document.getElementById('nav-item-quotes');
         if (navQuotesAdmin) navQuotesAdmin.style.display = 'flex';
         if (groupSystem) groupSystem.style.display = 'block';
+        if (navMailSettings) navMailSettings.style.display = 'flex';
         if (groupTenant) groupTenant.style.display = 'none';
 
         // Ẩn sub-tab Admins nếu không phải Super Admin
@@ -608,6 +614,7 @@
         if (navTickets) navTickets.style.display = 'flex'; // Tiếp nhận và xử lý sự cố, duyệt thi công ngoài giờ
         if (groupSales) groupSales.style.display = 'none';
         if (groupSystem) groupSystem.style.display = 'none';
+        if (navMailSettings) navMailSettings.style.display = 'none';
         if (groupTenant) groupTenant.style.display = 'none';
         if (updateRoute) switchFilamentTab('tab-admin-dashboard', navDashboard, true);
       } else if (role === 'sales') {
@@ -632,6 +639,7 @@
         const navQuotes = document.getElementById('nav-item-quotes');
         if (navQuotes) navQuotes.style.display = 'flex';
         if (groupSystem) groupSystem.style.display = 'none'; // Ẩn Nhân sự RBAC
+        if (navMailSettings) navMailSettings.style.display = 'none';
         if (groupTenant) groupTenant.style.display = 'none';
         const navSalesPerfTarget = navSalesPerf || navLeads;
         if (updateRoute) switchFilamentTab('tab-sales-performance', navSalesPerfTarget, true);
@@ -655,6 +663,7 @@
         if (navTickets) navTickets.style.display = 'none';
         if (groupSales) groupSales.style.display = 'none';
         if (groupSystem) groupSystem.style.display = 'none';
+        if (navMailSettings) navMailSettings.style.display = 'none';
         if (groupTenant) groupTenant.style.display = 'none';
         if (updateRoute) switchFilamentTab('tab-admin-billing', navBilling, true);
       } else if (role === 'tenant') {
@@ -670,6 +679,7 @@
         if (groupAdmin) groupAdmin.style.display = 'none';
         if (groupSales) groupSales.style.display = 'none';
         if (groupSystem) groupSystem.style.display = 'none';
+        if (navMailSettings) navMailSettings.style.display = 'none';
         if (groupTenant) groupTenant.style.display = 'block';
 
         const welcomeTitle = document.getElementById("tenant-welcome-title");
@@ -780,6 +790,9 @@
       if (tabId === 'tab-admin-staff') {
         if (typeof preloadAllStaffData === 'function') preloadAllStaffData();
         if (typeof switchStaffSubTab === 'function') switchStaffSubTab(currentStaffTab, null, updateRoute);
+      }
+      if (tabId === 'tab-admin-mail-settings') {
+        if (typeof loadMailSettings === 'function') loadMailSettings();
       }
       if (tabId === 'tab-admin-buildings') {
         if (typeof loadAdminBuildingsList === 'function') loadAdminBuildingsList();

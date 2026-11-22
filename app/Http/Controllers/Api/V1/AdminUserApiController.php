@@ -77,6 +77,21 @@ class AdminUserApiController extends BaseApiController
     }
 
     /**
+     * POST /api/v1/admin/users/admins/{id}/reset-password: Cấp lại mật khẩu cho Quản trị viên.
+     */
+    public function resetPassword(string $id, Request $request): JsonResponse
+    {
+        /** @var Admin $currentAdmin */
+        $currentAdmin = $request->user();
+
+        $newPassword = $this->adminUserService->adminResetPassword($id, $currentAdmin);
+
+        return $this->successResponse([
+            'new_password' => $newPassword,
+        ], 'Cấp lại mật khẩu cho quản trị viên thành công. Thông tin mật khẩu mới đã được gửi qua email.');
+    }
+
+    /**
      * API tự động tính toán mã nhân viên kế tiếp theo vai trò từ CSDL.
      * Hỗ trợ Sales, Ban Quản Lý (PM) và Kế Toán.
      */

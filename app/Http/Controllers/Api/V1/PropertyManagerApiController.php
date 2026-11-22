@@ -91,4 +91,22 @@ class PropertyManagerApiController extends BaseApiController
 
         return $this->successResponse(null, 'Xóa mềm nhân sự Ban Quản lý thành công.');
     }
+
+    /**
+     * POST /api/v1/admin/users/property-managers/{id}/reset-password: Cấp lại mật khẩu cho Ban Quản lý.
+     */
+    public function resetPassword(string $id, Request $request): JsonResponse
+    {
+        /** @var Admin $admin */
+        $admin = $request->user();
+        if (!($admin instanceof Admin)) {
+            return $this->errorResponse('Chỉ Quản trị viên mới có quyền cấp lại mật khẩu cho Ban Quản lý.', 403);
+        }
+
+        $newPassword = $this->propertyManagerService->adminResetPassword($id, $admin);
+
+        return $this->successResponse([
+            'new_password' => $newPassword,
+        ], 'Cấp lại mật khẩu cho Ban Quản lý thành công. Thông tin mật khẩu mới đã được gửi qua email.');
+    }
 }

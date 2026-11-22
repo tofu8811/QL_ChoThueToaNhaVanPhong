@@ -232,6 +232,8 @@ Route::prefix('v1')->group(function () {
         Route::get('{id}', [AdminUserApiController::class, 'show'])->name('v1.admin.users.admins.show');
         // 75. Cập nhật Quản trị viên
         Route::put('{id}', [AdminUserApiController::class, 'update'])->name('v1.admin.users.admins.update');
+        // Cấp lại mật khẩu Quản trị viên
+        Route::post('{id}/reset-password', [AdminUserApiController::class, 'resetPassword'])->name('v1.admin.users.admins.reset-password');
         // 76. Xóa mềm Quản trị viên
         Route::delete('{id}', [AdminUserApiController::class, 'destroy'])->name('v1.admin.users.admins.destroy');
     });
@@ -248,6 +250,8 @@ Route::prefix('v1')->group(function () {
         Route::get('{id}', [SaleUserApiController::class, 'show'])->name('v1.admin.users.sales.show');
         // 80. Cập nhật Nhân viên Sales
         Route::put('{id}', [SaleUserApiController::class, 'update'])->name('v1.admin.users.sales.update');
+        // Cấp lại mật khẩu Sales
+        Route::post('{id}/reset-password', [SaleUserApiController::class, 'resetPassword'])->name('v1.admin.users.sales.reset-password');
         // 81. Xóa mềm Nhân viên Sales
         Route::delete('{id}', [SaleUserApiController::class, 'destroy'])->name('v1.admin.users.sales.destroy');
     });
@@ -264,6 +268,8 @@ Route::prefix('v1')->group(function () {
         Route::get('{id}', [PropertyManagerApiController::class, 'show'])->name('v1.admin.users.pm.show');
         // 85. Cập nhật Ban Quản lý (PM)
         Route::put('{id}', [PropertyManagerApiController::class, 'update'])->name('v1.admin.users.pm.update');
+        // Cấp lại mật khẩu Ban Quản lý
+        Route::post('{id}/reset-password', [PropertyManagerApiController::class, 'resetPassword'])->name('v1.admin.users.pm.reset-password');
         // 86. Xóa mềm Ban Quản lý (PM)
         Route::delete('{id}', [PropertyManagerApiController::class, 'destroy'])->name('v1.admin.users.pm.destroy');
     });
@@ -280,6 +286,8 @@ Route::prefix('v1')->group(function () {
         Route::get('{id}', [AccountantUserApiController::class, 'show'])->name('v1.admin.users.accountants.show');
         // 90. Cập nhật Kế toán
         Route::put('{id}', [AccountantUserApiController::class, 'update'])->name('v1.admin.users.accountants.update');
+        // Cấp lại mật khẩu Kế toán
+        Route::post('{id}/reset-password', [AccountantUserApiController::class, 'resetPassword'])->name('v1.admin.users.accountants.reset-password');
         // 91. Xóa mềm Kế toán
         Route::delete('{id}', [AccountantUserApiController::class, 'destroy'])->name('v1.admin.users.accountants.destroy');
     });

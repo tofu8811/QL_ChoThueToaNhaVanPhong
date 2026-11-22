@@ -3,16 +3,11 @@
 namespace App\Http\Requests\V1\Unit;
 
 use App\Enums\UnitStatus;
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\V1\BaseApiRequest;
 use Illuminate\Validation\Rules\Enum;
 
-class StoreUnitRequest extends FormRequest
+class StoreUnitRequest extends BaseApiRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     /**
      * Quy tắc xác thực thêm mới Mặt bằng văn phòng.
      *
@@ -38,12 +33,9 @@ class StoreUnitRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'building_id.required' => 'Mã tòa nhà là bắt buộc.',
             'building_id.exists' => 'Tòa nhà đã chọn không tồn tại trên hệ thống.',
-            'unit_code.required' => 'Mã căn/phòng là bắt buộc.',
-            'floor_number.required' => 'Số tầng là bắt buộc.',
-            'area_sqm.required' => 'Diện tích cho thuê (m2) là bắt buộc và phải lớn hơn 0.',
-            'base_rental_price.required' => 'Đơn giá thuê cơ sở là bắt buộc.',
+            'area_sqm.min' => 'Diện tích cho thuê (m2) phải lớn hơn 0.',
+            'base_rental_price.min' => 'Đơn giá thuê cơ sở phải lớn hơn hoặc bằng 0.',
         ];
     }
 }

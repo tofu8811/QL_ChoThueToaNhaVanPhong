@@ -2,18 +2,10 @@
 
 namespace App\Http\Requests\V1\Lead;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\V1\BaseApiRequest;
 
-class StoreLeadActivityRequest extends FormRequest
+class StoreLeadActivityRequest extends BaseApiRequest
 {
-    /**
-     * Xác định quyền ghi nhật ký hoạt động.
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     /**
      * Quy tắc xác thực thêm nhật ký hoạt động tương tác chăm sóc Lead.
      *

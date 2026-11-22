@@ -2,15 +2,10 @@
 
 namespace App\Http\Requests\V1\Setting;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\V1\BaseApiRequest;
 
-class TestMailSettingRequest extends FormRequest
+class TestMailSettingRequest extends BaseApiRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     /**
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */

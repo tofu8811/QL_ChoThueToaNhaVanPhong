@@ -3,19 +3,11 @@
 namespace App\Http\Requests\V1\Lead;
 
 use App\Enums\LeadStatus;
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\V1\BaseApiRequest;
 use Illuminate\Validation\Rules\Enum;
 
-class UpdateLeadStatusRequest extends FormRequest
+class UpdateLeadStatusRequest extends BaseApiRequest
 {
-    /**
-     * Xác định xem người dùng có quyền cập nhật trạng thái Pipeline hay không.
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     /**
      * Quy tắc xác thực chuyển đổi trạng thái tiến trình Lead.
      * Bắt buộc có lý do khi chuyển sang LOST.

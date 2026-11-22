@@ -2,16 +2,11 @@
 
 namespace App\Http\Requests\V1\Tenant;
 
+use App\Http\Requests\V1\BaseApiRequest;
 use App\Rules\VietnamesePhoneNumber;
-use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateTenantProfileRequest extends FormRequest
+class UpdateTenantProfileRequest extends BaseApiRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     /**
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */

@@ -3,26 +3,14 @@
 namespace App\Http\Requests\V1\Auth;
 
 use App\Enums\UserRole;
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\V1\BaseApiRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * Class LoginRequest
- * 
  * FormRequest kiểm thực dữ liệu đầu vào cho API Đăng nhập Đa tác nhân (/api/v1/auth/login).
  */
-class LoginRequest extends FormRequest
+class LoginRequest extends BaseApiRequest
 {
-    /**
-     * Xác định người dùng có quyền thực hiện request này hay không.
-     *
-     * @return bool
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     /**
      * Quy tắc kiểm thực dữ liệu đầu vào.
      *

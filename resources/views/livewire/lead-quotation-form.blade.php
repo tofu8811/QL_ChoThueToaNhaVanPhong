@@ -73,6 +73,28 @@
         }
         this.clientErrors.tour = '';
         return true;
+    },
+
+    submitForm(e) {
+        let valid = true;
+        let fn = document.getElementById('lead-fullname')?.value || '';
+        let ph = document.getElementById('lead-phone')?.value || '';
+        let em = document.getElementById('lead-email')?.value || '';
+        let tr = document.getElementById('lead-tour')?.value || '';
+
+        if (!this.validateFullname(fn)) valid = false;
+        if (!this.validatePhone(ph)) valid = false;
+        if (!this.validateEmail(em)) valid = false;
+        if (tr && !this.validateTour(tr)) valid = false;
+
+        if (!valid) {
+            if (typeof moToast === 'function') {
+                moToast('Vui lòng kiểm tra và điền chính xác các trường thông tin bắt buộc.', 'error', 'Thông tin chưa hợp lệ');
+            }
+            return;
+        }
+
+        $wire.submit();
     }
 }">
   @if($isSubmitted)
@@ -98,7 +120,7 @@
       <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Điền thông tin nhu cầu doanh nghiệp. Chuyên viên tư vấn sẽ liên hệ và gửi hồ sơ báo giá trong vòng 30 phút.</p>
     </div>
 
-    <form wire:submit.prevent="submit">
+    <form @submit.prevent="submitForm($event)" novalidate>
       <div class="lead-form-grid">
         <!-- 1. Họ và tên người liên hệ -->
         <div class="form-field">

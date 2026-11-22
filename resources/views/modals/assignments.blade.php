@@ -46,7 +46,7 @@
             <h4 style="margin:0 0 4px 0; font-size:14.5px; font-weight:700; color:#0f172a;">Gán Thêm Nhân Viên Sales Vào Tòa Nhà</h4>
             <p style="margin:0; font-size:12px; color:#64748b;">Sales được gán sẽ có quyền xem tòa nhà này và tự động nhận Lead khách có nhu cầu thuê.</p>
           </div>
-          <button type="button" class="btn-mo-primary" style="background:#2563eb; padding:8px 16px; font-size:13px; font-weight:700;" onclick="openAssignSalesModal()">
+          <button type="button" class="btn-mo-primary" style="background:#2563eb; padding:8px 16px; font-size:13px; font-weight:700;" onclick="openAssignBuildingSalesModal()">
             <i class="fa-solid fa-user-plus"></i> + Thêm Nhân Viên Sales
           </button>
         </div>

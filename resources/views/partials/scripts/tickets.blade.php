@@ -475,16 +475,17 @@
         prBadge.innerText = prMeta.label;
       }
 
-      document.getElementById("td-code").innerText = ticket.ticket_code || ('#' + ticket.id);
-      document.getElementById("td-title").innerText = ticket.title || '-';
-      document.getElementById("td-building-name").innerText = ticket.building?.name || ticket.location || '-';
-      document.getElementById("td-unit-info").innerText = ticket.unit ? (`Tầng ` + ticket.unit.floor_number + ` (Mã ` + ticket.unit.unit_code + `)`) : 'Khu vực chung';
-      document.getElementById("td-tenant-name").innerText = ticket.tenant?.company_name || ticket.tenant?.representative_name || ticket.tenant || 'Khách thuê';
-      document.getElementById("td-category-name").innerText = getTicketCategoryLabel(ticket.category?.value || ticket.category);
-      document.getElementById("td-pm-name").innerText = ticket.assigned_pm?.full_name ? (ticket.assigned_pm.full_name + ` (` + (ticket.assigned_pm.employee_code || '') + `)`) : 'Chưa phân công';
-      document.getElementById("td-expected-date").innerText = ticket.expected_completion_at ? new Date(ticket.expected_completion_at).toLocaleString('vi-VN') : 'Chưa xác định';
-      document.getElementById("td-created-at").innerText = ticket.created_at ? new Date(ticket.created_at).toLocaleString('vi-VN') : 'Vừa xong';
-      document.getElementById("td-description").innerText = ticket.description || '-';
+      const setSafeText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
+      setSafeText("td-code", ticket.ticket_code || ('#' + ticket.id));
+      setSafeText("td-title", ticket.title || '-');
+      setSafeText("td-building-name", ticket.building?.name || ticket.location || '-');
+      setSafeText("td-unit-info", ticket.unit ? (`Tầng ` + ticket.unit.floor_number + ` (Mã ` + ticket.unit.unit_code + `)`) : 'Khu vực chung');
+      setSafeText("td-tenant-name", ticket.tenant?.company_name || ticket.tenant?.representative_name || ticket.tenant || 'Khách thuê');
+      setSafeText("td-category-name", getTicketCategoryLabel(ticket.category?.value || ticket.category));
+      setSafeText("td-pm-name", ticket.assigned_pm?.full_name ? (ticket.assigned_pm.full_name + ` (` + (ticket.assigned_pm.employee_code || '') + `)`) : 'Chưa phân công');
+      setSafeText("td-expected-date", ticket.expected_completion_at ? new Date(ticket.expected_completion_at).toLocaleString('vi-VN') : 'Chưa xác định');
+      setSafeText("td-created-at", ticket.created_at ? new Date(ticket.created_at).toLocaleString('vi-VN') : 'Vừa xong');
+      setSafeText("td-description", ticket.description || '-');
 
       // Resolution Summary
       const resBox = document.getElementById("td-resolution-box");
@@ -966,5 +967,17 @@
       }
     }
 
+    function resetTicketFilters(viewType = 'admin') {
+      const kw = document.getElementById("ticket-filter-keyword");
+      if (kw) kw.value = '';
+      const clrBtn = document.getElementById("btn-clear-ticket-search");
+      if (clrBtn) clrBtn.style.display = 'none';
+      const st = document.getElementById("ticket-filter-status");
+      if (st) st.value = '';
+      const pr = document.getElementById("ticket-filter-priority");
+      if (pr) pr.value = '';
+      loadTicketsList(viewType);
+    }
+    window.resetTicketFilters = resetTicketFilters;
 
     </script>

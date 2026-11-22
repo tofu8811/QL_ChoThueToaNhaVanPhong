@@ -1839,17 +1839,17 @@
       grid-column: 1 / -1;
     }
     .field-error-slot {
-      height: 18px;
       min-height: 18px;
-      max-height: 18px;
-      font-size: 12px;
-      line-height: 18px;
+      font-size: 11.5px;
+      line-height: 1.35;
       color: #ef4444;
       font-weight: 500;
       display: flex;
-      align-items: center;
-      overflow: hidden;
+      align-items: flex-start;
+      gap: 5px;
       box-sizing: border-box;
+      word-break: break-word;
+      margin-top: 3px;
       transition: all 0.15s ease-in-out;
     }
     .form-field label {
@@ -2292,6 +2292,18 @@
       border: 1px solid #cbd5e1;
       border-radius: 6px;
       font-size: 13px;
+      color: #0f172a !important;
+      background-color: #ffffff;
+      font-weight: 500;
+    }
+    select.filament-input-sm, select.filament-input {
+      color: #0f172a !important;
+      background-color: #ffffff;
+      font-weight: 500 !important;
+    }
+    select.filament-input-sm option, select.filament-input option {
+      color: #0f172a !important;
+      background: #ffffff;
     }
 
     /* FilamentBadges & VIETOFFICE BMS Proptech Core Styling (Image 2 Design) */
@@ -3348,12 +3360,13 @@
     .field-error-slot {
       min-height: 18px;
       font-size: 11.5px;
-      line-height: 18px;
+      line-height: 1.35;
       color: #ef4444;
       margin-top: 4px;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 5px;
+      word-break: break-word;
     }
     .input-icon-wrapper .toggle-pwd-btn {
       position: absolute;

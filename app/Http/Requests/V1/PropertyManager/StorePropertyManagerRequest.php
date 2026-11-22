@@ -20,10 +20,10 @@ class StorePropertyManagerRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'employee_code'          => ['nullable', 'string', 'max:30', Rule::unique('property_managers', 'employee_code')->whereNull('deleted_at')],
+            'employee_code'          => ['nullable', 'string', 'max:30', 'unique:property_managers,employee_code'],
             'full_name'              => ['required', 'string', 'max:120'],
-            'email'                  => ['required', 'string', 'email', 'max:150', Rule::unique('property_managers', 'email')->whereNull('deleted_at')],
-            'phone'                  => ['nullable', 'string', new VietnamesePhoneNumber, Rule::unique('property_managers', 'phone')->whereNull('deleted_at')],
+            'email'                  => ['required', 'string', 'email', 'max:150', 'unique:property_managers,email'],
+            'phone'                  => ['nullable', 'string', new VietnamesePhoneNumber, 'unique:property_managers,phone'],
             'emergency_hotline'      => ['nullable', 'string', new VietnamesePhoneNumber],
             'password'               => ['required', 'string', Password::min(8)],
             'department'             => ['nullable', 'string', 'in:TECHNICAL,SECURITY,CLEANING,CUSTOMER_CARE'],

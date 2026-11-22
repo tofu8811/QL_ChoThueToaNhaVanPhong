@@ -26,13 +26,13 @@ class StoreAdminRequest extends FormRequest
                 'string',
                 'email',
                 'max:150',
-                Rule::unique('admins', 'email')->whereNull('deleted_at'),
+                'unique:admins,email',
             ],
             'phone'          => [
                 'nullable',
                 'string',
                 new VietnamesePhoneNumber,
-                Rule::unique('admins', 'phone')->whereNull('deleted_at'),
+                'unique:admins,phone',
             ],
             'password'       => [
                 'required',

@@ -411,4 +411,10 @@ window.moUpdateRuleCheck = moUpdateRuleCheck;
 window.moRenderPasswordStrength = moRenderPasswordStrength;
 window.moTogglePasswordVisibility = moTogglePasswordVisibility;
 window.moMapServerErrors = moMapServerErrors;
+
+// Lắng nghe sự kiện mo-toast từ Livewire và Client
+window.addEventListener('mo-toast', (e) => {
+  const d = Array.isArray(e.detail) ? e.detail[0] : (e.detail || {});
+  moToast(d.message || '', d.type || 'info', d.title || '');
+});
 </script>

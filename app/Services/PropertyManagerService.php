@@ -71,7 +71,7 @@ class PropertyManagerService
             // 1. Tự động sinh mã nhân viên nếu chưa có (VD: NV-BQL-001)
             $code = $data['employee_code'] ?? null;
             if (empty($code)) {
-                $codes = PropertyManager::whereNotNull('employee_code')->pluck('employee_code');
+                $codes = PropertyManager::withTrashed()->whereNotNull('employee_code')->pluck('employee_code');
                 $maxSeq = 0;
                 foreach ($codes as $c) {
                     if (preg_match('/(\d+)$/', (string) $c, $m)) {

@@ -328,7 +328,8 @@
       currentActiveBuildingId = buildingId;
       const modal = document.getElementById('modal-building-media');
       if (!modal) return;
-      document.getElementById('media-building-name').innerText = buildingName;
+      const mediaBldName = document.getElementById('media-building-name');
+      if (mediaBldName) mediaBldName.innerText = buildingName;
       modal.style.display = 'flex';
       loadBuildingMedia(buildingId);
     }
@@ -449,7 +450,8 @@
       currentActiveUnitBuildingId = buildingId;
       const modal = document.getElementById('modal-manage-units');
       if (!modal) return;
-      document.getElementById('units-modal-building-name').innerText = buildingName;
+      const unitsBldName = document.getElementById('units-modal-building-name');
+      if (unitsBldName) unitsBldName.innerText = buildingName;
       modal.style.display = 'flex';
       loadBuildingUnits(buildingId);
     }
@@ -714,6 +716,24 @@
 
     function handleAdminBuildingGrade(grade) {
       currentAdminBuildingGrade = grade;
+      const sel = document.getElementById('admin-building-grade-select');
+      if (sel && sel.value !== grade) sel.value = grade;
       loadAdminBuildingsList();
     }
+
+    function resetBuildingFilters() {
+      const inp = document.getElementById('admin-building-search');
+      if (inp) inp.value = '';
+      const clrBtn = document.getElementById('btn-clear-building-search');
+      if (clrBtn) clrBtn.style.display = 'none';
+      const sel = document.getElementById('admin-building-grade-select');
+      if (sel) sel.value = 'ALL';
+      currentAdminBuildingSearch = '';
+      currentAdminBuildingGrade = 'ALL';
+      loadAdminBuildingsList();
+    }
+
+    window.doBuildingSearch = doBuildingSearch;
+    window.handleAdminBuildingGrade = handleAdminBuildingGrade;
+    window.resetBuildingFilters = resetBuildingFilters;
 </script>

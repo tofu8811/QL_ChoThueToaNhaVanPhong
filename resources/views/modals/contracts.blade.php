@@ -5,70 +5,81 @@
       <h3 style="margin:0;font-size:16px;font-weight:700;"><i class="fa-solid fa-file-signature"></i> Khởi Tạo Hợp Đồng Thuê Văn Phòng Mới (Bản Nháp)</h3>
       <button type="button" onclick="closeCreateContractModal()" style="background:none;border:none;color:#ffffff;font-size:18px;cursor:pointer;">&times;</button>
     </div>
-    <form id="form-create-contract" onsubmit="submitCreateContract(event)" style="padding:20px;overflow-y:auto;flex:1;">
+    <form id="form-create-contract" onsubmit="submitCreateContract(event)" novalidate style="padding:20px;overflow-y:auto;flex:1;">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Khách Thuê Doanh Nghiệp <span style="color:#ef4444;">*</span></label>
-          <select id="contract-tenant-select" class="filament-input-sm" required>
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Khách Thuê Doanh Nghiệp <span style="color:#ef4444;">*</span></label>
+          <select id="contract-tenant-select" class="filament-input-sm" onchange="moClearFieldError('contract-tenant-select', 'err-contract-tenant')">
             <!-- Rendered via JS -->
           </select>
+          <div class="field-error-slot" id="err-contract-tenant"></div>
         </div>
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Tòa Nhà Văn Phòng <span style="color:#ef4444;">*</span></label>
-          <select id="contract-building-select" class="filament-input-sm" required>
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Tòa Nhà Văn Phòng <span style="color:#ef4444;">*</span></label>
+          <select id="contract-building-select" class="filament-input-sm" onchange="moClearFieldError('contract-building-select', 'err-contract-building')">
             <!-- Rendered via JS -->
           </select>
+          <div class="field-error-slot" id="err-contract-building"></div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Mã Hợp Đồng (Tự sinh nếu bỏ trống)</label>
-          <input type="text" id="contract-code-input" class="filament-input-sm" placeholder="VD: HD-2026-001">
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Mã Hợp Đồng (Tự sinh nếu bỏ trống)</label>
+          <input type="text" id="contract-code-input" class="filament-input-sm" placeholder="VD: HD-2026-001" oninput="moClearFieldError('contract-code-input', 'err-contract-code')">
+          <div class="field-error-slot" id="err-contract-code"></div>
         </div>
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Ngày Bắt Đầu Thuê <span style="color:#ef4444;">*</span></label>
-          <input type="date" id="contract-start-date" class="filament-input-sm" required>
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Ngày Bắt Đầu Thuê <span style="color:#ef4444;">*</span></label>
+          <input type="date" id="contract-start-date" class="filament-input-sm" onchange="moClearFieldError('contract-start-date', 'err-contract-start-date')">
+          <div class="field-error-slot" id="err-contract-start-date"></div>
         </div>
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Ngày Kết Thúc Thuê <span style="color:#ef4444;">*</span></label>
-          <input type="date" id="contract-end-date" class="filament-input-sm" required>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Tiền Thuê Sàn ($/tháng)</label>
-          <input type="number" step="0.01" id="contract-rent" class="filament-input-sm" placeholder="VD: 4500">
-        </div>
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Phí Dịch Vụ ($/tháng)</label>
-          <input type="number" step="0.01" id="contract-service-fee" class="filament-input-sm" placeholder="VD: 500">
-        </div>
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Tiền Cọc Bảo Đảm ($)</label>
-          <input type="number" step="0.01" id="contract-deposit" class="filament-input-sm" placeholder="VD: 15000">
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Ngày Kết Thúc Thuê <span style="color:#ef4444;">*</span></label>
+          <input type="date" id="contract-end-date" class="filament-input-sm" onchange="moClearFieldError('contract-end-date', 'err-contract-end-date')">
+          <div class="field-error-slot" id="err-contract-end-date"></div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Ngày Bàn Giao Mặt Bằng</label>
-          <input type="date" id="contract-handover-date" class="filament-input-sm">
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Tiền Thuê Sàn ($/tháng)</label>
+          <input type="number" step="0.01" id="contract-rent" class="filament-input-sm" placeholder="VD: 4500" min="0" oninput="moClearFieldError('contract-rent', 'err-contract-rent')">
+          <div class="field-error-slot" id="err-contract-rent"></div>
         </div>
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Kỳ Thanh Toán (Tháng)</label>
-          <input type="number" id="contract-billing-cycle" value="1" min="1" class="filament-input-sm">
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Phí Dịch Vụ ($/tháng)</label>
+          <input type="number" step="0.01" id="contract-service-fee" class="filament-input-sm" placeholder="VD: 500" min="0" oninput="moClearFieldError('contract-service-fee', 'err-contract-service-fee')">
+          <div class="field-error-slot" id="err-contract-service-fee"></div>
         </div>
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Hạn Đóng Tiền Hàng Tháng</label>
-          <input type="number" id="contract-payment-day" value="5" min="1" max="28" class="filament-input-sm">
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Tiền Cọc Bảo Đảm ($)</label>
+          <input type="number" step="0.01" id="contract-deposit" class="filament-input-sm" placeholder="VD: 15000" min="0" oninput="moClearFieldError('contract-deposit', 'err-contract-deposit')">
+          <div class="field-error-slot" id="err-contract-deposit"></div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div class="form-field">
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Ngày Bàn Giao Mặt Bằng</label>
+          <input type="date" id="contract-handover-date" class="filament-input-sm" onchange="moClearFieldError('contract-handover-date', 'err-contract-handover-date')">
+          <div class="field-error-slot" id="err-contract-handover-date"></div>
+        </div>
+        <div class="form-field">
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Kỳ Thanh Toán (Tháng)</label>
+          <input type="number" id="contract-billing-cycle" value="1" min="1" class="filament-input-sm" oninput="moClearFieldError('contract-billing-cycle', 'err-contract-billing-cycle')">
+          <div class="field-error-slot" id="err-contract-billing-cycle"></div>
+        </div>
+        <div class="form-field">
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Hạn Đóng Tiền Hàng Tháng (Ngày 1-28)</label>
+          <input type="number" id="contract-payment-day" value="5" min="1" max="28" class="filament-input-sm" oninput="moClearFieldError('contract-payment-day', 'err-contract-payment-day')">
+          <div class="field-error-slot" id="err-contract-payment-day"></div>
         </div>
       </div>
       <div class="form-field" style="margin-bottom:16px;">
-        <label style="font-size:12px;font-weight:600;color:#334155;">Điều Khoản Bổ Sung / Ghi Chú</label>
+        <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Điều Khoản Bổ Sung / Ghi Chú</label>
         <textarea id="contract-notes" rows="2" class="filament-input-sm" placeholder="Quy định ngày fit-out, miễn phí thời gian thi công..."></textarea>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #f1f5f9;padding-top:14px;">
         <button type="button" class="btn-mo-outline" onclick="closeCreateContractModal()">Hủy</button>
-        <button type="submit" class="btn-mo-orange"><i class="fa-solid fa-file-circle-plus"></i> Khởi Tạo Bản Nháp</button>
+        <button type="submit" id="btn-submit-create-contract" class="btn-mo-orange"><i class="fa-solid fa-file-circle-plus"></i> Khởi Tạo Bản Nháp</button>
       </div>
     </form>
   </div>

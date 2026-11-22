@@ -125,10 +125,10 @@ class TicketService
     public function createTenantTicket(array $data, Tenant $tenant): Ticket
     {
         return DB::transaction(function () use ($data, $tenant) {
-            // 1. Tự động sinh mã ticket duy nhất theo định dạng TK-YYYY-XXXX
+            // 1. Tự động sinh mã ticket duy nhất theo định dạng TK-YYYY-XXXX (bao gồm cả bản ghi xóa mềm)
             $year = date('Y');
             $prefix = "TK-{$year}-";
-            $latest = Ticket::where('ticket_code', 'like', "{$prefix}%")
+            $latest = Ticket::withTrashed()->where('ticket_code', 'like', "{$prefix}%")
                 ->orderBy('ticket_code', 'desc')
                 ->lockForUpdate()
                 ->value('ticket_code');

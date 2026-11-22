@@ -19,25 +19,36 @@
   </div>
 
   <div class="filament-card">
-    <div class="filament-card-header">
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-        <div style="position:relative;width:280px;display:flex;align-items:center;">
-          <input type="text" id="admin-building-search" class="filament-input-sm" placeholder="Tìm theo tên tòa nhà, quận, mã..." oninput="toggleSearchClearBtn(this)" onkeydown="if(event.key==='Enter'){ event.preventDefault(); doBuildingSearch(); }" style="width:100%;padding-right:32px;">
-          <button type="button" class="bms-search-clear-btn" id="btn-clear-building-search" onclick="handleClearSearchInput('admin-building-search', doBuildingSearch)" title="Xóa tìm kiếm">
-            <i class="fa-solid fa-xmark"></i>
+    <div class="filament-card-header" style="padding:14px 18px;">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;flex:1;">
+        <div style="display:flex;gap:10px;align-items:center;flex:1;min-width:320px;">
+          <div style="position:relative;flex:1;display:flex;align-items:center;">
+            <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:12px;color:#94a3b8;font-size:13px;pointer-events:none;"></i>
+            <input type="text" id="admin-building-search" class="filament-input-sm" placeholder="Tìm theo tên tòa nhà, quận, mã..." oninput="toggleSearchClearBtn(this)" onkeydown="if(event.key==='Enter'){ event.preventDefault(); doBuildingSearch(); }" style="width:100%;padding-left:34px;padding-right:32px;height:38px;font-size:13px;border-radius:6px;">
+            <button type="button" class="bms-search-clear-btn" id="btn-clear-building-search" onclick="handleClearSearchInput('admin-building-search', doBuildingSearch)" title="Xóa tìm kiếm">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <button type="button" class="btn-mo-primary" onclick="doBuildingSearch()" style="background:#2563eb;height:38px;padding:0 16px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;white-space:nowrap;border:none;border-radius:6px;cursor:pointer;">
+            <i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm
           </button>
         </div>
-        <button type="button" class="btn-mo-primary" onclick="doBuildingSearch()" style="background:#2563eb;padding:5px 14px;font-size:12.5px;display:flex;align-items:center;gap:6px;white-space:nowrap;border:none;border-radius:6px;cursor:pointer;">
-          <i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm
-        </button>
-        <select class="filament-input-sm" onchange="handleAdminBuildingGrade(this.value)">
-          <option value="ALL">Tất cả Phân Hạng</option>
-          <option value="A">Hạng A</option>
-          <option value="B">Hạng B</option>
-          <option value="C">Hạng C</option>
-        </select>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <label for="admin-building-grade-select" style="font-size:12.5px;font-weight:600;color:#64748b;white-space:nowrap;margin:0;">Phân hạng:</label>
+            <select id="admin-building-grade-select" class="filament-input-sm" onchange="handleAdminBuildingGrade(this.value)" style="height:38px;font-size:13px;border-radius:6px;min-width:160px;cursor:pointer;">
+              <option value="ALL">Tất cả Phân Hạng</option>
+              <option value="A">Hạng A</option>
+              <option value="B">Hạng B</option>
+              <option value="C">Hạng C</option>
+            </select>
+          </div>
+          <button type="button" class="btn-mo-outline" onclick="resetBuildingFilters()" style="height:38px;padding:0 14px;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;border-radius:6px;cursor:pointer;background:#fff;" title="Đặt lại bộ lọc & tải lại danh sách">
+            <i class="fa-solid fa-rotate-left"></i> Đặt lại
+          </button>
+        </div>
       </div>
-      <span style="font-size:13px;color:#64748b;">Tổng cộng: <strong id="admin-buildings-total-count" style="color:#0f172a;">0</strong> tòa nhà</span>
+      <span style="font-size:13px;color:#64748b;margin-left:12px;white-space:nowrap;">Tổng cộng: <strong id="admin-buildings-total-count" style="color:#0f172a;">0</strong> tòa nhà</span>
     </div>
 
     <div class="table-responsive">

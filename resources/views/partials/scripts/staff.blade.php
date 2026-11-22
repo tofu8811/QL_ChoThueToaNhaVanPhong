@@ -1934,4 +1934,52 @@
       `;
     }
     // Dữ liệu nhân sự sẽ được nạp theo cơ chế lazy load khi người dùng mở tab Nhân Sự trong Admin Panel
+    function resetStaffAdminFilters() {
+      const kw = document.getElementById('filter-admin-keyword');
+      if (kw) kw.value = '';
+      const clrBtn = document.getElementById('btn-clear-filter-admin');
+      if (clrBtn) clrBtn.style.display = 'none';
+      const st = document.getElementById('filter-admin-status');
+      if (st) st.value = '';
+      loadStaffAdmins(1);
+    }
+
+    function resetStaffSaleFilters() {
+      const kw = document.getElementById('filter-sale-keyword');
+      if (kw) kw.value = '';
+      const clrBtn = document.getElementById('btn-clear-filter-sale');
+      if (clrBtn) clrBtn.style.display = 'none';
+      const st = document.getElementById('filter-sale-status');
+      if (st) st.value = '';
+      loadStaffSales(1);
+    }
+
+    function resetStaffPmFilters() {
+      const kw = document.getElementById('filter-pm-keyword');
+      if (kw) kw.value = '';
+      const clrBtn = document.getElementById('btn-clear-filter-pm');
+      if (clrBtn) clrBtn.style.display = 'none';
+      const dep = document.getElementById('filter-pm-department');
+      if (dep) dep.value = '';
+      const st = document.getElementById('filter-pm-status');
+      if (st) st.value = '';
+      loadStaffPm(1);
+    }
+
+    function resetStaffAccFilters() {
+      const kw = document.getElementById('filter-acc-keyword');
+      if (kw) kw.value = '';
+      const clrBtn = document.getElementById('btn-clear-filter-acc');
+      if (clrBtn) clrBtn.style.display = 'none';
+      const adj = document.getElementById('filter-acc-adjustment');
+      if (adj) adj.value = '';
+      const st = document.getElementById('filter-acc-status');
+      if (st) st.value = '';
+      loadStaffAccountants(1);
+    }
+
+    window.resetStaffAdminFilters = resetStaffAdminFilters;
+    window.resetStaffSaleFilters = resetStaffSaleFilters;
+    window.resetStaffPmFilters = resetStaffPmFilters;
+    window.resetStaffAccFilters = resetStaffAccFilters;
   </script>

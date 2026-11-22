@@ -20,10 +20,10 @@ class StoreAccountantRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'employee_code'          => ['nullable', 'string', 'max:30', Rule::unique('accountants', 'employee_code')->whereNull('deleted_at')],
+            'employee_code'          => ['nullable', 'string', 'max:30', 'unique:accountants,employee_code'],
             'full_name'              => ['required', 'string', 'max:120'],
-            'email'                  => ['required', 'string', 'email', 'max:150', Rule::unique('accountants', 'email')->whereNull('deleted_at')],
-            'phone'                  => ['nullable', 'string', new VietnamesePhoneNumber, Rule::unique('accountants', 'phone')->whereNull('deleted_at')],
+            'email'                  => ['required', 'string', 'email', 'max:150', 'unique:accountants,email'],
+            'phone'                  => ['nullable', 'string', new VietnamesePhoneNumber, 'unique:accountants,phone'],
             'password'               => ['required', 'string', Password::min(8)],
             'can_approve_adjustment' => ['nullable', 'boolean'],
             'status'                 => ['nullable', 'string', 'in:ACTIVE,LOCKED,PENDING'],

@@ -20,10 +20,10 @@ class StoreSaleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'employee_code'        => ['nullable', 'string', 'max:30', Rule::unique('sales', 'employee_code')->whereNull('deleted_at')],
+            'employee_code'        => ['nullable', 'string', 'max:30', 'unique:sales,employee_code'],
             'full_name'            => ['required', 'string', 'max:120'],
-            'email'                => ['required', 'string', 'email', 'max:150', Rule::unique('sales', 'email')->whereNull('deleted_at')],
-            'phone'                => ['nullable', 'string', new VietnamesePhoneNumber, Rule::unique('sales', 'phone')->whereNull('deleted_at')],
+            'email'                => ['required', 'string', 'email', 'max:150', 'unique:sales,email'],
+            'phone'                => ['nullable', 'string', new VietnamesePhoneNumber, 'unique:sales,phone'],
             'password'             => ['required', 'string', Password::min(8)],
             'commission_rate'      => ['nullable', 'numeric', 'min:0', 'max:100'],
             'max_concurrent_leads' => ['nullable', 'integer', 'min:1'],

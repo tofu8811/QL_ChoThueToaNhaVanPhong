@@ -16,25 +16,34 @@
   </div>
 
   <!-- Bộ lọc nhanh & Tìm kiếm MST -->
-  <div class="filament-card" style="margin-bottom:16px;padding:16px;">
+  <div class="filament-card" style="margin-bottom:16px;padding:14px 18px;">
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;">
-      <div style="display:flex;gap:10px;align-items:center;flex:1;max-width:540px;">
+      <div style="display:flex;gap:10px;align-items:center;flex:1;min-width:320px;">
         <div style="position:relative;flex:1;display:flex;align-items:center;">
-          <input type="text" id="tenant-search-input" class="filament-input-sm" placeholder="Tìm kiếm theo Mã số thuế (MST), Tên công ty, Đại diện..." oninput="toggleSearchClearBtn(this)" onkeydown="if(event.key==='Enter'){ event.preventDefault(); doTenantSearch(); }" style="width:100%;padding-right:32px;">
+          <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:12px;color:#94a3b8;font-size:13px;pointer-events:none;"></i>
+          <input type="text" id="tenant-search-input" class="filament-input-sm" placeholder="Tìm kiếm theo Mã số thuế (MST), Tên công ty, Đại diện..." oninput="toggleSearchClearBtn(this)" onkeydown="if(event.key==='Enter'){ event.preventDefault(); doTenantSearch(); }" style="width:100%;padding-left:34px;padding-right:32px;height:38px;font-size:13px;border-radius:6px;">
           <button type="button" class="bms-search-clear-btn" id="btn-clear-tenant-search" onclick="handleClearSearchInput('tenant-search-input', doTenantSearch)" title="Xóa tìm kiếm">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
-        <button type="button" class="btn-mo-primary" onclick="doTenantSearch()" style="background:#2563eb;padding:6px 14px;font-size:12.5px;display:flex;align-items:center;gap:6px;white-space:nowrap;border:none;border-radius:6px;cursor:pointer;">
+        <button type="button" class="btn-mo-primary" onclick="doTenantSearch()" style="background:#2563eb;height:38px;padding:0 16px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;white-space:nowrap;border:none;border-radius:6px;cursor:pointer;">
           <i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm
         </button>
       </div>
-      <div style="display:flex;gap:6px;">
-        <button class="btn-mo-outline tenant-status-btn active" data-status="ALL" onclick="handleTenantStatusFilter('ALL')" style="font-size:12px;padding:4px 10px;">Tất cả</button>
-        <button class="btn-mo-outline tenant-status-btn" data-status="ACTIVE" onclick="handleTenantStatusFilter('ACTIVE')" style="font-size:12px;padding:4px 10px;">Đang hoạt động</button>
-        <button class="btn-mo-outline tenant-status-btn" data-status="INACTIVE" onclick="handleTenantStatusFilter('INACTIVE')" style="font-size:12px;padding:4px 10px;">Ngừng hoạt động</button>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <label for="tenant-status-select" style="font-size:12.5px;font-weight:600;color:#64748b;white-space:nowrap;margin:0;">Trạng thái:</label>
+          <select id="tenant-status-select" class="filament-input-sm" onchange="handleTenantStatusFilter(this.value)" style="height:38px;font-size:13px;border-radius:6px;min-width:180px;cursor:pointer;">
+            <option value="ALL">-- Tất cả trạng thái --</option>
+            <option value="ACTIVE">Đang hoạt động (ACTIVE)</option>
+            <option value="INACTIVE">Ngừng hoạt động (INACTIVE)</option>
+          </select>
+        </div>
+        <button type="button" class="btn-mo-outline" onclick="resetTenantFilters()" style="height:38px;padding:0 14px;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;border-radius:6px;cursor:pointer;background:#fff;" title="Đặt lại bộ lọc & hiển thị toàn bộ Khách thuê">
+          <i class="fa-solid fa-rotate-left"></i> Đặt lại
+        </button>
+        <span style="font-size:13px;color:#64748b;margin-left:4px;white-space:nowrap;">Tổng cộng: <strong id="admin-tenants-count" style="color:#0f172a;">0</strong> doanh nghiệp</span>
       </div>
-      <span style="font-size:13px;color:#64748b;">Tổng cộng: <strong id="admin-tenants-count" style="color:#0f172a;">0</strong> doanh nghiệp</span>
     </div>
   </div>
 

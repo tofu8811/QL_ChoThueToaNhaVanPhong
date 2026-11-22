@@ -181,8 +181,9 @@ class UnitService
      */
     public function storeUnit(array $data, ?string $pmId = null): Unit
     {
-        // Kiểm tra unique composite (building_id, unit_code)
-        $exists = Unit::where('building_id', $data['building_id'])
+        // Kiểm tra unique composite (building_id, unit_code) bao gồm cả bản ghi đã xóa mềm
+        $exists = Unit::withTrashed()
+            ->where('building_id', $data['building_id'])
             ->where('unit_code', $data['unit_code'])
             ->exists();
 
@@ -221,7 +222,8 @@ class UnitService
     {
         // Kiểm tra mã phòng trùng nếu có đổi unit_code
         if (!empty($data['unit_code']) && $data['unit_code'] !== $unit->unit_code) {
-            $exists = Unit::where('building_id', $unit->building_id)
+            $exists = Unit::withTrashed()
+                ->where('building_id', $unit->building_id)
                 ->where('unit_code', $data['unit_code'])
                 ->where('id', '!=', $unit->id)
                 ->exists();

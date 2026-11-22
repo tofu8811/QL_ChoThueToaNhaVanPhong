@@ -221,7 +221,7 @@
                                   <span style="background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:700;">+{{ count($blds) - 2 }} tòa</span>
                                 @endif
                               @else
-                                <span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span>
+                                <span style="color:#b45309; background:#fef3c7; padding:2px 8px; border-radius:6px; font-size:11.5px; font-weight:600;">Chưa phân công</span>
                               @endif
                             </div>
                           </td>
@@ -347,7 +347,7 @@
                                   <span style="background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:700; white-space:nowrap;">+{{ count($blds) - 2 }} tòa</span>
                                 @endif
                               @else
-                                <span style="color:#94a3b8; font-size:11.5px;">Chưa phân công</span>
+                                <span style="color:#b45309; background:#fef3c7; padding:2px 8px; border-radius:6px; font-size:11.5px; font-weight:600;">Chưa phân công</span>
                               @endif
                             </div>
                           </td>
@@ -465,7 +465,7 @@
                                   <span style="background:#f1f5f9; color:#475569; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:700; white-space:nowrap;">+{{ count($blds) - 2 }} tòa</span>
                                 @endif
                               @else
-                                <span style="color:#94a3b8; font-size:11.5px;">Toàn hệ thống</span>
+                                <span style="color:#b45309; background:#fef3c7; padding:2px 8px; border-radius:6px; font-size:11.5px; font-weight:600;">Chưa phân công</span>
                               @endif
                             </div>
                           </td>

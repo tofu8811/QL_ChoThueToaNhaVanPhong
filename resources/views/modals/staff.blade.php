@@ -289,20 +289,13 @@
               <div id="err-pm-password" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
             </div>
 
-            <div style="margin-bottom: 14px;">
+            <div style="margin-bottom: 20px;">
               <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Trạng thái</label>
               <select id="pm-form-status" class="form-control" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
                 <option value="ACTIVE">Hoạt động (ACTIVE)</option>
                 <option value="LOCKED">Tạm khóa (LOCKED)</option>
                 <option value="PENDING">Chờ kích hoạt (PENDING)</option>
               </select>
-            </div>
-
-            <div style="margin-bottom: 20px;">
-              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Phân công tòa nhà quản lý & tiếp nhận sự cố</label>
-              <div id="pm-form-buildings" class="building-select-grid">
-                <span style="color:#94a3b8; font-size:12px;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải danh sách tòa nhà...</span>
-              </div>
             </div>
 
             <div style="display:flex; justify-content:flex-end; gap:10px;">
@@ -398,20 +391,13 @@
               </label>
             </div>
 
-            <div style="margin-bottom: 14px;">
+            <div style="margin-bottom: 20px;">
               <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Trạng thái</label>
               <select id="acc-form-status" class="form-control" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
                 <option value="ACTIVE">Hoạt động (ACTIVE)</option>
                 <option value="LOCKED">Tạm khóa (LOCKED)</option>
                 <option value="PENDING">Chờ kích hoạt (PENDING)</option>
               </select>
-            </div>
-
-            <div style="margin-bottom: 20px;">
-              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Phân công tòa nhà theo dõi công nợ</label>
-              <div id="acc-form-buildings" class="building-select-grid">
-                <span style="color:#94a3b8; font-size:12px;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải danh sách tòa nhà...</span>
-              </div>
             </div>
 
             <div style="display:flex; justify-content:flex-end; gap:10px;">

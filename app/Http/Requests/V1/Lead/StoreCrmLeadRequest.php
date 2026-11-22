@@ -2,17 +2,21 @@
 
 namespace App\Http\Requests\V1\Lead;
 
+use App\Http\Requests\V1\BaseApiRequest;
 use App\Rules\VietnamesePhoneNumber;
-use Illuminate\Foundation\Http\FormRequest;
 
-class StoreCrmLeadRequest extends FormRequest
+class StoreCrmLeadRequest extends BaseApiRequest
 {
     /**
-     * Xác định xem nhân viên có quyền tạo Lead CRM thủ công hay không.
+     * Chuẩn hóa số điện thoại trước khi validate.
      */
-    public function authorize(): bool
+    protected function prepareForValidation(): void
     {
-        return true;
+        if ($this->has('phone') && $this->phone !== null) {
+            $this->merge([
+                'phone' => preg_replace('/[^0-9]/', '', (string) $this->phone),
+            ]);
+        }
     }
 
     /**

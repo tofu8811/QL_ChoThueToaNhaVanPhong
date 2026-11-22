@@ -2,49 +2,27 @@
 
 namespace App\Http\Requests\V1\Sale;
 
-use App\Rules\VietnamesePhoneNumber;
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
+use App\Http\Requests\V1\BaseApiRequest;
+use App\Http\Requests\V1\Traits\HasStaffRules;
 
-class UpdateSaleRequest extends FormRequest
+class UpdateSaleRequest extends BaseApiRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
+    use HasStaffRules;
 
     /**
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
-        $saleId = $this->route('id');
+        $saleId = $this->getResourceId();
 
-        return [
-            'full_name'            => ['sometimes', 'required', 'string', 'max:120'],
-            'email'                => [
-                'sometimes',
-                'required',
-                'string',
-                'email',
-                'max:150',
-                Rule::unique('sales', 'email')->ignore($saleId)->whereNull('deleted_at'),
-            ],
-            'phone'                => [
-                'sometimes',
-                'nullable',
-                'string',
-                new VietnamesePhoneNumber,
-                Rule::unique('sales', 'phone')->ignore($saleId)->whereNull('deleted_at'),
-            ],
-            'password'             => ['sometimes', 'nullable', 'string', Password::min(8)],
-            'commission_rate'      => ['sometimes', 'numeric', 'min:0', 'max:100'],
-            'max_concurrent_leads' => ['sometimes', 'integer', 'min:1'],
-            'status'               => ['sometimes', 'string', 'in:ACTIVE,LOCKED,PENDING'],
-            'building_ids'         => ['sometimes', 'nullable', 'array'],
-            'building_ids.*'       => ['string', 'uuid', 'exists:buildings,id'],
-        ];
+        return array_merge(
+            $this->staffAccountRules('sales', $saleId, true, true, false),
+            [
+                'commission_rate'      => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:100'],
+                'max_concurrent_leads' => ['sometimes', 'nullable', 'integer', 'min:1'],
+            ]
+        );
     }
 
     /**
@@ -52,13 +30,6 @@ class UpdateSaleRequest extends FormRequest
      */
     public function messages(): array
     {
-        return [
-            'full_name.required' => 'Họ và tên nhân viên Sales không được để trống.',
-            'email.required'     => 'Email không được để trống.',
-            'email.unique'       => 'Email này đã tồn tại trong hệ thống.',
-            'phone.unique'       => 'Số điện thoại này đã tồn tại trong hệ thống.',
-            'password.min'       => 'Mật khẩu phải có tối thiểu 8 ký tự.',
-            'building_ids.*.exists' => 'Mã tòa nhà được phân công không tồn tại trong hệ thống.',
-        ];
+        return $this->staffAccountMessages('nhân viên Sales');
     }
 }

@@ -2,50 +2,29 @@
 
 namespace App\Http\Requests\V1\PropertyManager;
 
+use App\Http\Requests\V1\BaseApiRequest;
+use App\Http\Requests\V1\Traits\HasStaffRules;
 use App\Rules\VietnamesePhoneNumber;
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
-class UpdatePropertyManagerRequest extends FormRequest
+class UpdatePropertyManagerRequest extends BaseApiRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
+    use HasStaffRules;
 
     /**
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
-        $pmId = $this->route('id');
+        $pmId = $this->getResourceId();
 
-        return [
-            'full_name'              => ['sometimes', 'required', 'string', 'max:120'],
-            'email'                  => [
-                'sometimes',
-                'required',
-                'string',
-                'email',
-                'max:150',
-                Rule::unique('property_managers', 'email')->ignore($pmId)->whereNull('deleted_at'),
-            ],
-            'phone'                  => [
-                'sometimes',
-                'nullable',
-                'string',
-                new VietnamesePhoneNumber,
-                Rule::unique('property_managers', 'phone')->ignore($pmId)->whereNull('deleted_at'),
-            ],
-            'emergency_hotline'      => ['sometimes', 'nullable', 'string', new VietnamesePhoneNumber],
-            'password'               => ['sometimes', 'nullable', 'string', Password::min(8)],
-            'department'             => ['sometimes', 'string', 'in:TECHNICAL,SECURITY,CLEANING,CUSTOMER_CARE'],
-            'status'                 => ['sometimes', 'string', 'in:ACTIVE,LOCKED,PENDING'],
-            'building_ids'           => ['sometimes', 'nullable', 'array'],
-            'building_ids.*'         => ['string', 'uuid', 'exists:buildings,id'],
-            'is_primary_building_id' => ['nullable', 'string', 'uuid', 'exists:buildings,id'],
-        ];
+        return array_merge(
+            $this->staffAccountRules('property_managers', $pmId, true, true, false),
+            [
+                'emergency_hotline'      => ['sometimes', 'nullable', 'string', new VietnamesePhoneNumber],
+                'department'             => ['sometimes', 'string', 'in:TECHNICAL,SECURITY,CLEANING,CUSTOMER_CARE'],
+                'is_primary_building_id' => ['nullable', 'string', 'uuid', 'exists:buildings,id'],
+            ]
+        );
     }
 
     protected function prepareForValidation(): void
@@ -60,14 +39,8 @@ class UpdatePropertyManagerRequest extends FormRequest
      */
     public function messages(): array
     {
-        return [
-            'full_name.required'    => 'Họ và tên nhân sự Ban Quản lý không được để trống.',
-            'email.required'        => 'Email không được để trống.',
-            'email.unique'          => 'Email này đã tồn tại trong hệ thống.',
-            'phone.unique'          => 'Số điện thoại này đã tồn tại trong hệ thống.',
-            'password.min'          => 'Mật khẩu phải có tối thiểu 8 ký tự.',
-            'department.in'         => 'Bộ phận chuyên trách không hợp lệ (TECHNICAL, SECURITY, CLEANING, CUSTOMER_CARE).',
-            'building_ids.*.exists' => 'Mã tòa nhà được phân công không tồn tại trong hệ thống.',
-        ];
+        return array_merge($this->staffAccountMessages('Ban Quản lý'), [
+            'department.in' => 'Bộ phận chuyên trách không hợp lệ (TECHNICAL, SECURITY, CLEANING, CUSTOMER_CARE).',
+        ]);
     }
 }

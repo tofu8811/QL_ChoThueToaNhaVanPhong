@@ -2,15 +2,10 @@
 
 namespace App\Http\Requests\V1\Tenant;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\V1\BaseApiRequest;
 
-class UploadLicenseRequest extends FormRequest
+class UploadLicenseRequest extends BaseApiRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     /**
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */

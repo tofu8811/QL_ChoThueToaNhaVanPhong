@@ -1756,26 +1756,34 @@
       width: 100%;
       border-collapse: collapse;
       text-align: left;
-      font-size: 14px;
-      margin-top: 14px;
+      font-size: 13.5px;
+      margin-top: 6px;
     }
     .mo-table th {
       background: #f8fafc;
       color: #475569;
       font-weight: 700;
-      font-size: 12.5px;
+      font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       padding: 12px 14px;
       border-bottom: 2px solid #e2e8f0;
+      white-space: nowrap;
     }
     .mo-table td {
-      padding: 14px;
+      padding: 13px 14px;
       border-bottom: 1px solid #f1f5f9;
       color: #334155;
+      vertical-align: middle;
     }
     .mo-table tr:hover td {
       background: #f8fafc;
+    }
+    .mo-table th:last-child,
+    .mo-table td:last-child {
+      text-align: right;
+      white-space: nowrap;
+      width: 1%;
     }
 
     /* Mock Google Map Container */
@@ -2043,6 +2051,8 @@
       display: flex;
       flex-direction: column;
       overflow-x: hidden;
+      min-width: 0;
+      background-color: #f8fafc;
     }
     .filament-topbar {
       height: 64px;
@@ -2055,6 +2065,34 @@
       position: sticky;
       top: 0;
       z-index: 40;
+    }
+    .bms-mobile-menu-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      color: #1e293b;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .bms-mobile-menu-btn:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    .bms-sidebar-backdrop {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(3px);
+      z-index: 9998;
+      animation: fadeIn 0.2s ease;
     }
     .filament-search-mock {
       display: flex;
@@ -2158,8 +2196,13 @@
 
     /* Filament Workspace Body */
     .filament-body {
-      padding: 28px;
+      padding: 24px 28px;
       flex: 1;
+      width: 100%;
+      max-width: 1600px;
+      margin-left: auto;
+      margin-right: auto;
+      box-sizing: border-box;
     }
     .filament-page-header {
       display: flex;
@@ -2722,22 +2765,129 @@
     }
     @media (max-width: 1200px) {
       .mo-stats-strip { grid-template-columns: repeat(3, 1fr); }
+      .bms-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 14px; }
+      .bms-analytics-grid { grid-template-columns: 1fr !important; }
+      .bms-alerts-grid { grid-template-columns: 1fr !important; }
+      .filament-widgets-grid { grid-template-columns: repeat(2, 1fr) !important; }
     }
     @media (max-width: 1024px) {
+      .filament-sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: -290px !important;
+        bottom: 0 !important;
+        height: 100vh !important;
+        z-index: 10000 !important;
+        box-shadow: 6px 0 25px rgba(0,0,0,0.3) !important;
+        transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        display: flex !important;
+      }
+      .filament-sidebar.mobile-open {
+        left: 0 !important;
+      }
+      .bms-sidebar-backdrop.active {
+        display: block !important;
+      }
+      .bms-mobile-menu-btn {
+        display: inline-flex !important;
+      }
+      .filament-topbar {
+        padding: 0 16px;
+        gap: 12px;
+      }
+      .filament-body {
+        padding: 20px 14px;
+      }
+      .filament-search-mock {
+        width: 190px;
+      }
+      #filament-user-sub {
+        display: none !important;
+      }
       .mo-header-actions {
         min-width: auto;
       }
       .mo-nav { display: none !important; }
       .mo-hamburger-btn { display: inline-flex !important; }
       .mo-topbar-right { display: none; }
-      .mo-filter-grid { grid-template-columns: 1fr 1fr; }
+      .mo-filter-grid { grid-template-columns: repeat(2, 1fr) !important; }
       .mo-content-grid { grid-template-columns: 1fr; }
-      .mo-building-grid { grid-template-columns: 1fr; }
-      .filament-widgets-grid { grid-template-columns: 1fr 1fr; }
+      .mo-building-grid { grid-template-columns: repeat(2, 1fr) !important; }
       .mo-footer-grid { grid-template-columns: 1fr 1fr; }
       .detail-hero-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 768px) {
+      .filament-topbar {
+        height: 58px;
+        padding: 0 12px;
+      }
+      .bms-topbar-home-link,
+      .bms-topbar-sep {
+        display: none !important;
+      }
+      .bms-bc-current {
+        font-size: 13px !important;
+        max-width: 135px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .filament-search-mock {
+        width: 135px;
+        padding: 4px 8px;
+      }
+      .filament-search-mock input::placeholder {
+        font-size: 11px;
+      }
+      #filament-user-name {
+        display: none !important;
+      }
+      .filament-user-pill {
+        padding: 2px !important;
+        border-left: none !important;
+      }
+      .filament-page-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        margin-bottom: 16px !important;
+      }
+      .filament-page-title {
+        font-size: 19px !important;
+      }
+      .filament-card-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        padding: 14px !important;
+      }
+      .bms-kpi-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+      }
+      .filament-widgets-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .mo-table, .filament-table {
+        min-width: 740px !important;
+      }
+      .table-responsive {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+      }
+      .mo-modal-content {
+        max-width: 95vw !important;
+        margin: 10px auto !important;
+      }
+      .mo-modal-body {
+        padding: 16px !important;
+      }
+      .mo-modal form div[style*="grid-template-columns"],
+      .mo-modal-content div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+      }
       .mo-header .container {
         height: 64px;
         padding: 0 16px;
@@ -2750,13 +2900,28 @@
       .mo-logo-text h1 {
         font-size: 17px;
       }
-      .filament-sidebar { display: none; }
-      .filament-widgets-grid { grid-template-columns: 1fr; }
       .mo-stats-strip { grid-template-columns: repeat(2, 1fr); }
       .lead-form-grid { grid-template-columns: 1fr; }
       .lead-form-wrap { padding: 24px 18px; }
       .form-field label { white-space: normal; height: auto; min-height: 20px; }
       .mo-footer-grid { grid-template-columns: 1fr; }
+      .mo-filter-grid { grid-template-columns: 1fr !important; }
+      .mo-building-grid { grid-template-columns: 1fr !important; }
+      .staff-subtab-btn {
+        padding: 7px 12px !important;
+        font-size: 12px !important;
+      }
+      .staff-subpanel .filament-card > div:first-child {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+      }
+      .staff-subpanel .filament-card > div:first-child > div {
+        width: 100% !important;
+      }
+      .staff-subpanel .filament-card > div:first-child .form-control {
+        width: 100% !important;
+      }
     }
     @media (max-width: 480px) {
       .mo-header .container {
@@ -2782,6 +2947,12 @@
         display: none !important;
       }
       .mo-stats-strip { grid-template-columns: 1fr; }
+      #bms-topbar-search-wrapper {
+        display: none !important;
+      }
+      .filament-topbar {
+        padding: 0 10px;
+      }
     }
 
     /* Login Modal Specific Styling */
@@ -3150,7 +3321,7 @@
     .input-icon-wrapper .field-icon {
       position: absolute;
       left: 14px;
-      bottom: 11px;
+      top: 35px;
       color: #94a3b8;
       font-size: 15px;
       pointer-events: none;
@@ -3169,10 +3340,25 @@
       border-color: #2563eb;
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
     }
+    .input-error {
+      border-color: #ef4444 !important;
+      background-color: #fff5f5 !important;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+    }
+    .field-error-slot {
+      min-height: 18px;
+      font-size: 11.5px;
+      line-height: 18px;
+      color: #ef4444;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
     .input-icon-wrapper .toggle-pwd-btn {
       position: absolute;
       right: 12px;
-      bottom: 10px;
+      top: 33px;
       background: none;
       border: none;
       color: #94a3b8;
@@ -3704,9 +3890,24 @@
     .table-responsive {
       width: 100%;
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
       border: 1px solid #e2e8f0;
       border-radius: 10px;
       background: #ffffff;
+    }
+    .filament-card > .table-responsive {
+      border: none;
+      border-radius: 0;
+    }
+    .table-responsive::-webkit-scrollbar {
+      height: 6px;
+    }
+    .table-responsive::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 999px;
+    }
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
     }
     .filament-table {
       width: 100%;
@@ -3909,5 +4110,107 @@
     }
     .val-shake {
       animation: valShake 0.4s ease-in-out;
+    }
+
+    /* ==========================================================================
+       TOAST NOTIFICATIONS (Chuẩn UX B2B Góc Màn Hình)
+       ========================================================================== */
+    #mo-toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 999999;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: none;
+      max-width: 420px;
+      width: calc(100vw - 36px);
+    }
+    .mo-toast {
+      pointer-events: auto;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 18px;
+      border-radius: 10px;
+      background: #ffffff;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.18), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #2563eb;
+      font-size: 13.5px;
+      color: #1e293b;
+      line-height: 1.45;
+      animation: moToastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .mo-toast.mo-toast-hiding {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    .mo-toast-icon {
+      font-size: 16px;
+      margin-top: 1px;
+      flex-shrink: 0;
+    }
+    .mo-toast-success {
+      border-left-color: #10b981;
+    }
+    .mo-toast-success .mo-toast-icon {
+      color: #10b981;
+    }
+    .mo-toast-error {
+      border-left-color: #ef4444;
+    }
+    .mo-toast-error .mo-toast-icon {
+      color: #ef4444;
+    }
+    .mo-toast-warning {
+      border-left-color: #f59e0b;
+    }
+    .mo-toast-warning .mo-toast-icon {
+      color: #f59e0b;
+    }
+    .mo-toast-info {
+      border-left-color: #3b82f6;
+    }
+    .mo-toast-info .mo-toast-icon {
+      color: #3b82f6;
+    }
+    .mo-toast-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .mo-toast-title {
+      font-weight: 700;
+      font-size: 13px;
+      margin-bottom: 2px;
+      color: #0f172a;
+    }
+    .mo-toast-close {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 0;
+      font-size: 14px;
+      line-height: 1;
+      margin-left: 6px;
+      transition: color 0.15s;
+    }
+    .mo-toast-close:hover {
+      color: #475569;
+    }
+    @keyframes moToastSlideIn {
+      from {
+        opacity: 0;
+        transform: translateX(60px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
     }
   </style>

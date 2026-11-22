@@ -223,8 +223,14 @@
     let ticketFirstErrorField = null;
 
     function clearTicketSingleFieldError(fieldId) {
+      if (typeof moClearFieldError === 'function') {
+        moClearFieldError(fieldId, 'err-' + fieldId);
+      }
       const el = document.getElementById(fieldId);
-      if (el) el.classList.remove('is-invalid');
+      if (el) {
+        el.classList.remove('is-invalid');
+        el.classList.remove('input-error');
+      }
       const errEl = document.getElementById('err-' + fieldId);
       if (errEl) {
         errEl.style.display = 'none';
@@ -254,6 +260,17 @@
       }
     }
 
+    function openTenantAfterHoursModal() {
+      openTenantTicketModal();
+      const catEl = document.getElementById("ticket-category");
+      if (catEl) catEl.value = 'OVERTIME_CONSTRUCTION';
+      const titleEl = document.getElementById("ticket-title");
+      if (titleEl && !titleEl.value) {
+        titleEl.placeholder = 'VD: Đăng ký thi công cải tạo văn phòng ngoài giờ từ 18h - 22h...';
+      }
+    }
+    window.openTenantAfterHoursModal = openTenantAfterHoursModal;
+
     function closeTenantTicketModal() {
       if (typeof closeModal === 'function') {
         closeModal("ticket-modal");
@@ -266,54 +283,54 @@
       }
     }
 
-    // 58. POST /api/v1/tenant/tickets: Tạo Ticket mới
+    // 58. POST /api/v1/tenant/tickets: Tạo Ticket mới / Đăng ký thi công
     async function handleTenantNewTicket(e) {
       if (e) e.preventDefault();
       clearAllTicketErrors();
 
-      const building_id = document.getElementById("ticket-building-id")?.value;
-      const title = document.getElementById("ticket-title")?.value?.trim() || '';
+      const buildingSelect = document.getElementById("ticket-building-id");
+      const titleInput = document.getElementById("ticket-title");
+      const descInput = document.getElementById("ticket-desc");
+
+      const building_id = buildingSelect?.value;
+      const title = titleInput?.value?.trim() || '';
       const category = document.getElementById("ticket-category")?.value || 'MAINTENANCE';
       const priority = document.getElementById("ticket-priority")?.value || 'NORMAL';
-      const description = document.getElementById("ticket-desc")?.value?.trim() || '';
+      const description = descInput?.value?.trim() || '';
       const imgUrl = document.getElementById("ticket-image-url")?.value?.trim();
       const btn = document.getElementById("btn-submit-create-ticket");
 
-      // Validate các trường bắt buộc
-      const errors = [];
+      let hasError = false;
+      let firstEl = null;
+
       if (!building_id) {
-        errors.push({
-          fieldId: 'ticket-building-id',
-          message: 'Vui lòng chọn tòa nhà văn phòng của bạn.'
-        });
+        if (typeof moSetFieldError === 'function') {
+          moSetFieldError('ticket-building-id', 'err-ticket-building-id', 'Vui lòng chọn tòa nhà văn phòng của bạn.');
+        }
+        if (!firstEl) firstEl = buildingSelect;
+        hasError = true;
       }
+
       if (!title || title.length < 6) {
-        errors.push({
-          fieldId: 'ticket-title',
-          message: 'Vui lòng nhập tiêu đề sự cố / yêu cầu (tối thiểu 6 ký tự).'
-        });
+        const msg = !title ? 'Vui lòng nhập tiêu đề sự cố / yêu cầu.' : 'Tiêu đề sự cố / yêu cầu phải có tối thiểu 6 ký tự.';
+        if (typeof moSetFieldError === 'function') {
+          moSetFieldError('ticket-title', 'err-ticket-title', msg);
+        }
+        if (!firstEl) firstEl = titleInput;
+        hasError = true;
       }
+
       if (!description || description.length < 10) {
-        errors.push({
-          fieldId: 'ticket-desc',
-          message: 'Vui lòng mô tả hiện trạng chi tiết vị trí sự cố (tối thiểu 10 ký tự).'
-        });
+        const msg = !description ? 'Vui lòng mô tả hiện trạng chi tiết vị trí sự cố.' : 'Mô tả hiện trạng phải có tối thiểu 10 ký tự.';
+        if (typeof moSetFieldError === 'function') {
+          moSetFieldError('ticket-desc', 'err-ticket-desc', msg);
+        }
+        if (!firstEl) firstEl = descInput;
+        hasError = true;
       }
 
       // NẾU CÓ LỖI: HIỆN HẾT RA DƯỚI TỪNG TRƯỜNG & KHÔNG DÙNG POPUP
-      if (errors.length > 0) {
-        ticketFirstErrorField = errors[0].fieldId;
-        errors.forEach(err => {
-          const inputEl = document.getElementById(err.fieldId);
-          if (inputEl) inputEl.classList.add('is-invalid');
-          const errEl = document.getElementById('err-' + err.fieldId);
-          if (errEl) {
-            errEl.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> <span>${err.message}</span>`;
-            errEl.style.display = 'flex';
-          }
-        });
-
-        const firstEl = document.getElementById(ticketFirstErrorField);
+      if (hasError) {
         if (firstEl) {
           firstEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
           firstEl.focus();
@@ -358,22 +375,48 @@
 
         const json = await res.json();
         if (res.ok && json.status === 'success') {
-          alert("Gửi phiếu yêu cầu hỗ trợ sự cố thành công!\nMã phiếu: " + (json.data?.ticket_code || 'Mới') + "\nĐã gửi thông báo tới Ban Quản Lý tòa nhà.");
           closeTenantTicketModal();
-          document.getElementById("ticket-title").value = '';
-          document.getElementById("ticket-desc").value = '';
-          if (document.getElementById("ticket-image-url")) document.getElementById("ticket-image-url").value = '';
+          if (titleInput) titleInput.value = '';
+          if (descInput) descInput.value = '';
+          const imgEl = document.getElementById("ticket-image-url");
+          if (imgEl) imgEl.value = '';
+
+          const ticketCode = json.data?.ticket_code || 'Mới';
+          const successMsg = `Đã gửi phiếu yêu cầu hỗ trợ thành công (Mã: ${ticketCode}). Ban Quản Lý sẽ liên hệ xử lý trong vòng 30 phút.`;
+          if (typeof moToast === 'function') {
+            moToast(successMsg, 'success', 'Gửi Yêu Cầu Hỗ Trợ Thành Công');
+          } else {
+            alert(successMsg);
+          }
+
           if (typeof loadTicketsList === 'function') loadTicketsList('tenant');
           if (typeof Livewire !== 'undefined') {
             const comp = document.querySelector('[wire\\:id]');
             if (comp) Livewire.find(comp.getAttribute('wire:id'))?.$refresh();
           }
         } else {
-          alert("Lỗi khi tạo ticket: " + (json.message || 'Dữ liệu không hợp lệ'));
+          if (json.errors && typeof moMapServerErrors === 'function') {
+            moMapServerErrors(json.errors, {
+              'building_id': { inputId: 'ticket-building-id', slotId: 'err-ticket-building-id' },
+              'title': { inputId: 'ticket-title', slotId: 'err-ticket-title' },
+              'description': { inputId: 'ticket-desc', slotId: 'err-ticket-desc' }
+            });
+          }
+          const errorMsg = json.message || 'Không thể tạo phiếu yêu cầu sự cố. Vui lòng kiểm tra lại thông tin.';
+          if (typeof moToast === 'function') {
+            moToast(errorMsg, 'error', 'Tạo Phiếu Thất Bại');
+          } else {
+            alert("Lỗi khi tạo ticket: " + errorMsg);
+          }
         }
       } catch (err) {
         console.error("Create ticket error:", err);
-        alert("Lỗi kết nối máy chủ khi tạo phiếu hỗ trợ.");
+        const netErr = "Lỗi kết nối máy chủ khi tạo phiếu hỗ trợ. Vui lòng thử lại sau.";
+        if (typeof moToast === 'function') {
+          moToast(netErr, 'error', 'Lỗi Kết Nối');
+        } else {
+          alert(netErr);
+        }
       } finally {
         if (btn) {
           btn.disabled = false;

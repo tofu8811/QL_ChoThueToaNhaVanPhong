@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V1\Accountant;
 
+use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -34,7 +35,7 @@ class UpdateAccountantRequest extends FormRequest
                 'sometimes',
                 'nullable',
                 'string',
-                'max:20',
+                new VietnamesePhoneNumber,
                 Rule::unique('accountants', 'phone')->ignore($accountantId)->whereNull('deleted_at'),
             ],
             'password'               => ['sometimes', 'nullable', 'string', Password::min(8)],

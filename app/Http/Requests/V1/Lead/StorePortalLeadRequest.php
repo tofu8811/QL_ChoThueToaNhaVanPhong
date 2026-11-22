@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V1\Lead;
 
+use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StorePortalLeadRequest extends FormRequest
@@ -36,7 +37,7 @@ class StorePortalLeadRequest extends FormRequest
         return [
             'contact_full_name' => ['required', 'string', 'max:120'],
             'company_name' => ['nullable', 'string', 'max:200'],
-            'phone' => ['required', 'string', 'regex:/^0[0-9]{9,10}$/'],
+            'phone' => ['required', 'string', new VietnamesePhoneNumber],
             'email' => ['required', 'string', 'email:rfc,filter', 'max:150'],
             'building_id' => ['nullable', 'uuid', 'exists:buildings,id'],
             'unit_id' => ['nullable', 'uuid', 'exists:units,id'],

@@ -50,22 +50,24 @@
   </div>
 
   <div class="filament-card">
-    <table class="mo-table">
-      <thead>
-        <tr>
-          <th>Mã Ticket</th>
-          <th>Khách Thuê / Doanh Nghiệp</th>
-          <th>Tòa Nhà & Vị Trí</th>
-          <th>Nội Dung Yêu Cầu</th>
-          <th>Mức Ưu Tiên</th>
-          <th>Kỹ Thuật Viên</th>
-          <th>Trạng Thái</th>
-          <th style="text-align:right;">Hành Động</th>
-        </tr>
-      </thead>
-      <tbody id="admin-tickets-tbody">
-        <!-- Rendered via JS -->
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="mo-table">
+        <thead>
+          <tr>
+            <th>Mã Ticket</th>
+            <th>Khách Thuê / Doanh Nghiệp</th>
+            <th>Tòa Nhà & Vị Trí</th>
+            <th>Nội Dung Yêu Cầu</th>
+            <th>Mức Ưu Tiên</th>
+            <th>Kỹ Thuật Viên</th>
+            <th>Trạng Thái</th>
+            <th style="text-align:right;">Hành Động</th>
+          </tr>
+        </thead>
+        <tbody id="admin-tickets-tbody">
+          <!-- Rendered via JS -->
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>

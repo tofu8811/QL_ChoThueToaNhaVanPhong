@@ -43,10 +43,26 @@
       const succText = document.getElementById("forgot-success-text");
       const btn = document.getElementById("btn-submit-forgot");
 
-      if (!emailInput || !emailInput.value.trim()) return;
-
+      if (!emailInput) return;
+      moClearFieldError('forgot-email', 'err-forgot-email');
       if (errBox) errBox.style.display = "none";
       if (succBox) succBox.style.display = "none";
+
+      const val = emailInput.value.trim();
+      if (!val) {
+        moSetFieldError('forgot-email', 'err-forgot-email', 'Vui lòng nhập địa chỉ Email hoặc Mã khách thuê.');
+        emailInput.focus();
+        return;
+      }
+      if (val.includes('@')) {
+        const vEmail = moValidateEmail(val);
+        if (!vEmail.valid) {
+          moSetFieldError('forgot-email', 'err-forgot-email', vEmail.message);
+          emailInput.focus();
+          return;
+        }
+      }
+
       if (btn) {
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi yêu cầu...';
@@ -60,27 +76,41 @@
             'Accept': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
           },
-          body: JSON.stringify({ email: emailInput.value.trim() })
+          body: JSON.stringify({ email: val })
         });
 
         const resData = await response.json();
 
         if (response.ok) {
+          const succMsg = resData.message || 'Yêu cầu khôi phục mật khẩu đã được tiếp nhận. Vui lòng kiểm tra hộp thư email của bạn.';
           if (succBox) {
-            succText.innerText = resData.message || 'Yêu cầu khôi phục mật khẩu đã được tiếp nhận. Vui lòng kiểm tra hộp thư email của bạn.';
+            succText.innerText = succMsg;
             succBox.style.display = 'block';
+          }
+          if (typeof moToast === 'function') {
+            moToast(succMsg, 'success', 'Khôi phục mật khẩu');
           }
           emailInput.value = '';
         } else {
+          const failMsg = resData.errors?.email?.[0] || resData.message || 'Không thể gửi yêu cầu khôi phục mật khẩu.';
+          moSetFieldError('forgot-email', 'err-forgot-email', failMsg);
           if (errBox) {
-            errText.innerText = resData.errors?.email?.[0] || resData.message || 'Không thể gửi yêu cầu khôi phục mật khẩu.';
+            errText.innerText = failMsg;
             errBox.style.display = 'block';
+          }
+          if (typeof moToast === 'function') {
+            moToast(failMsg, 'error', 'Khôi phục thất bại');
           }
         }
       } catch (err) {
+        const netMsg = 'Lỗi kết nối máy chủ. Vui lòng thử lại sau.';
+        moSetFieldError('forgot-email', 'err-forgot-email', netMsg);
         if (errBox) {
-          errText.innerText = 'Lỗi kết nối máy chủ. Vui lòng thử lại sau.';
+          errText.innerText = netMsg;
           errBox.style.display = 'block';
+        }
+        if (typeof moToast === 'function') {
+          moToast(netMsg, 'error');
         }
       } finally {
         if (btn) {
@@ -207,15 +237,43 @@
 
     async function handleLoginSubmit(e) {
       e.preventDefault();
-      const email = document.getElementById("login-email").value.trim();
-      const password = document.getElementById("login-password").value;
+      const emailInput = document.getElementById("login-email");
+      const passwordInput = document.getElementById("login-password");
+      const email = emailInput ? emailInput.value.trim() : '';
+      const password = passwordInput ? passwordInput.value : '';
       const btn = document.getElementById("btn-submit-login");
       const errBox = document.getElementById("login-error-alert");
       const errText = document.getElementById("login-error-text");
 
+      // Xóa sạch trạng thái lỗi cũ 0ms
+      moClearFieldError('login-email', 'err-login-email');
+      moClearFieldError('login-password', 'err-login-password');
+      if (errBox) errBox.style.display = "none";
+
+      // Validation thời gian thực 0ms với thư viện BMS Validation Engine
+      let hasError = false;
+      let firstEl = null;
+
+      const vEmail = moValidateEmail(email);
+      if (!vEmail.valid) {
+        moSetFieldError('login-email', 'err-login-email', vEmail.message);
+        if (!firstEl) firstEl = emailInput;
+        hasError = true;
+      }
+
+      if (!password || password.trim().length === 0) {
+        moSetFieldError('login-password', 'err-login-password', 'Vui lòng nhập mật khẩu tài khoản.');
+        if (!firstEl) firstEl = passwordInput;
+        hasError = true;
+      }
+
+      if (hasError) {
+        if (firstEl) firstEl.focus();
+        return;
+      }
+
       btn.disabled = true;
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang xác thực...`;
-      if (errBox) errBox.style.display = "none";
 
       try {
         const response = await fetch('/api/v1/auth/login', {
@@ -246,6 +304,9 @@
 
           closeLoginModal();
           updateAuthUI(authData.user, authData.role);
+          if (typeof moToast === 'function') {
+            moToast('Đăng nhập không gian làm việc thành công!', 'success');
+          }
 
           // Tự động chuyển trang phù hợp theo đúng Role (Dedicated Portals)
           const upperRole = String(authData.role || '').toUpperCase();
@@ -262,16 +323,24 @@
           }
         } else {
           const msg = result.message || 'Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại.';
+          moSetFieldError('login-password', 'err-login-password', msg);
           if (errText) errText.innerText = msg;
           else if (errBox) errBox.innerText = msg;
           if (errBox) errBox.style.display = "flex";
+          if (typeof moToast === 'function') {
+            moToast(msg, 'error', 'Đăng nhập không thành công');
+          }
         }
       } catch (error) {
         console.error('Login Error:', error);
         const msg = 'Lỗi kết nối máy chủ xác thực. Vui lòng thử lại sau.';
+        moSetFieldError('login-password', 'err-login-password', msg);
         if (errText) errText.innerText = msg;
         else if (errBox) errBox.innerText = msg;
         if (errBox) errBox.style.display = "flex";
+        if (typeof moToast === 'function') {
+          moToast(msg, 'error');
+        }
       } finally {
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Đăng Nhập Không Gian Làm Việc`;
@@ -489,6 +558,9 @@
 
       // Tải hồ sơ từ API 69
       loadUserProfile();
+
+      // Reset form đổi mật khẩu và xóa lỗi về trạng thái ban đầu
+      resetChangePasswordValidation();
     }
 
     function closeProfileModal() {
@@ -689,8 +761,176 @@
       }
     }
 
+    /* ==========================================================================
+       VALIDATION THỜI GIAN THỰC (0ms DELAY) FORM ĐỔI MẬT KHẨU
+       Kế thừa chuẩn mô hình 3 lớp qua thư viện BMS Validation Engine dùng chung
+       ========================================================================== */
+
+    function toggleFieldPasswordVisibility(fieldId, btnEl) {
+      return moTogglePasswordVisibility(fieldId, btnEl);
+    }
+
+    function setFieldError(inputId, slotId, msg) {
+      return moSetFieldError(inputId, slotId, msg);
+    }
+
+    function clearFieldError(inputId, slotId) {
+      return moClearFieldError(inputId, slotId);
+    }
+
+    function updateRuleCheck(ruleId, isPassed) {
+      return moUpdateRuleCheck(ruleId, isPassed);
+    }
+
+    function evaluatePasswordStrength(val) {
+      return moRenderPasswordStrength(val);
+    }
+
+    function validateCurrentPwd(showError = false) {
+      const input = document.getElementById('pwd-current');
+      const val = input ? input.value : '';
+      if (!val || val.trim().length === 0) {
+        if (showError) setFieldError('pwd-current', 'err-pwd-current', 'Vui lòng nhập mật khẩu hiện tại.');
+        return false;
+      }
+      clearFieldError('pwd-current', 'err-pwd-current');
+      return true;
+    }
+
+    function validateNewPwd(showError = false) {
+      const input = document.getElementById('pwd-new');
+      const val = input ? input.value : '';
+      const strength = evaluatePasswordStrength(val);
+
+      if (!val || val.length === 0) {
+        if (showError) setFieldError('pwd-new', 'err-pwd-new', 'Vui lòng nhập mật khẩu mới.');
+        return false;
+      }
+
+      if (strength.score < 4) {
+        if (showError) setFieldError('pwd-new', 'err-pwd-new', 'Mật khẩu mới phải đáp ứng đủ 4 tiêu chuẩn an toàn bên dưới.');
+        return false;
+      }
+
+      clearFieldError('pwd-new', 'err-pwd-new');
+
+      // Tự động re-validate xác nhận mật khẩu nếu ô confirm đã có ký tự
+      const confirmInput = document.getElementById('pwd-confirm');
+      if (confirmInput && confirmInput.value.length > 0) {
+        validateConfirmPwd(false);
+      }
+      return true;
+    }
+
+    function validateConfirmPwd(showError = false) {
+      const input = document.getElementById('pwd-confirm');
+      const confirmVal = input ? input.value : '';
+      const newVal = document.getElementById('pwd-new') ? document.getElementById('pwd-new').value : '';
+
+      if (!confirmVal || confirmVal.length === 0) {
+        if (showError) setFieldError('pwd-confirm', 'err-pwd-confirm', 'Vui lòng xác nhận lại mật khẩu mới.');
+        return false;
+      }
+
+      if (confirmVal !== newVal) {
+        if (showError) setFieldError('pwd-confirm', 'err-pwd-confirm', 'Mật khẩu xác nhận không khớp với mật khẩu mới.');
+        return false;
+      }
+
+      clearFieldError('pwd-confirm', 'err-pwd-confirm');
+      return true;
+    }
+
+    function handleCurrentPwdInput(input) {
+      // 0ms delay: Khi người dùng bắt đầu gõ, hủy ngay trạng thái lỗi
+      if (input.value.length > 0) {
+        clearFieldError('pwd-current', 'err-pwd-current');
+      }
+      const alertBox = document.getElementById('change-pwd-alert');
+      if (alertBox && alertBox.style.display !== 'none') alertBox.style.display = 'none';
+    }
+
+    function handleCurrentPwdBlur(input) {
+      validateCurrentPwd(true);
+    }
+
+    function handleNewPwdInput(input) {
+      const strength = evaluatePasswordStrength(input.value);
+      // 0ms delay: Xóa ngay lỗi cũ khi người dùng bắt đầu gõ
+      if (input.value.length > 0) {
+        clearFieldError('pwd-new', 'err-pwd-new');
+      }
+      const confirmInput = document.getElementById('pwd-confirm');
+      if (confirmInput && confirmInput.value.length > 0) {
+        if (confirmInput.value === input.value) {
+          clearFieldError('pwd-confirm', 'err-pwd-confirm');
+        }
+      }
+      const alertBox = document.getElementById('change-pwd-alert');
+      if (alertBox && alertBox.style.display !== 'none') alertBox.style.display = 'none';
+    }
+
+    function handleNewPwdBlur(input) {
+      validateNewPwd(true);
+    }
+
+    function handleConfirmPwdInput(input) {
+      // 0ms delay: Xóa ngay lỗi cũ khi bắt đầu gõ
+      if (input.value.length > 0) {
+        clearFieldError('pwd-confirm', 'err-pwd-confirm');
+      }
+      const newVal = document.getElementById('pwd-new') ? document.getElementById('pwd-new').value : '';
+      if (input.value === newVal && input.value.length > 0) {
+        clearFieldError('pwd-confirm', 'err-pwd-confirm');
+      }
+      const alertBox = document.getElementById('change-pwd-alert');
+      if (alertBox && alertBox.style.display !== 'none') alertBox.style.display = 'none';
+    }
+
+    function handleConfirmPwdBlur(input) {
+      validateConfirmPwd(true);
+    }
+
+    function resetChangePasswordValidation() {
+      clearFieldError('pwd-current', 'err-pwd-current');
+      clearFieldError('pwd-new', 'err-pwd-new');
+      clearFieldError('pwd-confirm', 'err-pwd-confirm');
+
+      const form = document.getElementById('change-password-form');
+      if (form) form.reset();
+
+      evaluatePasswordStrength('');
+
+      const alertBox = document.getElementById('change-pwd-alert');
+      if (alertBox) {
+        alertBox.style.display = 'none';
+        alertBox.innerHTML = '';
+      }
+
+      // Reset lại input types về password
+      ['pwd-current', 'pwd-new', 'pwd-confirm'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.type = 'password';
+      });
+      document.querySelectorAll('#change-password-form .toggle-pwd-btn i').forEach(icon => {
+        icon.className = 'fa-regular fa-eye';
+      });
+    }
+
     async function handleChangePasswordSubmit(e) {
       e.preventDefault();
+
+      const ok1 = validateCurrentPwd(true);
+      const ok2 = validateNewPwd(true);
+      const ok3 = validateConfirmPwd(true);
+
+      if (!ok1 || !ok2 || !ok3) {
+        if (!ok1) document.getElementById('pwd-current').focus();
+        else if (!ok2) document.getElementById('pwd-new').focus();
+        else if (!ok3) document.getElementById('pwd-confirm').focus();
+        return;
+      }
+
       const current_password = document.getElementById("pwd-current").value;
       const password = document.getElementById("pwd-new").value;
       const password_confirmation = document.getElementById("pwd-confirm").value;
@@ -700,17 +940,6 @@
 
       if (!token) {
         alert("Vui lòng đăng nhập để đổi mật khẩu.");
-        return;
-      }
-
-      if (password !== password_confirmation) {
-        if (alertBox) {
-          alertBox.style.display = "block";
-          alertBox.style.background = "#fef2f2";
-          alertBox.style.border = "1px solid #fecaca";
-          alertBox.style.color = "#b91c1c";
-          alertBox.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> Mật khẩu xác nhận không khớp với mật khẩu mới.`;
-        }
         return;
       }
 
@@ -741,16 +970,26 @@
             alertBox.style.background = "#f0fdf4";
             alertBox.style.border = "1px solid #bbf7d0";
             alertBox.style.color = "#15803d";
-            alertBox.innerHTML = `<i class="fa-solid fa-circle-check"></i> Đổi mật khẩu cá nhân thành công!`;
+            alertBox.innerHTML = `<i class="fa-solid fa-circle-check"></i> <strong>Thành công:</strong> Đổi mật khẩu tài khoản thành công!`;
           }
-          document.getElementById("change-password-form").reset();
+          resetChangePasswordValidation();
         } else {
-          let errDetail = result.message || 'Không thể đổi mật khẩu.';
+          // Map lỗi chính xác từ Laravel Validator vào từng trường (Zero Layout Shift)
           if (result.errors) {
-            const errArr = Object.values(result.errors).flat();
-            if (errArr.length > 0) errDetail = errArr.join('<br>');
+            if (result.errors.current_password) {
+              setFieldError('pwd-current', 'err-pwd-current', result.errors.current_password[0]);
+              document.getElementById('pwd-current').focus();
+            }
+            if (result.errors.password) {
+              setFieldError('pwd-new', 'err-pwd-new', result.errors.password[0]);
+              if (!result.errors.current_password) document.getElementById('pwd-new').focus();
+            }
+            if (result.errors.password_confirmation) {
+              setFieldError('pwd-confirm', 'err-pwd-confirm', result.errors.password_confirmation[0]);
+            }
           }
 
+          let errDetail = result.message || 'Không thể đổi mật khẩu. Vui lòng kiểm tra lại thông tin.';
           if (alertBox) {
             alertBox.style.display = "block";
             alertBox.style.background = "#fef2f2";

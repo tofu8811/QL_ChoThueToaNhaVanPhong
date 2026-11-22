@@ -40,21 +40,23 @@
       <span style="font-size:13px;color:#64748b;">Tổng cộng: <strong id="admin-buildings-total-count" style="color:#0f172a;">0</strong> tòa nhà</span>
     </div>
 
-    <table class="mo-table">
-      <thead>
-        <tr>
-          <th>Tên Tòa Nhà / Mã</th>
-          <th>Địa Chỉ / Khu Vực</th>
-          <th>Phân Hạng</th>
-          <th>Tổng Diện Tích</th>
-          <th>Đơn Giá Niêm Yết</th>
-          <th>Phát Hành</th>
-          <th style="text-align:right;">Thao tác</th>
-        </tr>
-      </thead>
-      <tbody id="admin-buildings-tbody">
-        <!-- Rendered via JS admin-buildings.blade.php -->
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="mo-table">
+        <thead>
+          <tr>
+            <th>Tên Tòa Nhà / Mã</th>
+            <th>Địa Chỉ / Khu Vực</th>
+            <th>Phân Hạng</th>
+            <th>Tổng Diện Tích</th>
+            <th>Đơn Giá Niêm Yết</th>
+            <th>Phát Hành</th>
+            <th style="text-align:right;">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="admin-buildings-tbody">
+          <!-- Rendered via JS admin-buildings.blade.php -->
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>

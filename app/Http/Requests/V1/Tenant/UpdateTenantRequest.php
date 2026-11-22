@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V1\Tenant;
 
+use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -27,7 +28,7 @@ class UpdateTenantRequest extends FormRequest
             'headquarter_address' => ['sometimes', 'required', 'string', 'max:255'],
             'login_email' => ['sometimes', 'required', 'email', 'max:150', Rule::unique('tenants', 'login_email')->ignore($tenantId)],
             'billing_email' => ['nullable', 'email', 'max:150'],
-            'contact_phone' => ['sometimes', 'required', 'string', 'max:20'],
+            'contact_phone' => ['sometimes', 'required', 'string', new VietnamesePhoneNumber],
             'status' => ['nullable', 'string', Rule::in(['ACTIVE', 'LOCKED', 'PENDING'])],
         ];
     }

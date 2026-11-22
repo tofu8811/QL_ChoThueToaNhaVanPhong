@@ -1,4 +1,5 @@
 @include('partials.scripts.main')
+@include('partials.scripts.validation')
 @include('partials.scripts.auth')
 @include('partials.scripts.public-portal')
 @include('partials.scripts.shell')

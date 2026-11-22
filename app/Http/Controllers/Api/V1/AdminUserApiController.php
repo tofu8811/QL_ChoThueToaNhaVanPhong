@@ -55,7 +55,10 @@ class AdminUserApiController extends BaseApiController
      */
     public function update(string $id, UpdateAdminRequest $request): JsonResponse
     {
-        $admin = $this->adminUserService->updateAdmin($id, $request->validated());
+        /** @var Admin $currentAdmin */
+        $currentAdmin = $request->user();
+
+        $admin = $this->adminUserService->updateAdmin($id, $request->validated(), $currentAdmin);
 
         return $this->successResponse($admin, 'Cập nhật tài khoản quản trị viên thành công.');
     }
@@ -71,5 +74,63 @@ class AdminUserApiController extends BaseApiController
         $this->adminUserService->deleteAdmin($id, $currentAdmin);
 
         return $this->successResponse(null, 'Xóa tài khoản quản trị viên thành công.');
+    }
+
+    /**
+     * API tự động tính toán mã nhân viên kế tiếp theo vai trò từ CSDL.
+     * Hỗ trợ Sales, Ban Quản Lý (PM) và Kế Toán.
+     */
+    public function nextEmployeeCode(Request $request): JsonResponse
+    {
+        $role = strtolower((string) $request->input('role', 'sales'));
+
+        $nextCode = match ($role) {
+            'sales', 'sale' => (function () {
+                $codes = \App\Models\Sale::whereNotNull('employee_code')->pluck('employee_code');
+                $max = 0;
+                foreach ($codes as $c) {
+                    if (preg_match('/(\d+)$/', (string) $c, $m)) {
+                        $n = (int) $m[1];
+                        if ($n > $max) {
+                            $max = $n;
+                        }
+                    }
+                }
+                return sprintf('NV-SALE-%03d', $max + 1);
+            })(),
+            'pm', 'property_manager', 'property-manager' => (function () {
+                $codes = \App\Models\PropertyManager::whereNotNull('employee_code')->pluck('employee_code');
+                $max = 0;
+                foreach ($codes as $c) {
+                    if (preg_match('/(\d+)$/', (string) $c, $m)) {
+                        $n = (int) $m[1];
+                        if ($n > $max) {
+                            $max = $n;
+                        }
+                    }
+                }
+                return sprintf('NV-BQL-%03d', $max + 1);
+            })(),
+            'accountant', 'accountants', 'kt' => (function () {
+                $codes = \App\Models\Accountant::whereNotNull('employee_code')->pluck('employee_code');
+                $max = 0;
+                foreach ($codes as $c) {
+                    if (preg_match('/(\d+)$/', (string) $c, $m)) {
+                        $n = (int) $m[1];
+                        if ($n > $max) {
+                            $max = $n;
+                        }
+                    }
+                }
+                return sprintf('NV-KT-%03d', $max + 1);
+            })(),
+            default => null,
+        };
+
+        if (!$nextCode) {
+            return $this->errorResponse('Vai trò không hợp lệ để tạo mã nhân viên.', 400);
+        }
+
+        return $this->successResponse(['next_code' => $nextCode], 'Lấy mã nhân viên tiếp theo thành công.');
     }
 }

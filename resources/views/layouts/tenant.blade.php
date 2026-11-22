@@ -77,6 +77,7 @@
 
   <!-- Core JavaScript & API Modules -->
   @include('partials.scripts.main')
+  @include('partials.scripts.validation')
   @include('partials.scripts.auth')
   @include('partials.scripts.tickets')
   @include('partials.scripts.role-operations')

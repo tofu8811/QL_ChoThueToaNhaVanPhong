@@ -82,14 +82,49 @@ class AdminUserService
 
     /**
      * Cập nhật thông tin tài khoản Quản trị viên.
+     * Cấm tự tước quyền Super Admin hoặc tự khóa/thay đổi trạng thái tài khoản đang đăng nhập của chính mình.
+     * Cấm hạ quyền hoặc khóa Quản trị viên cấp cao (Super Admin) duy nhất còn lại của hệ thống.
      *
      * @param string $id
      * @param array $data
+     * @param Admin|null $currentAdmin
      * @return Admin
+     * @throws BusinessException
      */
-    public function updateAdmin(string $id, array $data): Admin
+    public function updateAdmin(string $id, array $data, ?Admin $currentAdmin = null): Admin
     {
         $admin = Admin::findOrFail($id);
+        $isSelf = $currentAdmin && ($currentAdmin->id === $admin->id);
+
+        // 1. Kiểm tra bảo vệ tự chỉnh sửa tài khoản đang đăng nhập (Self-protection)
+        if ($isSelf) {
+            // Không được tự bỏ quyền Super Admin
+            if ($admin->is_super_admin && array_key_exists('is_super_admin', $data) && empty($data['is_super_admin'])) {
+                throw new BusinessException('Bạn không thể tự tước quyền Quản trị viên cấp cao (Super Admin) của chính mình.', 422);
+            }
+
+            // Không được tự thay đổi trạng thái khác ACTIVE (tự khóa mình)
+            if (array_key_exists('status', $data) && strtoupper((string) $data['status']) !== 'ACTIVE') {
+                throw new BusinessException('Bạn không thể tự khóa hoặc thay đổi trạng thái tài khoản đang đăng nhập của chính mình.', 422);
+            }
+        }
+
+        // 2. Kiểm tra bảo vệ Super Admin duy nhất còn lại của toàn hệ thống
+        if ($admin->is_super_admin) {
+            $demoting = array_key_exists('is_super_admin', $data) && empty($data['is_super_admin']);
+            $locking = array_key_exists('status', $data) && strtoupper((string) $data['status']) !== 'ACTIVE';
+
+            if ($demoting || $locking) {
+                $otherActiveSuperAdmins = Admin::where('is_super_admin', true)
+                    ->where('status', 'ACTIVE')
+                    ->where('id', '!=', $admin->id)
+                    ->count();
+
+                if ($otherActiveSuperAdmins < 1) {
+                    throw new BusinessException('Hệ thống phải duy trì tối thiểu 1 Quản trị viên cấp cao (Super Admin) đang hoạt động. Không thể hạ quyền hoặc khóa tài khoản này.', 422);
+                }
+            }
+        }
 
         $updateData = [];
 
@@ -106,10 +141,12 @@ class AdminUserService
             $updateData['password'] = Hash::make($data['password']);
         }
         if (array_key_exists('is_super_admin', $data)) {
-            $updateData['is_super_admin'] = (bool) $data['is_super_admin'];
+            // Nếu là tài khoản của chính mình và đang là Super Admin, luôn bảo lưu quyền Super Admin
+            $updateData['is_super_admin'] = ($isSelf && $admin->is_super_admin) ? true : (bool) $data['is_super_admin'];
         }
         if (array_key_exists('status', $data)) {
-            $updateData['status'] = $data['status'];
+            // Nếu là tài khoản của chính mình, luôn bảo lưu trạng thái ACTIVE
+            $updateData['status'] = $isSelf ? 'ACTIVE' : $data['status'];
         }
 
         $admin->update($updateData);
@@ -120,6 +157,7 @@ class AdminUserService
     /**
      * Xóa mềm (Soft Delete) tài khoản Quản trị viên.
      * Cấm tự xóa tài khoản của chính mình.
+     * Cấm xóa Quản trị viên cấp cao (Super Admin) duy nhất còn lại của hệ thống.
      *
      * @param string $id
      * @param Admin $currentAdmin
@@ -133,6 +171,17 @@ class AdminUserService
         }
 
         $admin = Admin::findOrFail($id);
+
+        if ($admin->is_super_admin) {
+            $otherActiveSuperAdmins = Admin::where('is_super_admin', true)
+                ->where('status', 'ACTIVE')
+                ->where('id', '!=', $id)
+                ->count();
+
+            if ($otherActiveSuperAdmins < 1) {
+                throw new BusinessException('Không thể xóa Quản trị viên cấp cao (Super Admin) duy nhất còn lại của hệ thống.', 422);
+            }
+        }
 
         return (bool) $admin->delete();
     }

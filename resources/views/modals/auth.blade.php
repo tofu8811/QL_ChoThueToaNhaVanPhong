@@ -101,23 +101,29 @@
             <span>Hoặc nhập tài khoản</span>
           </div>
 
-          <!-- Main Login Form -->
-          <form id="auth-login-form" onsubmit="handleLoginSubmit(event)">
+          <!-- Main Login Form (Validation 0ms) -->
+          <form id="auth-login-form" novalidate onsubmit="handleLoginSubmit(event)">
             <!-- Email Field -->
-            <div class="input-icon-wrapper">
-              <label for="login-email">Địa chỉ Email đăng nhập *</label>
-              <i class="fa-solid fa-envelope field-icon"></i>
-              <input type="email" id="login-email" required placeholder="name@company.com" autocomplete="email">
+            <div style="margin-bottom:12px;">
+              <label for="login-email" style="display:block; font-size:12.5px; font-weight:600; color:#334155; margin-bottom:6px;">Địa chỉ Email đăng nhập <span style="color:#ef4444;">*</span></label>
+              <div style="position:relative;">
+                <i class="fa-solid fa-envelope" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:14px; pointer-events:none;"></i>
+                <input type="email" id="login-email" style="width:100%; padding:10px 42px 10px 38px; border:1px solid #cbd5e1; border-radius:8px; font-size:13.5px; box-sizing:border-box; transition:all 0.2s;" placeholder="name@company.com" autocomplete="email" oninput="moClearFieldError('login-email', 'err-login-email')">
+              </div>
+              <div class="field-error-slot" id="err-login-email" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
             </div>
 
             <!-- Password Field -->
-            <div class="input-icon-wrapper">
-              <label for="login-password">Mật khẩu *</label>
-              <i class="fa-solid fa-lock field-icon"></i>
-              <input type="password" id="login-password" required placeholder="••••••••" autocomplete="current-password">
-              <button type="button" class="toggle-pwd-btn" onclick="togglePasswordVisibility()" title="Ẩn/Hiện mật khẩu">
-                <i class="fa-regular fa-eye" id="pwd-eye-icon"></i>
-              </button>
+            <div style="margin-bottom:10px;">
+              <label for="login-password" style="display:block; font-size:12.5px; font-weight:600; color:#334155; margin-bottom:6px;">Mật khẩu <span style="color:#ef4444;">*</span></label>
+              <div style="position:relative;">
+                <i class="fa-solid fa-lock" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:14px; pointer-events:none;"></i>
+                <input type="password" id="login-password" style="width:100%; padding:10px 42px 10px 38px; border:1px solid #cbd5e1; border-radius:8px; font-size:13.5px; box-sizing:border-box; transition:all 0.2s;" placeholder="••••••••" autocomplete="current-password" oninput="moClearFieldError('login-password', 'err-login-password')">
+                <button type="button" class="toggle-pwd-btn" onclick="moTogglePasswordVisibility('login-password', this)" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; font-size:14px; padding:4px;" title="Ẩn/Hiện mật khẩu">
+                  <i class="fa-regular fa-eye" id="pwd-eye-icon"></i>
+                </button>
+              </div>
+              <div class="field-error-slot" id="err-login-password" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
             </div>
 
             <!-- Forgot Password Link -->
@@ -171,32 +177,108 @@
         <div class="profile-modal-body">
           <!-- TAB: ĐỔI MẬT KHẨU CÁ NHÂN (Endpoint 71: PUT /api/v1/auth/password) -->
           <div id="tab-profile-password" class="profile-tab-pane active" style="display:block;">
-            <p style="color:#64748b; font-size:12.5px; margin-bottom:16px;">
+            <p style="color:#64748b; font-size:12.5px; margin-bottom:14px; line-height:1.5;">
               Để đảm bảo an toàn tài khoản, vui lòng đặt mật khẩu có độ dài tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.
             </p>
 
-            <form id="change-password-form" onsubmit="handleChangePasswordSubmit(event)">
-              <div class="input-icon-wrapper">
-                <label for="pwd-current">Mật khẩu hiện tại *</label>
-                <i class="fa-solid fa-lock field-icon"></i>
-                <input type="password" id="pwd-current" required placeholder="Nhập mật khẩu đang sử dụng" autocomplete="current-password">
+            <form id="change-password-form" onsubmit="handleChangePasswordSubmit(event)" novalidate>
+              <!-- 1. Mật khẩu hiện tại -->
+              <div class="pwd-field-group" style="margin-bottom:12px;">
+                <label for="pwd-current" style="display:block; font-size:12.5px; font-weight:600; color:#334155; margin-bottom:5px;">
+                  Mật khẩu hiện tại <span style="color:#ef4444;">*</span>
+                </label>
+                <div style="position:relative;">
+                  <i class="fa-solid fa-lock" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:14px; pointer-events:none;"></i>
+                  <input type="password" 
+                         id="pwd-current" 
+                         style="width:100%; padding:10px 42px 10px 38px; border:1px solid #cbd5e1; border-radius:8px; font-size:13.5px; transition:all 0.2s; box-sizing:border-box;"
+                         placeholder="Nhập mật khẩu đang sử dụng" 
+                         autocomplete="current-password"
+                         oninput="handleCurrentPwdInput(this)"
+                         onblur="handleCurrentPwdBlur(this)">
+                  <button type="button" class="toggle-pwd-btn" onclick="toggleFieldPasswordVisibility('pwd-current', this)" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; font-size:14px; padding:4px;" title="Ẩn/Hiện mật khẩu">
+                    <i class="fa-regular fa-eye"></i>
+                  </button>
+                </div>
+                <div class="field-error-slot" id="err-pwd-current" style="display:none; min-height:18px; font-size:11.5px; line-height:18px; color:#ef4444; margin-top:3px;"></div>
               </div>
 
-              <div class="input-icon-wrapper">
-                <label for="pwd-new">Mật khẩu mới *</label>
-                <i class="fa-solid fa-key field-icon"></i>
-                <input type="password" id="pwd-new" required placeholder="Tối thiểu 8 ký tự (hoa, thường, số, ký tự đặc biệt)" autocomplete="new-password">
+              <!-- 2. Mật khẩu mới -->
+              <div class="pwd-field-group" style="margin-bottom:12px;">
+                <label for="pwd-new" style="display:block; font-size:12.5px; font-weight:600; color:#334155; margin-bottom:5px;">
+                  Mật khẩu mới <span style="color:#ef4444;">*</span>
+                </label>
+                <div style="position:relative;">
+                  <i class="fa-solid fa-key" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:14px; pointer-events:none;"></i>
+                  <input type="password" 
+                         id="pwd-new" 
+                         style="width:100%; padding:10px 42px 10px 38px; border:1px solid #cbd5e1; border-radius:8px; font-size:13.5px; transition:all 0.2s; box-sizing:border-box;"
+                         placeholder="Tối thiểu 8 ký tự (hoa, thường, số, ký tự đặc biệt)" 
+                         autocomplete="new-password"
+                         oninput="handleNewPwdInput(this)"
+                         onblur="handleNewPwdBlur(this)">
+                  <button type="button" class="toggle-pwd-btn" onclick="toggleFieldPasswordVisibility('pwd-new', this)" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; font-size:14px; padding:4px;" title="Ẩn/Hiện mật khẩu">
+                    <i class="fa-regular fa-eye"></i>
+                  </button>
+                </div>
+                <div class="field-error-slot" id="err-pwd-new" style="display:none; min-height:18px; font-size:11.5px; line-height:18px; color:#ef4444; margin-top:3px;"></div>
+
+                <!-- Password Strength Meter & Real-time Checklist -->
+                <div id="pwd-strength-container" style="margin-top:8px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span style="font-size:11.5px; color:#64748b; font-weight:600;">Độ mạnh mật khẩu:</span>
+                    <span id="pwd-strength-label" style="font-size:11.5px; font-weight:700; color:#94a3b8;">Chưa nhập</span>
+                  </div>
+                  <!-- Thanh tiến trình độ mạnh 4 nấc -->
+                  <div style="height:5px; background:#e2e8f0; border-radius:4px; overflow:hidden; margin-bottom:8px; display:flex; gap:3px;">
+                    <div id="pwd-bar-1" style="flex:1; height:100%; background:#e2e8f0; border-radius:2px; transition:background 0.2s;"></div>
+                    <div id="pwd-bar-2" style="flex:1; height:100%; background:#e2e8f0; border-radius:2px; transition:background 0.2s;"></div>
+                    <div id="pwd-bar-3" style="flex:1; height:100%; background:#e2e8f0; border-radius:2px; transition:background 0.2s;"></div>
+                    <div id="pwd-bar-4" style="flex:1; height:100%; background:#e2e8f0; border-radius:2px; transition:background 0.2s;"></div>
+                  </div>
+                  <!-- Checklist 4 tiêu chuẩn -->
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 8px; font-size:11.5px;">
+                    <div id="rule-len" style="color:#94a3b8; display:flex; align-items:center; gap:5px; transition:color 0.2s;">
+                      <i class="fa-solid fa-circle-xmark rule-icon" style="font-size:11px;"></i> Ít nhất 8 ký tự
+                    </div>
+                    <div id="rule-case" style="color:#94a3b8; display:flex; align-items:center; gap:5px; transition:color 0.2s;">
+                      <i class="fa-solid fa-circle-xmark rule-icon" style="font-size:11px;"></i> Chữ hoa & thường
+                    </div>
+                    <div id="rule-num" style="color:#94a3b8; display:flex; align-items:center; gap:5px; transition:color 0.2s;">
+                      <i class="fa-solid fa-circle-xmark rule-icon" style="font-size:11px;"></i> Chứa ít nhất 1 số
+                    </div>
+                    <div id="rule-sym" style="color:#94a3b8; display:flex; align-items:center; gap:5px; transition:color 0.2s;">
+                      <i class="fa-solid fa-circle-xmark rule-icon" style="font-size:11px;"></i> Ký tự đặc biệt (!@#...)
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div class="input-icon-wrapper">
-                <label for="pwd-confirm">Xác nhận mật khẩu mới *</label>
-                <i class="fa-solid fa-check-double field-icon"></i>
-                <input type="password" id="pwd-confirm" required placeholder="Nhập lại mật khẩu mới" autocomplete="new-password">
+              <!-- 3. Xác nhận mật khẩu mới -->
+              <div class="pwd-field-group" style="margin-bottom:14px;">
+                <label for="pwd-confirm" style="display:block; font-size:12.5px; font-weight:600; color:#334155; margin-bottom:5px;">
+                  Xác nhận mật khẩu mới <span style="color:#ef4444;">*</span>
+                </label>
+                <div style="position:relative;">
+                  <i class="fa-solid fa-check-double" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:14px; pointer-events:none;"></i>
+                  <input type="password" 
+                         id="pwd-confirm" 
+                         style="width:100%; padding:10px 42px 10px 38px; border:1px solid #cbd5e1; border-radius:8px; font-size:13.5px; transition:all 0.2s; box-sizing:border-box;"
+                         placeholder="Nhập lại mật khẩu mới" 
+                         autocomplete="new-password"
+                         oninput="handleConfirmPwdInput(this)"
+                         onblur="handleConfirmPwdBlur(this)">
+                  <button type="button" class="toggle-pwd-btn" onclick="toggleFieldPasswordVisibility('pwd-confirm', this)" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; font-size:14px; padding:4px;" title="Ẩn/Hiện mật khẩu">
+                    <i class="fa-regular fa-eye"></i>
+                  </button>
+                </div>
+                <div class="field-error-slot" id="err-pwd-confirm" style="display:none; min-height:18px; font-size:11.5px; line-height:18px; color:#ef4444; margin-top:3px;"></div>
               </div>
 
+              <!-- Alert tổng quát -->
               <div id="change-pwd-alert" style="display:none; padding:10px 14px; border-radius:8px; font-size:12.5px; margin-bottom:14px;"></div>
 
-              <button type="submit" id="btn-submit-change-pwd" class="btn-login-submit" style="background:linear-gradient(135deg,#0f3361,#2563eb);">
+              <button type="submit" id="btn-submit-change-pwd" class="btn-login-submit" style="background:linear-gradient(135deg,#0f3361,#2563eb); font-weight:600; padding:11px; font-size:14px; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:8px;">
                 <i class="fa-solid fa-floppy-disk"></i> Cập Nhật Mật Khẩu Mới
               </button>
             </form>
@@ -220,11 +302,14 @@
         </div>
 
         <div class="login-modal-body">
-          <form id="forgot-password-form" onsubmit="handleForgotPasswordSubmit(event)">
-            <div class="input-icon-wrapper">
-              <label for="forgot-email">Địa chỉ Email hoặc Mã khách thuê *</label>
-              <i class="fa-solid fa-envelope field-icon"></i>
-              <input type="text" id="forgot-email" required placeholder="name@company.com hoặc TNT-..." autocomplete="email">
+          <form id="forgot-password-form" novalidate onsubmit="handleForgotPasswordSubmit(event)">
+            <div style="margin-bottom:12px;">
+              <label for="forgot-email" style="display:block; font-size:12.5px; font-weight:600; color:#334155; margin-bottom:6px;">Địa chỉ Email hoặc Mã khách thuê <span style="color:#ef4444;">*</span></label>
+              <div style="position:relative;">
+                <i class="fa-solid fa-envelope" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:14px; pointer-events:none;"></i>
+                <input type="text" id="forgot-email" style="width:100%; padding:10px 42px 10px 38px; border:1px solid #cbd5e1; border-radius:8px; font-size:13.5px; box-sizing:border-box; transition:all 0.2s;" placeholder="name@company.com hoặc TNT-..." autocomplete="email" oninput="moClearFieldError('forgot-email', 'err-forgot-email')">
+              </div>
+              <div class="field-error-slot" id="err-forgot-email" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
             </div>
 
             <div id="forgot-error-alert" style="display:none; background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; padding:10px 14px; border-radius:8px; font-size:12.5px; margin-bottom:14px;">

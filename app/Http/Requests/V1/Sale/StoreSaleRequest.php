@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V1\Sale;
 
+use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -22,7 +23,7 @@ class StoreSaleRequest extends FormRequest
             'employee_code'        => ['nullable', 'string', 'max:30', Rule::unique('sales', 'employee_code')->whereNull('deleted_at')],
             'full_name'            => ['required', 'string', 'max:120'],
             'email'                => ['required', 'string', 'email', 'max:150', Rule::unique('sales', 'email')->whereNull('deleted_at')],
-            'phone'                => ['nullable', 'string', 'max:20', Rule::unique('sales', 'phone')->whereNull('deleted_at')],
+            'phone'                => ['nullable', 'string', new VietnamesePhoneNumber, Rule::unique('sales', 'phone')->whereNull('deleted_at')],
             'password'             => ['required', 'string', Password::min(8)],
             'commission_rate'      => ['nullable', 'numeric', 'min:0', 'max:100'],
             'max_concurrent_leads' => ['nullable', 'integer', 'min:1'],

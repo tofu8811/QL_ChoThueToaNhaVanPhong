@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V1\PropertyManager;
 
+use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -34,10 +35,10 @@ class UpdatePropertyManagerRequest extends FormRequest
                 'sometimes',
                 'nullable',
                 'string',
-                'max:20',
+                new VietnamesePhoneNumber,
                 Rule::unique('property_managers', 'phone')->ignore($pmId)->whereNull('deleted_at'),
             ],
-            'emergency_hotline'      => ['sometimes', 'nullable', 'string', 'max:20'],
+            'emergency_hotline'      => ['sometimes', 'nullable', 'string', new VietnamesePhoneNumber],
             'password'               => ['sometimes', 'nullable', 'string', Password::min(8)],
             'department'             => ['sometimes', 'string', 'in:TECHNICAL,SECURITY,CLEANING,CUSTOMER_CARE'],
             'status'                 => ['sometimes', 'string', 'in:ACTIVE,LOCKED,PENDING'],

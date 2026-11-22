@@ -21,41 +21,58 @@
 
             <div style="margin-bottom: 14px;">
               <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Họ và tên Quản trị viên <span style="color:#ef4444;">*</span></label>
-              <input type="text" id="admin-form-fullname" required class="form-control" placeholder="VD: Nguyễn Văn An" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+              <input type="text" id="admin-form-fullname" class="form-control" placeholder="VD: Nguyễn Văn An" oninput="moClearFieldError('admin-form-fullname', 'err-admin-fullname')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+              <div id="err-admin-fullname" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
             </div>
 
             <div style="margin-bottom: 14px;">
               <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Email đăng nhập <span style="color:#ef4444;">*</span></label>
-              <input type="email" id="admin-form-email" required class="form-control" placeholder="admin@domain.com" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+              <input type="email" id="admin-form-email" class="form-control" placeholder="admin@domain.com" oninput="moClearFieldError('admin-form-email', 'err-admin-email')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+              <div id="err-admin-email" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
             </div>
 
             <div style="margin-bottom: 14px;">
               <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Số điện thoại liên hệ</label>
-              <input type="tel" id="admin-form-phone" class="form-control" placeholder="0901234567" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+              <input type="tel" id="admin-form-phone" class="form-control" placeholder="0901234567" oninput="moSanitizeNumeric(this); moClearFieldError('admin-form-phone', 'err-admin-phone')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+              <div id="err-admin-phone" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
             </div>
 
             <div id="admin-form-password-group" style="margin-bottom: 14px;">
               <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">
                 Mật khẩu đăng nhập <span id="admin-form-password-req" style="color:#ef4444;">*</span>
               </label>
-              <input type="password" id="admin-form-password" class="form-control" placeholder="Tối thiểu 8 ký tự (hoa, thường, số, ký tự đặc biệt)" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+              <div style="position:relative;">
+                <input type="password" id="admin-form-password" class="form-control" placeholder="Tối thiểu 8 ký tự (hoa, thường, số, ký tự đặc biệt)" oninput="moClearFieldError('admin-form-password', 'err-admin-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
+                <button type="button" onclick="moTogglePasswordVisibility('admin-form-password', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; padding:4px;" title="Ẩn/Hiện mật khẩu">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+              </div>
               <small id="admin-form-password-hint" style="color:#64748b; font-size:11.5px; display:none; margin-top:4px;">Để trống nếu không muốn đổi mật khẩu.</small>
+              <div id="err-admin-password" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
             </div>
 
-            <div style="margin-bottom: 14px; background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0;">
-              <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer;">
+            <div id="admin-form-issuper-group" style="margin-bottom: 14px; background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0; transition:all 0.2s;">
+              <label id="admin-form-issuper-label" style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer; margin-bottom:0;">
                 <input type="checkbox" id="admin-form-issuper" style="accent-color:#ef4444; width:16px; height:16px;">
-                <span>Cấp quyền Super Admin (Toàn quyền quản trị nhân sự)</span>
+                <span id="admin-form-issuper-text">Cấp quyền Super Admin (Toàn quyền quản trị nhân sự)</span>
               </label>
+              <div id="admin-form-issuper-hint" style="display:none; color:#b45309; background:#fffbeb; padding:7px 10px; border-radius:6px; font-size:11.5px; margin-top:8px; border:1px solid #fef3c7; align-items:center; gap:6px;">
+                <i class="fa-solid fa-shield-halved" style="color:#d97706; font-size:12px;"></i>
+                <span><strong>Bảo vệ phiên đăng nhập:</strong> Bạn không thể tự tước quyền Super Admin của chính mình để tránh mất quyền quản trị.</span>
+              </div>
             </div>
 
             <div style="margin-bottom: 20px;">
               <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Trạng thái tài khoản</label>
-              <select id="admin-form-status" class="form-control" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+              <select id="admin-form-status" class="form-control" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px; transition:all 0.2s;">
                 <option value="ACTIVE">Hoạt động (ACTIVE)</option>
                 <option value="LOCKED">Tạm khóa (LOCKED)</option>
                 <option value="PENDING">Chờ kích hoạt (PENDING)</option>
               </select>
+              <div id="admin-form-status-hint" style="display:none; color:#b45309; background:#fffbeb; padding:7px 10px; border-radius:6px; font-size:11.5px; margin-top:8px; border:1px solid #fef3c7; align-items:center; gap:6px;">
+                <i class="fa-solid fa-lock" style="color:#d97706; font-size:12px;"></i>
+                <span><strong>Bảo vệ phiên đăng nhập:</strong> Bạn không thể tự khóa hoặc đổi trạng thái tài khoản đang đăng nhập của chính mình.</span>
+              </div>
             </div>
 
             <div style="display:flex; justify-content:flex-end; gap:10px;">
@@ -102,22 +119,26 @@
             <div style="display:grid; grid-template-columns: 1fr 2fr; gap:12px; margin-bottom: 14px;">
               <div>
                 <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Mã nhân viên</label>
-                <input type="text" id="sale-form-code" class="form-control" placeholder="VD: SL-009" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <input type="text" id="sale-form-code" readonly class="form-control" placeholder="Tự động cấp..." style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px; background:#f1f5f9; cursor:not-allowed; font-weight:700; color:#334155; font-family:monospace;">
+                <small style="color:#64748b; font-size:11px; display:flex; align-items:center; gap:4px; margin-top:3px;"><i class="fa-solid fa-lock" style="font-size:10px;"></i> Tự động từ CSDL</small>
               </div>
               <div>
                 <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Họ và tên <span style="color:#ef4444;">*</span></label>
-                <input type="text" id="sale-form-fullname" required class="form-control" placeholder="VD: Lê Hoàng Long" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <input type="text" id="sale-form-fullname" class="form-control" placeholder="VD: Lê Hoàng Long" oninput="moClearFieldError('sale-form-fullname', 'err-sale-fullname')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <div id="err-sale-fullname" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
               </div>
             </div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom: 14px;">
               <div>
                 <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Email đăng nhập <span style="color:#ef4444;">*</span></label>
-                <input type="email" id="sale-form-email" required class="form-control" placeholder="long.le@domain.com" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <input type="email" id="sale-form-email" class="form-control" placeholder="long.le@domain.com" oninput="moClearFieldError('sale-form-email', 'err-sale-email')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <div id="err-sale-email" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
               </div>
               <div>
                 <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Số điện thoại</label>
-                <input type="tel" id="sale-form-phone" class="form-control" placeholder="0908889999" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <input type="tel" id="sale-form-phone" class="form-control" placeholder="0908889999" oninput="moSanitizeNumeric(this); moClearFieldError('sale-form-phone', 'err-sale-phone')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <div id="err-sale-phone" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
               </div>
             </div>
 
@@ -125,8 +146,14 @@
               <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">
                 Mật khẩu đăng nhập <span id="sale-form-password-req" style="color:#ef4444;">*</span>
               </label>
-              <input type="password" id="sale-form-password" class="form-control" placeholder="Tối thiểu 8 ký tự" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+              <div style="position:relative;">
+                <input type="password" id="sale-form-password" class="form-control" placeholder="Tối thiểu 8 ký tự" oninput="moClearFieldError('sale-form-password', 'err-sale-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
+                <button type="button" onclick="moTogglePasswordVisibility('sale-form-password', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; padding:4px;" title="Ẩn/Hiện mật khẩu">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+              </div>
               <small id="sale-form-password-hint" style="color:#64748b; font-size:11.5px; display:none; margin-top:4px;">Để trống nếu không đổi mật khẩu.</small>
+              <div id="err-sale-password" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
             </div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom: 14px;">
@@ -140,20 +167,13 @@
               </div>
             </div>
 
-            <div style="margin-bottom: 14px;">
+            <div style="margin-bottom: 20px;">
               <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Trạng thái làm việc</label>
               <select id="sale-form-status" class="form-control" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
                 <option value="ACTIVE">Hoạt động (ACTIVE - Nhận Lead)</option>
                 <option value="LOCKED">Tạm ngưng (LOCKED - Loại khỏi vòng phân bổ)</option>
                 <option value="PENDING">Chờ kích hoạt (PENDING)</option>
               </select>
-            </div>
-
-            <div style="margin-bottom: 20px;">
-              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">Phân công tòa nhà phụ trách kinh doanh</label>
-              <div id="sale-form-buildings" class="building-select-grid">
-                <span style="color:#94a3b8; font-size:12px;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải danh sách tòa nhà...</span>
-              </div>
             </div>
 
             <div style="display:flex; justify-content:flex-end; gap:10px;">
@@ -200,29 +220,34 @@
             <div style="display:grid; grid-template-columns: 1fr 2fr; gap:12px; margin-bottom: 14px;">
               <div>
                 <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Mã nhân viên</label>
-                <input type="text" id="pm-form-code" class="form-control" placeholder="VD: PM-002" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <input type="text" id="pm-form-code" readonly class="form-control" placeholder="Tự động cấp..." style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px; background:#f1f5f9; cursor:not-allowed; font-weight:700; color:#334155; font-family:monospace;">
+                <small style="color:#64748b; font-size:11px; display:flex; align-items:center; gap:4px; margin-top:3px;"><i class="fa-solid fa-lock" style="font-size:10px;"></i> Tự động từ CSDL</small>
               </div>
               <div>
                 <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Họ và tên <span style="color:#ef4444;">*</span></label>
-                <input type="text" id="pm-form-fullname" required class="form-control" placeholder="VD: Đỗ Minh Quang" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <input type="text" id="pm-form-fullname" class="form-control" placeholder="VD: Đỗ Minh Quang" oninput="moClearFieldError('pm-form-fullname', 'err-pm-fullname')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <div id="err-pm-fullname" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
               </div>
             </div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom: 14px;">
               <div>
                 <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Email đăng nhập <span style="color:#ef4444;">*</span></label>
-                <input type="email" id="pm-form-email" required class="form-control" placeholder="pm.quang@domain.com" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <input type="email" id="pm-form-email" class="form-control" placeholder="pm.quang@domain.com" oninput="moClearFieldError('pm-form-email', 'err-pm-email')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <div id="err-pm-email" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
               </div>
               <div>
                 <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Số điện thoại di động</label>
-                <input type="tel" id="pm-form-phone" class="form-control" placeholder="0912345678" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <input type="tel" id="pm-form-phone" class="form-control" placeholder="0912345678" oninput="moSanitizeNumeric(this); moClearFieldError('pm-form-phone', 'err-pm-phone')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <div id="err-pm-phone" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
               </div>
             </div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom: 14px;">
               <div>
                 <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Hotline sự cố khẩn cấp (24/7)</label>
-                <input type="tel" id="pm-form-hotline" class="form-control" placeholder="VD: 0909000111" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <input type="tel" id="pm-form-hotline" class="form-control" placeholder="VD: 0909000111" oninput="moSanitizeNumeric(this); moClearFieldError('pm-form-hotline', 'err-pm-hotline')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <div id="err-pm-hotline" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
               </div>
               <div>
                 <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Bộ phận chuyên trách</label>
@@ -239,8 +264,14 @@
               <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">
                 Mật khẩu đăng nhập <span id="pm-form-password-req" style="color:#ef4444;">*</span>
               </label>
-              <input type="password" id="pm-form-password" class="form-control" placeholder="Tối thiểu 8 ký tự" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+              <div style="position:relative;">
+                <input type="password" id="pm-form-password" class="form-control" placeholder="Tối thiểu 8 ký tự" oninput="moClearFieldError('pm-form-password', 'err-pm-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
+                <button type="button" onclick="moTogglePasswordVisibility('pm-form-password', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; padding:4px;" title="Ẩn/Hiện mật khẩu">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+              </div>
               <small id="pm-form-password-hint" style="color:#64748b; font-size:11.5px; display:none; margin-top:4px;">Để trống nếu không đổi mật khẩu.</small>
+              <div id="err-pm-password" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
             </div>
 
             <div style="margin-bottom: 14px;">
@@ -303,22 +334,26 @@
             <div style="display:grid; grid-template-columns: 1fr 2fr; gap:12px; margin-bottom: 14px;">
               <div>
                 <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Mã nhân viên</label>
-                <input type="text" id="acc-form-code" class="form-control" placeholder="VD: ACC-001" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <input type="text" id="acc-form-code" readonly class="form-control" placeholder="Tự động cấp..." style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px; background:#f1f5f9; cursor:not-allowed; font-weight:700; color:#334155; font-family:monospace;">
+                <small style="color:#64748b; font-size:11px; display:flex; align-items:center; gap:4px; margin-top:3px;"><i class="fa-solid fa-lock" style="font-size:10px;"></i> Tự động từ CSDL</small>
               </div>
               <div>
                 <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Họ và tên <span style="color:#ef4444;">*</span></label>
-                <input type="text" id="acc-form-fullname" required class="form-control" placeholder="VD: Trần Thị Mai" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <input type="text" id="acc-form-fullname" class="form-control" placeholder="VD: Trần Thị Mai" oninput="moClearFieldError('acc-form-fullname', 'err-acc-fullname')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <div id="err-acc-fullname" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
               </div>
             </div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom: 14px;">
               <div>
                 <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Email đăng nhập <span style="color:#ef4444;">*</span></label>
-                <input type="email" id="acc-form-email" required class="form-control" placeholder="mai.tran@domain.com" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <input type="email" id="acc-form-email" class="form-control" placeholder="mai.tran@domain.com" oninput="moClearFieldError('acc-form-email', 'err-acc-email')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <div id="err-acc-email" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
               </div>
               <div>
                 <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">Số điện thoại</label>
-                <input type="tel" id="acc-form-phone" class="form-control" placeholder="0933334444" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <input type="tel" id="acc-form-phone" class="form-control" placeholder="0933334444" oninput="moSanitizeNumeric(this); moClearFieldError('acc-form-phone', 'err-acc-phone')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+                <div id="err-acc-phone" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
               </div>
             </div>
 
@@ -326,8 +361,14 @@
               <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">
                 Mật khẩu đăng nhập <span id="acc-form-password-req" style="color:#ef4444;">*</span>
               </label>
-              <input type="password" id="acc-form-password" class="form-control" placeholder="Tối thiểu 8 ký tự" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 12px;">
+              <div style="position:relative;">
+                <input type="password" id="acc-form-password" class="form-control" placeholder="Tối thiểu 8 ký tự" oninput="moClearFieldError('acc-form-password', 'err-acc-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
+                <button type="button" onclick="moTogglePasswordVisibility('acc-form-password', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; padding:4px;" title="Ẩn/Hiện mật khẩu">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+              </div>
               <small id="acc-form-password-hint" style="color:#64748b; font-size:11.5px; display:none; margin-top:4px;">Để trống nếu không đổi mật khẩu.</small>
+              <div id="err-acc-password" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
             </div>
 
             <div style="margin-bottom: 14px; background:#ecfdf5; padding:12px; border-radius:8px; border:1px solid #a7f3d0;">

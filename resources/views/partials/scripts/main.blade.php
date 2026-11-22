@@ -8,6 +8,82 @@
 
     const SERVER_STAFF = @json($serverStaff ?? []);
 
+    /* ==========================================================================
+       TOAST NOTIFICATION SYSTEM (B2B Enterprise UX - Góc Trên Bên Phải Màn Hình)
+       ========================================================================== */
+    function getOrCreateToastContainer() {
+      let container = document.getElementById('mo-toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'mo-toast-container';
+        document.body.appendChild(container);
+      }
+      return container;
+    }
+
+    function moToast(message, type = 'success', title = '') {
+      if (!message) return;
+      const container = getOrCreateToastContainer();
+      const toast = document.createElement('div');
+
+      const isError = type === 'error' || /lỗi|thất bại|không thể|từ chối|sai/i.test(message);
+      const isWarning = type === 'warning' || /cảnh báo|chú ý/i.test(message);
+      const isInfo = type === 'info';
+      const actualType = isError ? 'error' : (isWarning ? 'warning' : (isInfo ? 'info' : 'success'));
+
+      toast.className = `mo-toast mo-toast-${actualType}`;
+
+      let iconHtml = '<i class="fa-solid fa-circle-check mo-toast-icon"></i>';
+      let defaultTitle = 'Thành công';
+      if (actualType === 'error') {
+        iconHtml = '<i class="fa-solid fa-circle-xmark mo-toast-icon"></i>';
+        defaultTitle = 'Có lỗi xảy ra';
+      } else if (actualType === 'warning') {
+        iconHtml = '<i class="fa-solid fa-triangle-exclamation mo-toast-icon"></i>';
+        defaultTitle = 'Cảnh báo';
+      } else if (actualType === 'info') {
+        iconHtml = '<i class="fa-solid fa-circle-info mo-toast-icon"></i>';
+        defaultTitle = 'Thông báo';
+      }
+
+      toast.innerHTML = `
+        ${iconHtml}
+        <div class="mo-toast-content">
+          <div class="mo-toast-title">${escapeHtml(title || defaultTitle)}</div>
+          <div>${escapeHtml(message)}</div>
+        </div>
+        <button type="button" class="mo-toast-close" title="Đóng">&times;</button>
+      `;
+
+      const closeBtn = toast.querySelector('.mo-toast-close');
+      const dismiss = () => {
+        toast.classList.add('mo-toast-hiding');
+        setTimeout(() => {
+          if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 260);
+      };
+
+      if (closeBtn) closeBtn.onclick = dismiss;
+      const autoTimer = setTimeout(dismiss, 3800);
+      toast.onmouseenter = () => clearTimeout(autoTimer);
+      toast.onmouseleave = () => setTimeout(dismiss, 2000);
+
+      container.appendChild(toast);
+    }
+
+    // Override thông minh window.alert để chuyển đổi toàn bộ popup trình duyệt thành Toast Notifications
+    if (!window._origAlert) {
+      window._origAlert = window.alert;
+      window.alert = function(msg) {
+        if (typeof msg === 'string') {
+          const isErr = /lỗi|thất bại|không thể|vui lòng|sai|chưa|từ chối/i.test(msg);
+          moToast(msg, isErr ? 'error' : 'success');
+        } else {
+          window._origAlert(msg);
+        }
+      };
+    }
+
     // Hàm lấy Token Sanctum toàn cục phục vụ các API nội bộ
     function getSanctumToken() {
       const storedToken = localStorage.getItem('auth_token');
@@ -22,6 +98,71 @@
       }
       return '';
     }
+
+    /* ==========================================================================
+       FETCH / AXIOS INTERCEPTOR (Tự động gắn Bearer Token & Bắt lỗi HTTP tiếng Việt)
+       ========================================================================== */
+    (function setupFetchInterceptor() {
+      const originalFetch = window.fetch;
+      window.fetch = async function(resource, config = {}) {
+        const url = typeof resource === 'string' ? resource : (resource?.url || '');
+        // 1. Request Interceptor: Đính kèm Token (Bearer Auth) & Headers tự động cho mọi request tới /api/
+        if (url.includes('/api/')) {
+          config.headers = config.headers || {};
+          const token = getSanctumToken();
+          if (token) {
+            if (config.headers instanceof Headers) {
+              if (!config.headers.has('Authorization')) config.headers.set('Authorization', 'Bearer ' + token);
+            } else if (!config.headers['Authorization'] && !config.headers['authorization']) {
+              config.headers['Authorization'] = 'Bearer ' + token;
+            }
+          }
+          const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+          if (csrf) {
+            if (config.headers instanceof Headers) {
+              if (!config.headers.has('X-CSRF-TOKEN')) config.headers.set('X-CSRF-TOKEN', csrf);
+            } else if (!config.headers['X-CSRF-TOKEN']) {
+              config.headers['X-CSRF-TOKEN'] = csrf;
+            }
+          }
+          const curRole = window.currentUiRole || localStorage.getItem('auth_role');
+          if (curRole) {
+            if (config.headers instanceof Headers) {
+              if (!config.headers.has('X-User-Role')) config.headers.set('X-User-Role', curRole);
+            } else if (!config.headers['X-User-Role']) {
+              config.headers['X-User-Role'] = curRole;
+            }
+          }
+        }
+
+        // 2. Response Interceptor: Bắt mã lỗi từ Backend & cảnh báo
+        try {
+          const response = await originalFetch(resource, config);
+          if (!response.ok && url.includes('/api/')) {
+            try {
+              const cloned = response.clone();
+              const errData = await cloned.json();
+              let errMsg = errData.message;
+              if (errData.errors) {
+                const firstKey = Object.keys(errData.errors)[0];
+                if (firstKey && errData.errors[firstKey]?.[0]) {
+                  errMsg = errData.errors[firstKey][0];
+                }
+              }
+              if (response.status === 403) {
+                moToast(errMsg || 'Bạn không có quyền thực hiện hành động này.', 'error', 'Từ chối truy cập (403)');
+              } else if (response.status >= 500) {
+                moToast('Lỗi máy chủ nội bộ. Vui lòng thử lại sau hoặc liên hệ Admin.', 'error', 'Lỗi hệ thống (500)');
+              }
+            } catch (e) {}
+          }
+          return response;
+        } catch (netErr) {
+          console.error('[Fetch Interceptor Error]', netErr);
+          throw netErr;
+        }
+      };
+    })();
 
     // Helper toàn cục bảo vệ XSS khi render HTML động
     function escapeHtml(str) {

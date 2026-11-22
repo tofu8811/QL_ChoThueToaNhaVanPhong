@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V1\Lead;
 
+use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreCrmLeadRequest extends FormRequest
@@ -24,7 +25,7 @@ class StoreCrmLeadRequest extends FormRequest
         return [
             'contact_full_name' => ['required', 'string', 'max:120'],
             'company_name' => ['nullable', 'string', 'max:200'],
-            'phone' => ['required', 'string', 'max:20'],
+            'phone' => ['required', 'string', new VietnamesePhoneNumber],
             'email' => ['required', 'email', 'max:150'],
             'lead_source' => ['nullable', 'string', 'in:WEBSITE,HOTLINE,DIRECT_WALK_IN,BROKER,FACEBOOK_ADS,GOOGLE_ADS,REFERRAL'],
             'building_id' => ['nullable', 'uuid', 'exists:buildings,id'],

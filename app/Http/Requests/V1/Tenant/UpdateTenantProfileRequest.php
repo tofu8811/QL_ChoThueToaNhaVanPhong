@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V1\Tenant;
 
+use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateTenantProfileRequest extends FormRequest
@@ -18,7 +19,7 @@ class UpdateTenantProfileRequest extends FormRequest
     {
         return [
             'billing_email' => ['sometimes', 'required', 'email', 'max:150'],
-            'contact_phone' => ['sometimes', 'required', 'string', 'max:20'],
+            'contact_phone' => ['sometimes', 'required', 'string', new VietnamesePhoneNumber],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ];
     }

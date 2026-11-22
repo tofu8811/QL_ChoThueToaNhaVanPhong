@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V1\PropertyManager;
 
+use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -22,8 +23,8 @@ class StorePropertyManagerRequest extends FormRequest
             'employee_code'          => ['nullable', 'string', 'max:30', Rule::unique('property_managers', 'employee_code')->whereNull('deleted_at')],
             'full_name'              => ['required', 'string', 'max:120'],
             'email'                  => ['required', 'string', 'email', 'max:150', Rule::unique('property_managers', 'email')->whereNull('deleted_at')],
-            'phone'                  => ['nullable', 'string', 'max:20', Rule::unique('property_managers', 'phone')->whereNull('deleted_at')],
-            'emergency_hotline'      => ['nullable', 'string', 'max:20'],
+            'phone'                  => ['nullable', 'string', new VietnamesePhoneNumber, Rule::unique('property_managers', 'phone')->whereNull('deleted_at')],
+            'emergency_hotline'      => ['nullable', 'string', new VietnamesePhoneNumber],
             'password'               => ['required', 'string', Password::min(8)],
             'department'             => ['nullable', 'string', 'in:TECHNICAL,SECURITY,CLEANING,CUSTOMER_CARE'],
             'status'                 => ['nullable', 'string', 'in:ACTIVE,LOCKED,PENDING'],

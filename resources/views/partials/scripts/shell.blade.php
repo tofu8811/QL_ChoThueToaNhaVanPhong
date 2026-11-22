@@ -725,7 +725,33 @@
       }
     }
 
+    function toggleBmsMobileSidebar() {
+      const sidebar = document.getElementById('bms-main-sidebar');
+      const backdrop = document.getElementById('bms-sidebar-backdrop');
+      if (!sidebar) return;
+      const isOpen = sidebar.classList.toggle('mobile-open');
+      if (backdrop) {
+        if (isOpen) {
+          backdrop.classList.add('active');
+        } else {
+          backdrop.classList.remove('active');
+        }
+      }
+      document.body.style.overflow = isOpen ? 'hidden' : '';
+    }
+
+    function closeBmsMobileSidebar() {
+      const sidebar = document.getElementById('bms-main-sidebar');
+      const backdrop = document.getElementById('bms-sidebar-backdrop');
+      if (sidebar) sidebar.classList.remove('mobile-open');
+      if (backdrop) backdrop.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
     function switchFilamentTab(tabId, el, updateRoute = true) {
+      // Tự động đóng mobile sidebar khi chọn menu trên điện thoại / máy tính bảng
+      closeBmsMobileSidebar();
+
       if (tabId === 'tab-sales-pipeline') {
         const leadsLink = document.getElementById('nav-item-leads');
         switchFilamentTab('tab-sales-leads', leadsLink || el, false);

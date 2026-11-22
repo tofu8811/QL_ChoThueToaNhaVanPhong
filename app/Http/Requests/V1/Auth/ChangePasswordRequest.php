@@ -55,8 +55,13 @@ class ChangePasswordRequest extends FormRequest
         return [
             'current_password.required'      => 'Vui lòng nhập mật khẩu hiện tại.',
             'password.required'              => 'Vui lòng nhập mật khẩu mới.',
-            'password.confirmed'             => 'Mật khẩu xác nhận không khớp.',
-            'password_confirmation.required' => 'Vui lòng xác nhận mật khẩu mới.',
+            'password.confirmed'             => 'Mật khẩu xác nhận không khớp với mật khẩu mới.',
+            'password.min'                   => 'Mật khẩu mới phải có tối thiểu 8 ký tự.',
+            'password.mixed'                 => 'Mật khẩu mới phải bao gồm cả chữ hoa và chữ thường.',
+            'password.letters'               => 'Mật khẩu mới phải chứa ít nhất một chữ cái.',
+            'password.numbers'               => 'Mật khẩu mới phải chứa ít nhất một chữ số.',
+            'password.symbols'               => 'Mật khẩu mới phải chứa ít nhất một ký tự đặc biệt.',
+            'password_confirmation.required' => 'Vui lòng xác nhận lại mật khẩu mới.',
         ];
     }
 }

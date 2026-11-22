@@ -40,21 +40,23 @@
 
   <!-- Bảng dữ liệu Khách thuê -->
   <div class="filament-card">
-    <table class="mo-table">
-      <thead>
-        <tr>
-          <th>Mã Doanh Nghiệp</th>
-          <th>Tên Công Ty / MST</th>
-          <th>Đại Diện / Liên Hệ</th>
-          <th>Địa Chỉ ĐKKD</th>
-          <th>Trạng Thái</th>
-          <th>Hồ Sơ GPKD</th>
-          <th style="text-align:right;">Thao Tác</th>
-        </tr>
-      </thead>
-      <tbody id="admin-tenants-tbody">
-        <!-- Rendered via JS tenants.blade.php -->
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="mo-table">
+        <thead>
+          <tr>
+            <th>Mã Doanh Nghiệp</th>
+            <th>Tên Công Ty / MST</th>
+            <th>Đại Diện / Liên Hệ</th>
+            <th>Địa Chỉ ĐKKD</th>
+            <th>Trạng Thái</th>
+            <th>Hồ Sơ GPKD</th>
+            <th style="text-align:right;">Thao Tác</th>
+          </tr>
+        </thead>
+        <tbody id="admin-tenants-tbody">
+          <!-- Rendered via JS tenants.blade.php -->
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>

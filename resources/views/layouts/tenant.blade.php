@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <!-- Portal & Tenant Stylesheet -->
-  @include('portal.partials.styles')
+  @include('partials.styles')
   @livewireStyles
   @stack('styles')
 
@@ -73,14 +73,14 @@
   @yield('content')
 
   <!-- Modals -->
-  @include('portal.partials.modals')
+  @include('partials.modals')
 
   <!-- Core JavaScript & API Modules -->
-  @include('portal.scripts.main')
-  @include('portal.scripts.auth')
-  @include('portal.scripts.tickets')
-  @include('portal.scripts.role-operations')
-  @include('portal.scripts.init')
+  @include('partials.scripts.main')
+  @include('partials.scripts.auth')
+  @include('partials.scripts.tickets')
+  @include('partials.scripts.role-operations')
+  @include('partials.scripts.init')
 
   @livewireScripts
   @stack('scripts')

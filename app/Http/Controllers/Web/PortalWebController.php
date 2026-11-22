@@ -124,7 +124,7 @@ class PortalWebController extends Controller
      */
     public function quotePage(Request $request): View
     {
-        return view('pages.quote');
+        return view('portal.quote');
     }
 
     /**
@@ -135,11 +135,7 @@ class PortalWebController extends Controller
      */
     public function contractsPage(Request $request): mixed
     {
-        if (!$this->checkWebAuth($request)) {
-            return redirect('/');
-        }
-
-        return view('pages.contracts');
+        return redirect()->route('admin.contracts');
     }
 
     /**
@@ -163,11 +159,7 @@ class PortalWebController extends Controller
      */
     public function tenantsPage(Request $request): mixed
     {
-        if (!$this->checkWebAuth($request)) {
-            return redirect('/');
-        }
-
-        return view('pages.tenants');
+        return redirect()->route('admin.tenants');
     }
 
     /**
@@ -178,11 +170,7 @@ class PortalWebController extends Controller
      */
     public function leadsPage(Request $request): mixed
     {
-        if (!$this->checkWebAuth($request)) {
-            return redirect('/');
-        }
-
-        return view('pages.leads');
+        return redirect()->route('admin.leads');
     }
 
     /**
@@ -206,7 +194,7 @@ class PortalWebController extends Controller
             $tenantId = $demoTenant?->id;
         }
 
-        return view('pages.tenant-portal', ['tenantId' => $tenantId]);
+        return view('tenant.portal', ['tenantId' => $tenantId]);
     }
 
     /**
@@ -218,14 +206,28 @@ class PortalWebController extends Controller
             return true;
         }
 
-        $token = $request->bearerToken() ?? $request->cookie('auth_token');
-        if ($token) {
+        $rawToken = $request->bearerToken() ?? $request->cookie('auth_token') ?? $_COOKIE['auth_token'] ?? null;
+        if ($rawToken) {
+            $token = (string) $rawToken;
+            try {
+                $decrypted = decrypt($rawToken, false);
+                $validated = \Illuminate\Cookie\CookieValuePrefix::validate('auth_token', $decrypted, [app('encrypter')->getKey()]);
+                $token = $validated ?? \Illuminate\Cookie\CookieValuePrefix::remove($decrypted);
+            } catch (\Throwable $e) {}
+
+            $token = urldecode(trim($token, "\"' "));
             $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
             if ($accessToken && $accessToken->tokenable) {
-                if ($accessToken->tokenable instanceof \App\Models\Tenant) {
-                    \Illuminate\Support\Facades\Auth::guard('tenant')->setUser($accessToken->tokenable);
+                $user = $accessToken->tokenable;
+                if ($user instanceof \App\Models\Tenant) {
+                    \Illuminate\Support\Facades\Auth::guard('tenant')->setUser($user);
+                    if ($request->hasSession()) {
+                        try {
+                            \Illuminate\Support\Facades\Auth::guard('tenant')->login($user);
+                        } catch (\Throwable $e) {}
+                    }
                 }
-                \Illuminate\Support\Facades\Auth::setUser($accessToken->tokenable);
+                \Illuminate\Support\Facades\Auth::setUser($user);
                 return true;
             }
         }
@@ -256,7 +258,7 @@ class PortalWebController extends Controller
                 ->firstOrFail();
         }
 
-        return view('pages.building-detail', compact('building'));
+        return view('portal.building-detail', compact('building'));
     }
 
     /**

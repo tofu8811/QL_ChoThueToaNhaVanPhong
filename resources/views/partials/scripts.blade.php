@@ -1,0 +1,5 @@
+@include('partials.scripts.main')
+@include('partials.scripts.auth')
+@include('partials.scripts.public-portal')
+@include('partials.scripts.shell')
+@include('partials.scripts.init')

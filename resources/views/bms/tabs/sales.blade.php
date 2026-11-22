@@ -29,7 +29,7 @@
           <div class="bms-kpi-icon" style="background:#eff6ff;color:#2563eb;"><i class="fa-solid fa-users"></i></div>
         </div>
         <div class="bms-kpi-main">
-          <span class="bms-kpi-number" style="color:#0f172a;font-size:26px;">{{ count($leads ?? []) }}</span>
+          <span class="bms-kpi-number" style="color:#0f172a;font-size:26px;">{{ $activeLeadsCount ?? count(($leads ?? collect())->filter(fn($l) => !in_array($l->status?->value ?? (string)$l->status, ['WON', 'LOST']))) }}</span>
           <span class="bms-kpi-pill" style="background:#eff6ff;color:#1d4ed8;">Đang tiếp nhận</span>
         </div>
       </div>
@@ -43,7 +43,7 @@
           <div class="bms-kpi-icon" style="background:#ecfdf5;color:#10b981;"><i class="fa-solid fa-chart-pie"></i></div>
         </div>
         <div class="bms-kpi-main">
-          <span class="bms-kpi-number" style="color:#10b981;font-size:26px;">{{ count(($leads ?? collect())->filter(fn($l) => in_array($l->status?->value ?? (string)$l->status, ['NEGOTIATING', 'PROPOSAL', 'CONTACTED']))) }}</span>
+          <span class="bms-kpi-number" style="color:#10b981;font-size:26px;">{{ count(($leads ?? collect())->filter(fn($l) => ($l->status?->value ?? (string)$l->status) === 'NEGOTIATING')) }}</span>
           <span class="bms-kpi-pill" style="background:#ecfdf5;color:#047857;">Đang chăm sóc</span>
         </div>
       </div>
@@ -103,14 +103,55 @@
         </tr>
       </thead>
       <tbody>
-        @forelse(($leads ?? collect()) as $dl)
+        @php
+          $activeDeals = ($leads ?? collect())->filter(function ($l) {
+              $st = $l->status?->value ?? (string)$l->status;
+              return !in_array($st, ['WON', 'LOST']);
+          });
+        @endphp
+        @forelse($activeDeals as $dl)
           @php
             $leadCompany = $dl->company_name ?: ($dl->contact_full_name ?? 'Khách hàng');
             $leadContact = ($dl->contact_full_name ?? '') . ($dl->phone ? ' • ' . $dl->phone : '');
             $bldName = $dl->building->name ?? 'Tòa nhà văn phòng';
             $areaText = $dl->desired_area_sqm ? number_format($dl->desired_area_sqm, 0, ',', '.') . ' m²' : 'Mặt bằng trống';
-            $priceText = $dl->target_price_per_sqm ? number_format($dl->target_price_per_sqm, 0, ',', '.') . ' đ/m²' : 'Thương lượng';
+            
+            // Tính toán đơn giá đàm phán chính xác
+            $priceText = null;
+            if ($dl->unit && (float)($dl->unit->base_rental_price ?? 0) > 0) {
+                $priceText = $dl->unit->formatted_rent_price;
+            } elseif ((float)($dl->budget_max ?? 0) > 0 && (float)($dl->desired_area_sqm ?? 0) > 0) {
+                $unitPrice = round((float)$dl->budget_max / (float)$dl->desired_area_sqm);
+                $priceText = number_format($unitPrice, 0, ',', '.') . ' đ/m²';
+            } elseif ($dl->building && (float)($dl->building->min_rent_price_per_sqm ?? 0) > 0) {
+                $priceText = number_format((float)$dl->building->min_rent_price_per_sqm, 0, ',', '.') . ' đ/m²';
+            } else {
+                $priceText = 'Đang thỏa thuận';
+            }
+
             $stRaw = $dl->status?->value ?? (string)$dl->status;
+            $stBadge = match($stRaw) {
+                'WON' => '<span class="badge-filament success" style="background:#ecfdf5;color:#047857;"><i class="fa-solid fa-circle-check"></i> Đã hoàn thành</span>',
+                'LOST' => '<span class="badge-filament danger" style="background:#fef2f2;color:#b91c1c;"><i class="fa-solid fa-circle-xmark"></i> Thất bại</span>',
+                'NEGOTIATING' => '<span class="badge-filament warning" style="background:#fffbeb;color:#b45309;"><i class="fa-solid fa-handshake"></i> Đang đàm phán</span>',
+                'PENDING_ASSIGN' => '<span class="badge-filament warning" style="background:#fef3c7;color:#b45309;"><i class="fa-solid fa-clock"></i> Chờ phân bổ</span>',
+                default => '<span class="badge-filament secondary" style="background:#f1f5f9;color:#475569;"><i class="fa-solid fa-sparkles"></i> Mới tiếp nhận</span>',
+            };
+
+            $pipelineIcon = match($stRaw) {
+                'NEGOTIATING' => 'fa-handshake',
+                'WON' => 'fa-trophy',
+                'LOST' => 'fa-ban',
+                'PENDING_ASSIGN' => 'fa-clock',
+                default => 'fa-sparkles',
+            };
+            $pipelineBadgeStyle = match($stRaw) {
+                'NEGOTIATING' => 'background:#f3e8ff;color:#7e22ce;border:1px solid #e9d5ff;',
+                'WON' => 'background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;',
+                'LOST' => 'background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;',
+                'PENDING_ASSIGN' => 'background:#fef3c7;color:#b45309;border:1px solid #fde68a;',
+                default => 'background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;',
+            };
           @endphp
           <tr>
             <td>
@@ -119,17 +160,17 @@
             </td>
             <td><strong>{{ $bldName }}</strong> - {{ $areaText }}</td>
             <td><strong style="color:#2563eb;">{{ $priceText }}</strong></td>
-            <td><span class="badge-filament purple" style="background:#f3e8ff;color:#7e22ce;"><i class="fa-solid fa-handshake"></i> {{ $dl->status?->label() ?? $stRaw }}</span></td>
-            <td><span class="badge-filament success">Đang chăm sóc</span></td>
+            <td><span class="badge-filament" style="{{ $pipelineBadgeStyle }}"><i class="fa-solid {{ $pipelineIcon }}"></i> {{ method_exists($dl->status, 'label') ? $dl->status->label() : ($dl->status?->name ?? $stRaw) }}</span></td>
+            <td>{!! $stBadge !!}</td>
             <td style="text-align:right;">
-              <button class="btn-mo-primary" style="padding:4px 10px;font-size:12px;" onclick="openCrmDetailModal('{{ $dl->id }}')">Xem Deal</button>
+              <button class="btn-mo-primary" style="padding:4px 10px;font-size:12px;" onclick="openLeadDetailModal('{{ $dl->id }}')">Xem Deal</button>
             </td>
           </tr>
         @empty
           <tr>
-            <td colspan="6" style="text-align:center;padding:24px;color:#94a3b8;">
-              <i class="fa-solid fa-folder-open" style="font-size:24px;margin-bottom:8px;display:block;color:#cbd5e1;"></i>
-              Chưa có deal nào trong danh sách phụ trách cá nhân của bạn.
+            <td colspan="6" style="text-align:center;padding:32px 20px;color:#94a3b8;">
+              <i class="fa-solid fa-circle-check" style="font-size:28px;margin-bottom:8px;display:block;color:#10b981;"></i>
+              Hiện không có deal nào cần đẩy nhanh trong tháng. Các hợp đồng đã hoàn tất hoặc phễu đang chờ tiếp nhận thêm khách hàng mới.
             </td>
           </tr>
         @endforelse
@@ -185,12 +226,10 @@
           <select id="crm-status-select" class="filament-input-sm" onchange="handleCrmStatusFilter(this.value)" style="height:38px;font-size:13px;border-radius:6px;min-width:190px;cursor:pointer;">
             <option value="ALL">-- Tất cả trạng thái --</option>
             <option value="PENDING_ASSIGN" id="opt-pending-assign">⚠️ Chờ phân bổ</option>
-            <option value="NEW">1. Tiếp nhận</option>
-            <option value="CONTACTED">Đã gọi điện</option>
-            <option value="SITE_VISIT">2. Đi xem mặt bằng</option>
-            <option value="NEGOTIATING">3. Gửi LOI / Thương lượng</option>
-            <option value="WON">4. Chốt hợp đồng (Won)</option>
-            <option value="LOST">Thất bại (Lost)</option>
+            <option value="NEW">Mới tiếp nhận</option>
+            <option value="NEGOTIATING">Đang đàm phán</option>
+            <option value="WON">Thành công (Chốt thuê)</option>
+            <option value="LOST">Thất bại (Từ chối)</option>
           </select>
         </div>
         <button type="button" class="btn-mo-outline" onclick="resetCrmFilters()" style="height:38px;padding:0 14px;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;border-radius:6px;cursor:pointer;background:#fff;" title="Đặt lại bộ lọc & hiển thị toàn bộ Leads">
@@ -225,7 +264,7 @@
 
   <!-- Bảng Kanban Pipeline CRM (Chế độ xem Kanban) -->
   <div id="crm-kanban-view" style="display:none;margin-top:10px;">
-    <div style="display:grid;grid-template-columns:repeat(6, minmax(220px, 1fr));gap:14px;align-items:start;overflow-x:auto;padding-bottom:12px;">
+    <div style="display:grid;grid-template-columns:repeat(4, minmax(240px, 1fr));gap:14px;align-items:start;overflow-x:auto;padding-bottom:12px;">
       <!-- 1. Mới (NEW) -->
       <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #3b82f6;">
@@ -235,46 +274,28 @@
         <div id="kanban-col-new" style="min-height:200px;display:flex;flex-direction:column;gap:8px;"></div>
       </div>
 
-      <!-- 2. Đã gọi (CONTACTED) -->
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #6366f1;">
-          <strong style="font-size:13px;color:#3730a3;"><i class="fa-solid fa-phone"></i> 2. Đã liên hệ</strong>
-          <span class="badge-filament info" id="kanban-count-contacted">0</span>
-        </div>
-        <div id="kanban-col-contacted" style="min-height:200px;display:flex;flex-direction:column;gap:8px;"></div>
-      </div>
-
-      <!-- 3. Xem sàn (SITE_VISIT) -->
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #f59e0b;">
-          <strong style="font-size:13px;color:#92400e;"><i class="fa-solid fa-eye"></i> 3. Đi xem sàn</strong>
-          <span class="badge-filament warning" id="kanban-count-site_visit">0</span>
-        </div>
-        <div id="kanban-col-site_visit" style="min-height:200px;display:flex;flex-direction:column;gap:8px;"></div>
-      </div>
-
-      <!-- 4. Đàm phán (NEGOTIATING) -->
+      <!-- 2. Đàm phán (NEGOTIATING) -->
       <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #8b5cf6;">
-          <strong style="font-size:13px;color:#5b21b6;"><i class="fa-solid fa-file-contract"></i> 4. Báo giá / LOI</strong>
+          <strong style="font-size:13px;color:#5b21b6;"><i class="fa-solid fa-handshake"></i> 2. Đang đàm phán</strong>
           <span class="badge-filament purple" style="background:#f3e8ff;color:#7e22ce;" id="kanban-count-negotiating">0</span>
         </div>
         <div id="kanban-col-negotiating" style="min-height:200px;display:flex;flex-direction:column;gap:8px;"></div>
       </div>
 
-      <!-- 5. Thành công (WON) -->
+      <!-- 3. Thành công (WON) -->
       <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #10b981;">
-          <strong style="font-size:13px;color:#065f46;"><i class="fa-solid fa-handshake"></i> 5. Chốt cọc (Won)</strong>
+          <strong style="font-size:13px;color:#065f46;"><i class="fa-solid fa-trophy"></i> 3. Chốt cọc (Won)</strong>
           <span class="badge-filament success" id="kanban-count-won">0</span>
         </div>
         <div id="kanban-col-won" style="min-height:200px;display:flex;flex-direction:column;gap:8px;"></div>
       </div>
 
-      <!-- 6. Thất bại (LOST) -->
+      <!-- 4. Thất bại (LOST) -->
       <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #ef4444;">
-          <strong style="font-size:13px;color:#991b1b;"><i class="fa-solid fa-ban"></i> 6. Thất bại (Lost)</strong>
+          <strong style="font-size:13px;color:#991b1b;"><i class="fa-solid fa-ban"></i> 4. Thất bại (Lost)</strong>
           <span class="badge-filament danger" id="kanban-count-lost">0</span>
         </div>
         <div id="kanban-col-lost" style="min-height:200px;display:flex;flex-direction:column;gap:8px;"></div>

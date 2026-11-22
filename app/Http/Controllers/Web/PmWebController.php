@@ -136,6 +136,12 @@ class PmWebController extends Controller
         ])->sum('area_sqm');
         $totalArea = $leasedArea + $availArea + $expArea;
 
+        // Chuẩn nghiệp vụ Office Leasing: NLA (Net Leasable Area) = Đã thuê + Còn trống
+        $nlaArea = $leasedArea + $availArea;
+        // Tỷ lệ lấp đầy chuẩn theo diện tích sàn (m²)
+        $rentedPctArea = $nlaArea > 0 ? round(($leasedArea / $nlaArea) * 100, 1) : 0.0;
+        $availPctArea = $nlaArea > 0 ? round(($availArea / $nlaArea) * 100, 1) : 0.0;
+
         $rentedPct = $totalUnits > 0 ? round(($leasedUnits / $totalUnits) * 100, 1) : 0.0;
         $availPct = $totalUnits > 0 ? round(($availableUnits / $totalUnits) * 100, 1) : 0.0;
         $expPct = $totalUnits > 0 ? round(max(0, 100 - $rentedPct - $availPct), 1) : 0.0;
@@ -165,6 +171,9 @@ class PmWebController extends Controller
         $viewData['stats']['available_area'] = $availArea;
         $viewData['stats']['expiring_area'] = $expArea;
         $viewData['stats']['total_units_area'] = $totalArea;
+        $viewData['stats']['nla_area'] = $nlaArea;
+        $viewData['stats']['rented_pct_area'] = $rentedPctArea;
+        $viewData['stats']['available_pct_area'] = $availPctArea;
         $viewData['stats']['rented_pct'] = $rentedPct;
         $viewData['stats']['available_pct'] = $availPct;
         $viewData['stats']['expiring_pct'] = $expPct;
@@ -173,23 +182,23 @@ class PmWebController extends Controller
         $viewData['stats']['open_tickets'] = $openTicketsCount;
         $viewData['stats']['total_leasable_area'] = $totalLeasableArea;
 
-        // Biểu đồ lấp đầy chỉ tính riêng các tòa nhà theo phạm vi lọc
+        // Biểu đồ lấp đầy chỉ tính riêng các tòa nhà theo phạm vi lọc (theo diện tích chuẩn nghiệp vụ)
         $viewData['stats']['building_performances'] = \App\Models\Building::whereIn('id', $assignedBuildingIds)
-            ->withCount([
-                'units as total_u',
-                'units as leased_u' => fn ($q) => $q->where('status', \App\Enums\UnitStatus::LEASED),
-            ])
+            ->with(['units'])
             ->get()
             ->map(function ($b) {
-                $pct = $b->total_u > 0 ? round(($b->leased_u / $b->total_u) * 100, 1) : 0.0;
-                $barColor = $pct >= 80 ? '#10b981' : ($pct >= 40 ? '#2563eb' : '#f59e0b');
+                $leasedAreaB = (float) $b->units->where('status', \App\Enums\UnitStatus::LEASED)->sum('area_sqm');
+                $availAreaB = (float) $b->units->where('status', \App\Enums\UnitStatus::AVAILABLE)->sum('area_sqm');
+                $nlaB = $leasedAreaB + $availAreaB;
+                $pct = $nlaB > 0 ? round(($leasedAreaB / $nlaB) * 100, 1) : 0.0;
+                $barColor = $pct >= 80 ? '#10b981' : ($pct >= 30 ? '#2563eb' : '#f59e0b');
 
                 return [
                     'id' => $b->id,
                     'name' => $b->name,
                     'district' => $b->district ?? '',
-                    'total_units' => $b->total_u,
-                    'leased_units' => $b->leased_u,
+                    'total_units' => $b->units->count(),
+                    'leased_units' => $b->units->where('status', \App\Enums\UnitStatus::LEASED)->count(),
                     'occupancy_pct' => $pct,
                     'bar_color' => $barColor,
                 ];

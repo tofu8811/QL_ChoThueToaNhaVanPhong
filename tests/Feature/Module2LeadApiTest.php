@@ -15,6 +15,7 @@ use App\Models\Tenant;
 use App\Models\Unit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class Module2LeadApiTest extends TestCase
@@ -496,5 +497,88 @@ class Module2LeadApiTest extends TestCase
         $deleteRes = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
             ->deleteJson("/api/v1/crm/leads/{$leadId}");
         $deleteRes->assertStatus(200);
+    }
+
+    /**
+     * Test các bản vá bảo mật và logic mới:
+     * - Ánh xạ SITE_VISIT -> SITE_TOUR và summary -> title
+     * - Chặn đổi trạng thái WON trực tiếp khi chưa convert
+     * - Chặn đảo ngược trạng thái Lead đã WON
+     * - Chống trùng lặp 30 ngày trên kênh CRM
+     */
+    public function test_security_and_new_logic_enhancements(): void
+    {
+        $sale1 = $this->createSales('Sales 1', 'SALE-SEC1', 10);
+        $sale2 = $this->createSales('Sales 2', 'SALE-SEC2', 10);
+
+        // 1. Test ghi activity với SITE_VISIT và summary
+        $lead = Lead::create([
+            'contact_full_name' => 'Khách Bảo Mật',
+            'phone' => '0933333333',
+            'email' => 'baomat@gmail.com',
+            'building_id' => $this->building->id,
+            'assigned_sales_id' => $sale1->id,
+            'status' => LeadStatus::NEW,
+        ]);
+
+        Sanctum::actingAs($sale1, ['sales']);
+
+        $actRes = $this->postJson("/api/v1/crm/leads/{$lead->id}/activities", [
+            'activity_type' => 'SITE_VISIT',
+            'summary' => 'Hẹn xem thực tế mặt bằng tầng 5',
+            'content' => 'Khách rất ưng ý diện tích 150m2.',
+        ]);
+        $actRes->assertStatus(201)
+            ->assertJsonPath('data.activity_type', 'SITE_TOUR')
+            ->assertJsonPath('data.title', 'Hẹn xem thực tế mặt bằng tầng 5');
+
+        // Lead tự động chuyển sang NEGOTIATING
+        $this->assertEquals(LeadStatus::NEGOTIATING, $lead->fresh()->status);
+
+        // 2. Test chặn chuyển sang WON trực tiếp qua status PATCH
+        $wonPatchRes = $this->patchJson("/api/v1/crm/leads/{$lead->id}/status", [
+            'status' => 'WON',
+        ]);
+        $wonPatchRes->assertStatus(422);
+
+        // 3. Test Sales 2 không thể convert Lead của Sales 1 -> 403 Forbidden
+        Sanctum::actingAs($sale2, ['sales']);
+
+        $convertFail = $this->postJson("/api/v1/crm/leads/{$lead->id}/convert-to-tenant", [
+            'tax_code' => '0319998888',
+            'company_name' => 'Công Ty Trộm Deal',
+        ]);
+        $convertFail->assertStatus(403);
+
+        // 4. Sales 1 convert hợp lệ -> thành công mã TNT-2026-XXXX
+        Sanctum::actingAs($sale1, ['sales']);
+
+        $convertSuccess = $this->postJson("/api/v1/crm/leads/{$lead->id}/convert-to-tenant", [
+            'tax_code' => '0319998888',
+            'company_name' => 'Công Ty Khách Chuẩn',
+        ]);
+        $convertSuccess->assertStatus(201)
+            ->assertJsonPath('data.company_name', 'Công Ty Khách Chuẩn');
+        $this->assertStringStartsWith('TNT-', $convertSuccess->json('data.tenant_code'));
+        $this->assertEquals(LeadStatus::WON, $lead->fresh()->status);
+
+        // 5. Chặn đảo ngược trạng thái Lead đã WON
+        $revertRes = $this->patchJson("/api/v1/crm/leads/{$lead->id}/status", [
+            'status' => 'LOST',
+            'lost_reason_category' => 'Hủy',
+            'lost_reason_detail' => 'Hủy hợp đồng',
+        ]);
+        $revertRes->assertStatus(422);
+
+        // 6. Test chống trùng lặp 30 ngày trên CRM khi Sales khác cố tình tạo trùng SĐT
+        Sanctum::actingAs($sale2, ['sales']);
+
+        $dupFailRes = $this->postJson('/api/v1/crm/leads', [
+            'contact_full_name' => 'Khách Bị Cướp',
+            'phone' => '0933333333',
+            'email' => 'baomat_khac@gmail.com',
+            'building_id' => $this->building->id,
+        ]);
+        $dupFailRes->assertStatus(422);
     }
 }

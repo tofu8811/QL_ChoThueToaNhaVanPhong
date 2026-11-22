@@ -396,7 +396,7 @@
           phone: phone,
           email: 'lead_' + cleanPhone + '@officeleasing.vn',
           desired_area_sqm: area,
-          customer_note: '[Kịch bản 1 - Giữ chỗ ưu tiên] Đăng ký nhận thông báo mặt bằng mới tại: ' + regionName
+          customer_note: '[Giữ chỗ ưu tiên] Đăng ký nhận thông báo mặt bằng mới tại: ' + regionName
         };
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');

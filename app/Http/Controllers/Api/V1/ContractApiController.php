@@ -29,7 +29,7 @@ class ContractApiController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $perPage = (int) $request->input('per_page', 15);
-        $user = auth('sanctum')->user() ?? $request->user();
+        $user = auth('sanctum')->user() ?? $request->user() ?? auth()->user();
         $contracts = $this->contractService->getContracts($request->all(), $user, $perPage);
 
         return $this->paginateResponse($contracts, 'Lấy danh sách hợp đồng thuê thành công.');
@@ -40,7 +40,12 @@ class ContractApiController extends BaseApiController
      */
     public function store(StoreContractRequest $request): JsonResponse
     {
-        $salesId = $request->user() instanceof \App\Models\Sale ? $request->user()->id : null;
+        $user = auth('sanctum')->user() ?? $request->user() ?? auth()->user();
+        $salesId = $user instanceof \App\Models\Sale ? $user->id : null;
+        if (!$salesId && !empty($request->input('tenant_id'))) {
+            $tenant = \App\Models\Tenant::find($request->input('tenant_id'));
+            $salesId = $tenant?->created_by_sales_id;
+        }
         $contract = $this->contractService->createDraftContract($request->validated(), $salesId);
 
         return $this->createdResponse($contract, 'Khởi tạo hợp đồng thuê bản nháp thành công.');
@@ -51,7 +56,12 @@ class ContractApiController extends BaseApiController
      */
     public function reserve(ReserveContractRequest $request): JsonResponse
     {
-        $salesId = $request->user() instanceof \App\Models\Sale ? $request->user()->id : null;
+        $user = auth('sanctum')->user() ?? $request->user() ?? auth()->user();
+        $salesId = $user instanceof \App\Models\Sale ? $user->id : null;
+        if (!$salesId && !empty($request->input('tenant_id'))) {
+            $tenant = \App\Models\Tenant::find($request->input('tenant_id'));
+            $salesId = $tenant?->created_by_sales_id;
+        }
         $contract = $this->contractService->createBookingContract($request->validated(), $salesId);
 
         return $this->createdResponse($contract, 'Lập hợp đồng giữ chỗ thành công.');
@@ -62,7 +72,8 @@ class ContractApiController extends BaseApiController
      */
     public function show(string $id, Request $request): JsonResponse
     {
-        $contract = $this->contractService->getContractDetail($id, $request->user());
+        $user = auth('sanctum')->user() ?? $request->user() ?? auth()->user();
+        $contract = $this->contractService->getContractDetail($id, $user);
 
         return $this->successResponse($contract, 'Lấy chi tiết hợp đồng thành công.');
     }
@@ -129,7 +140,8 @@ class ContractApiController extends BaseApiController
     public function sign(string $id, Request $request): JsonResponse
     {
         $contract = Contract::findOrFail($id);
-        $signedContract = $this->contractService->signContract($contract, $request->user());
+        $user = auth('sanctum')->user() ?? $request->user() ?? auth()->user();
+        $signedContract = $this->contractService->signContract($contract, $user);
 
         return $this->successResponse($signedContract, 'Ký duyệt và kích hoạt hợp đồng thành công.');
     }
@@ -140,7 +152,8 @@ class ContractApiController extends BaseApiController
     public function renew(RenewContractRequest $request, string $id): JsonResponse
     {
         $contract = Contract::findOrFail($id);
-        $renewedContract = $this->contractService->renewContract($contract, $request->validated(), $request->user());
+        $user = auth('sanctum')->user() ?? $request->user() ?? auth()->user();
+        $renewedContract = $this->contractService->renewContract($contract, $request->validated(), $user);
 
         return $this->createdResponse($renewedContract, 'Lập phụ lục gia hạn hợp đồng thành công.');
     }
@@ -151,7 +164,8 @@ class ContractApiController extends BaseApiController
     public function terminate(TerminateContractRequest $request, string $id): JsonResponse
     {
         $contract = Contract::findOrFail($id);
-        $terminatedContract = $this->contractService->terminateContract($contract, $request->validated(), $request->user());
+        $user = auth('sanctum')->user() ?? $request->user() ?? auth()->user();
+        $terminatedContract = $this->contractService->terminateContract($contract, $request->validated(), $user);
 
         return $this->successResponse($terminatedContract, 'Thanh lý hợp đồng và nghiệm thu trả phòng thành công.');
     }

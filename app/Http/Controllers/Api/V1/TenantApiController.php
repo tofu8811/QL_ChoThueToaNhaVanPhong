@@ -25,7 +25,8 @@ class TenantApiController extends BaseApiController
     public function index(Request $request): JsonResponse
     {
         $perPage = (int) $request->input('per_page', 15);
-        $tenants = $this->tenantService->getTenants($request->all(), $perPage);
+        $user = auth('sanctum')->user() ?? $request->user() ?? auth()->user();
+        $tenants = $this->tenantService->getTenants($request->all(), $perPage, $user);
 
         return $this->paginateResponse($tenants, 'Lấy danh sách khách thuê thành công.');
     }

@@ -133,6 +133,15 @@
 
       let hash = window.location.hash ? window.location.hash.replace(/^#\/?/, '').trim() : '';
 
+      // Tự động phân giải tuyến theo đường dẫn tĩnh (pathname) nếu đang ở trang chuyên biệt (contracts, buildings, tenants, tickets, billing, staff, leads...)
+      const adminSub = window.location.pathname.replace(/^\/admin\/?/, '').split('/')[0];
+      if (adminSub && adminSub !== 'dashboard') {
+        const pathSubRoute = 'admin/' + (adminSub === 'leads' ? 'sales-leads' : adminSub);
+        if (ROUTE_TO_TAB[pathSubRoute]) {
+          hash = pathSubRoute;
+        }
+      }
+
       if (isHistoryNavigation) {
         closeAllOpenModalsOnHistoryNav();
         localStorage.setItem('last_active_route', hash || 'admin/dashboard');
@@ -415,7 +424,7 @@
       ],
       sales: [
         'tab-sales-performance', 'tab-sales-leads', 'tab-sales-appointments',
-        'tab-sales-quotes', 'tab-sales-pipeline', 'tab-admin-buildings'
+        'tab-sales-quotes', 'tab-sales-pipeline', 'tab-admin-buildings', 'tab-admin-contracts'
       ],
       accountant: [
         'tab-admin-billing', 'tab-admin-buildings', 'tab-admin-tenants',
@@ -555,11 +564,11 @@
         const dashTitle = document.getElementById('dashboard-page-title');
         const dashSub = document.getElementById('dashboard-page-subtitle');
         if (dashTitle) {
-          dashTitle.innerText = isPmRole ? 'Tổng Quan Vận Hành & Lấp Đầy Cao Ốc' : 'Tổng Quan Vận Hành & Kinh Doanh Tòa Nhà';
+          dashTitle.innerText = isPmRole ? 'Tổng Quan Vận Hành Cao Ốc Phụ Trách' : 'Tổng Quan Vận Hành & Kinh Doanh Tòa Nhà';
         }
         if (dashSub) {
           dashSub.innerText = isPmRole
-            ? 'Bức tranh toàn cảnh về hiện trạng tòa nhà, tỷ lệ lấp đầy, tiến độ xử lý sự cố kỹ thuật và phê duyệt vận hành.'
+            ? 'Bức tranh toàn cảnh về quy mô tài sản, tỷ lệ lấp đầy diện tích sàn, phiếu sự cố kỹ thuật và vận hành tại các cao ốc được phân quyền phụ trách.'
             : 'Bức tranh toàn cảnh về quy mô tài sản, hợp đồng thuê, doanh thu công nợ và trạng thái vận hành toàn hệ thống.';
         }
       }
@@ -796,6 +805,15 @@
         el.classList.add('active');
       } else if (tabId === 'tab-sales-pipeline') {
         document.getElementById('nav-item-leads')?.classList.add('active');
+      } else if (tabId === 'tab-admin-contracts') {
+        const cLink = document.querySelector('.filament-link[href*="contracts"]') || document.querySelector('.filament-link[onclick*="tab-admin-contracts"]');
+        if (cLink) cLink.classList.add('active');
+      } else if (tabId === 'tab-sales-leads') {
+        const lLink = document.querySelector('.filament-link[href*="leads"]') || document.querySelector('.filament-link[onclick*="tab-sales-leads"]');
+        if (lLink) lLink.classList.add('active');
+      } else if (tabId === 'tab-sales-quotes') {
+        const qLink = document.querySelector('.filament-link[href*="quotes"]') || document.querySelector('.filament-link[onclick*="tab-sales-quotes"]');
+        if (qLink) qLink.classList.add('active');
       }
 
       // Cập nhật Breadcrumb động trên Topbar chuẩn Hình 2
@@ -1185,10 +1203,8 @@
             const leads = json.data?.data || json.data || [];
             if (leads.length > 0) {
               const stageMap = {
-                'NEW': { label: 'Tiếp nhận mới', badge: 'warning' },
-                'CONTACTED': { label: 'Đã liên hệ', badge: 'info' },
-                'SURVEYING': { label: 'Khảo sát thực tế', badge: 'info' },
-                'PROPOSAL_SENT': { label: 'Đã gửi báo giá', badge: 'info' },
+                'PENDING_ASSIGN': { label: 'Chờ phân bổ', badge: 'warning' },
+                'NEW': { label: 'Mới tiếp nhận', badge: 'info' },
                 'NEGOTIATING': { label: 'Đang đàm phán', badge: 'warning' },
                 'WON': { label: 'Chốt thành công', badge: 'success' },
                 'LOST': { label: 'Thất bại', badge: 'danger' }

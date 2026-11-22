@@ -9,6 +9,47 @@ use Illuminate\Validation\Rules\Enum;
 class UpdateLeadStatusRequest extends BaseApiRequest
 {
     /**
+     * Chuẩn hóa và ánh xạ dữ liệu trạng thái trước khi validate.
+     */
+    protected function prepareForValidation(): void
+    {
+        $merge = [];
+
+        // 1. Ánh xạ trường status / pipeline_status
+        $rawStatus = $this->status ?? $this->pipeline_status;
+        if ($rawStatus !== null) {
+            $upper = strtoupper(trim((string) $rawStatus));
+            if ($upper === 'WIN') {
+                $upper = LeadStatus::WON->value;
+            } elseif ($upper === 'LOSE' || $upper === 'FAILED') {
+                $upper = LeadStatus::LOST->value;
+            }
+            $merge['status'] = $upper;
+        }
+
+        // 2. Ánh xạ alias nếu có truyền tham số thay thế
+        $targetStatus = $merge['status'] ?? $this->status ?? $this->pipeline_status;
+        if ($targetStatus === LeadStatus::LOST->value || strtoupper((string) $targetStatus) === 'LOST') {
+            if (!$this->filled('lost_reason_category')) {
+                $cat = $this->lost_category ?? $this->category ?? null;
+                if (!empty($cat)) {
+                    $merge['lost_reason_category'] = (string) $cat;
+                }
+            }
+            if (!$this->filled('lost_reason_detail')) {
+                $detail = $this->lost_reason_detail ?? $this->lost_reason ?? $this->reason ?? $this->note ?? null;
+                if (!empty($detail)) {
+                    $merge['lost_reason_detail'] = (string) $detail;
+                }
+            }
+        }
+
+        if (!empty($merge)) {
+            $this->merge($merge);
+        }
+    }
+
+    /**
      * Quy tắc xác thực chuyển đổi trạng thái tiến trình Lead.
      * Bắt buộc có lý do khi chuyển sang LOST.
      *

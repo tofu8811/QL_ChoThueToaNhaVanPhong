@@ -39,6 +39,13 @@
       </div>
     </a>
 
+    <a href="{{ route('admin.contracts') }}" class="filament-link {{ request()->routeIs('admin.contracts') || request()->routeIs('sales.contracts') ? 'active' : '' }}">
+      <div class="filament-link-content">
+        <i class="fa-solid fa-file-signature"></i>
+        <span>Hợp đồng & Lập HĐ nháp</span>
+      </div>
+    </a>
+
     <a href="{{ route('sales.available-units') }}" class="filament-link {{ request()->routeIs('sales.available-units') ? 'active' : '' }}">
       <div class="filament-link-content">
         <i class="fa-solid fa-city"></i>

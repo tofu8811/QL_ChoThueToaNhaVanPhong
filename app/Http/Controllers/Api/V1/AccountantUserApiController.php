@@ -91,4 +91,22 @@ class AccountantUserApiController extends BaseApiController
 
         return $this->successResponse(null, 'Xóa mềm nhân sự Kế toán thành công.');
     }
+
+    /**
+     * POST /api/v1/admin/users/accountants/{id}/reset-password: Cấp lại mật khẩu cho Kế toán.
+     */
+    public function resetPassword(string $id, Request $request): JsonResponse
+    {
+        /** @var Admin $admin */
+        $admin = $request->user();
+        if (!($admin instanceof Admin)) {
+            return $this->errorResponse('Chỉ Quản trị viên mới có quyền cấp lại mật khẩu cho Kế toán.', 403);
+        }
+
+        $newPassword = $this->accountantUserService->adminResetPassword($id, $admin);
+
+        return $this->successResponse([
+            'new_password' => $newPassword,
+        ], 'Cấp lại mật khẩu cho Kế toán thành công. Thông tin mật khẩu mới đã được gửi qua email.');
+    }
 }

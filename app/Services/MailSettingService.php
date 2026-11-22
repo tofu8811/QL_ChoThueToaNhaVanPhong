@@ -249,6 +249,11 @@ class MailSettingService
      */
     public function applyConfig(): void
     {
+        // Trong môi trường testing, không ghi đè runtime config để tuân thủ phpunit.xml (dùng array/null mailer)
+        if (app()->environment('testing')) {
+            return;
+        }
+
         if (!$this->isEnabled()) {
             // Khi chưa cấu hình hoặc đã TẮT: Đặt mailer mặc định là log để tránh gửi thư rác hay lỗi kết nối
             config([

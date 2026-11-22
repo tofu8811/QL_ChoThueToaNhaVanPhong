@@ -3,8 +3,11 @@
 namespace App\Services;
 
 use App\Exceptions\BusinessException;
+use App\Helpers\PasswordHelper;
 use App\Models\Admin;
+use App\Notifications\Admin\AdminCredentialNotification;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -59,14 +62,33 @@ class AdminUserService
      */
     public function createAdmin(array $data): Admin
     {
-        return Admin::create([
-            'full_name'      => $data['full_name'],
-            'email'          => $data['email'],
-            'phone'          => $data['phone'] ?? null,
-            'password'       => Hash::make($data['password']),
-            'is_super_admin' => (bool) ($data['is_super_admin'] ?? false),
-            'status'         => $data['status'] ?? 'ACTIVE',
-        ]);
+        return DB::transaction(function () use ($data) {
+            $plainPassword = !empty($data['password'])
+                ? trim((string) $data['password'])
+                : PasswordHelper::generateSecurePassword(10, 'Ad@');
+
+            $admin = Admin::create([
+                'full_name'      => $data['full_name'],
+                'email'          => $data['email'],
+                'phone'          => $data['phone'] ?? null,
+                'password'       => Hash::make($plainPassword),
+                'is_super_admin' => (bool) ($data['is_super_admin'] ?? false),
+                'status'         => $data['status'] ?? 'ACTIVE',
+            ]);
+
+            // Gửi email thông báo cấp tài khoản Quản trị viên sau khi commit
+            $admin->notify(
+                (new AdminCredentialNotification(
+                    plainPassword: $plainPassword,
+                    isSuperAdmin: (bool) $admin->is_super_admin,
+                    isReset: false
+                ))->afterCommit()
+            );
+
+            $admin->plain_password = $plainPassword;
+
+            return $admin;
+        });
     }
 
     /**
@@ -184,5 +206,39 @@ class AdminUserService
         }
 
         return (bool) $admin->delete();
+    }
+
+    /**
+     * Cấp lại mật khẩu cho tài khoản Quản trị viên (Admin-Assisted Reset).
+     *
+     * @param string $id
+     * @param Admin $actor
+     * @return string Mật khẩu ngẫu nhiên mới sinh ra (chuỗi thuần)
+     */
+    public function adminResetPassword(string $id, Admin $actor): string
+    {
+        return DB::transaction(function () use ($id, $actor) {
+            $admin = Admin::findOrFail($id);
+
+            $newPassword = PasswordHelper::generateSecurePassword(10, 'Ad@');
+
+            $admin->update([
+                'password' => Hash::make($newPassword),
+            ]);
+
+            // Thu hồi toàn bộ Sanctum tokens phiên cũ để chặn truy cập trái phép
+            $admin->tokens()->delete();
+
+            // Gửi email thông báo cấp lại mật khẩu qua Queue sau khi Commit
+            $admin->notify(
+                (new AdminCredentialNotification(
+                    plainPassword: $newPassword,
+                    isSuperAdmin: (bool) $admin->is_super_admin,
+                    isReset: true
+                ))->afterCommit()
+            );
+
+            return $newPassword;
+        });
     }
 }

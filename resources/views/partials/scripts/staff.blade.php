@@ -45,6 +45,9 @@
               <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditAdminModal('${a.id}')" title="Chỉnh sửa">
                 <i class="fa-regular fa-pen-to-square"></i>
               </button>
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('admin', '${a.id}', '${escapeHtml(a.full_name || a.name)}')" title="Cấp lại mật khẩu & gửi email">
+                <i class="fa-solid fa-key"></i>
+              </button>
               <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffAdmin('${a.id}', '${escapeHtml(a.full_name || a.name)}')" title="Xóa mềm">
                 <i class="fa-regular fa-trash-can"></i>
               </button>
@@ -88,6 +91,9 @@
               </button>
               <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditSaleModal('${s.id}')" title="Chỉnh sửa">
                 <i class="fa-regular fa-pen-to-square"></i>
+              </button>
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('sales', '${s.id}', '${escapeHtml(s.full_name || s.name)}')" title="Cấp lại mật khẩu & gửi email">
+                <i class="fa-solid fa-key"></i>
               </button>
               <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffSale('${s.id}', '${escapeHtml(s.full_name || s.name)}')" title="Xóa mềm">
                 <i class="fa-regular fa-trash-can"></i>
@@ -140,6 +146,9 @@
               <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditPmModal('${p.id}')" title="Chỉnh sửa">
                 <i class="fa-regular fa-pen-to-square"></i>
               </button>
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('pm', '${p.id}', '${escapeHtml(p.full_name || p.name)}')" title="Cấp lại mật khẩu & gửi email">
+                <i class="fa-solid fa-key"></i>
+              </button>
               <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffPm('${p.id}', '${escapeHtml(p.full_name || p.name)}')" title="Xóa mềm">
                 <i class="fa-regular fa-trash-can"></i>
               </button>
@@ -184,6 +193,9 @@
               </button>
               <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditAccountantModal('${a.id}')" title="Chỉnh sửa">
                 <i class="fa-regular fa-pen-to-square"></i>
+              </button>
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('accountant', '${a.id}', '${escapeHtml(a.full_name || a.name)}')" title="Cấp lại mật khẩu & gửi email">
+                <i class="fa-solid fa-key"></i>
               </button>
               <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffAccountant('${a.id}', '${escapeHtml(a.full_name || a.name)}')" title="Xóa mềm">
                 <i class="fa-regular fa-trash-can"></i>
@@ -570,8 +582,8 @@
       document.getElementById('admin-form-id').value = '';
       document.getElementById('admin-form-mode').value = 'create';
       document.getElementById('staff-admin-modal-title').innerHTML = '<i class="fa-solid fa-user-plus"></i> Thêm Quản Trị Viên Mới';
-      document.getElementById('admin-form-password-req').style.display = 'inline';
-      document.getElementById('admin-form-password-hint').style.display = 'none';
+      document.getElementById('admin-form-password-req').style.display = 'none';
+      document.getElementById('admin-form-password-hint').style.display = 'block';
 
       // Reset quyền Super Admin & Trạng thái tài khoản
       const isSuperCb = document.getElementById('admin-form-issuper');
@@ -733,19 +745,8 @@
         }
       }
 
-      if (mode === 'create') {
-        if (!pwd || pwd.trim().length === 0) {
-          moSetFieldError('admin-form-password', 'err-admin-password', 'Mật khẩu là bắt buộc khi tạo tài khoản quản trị.');
-          document.getElementById('admin-form-password').focus();
-          return;
-        }
-        if (pwd.length < 8) {
-          moSetFieldError('admin-form-password', 'err-admin-password', 'Mật khẩu phải có tối thiểu 8 ký tự.');
-          document.getElementById('admin-form-password').focus();
-          return;
-        }
-      } else if (pwd && pwd.length < 8) {
-        moSetFieldError('admin-form-password', 'err-admin-password', 'Mật khẩu mới phải có tối thiểu 8 ký tự.');
+      if (pwd && pwd.length < 8) {
+        moSetFieldError('admin-form-password', 'err-admin-password', 'Mật khẩu phải có tối thiểu 8 ký tự.');
         document.getElementById('admin-form-password').focus();
         return;
       }
@@ -804,9 +805,19 @@
         });
         const json = await res.json();
         if (res.ok) {
-          alert(json.message || 'Lưu thông tin Quản trị viên thành công!');
           closeModal('staff-admin-modal');
           loadStaffAdmins(1);
+          if (mode === 'create' && json.data?.plain_password) {
+            showStaffCredentialSuccessModal({
+              title: 'Khởi Tạo Quản Trị Viên Thành Công',
+              desc: `Tài khoản cho Quản trị viên <strong>${escapeHtml(json.data.full_name || '')}</strong> đã được khởi tạo thành công. Email thông báo tài khoản và mật khẩu đã được tự động xếp vào hàng đợi gửi đi.`,
+              name: json.data.full_name || '',
+              email: json.data.email || '',
+              password: json.data.plain_password
+            });
+          } else {
+            alert(json.message || 'Lưu thông tin Quản trị viên thành công!');
+          }
         } else {
           if (json.errors) {
             if (json.errors.full_name) moSetFieldError('admin-form-fullname', 'err-admin-fullname', json.errors.full_name[0]);
@@ -984,8 +995,8 @@
       document.getElementById('sale-form-id').value = '';
       document.getElementById('sale-form-mode').value = 'create';
       document.getElementById('staff-sale-modal-title').innerHTML = '<i class="fa-solid fa-user-plus"></i> Thêm Nhân Viên Sales Mới';
-      document.getElementById('sale-form-password-req').style.display = 'inline';
-      document.getElementById('sale-form-password-hint').style.display = 'none';
+      document.getElementById('sale-form-password-req').style.display = 'none';
+      document.getElementById('sale-form-password-hint').style.display = 'block';
 
       moClearFieldError('sale-form-fullname', 'err-sale-fullname');
       moClearFieldError('sale-form-email', 'err-sale-email');
@@ -1076,19 +1087,8 @@
         }
       }
 
-      if (mode === 'create') {
-        if (!pwd || pwd.trim().length === 0) {
-          moSetFieldError('sale-form-password', 'err-sale-password', 'Mật khẩu là bắt buộc khi tạo nhân viên Sales mới.');
-          document.getElementById('sale-form-password').focus();
-          return;
-        }
-        if (pwd.length < 8) {
-          moSetFieldError('sale-form-password', 'err-sale-password', 'Mật khẩu phải có tối thiểu 8 ký tự.');
-          document.getElementById('sale-form-password').focus();
-          return;
-        }
-      } else if (pwd && pwd.length < 8) {
-        moSetFieldError('sale-form-password', 'err-sale-password', 'Mật khẩu mới phải có tối thiểu 8 ký tự.');
+      if (pwd && pwd.length < 8) {
+        moSetFieldError('sale-form-password', 'err-sale-password', 'Mật khẩu phải có tối thiểu 8 ký tự.');
         document.getElementById('sale-form-password').focus();
         return;
       }
@@ -1126,9 +1126,19 @@
         });
         const json = await res.json();
         if (res.ok) {
-          alert(json.message || 'Lưu nhân viên Sales thành công!');
           closeModal('staff-sale-modal');
           loadStaffSales(1);
+          if (mode === 'create' && json.data?.plain_password) {
+            showStaffCredentialSuccessModal({
+              title: 'Khởi Tạo Nhân Viên Sales Thành Công',
+              desc: `Tài khoản cho chuyên viên Sales <strong>${escapeHtml(json.data.full_name || '')}</strong> đã được khởi tạo thành công. Email thông báo tài khoản và mật khẩu đã được tự động xếp vào hàng đợi gửi đi.`,
+              name: json.data.full_name || '',
+              email: json.data.email || '',
+              password: json.data.plain_password
+            });
+          } else {
+            alert(json.message || 'Lưu nhân viên Sales thành công!');
+          }
         } else {
           if (json.errors) {
             if (json.errors.full_name) moSetFieldError('sale-form-fullname', 'err-sale-fullname', json.errors.full_name[0]);
@@ -1316,8 +1326,8 @@
       document.getElementById('pm-form-id').value = '';
       document.getElementById('pm-form-mode').value = 'create';
       document.getElementById('staff-pm-modal-title').innerHTML = '<i class="fa-solid fa-user-plus"></i> Thêm Nhân Sự Ban Quản Lý (PM)';
-      document.getElementById('pm-form-password-req').style.display = 'inline';
-      document.getElementById('pm-form-password-hint').style.display = 'none';
+      document.getElementById('pm-form-password-req').style.display = 'none';
+      document.getElementById('pm-form-password-hint').style.display = 'block';
 
       moClearFieldError('pm-form-fullname', 'err-pm-fullname');
       moClearFieldError('pm-form-email', 'err-pm-email');
@@ -1427,19 +1437,8 @@
         }
       }
 
-      if (mode === 'create') {
-        if (!pwd || pwd.trim().length === 0) {
-          moSetFieldError('pm-form-password', 'err-pm-password', 'Mật khẩu là bắt buộc khi tạo nhân sự BQL mới.');
-          document.getElementById('pm-form-password').focus();
-          return;
-        }
-        if (pwd.length < 8) {
-          moSetFieldError('pm-form-password', 'err-pm-password', 'Mật khẩu phải có tối thiểu 8 ký tự.');
-          document.getElementById('pm-form-password').focus();
-          return;
-        }
-      } else if (pwd && pwd.length < 8) {
-        moSetFieldError('pm-form-password', 'err-pm-password', 'Mật khẩu mới phải có tối thiểu 8 ký tự.');
+      if (pwd && pwd.length < 8) {
+        moSetFieldError('pm-form-password', 'err-pm-password', 'Mật khẩu phải có tối thiểu 8 ký tự.');
         document.getElementById('pm-form-password').focus();
         return;
       }
@@ -1477,9 +1476,19 @@
         });
         const json = await res.json();
         if (res.ok) {
-          alert(json.message || 'Lưu nhân sự BQL thành công!');
           closeModal('staff-pm-modal');
           loadStaffPm(1);
+          if (mode === 'create' && json.data?.plain_password) {
+            showStaffCredentialSuccessModal({
+              title: 'Khởi Tạo Nhân Sự BQL Thành Công',
+              desc: `Tài khoản cho nhân sự Ban Quản Lý <strong>${escapeHtml(json.data.full_name || '')}</strong> đã được khởi tạo thành công. Email thông báo tài khoản và mật khẩu đã được tự động xếp vào hàng đợi gửi đi.`,
+              name: json.data.full_name || '',
+              email: json.data.email || '',
+              password: json.data.plain_password
+            });
+          } else {
+            alert(json.message || 'Lưu nhân sự BQL thành công!');
+          }
         } else {
           if (json.errors) {
             if (json.errors.full_name) moSetFieldError('pm-form-fullname', 'err-pm-fullname', json.errors.full_name[0]);
@@ -1658,8 +1667,8 @@
       document.getElementById('acc-form-id').value = '';
       document.getElementById('acc-form-mode').value = 'create';
       document.getElementById('staff-accountant-modal-title').innerHTML = '<i class="fa-solid fa-user-plus"></i> Thêm Nhân Viên Kế Toán Mới';
-      document.getElementById('acc-form-password-req').style.display = 'inline';
-      document.getElementById('acc-form-password-hint').style.display = 'none';
+      document.getElementById('acc-form-password-req').style.display = 'none';
+      document.getElementById('acc-form-password-hint').style.display = 'block';
 
       moClearFieldError('acc-form-fullname', 'err-acc-fullname');
       moClearFieldError('acc-form-email', 'err-acc-email');
@@ -1755,19 +1764,8 @@
         }
       }
 
-      if (mode === 'create') {
-        if (!pwd || pwd.trim().length === 0) {
-          moSetFieldError('acc-form-password', 'err-acc-password', 'Mật khẩu là bắt buộc khi tạo tài khoản kế toán mới.');
-          document.getElementById('acc-form-password').focus();
-          return;
-        }
-        if (pwd.length < 8) {
-          moSetFieldError('acc-form-password', 'err-acc-password', 'Mật khẩu phải có tối thiểu 8 ký tự.');
-          document.getElementById('acc-form-password').focus();
-          return;
-        }
-      } else if (pwd && pwd.length < 8) {
-        moSetFieldError('acc-form-password', 'err-acc-password', 'Mật khẩu mới phải có tối thiểu 8 ký tự.');
+      if (pwd && pwd.length < 8) {
+        moSetFieldError('acc-form-password', 'err-acc-password', 'Mật khẩu phải có tối thiểu 8 ký tự.');
         document.getElementById('acc-form-password').focus();
         return;
       }
@@ -1804,9 +1802,19 @@
         });
         const json = await res.json();
         if (res.ok) {
-          alert(json.message || 'Lưu nhân viên Kế toán thành công!');
           closeModal('staff-accountant-modal');
           loadStaffAccountants(1);
+          if (mode === 'create' && json.data?.plain_password) {
+            showStaffCredentialSuccessModal({
+              title: 'Khởi Tạo Kế Toán Thành Công',
+              desc: `Tài khoản cho nhân viên Kế toán <strong>${escapeHtml(json.data.full_name || '')}</strong> đã được khởi tạo thành công. Email thông báo tài khoản và mật khẩu đã được tự động xếp vào hàng đợi gửi đi.`,
+              name: json.data.full_name || '',
+              email: json.data.email || '',
+              password: json.data.plain_password
+            });
+          } else {
+            alert(json.message || 'Lưu nhân viên Kế toán thành công!');
+          }
         } else {
           if (json.errors) {
             if (json.errors.full_name) moSetFieldError('acc-form-fullname', 'err-acc-fullname', json.errors.full_name[0]);
@@ -1933,5 +1941,98 @@
         </div>
       `;
     }
+    // Sinh mật khẩu ngẫu nhiên an toàn vào input
+    function generateRandomPasswordForInput(inputId, prefix = 'Bms@') {
+      const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+      const lower = 'abcdefghjkmnpqrstuvwxyz';
+      const digits = '23456789';
+      const specials = '#!$%*';
+      const all = upper + lower + digits + specials;
+      
+      let pass = [
+        upper[Math.floor(Math.random() * upper.length)],
+        lower[Math.floor(Math.random() * lower.length)],
+        digits[Math.floor(Math.random() * digits.length)],
+        specials[Math.floor(Math.random() * specials.length)]
+      ];
+      while (pass.length < 6) {
+        pass.push(all[Math.floor(Math.random() * all.length)]);
+      }
+      pass.sort(() => 0.5 - Math.random());
+      const generated = prefix + pass.join('');
+
+      const input = document.getElementById(inputId);
+      if (input) {
+        input.value = generated;
+        input.type = 'text'; // Tạm thời hiện rõ để người tạo có thể thấy
+        const errSlot = inputId.replace('-form-', '-');
+        moClearFieldError(inputId, 'err-' + errSlot);
+      }
+    }
+
+    // Sao chép mật khẩu One-Time vào Clipboard
+    function copyStaffCredentialPassword() {
+      const passCode = document.getElementById('staff-credential-password');
+      if (passCode && passCode.innerText) {
+        navigator.clipboard.writeText(passCode.innerText).then(() => {
+          alert('Đã sao chép mật khẩu vào bộ nhớ tạm: ' + passCode.innerText);
+        }).catch(() => {
+          prompt('Sao chép mật khẩu thủ công:', passCode.innerText);
+        });
+      }
+    }
+
+    // Mở popup hiển thị mật khẩu khởi tạo / cấp lại
+    function showStaffCredentialSuccessModal(opts) {
+      if (opts.title) document.getElementById('staff-credential-modal-title').innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + opts.title;
+      if (opts.desc) document.getElementById('staff-credential-modal-desc').innerHTML = opts.desc;
+      if (opts.name) document.getElementById('staff-credential-name').innerText = opts.name;
+      if (opts.email) document.getElementById('staff-credential-email').innerText = opts.email;
+      if (opts.password) document.getElementById('staff-credential-password').innerText = opts.password;
+      openModal('staff-credential-success-modal');
+    }
+
+    // Cấp lại mật khẩu cho nhân sự (Admin-Assisted Password Reset)
+    async function resetStaffPassword(role, id, name) {
+      if (!confirm(`Bạn có chắc chắn muốn cấp lại mật khẩu cho nhân sự [${name}]?\n\nHệ thống sẽ tự động tạo mật khẩu ngẫu nhiên mới, thu hồi toàn bộ phiên đăng nhập cũ và gửi email thông báo mật khẩu mới cho nhân sự.`)) {
+        return;
+      }
+
+      const token = getSanctumToken();
+      let url = '';
+      if (role === 'admin') url = `/api/v1/admin/users/admins/${id}/reset-password`;
+      else if (role === 'sales') url = `/api/v1/admin/users/sales/${id}/reset-password`;
+      else if (role === 'pm') url = `/api/v1/admin/users/property-managers/${id}/reset-password`;
+      else if (role === 'accountant') url = `/api/v1/admin/users/accountants/${id}/reset-password`;
+
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          }
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          alert('Cấp lại mật khẩu thất bại: ' + (json.message || 'Lỗi không xác định.'));
+          return;
+        }
+
+        const newPass = json.data?.new_password || '';
+        showStaffCredentialSuccessModal({
+          title: 'Cấp Lại Mật Khẩu Thành Công',
+          desc: `Đã cấp lại mật khẩu mới cho nhân sự <strong>${escapeHtml(name)}</strong>. Email thông báo mật khẩu mới đã được tự động xếp vào hàng đợi gửi đi.`,
+          name: name,
+          email: json.data?.email || '',
+          password: newPass
+        });
+      } catch (e) {
+        console.error('Reset staff password error:', e);
+        alert('Lỗi kết nối máy chủ khi cấp lại mật khẩu.');
+      }
+    }
+
     // Dữ liệu nhân sự sẽ được nạp theo cơ chế lazy load khi người dùng mở tab Nhân Sự trong Admin Panel
   </script>

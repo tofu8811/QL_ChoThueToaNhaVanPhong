@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Exceptions\BusinessException;
+use App\Helpers\PasswordHelper;
 use App\Models\Admin;
 use App\Models\PropertyManager;
+use App\Notifications\PropertyManager\PropertyManagerCredentialNotification;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -85,18 +87,23 @@ class PropertyManagerService
             }
 
             // 2. Khởi tạo bản ghi PropertyManager
+            $plainPassword = !empty($data['password'])
+                ? trim((string) $data['password'])
+                : PasswordHelper::generateSecurePassword(10, 'Pm@');
+
             $pm = PropertyManager::create([
                 'employee_code'       => $code,
                 'full_name'           => $data['full_name'],
                 'email'               => $data['email'],
                 'phone'               => $data['phone'] ?? $data['emergency_hotline'] ?? null,
-                'password'            => Hash::make($data['password']),
+                'password'            => Hash::make($plainPassword),
                 'department'          => $data['department'] ?? 'TECHNICAL',
                 'status'              => $data['status'] ?? 'ACTIVE',
                 'created_by_admin_id' => $admin->id,
             ]);
 
             // 3. Phân công tòa nhà quản lý vận hành
+            $buildingNames = [];
             if (!empty($data['building_ids']) && is_array($data['building_ids'])) {
                 $syncData = [];
                 $primaryBuildingId = $data['is_primary_building_id'] ?? null;
@@ -109,7 +116,20 @@ class PropertyManagerService
                     ];
                 }
                 $pm->buildings()->sync($syncData);
+                $buildingNames = $pm->buildings()->pluck('name')->toArray();
             }
+
+            // 4. Gửi email thông báo cấp tài khoản PM sau khi commit
+            $pm->notify(
+                (new PropertyManagerCredentialNotification(
+                    plainPassword: $plainPassword,
+                    pm: $pm,
+                    assignedBuildings: $buildingNames,
+                    isReset: false
+                ))->afterCommit()
+            );
+
+            $pm->plain_password = $plainPassword;
 
             return $pm->load(['buildings']);
         });
@@ -217,5 +237,43 @@ class PropertyManagerService
         $pm = PropertyManager::findOrFail($id);
 
         return (bool) $pm->delete();
+    }
+
+    /**
+     * Cấp lại mật khẩu cho Ban Quản Lý tòa nhà (Admin-Assisted Reset).
+     *
+     * @param string $id
+     * @param Admin $actor
+     * @return string Mật khẩu ngẫu nhiên mới sinh ra (chuỗi thuần)
+     */
+    public function adminResetPassword(string $id, Admin $actor): string
+    {
+        return DB::transaction(function () use ($id, $actor) {
+            $pm = PropertyManager::findOrFail($id);
+
+            $newPassword = PasswordHelper::generateSecurePassword(10, 'Pm@');
+
+            $pm->update([
+                'password' => Hash::make($newPassword),
+            ]);
+
+            // Thu hồi toàn bộ Sanctum tokens phiên cũ để chặn truy cập trái phép
+            $pm->tokens()->delete();
+
+            // Lấy danh sách tên các tòa nhà phụ trách
+            $buildingNames = $pm->buildings()->pluck('name')->toArray();
+
+            // Gửi email thông báo cấp lại mật khẩu qua Queue sau khi Commit
+            $pm->notify(
+                (new PropertyManagerCredentialNotification(
+                    plainPassword: $newPassword,
+                    pm: $pm,
+                    assignedBuildings: $buildingNames,
+                    isReset: true
+                ))->afterCommit()
+            );
+
+            return $newPassword;
+        });
     }
 }

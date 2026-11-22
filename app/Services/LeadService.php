@@ -181,7 +181,22 @@ class LeadService
         $rawStatus = $filters['status'] ?? $filters['pipeline_status'] ?? null;
         if (!empty($rawStatus)) {
             $statusValue = is_string($rawStatus) ? strtoupper($rawStatus) : $rawStatus->value;
-            $query->where('status', $statusValue);
+            if ($statusValue === 'PENDING_ASSIGN' || $statusValue === 'UNASSIGNED') {
+                $query->where(function ($q) {
+                    $q->where('status', LeadStatus::PENDING_ASSIGN)
+                      ->orWhereNull('assigned_sales_id');
+                });
+            } else {
+                $query->where('status', $statusValue);
+            }
+        }
+
+        // Lọc các Lead chưa phân bổ (Unassigned Leads)
+        if (!empty($filters['unassigned'])) {
+            $query->where(function ($q) {
+                $q->where('status', LeadStatus::PENDING_ASSIGN)
+                  ->orWhereNull('assigned_sales_id');
+            });
         }
 
         // Lọc theo Tòa nhà quan tâm

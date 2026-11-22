@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <!-- Portal Stylesheet -->
-  @include('portal.partials.styles')
+  @include('partials.styles')
   @livewireStyles
   @stack('styles')
   <script>
@@ -26,7 +26,7 @@
       try {
         var t = localStorage.getItem('auth_token');
         if (t && !document.cookie.includes('auth_token=')) {
-          document.cookie = 'auth_token=' + t + '; path=/; max-age=86400; SameSite=Lax';
+          document.cookie = 'auth_token=' + encodeURIComponent(t) + '; path=/; max-age=86400; SameSite=Lax';
         }
       } catch (e) {}
     })();
@@ -35,10 +35,10 @@
   @yield('content')
 
   <!-- Modals (Báo giá nhanh, Ticket sự cố, Đăng nhập hệ thống) -->
-  @include('portal.partials.modals')
+  @include('partials.modals')
 
   <!-- JavaScript Client Logic & API Sync -->
-  @include('portal.partials.scripts')
+  @include('partials.scripts')
   @livewireScripts
   @stack('scripts')
 </body>

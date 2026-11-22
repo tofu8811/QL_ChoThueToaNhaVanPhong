@@ -1,7 +1,11 @@
-@extends('layouts.admin')
+﻿@extends('layouts.bms-master')
 
 @section('title', 'Quản Trị Vận Hành Tòa Nhà | Office BMS')
 
-@section('content')
-  @include('portal.admin.shell')
+@section('sidebar')
+  @include('components.sidebars.admin-sidebar')
+@endsection
+
+@section('portal-content')
+  @include('bms.tabs.dashboard')
 @endsection

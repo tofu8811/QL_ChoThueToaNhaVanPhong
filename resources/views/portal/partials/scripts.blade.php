@@ -1,6 +1,0 @@
-@include('portal.scripts.main')
-@include('portal.scripts.validation')
-@include('portal.scripts.auth')
-@include('portal.scripts.public-portal')
-@include('portal.scripts.shell')
-@include('portal.scripts.init')

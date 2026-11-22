@@ -1,0 +1,5 @@
+@include('modals.quote')
+@include('modals.auth')
+@include('modals.tickets')
+@include('modals.staff')
+@include('modals.assignments')

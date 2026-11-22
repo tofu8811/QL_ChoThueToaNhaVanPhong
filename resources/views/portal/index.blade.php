@@ -34,12 +34,12 @@
 @section('content')
   <div id="portal-wrapper">
     <!-- Header & Topbar -->
-    @include('portal.components.header')
+    @include('components.header')
 
     <!-- Trang chủ tìm kiếm tòa nhà & bộ lọc nâng cao -->
-    @include('portal.pages.home')
+    @include('portal.home')
 
     <!-- Footer thông tin liên hệ & bản quyền -->
-    @include('portal.components.footer')
+    @include('components.footer')
   </div>
 @endsection

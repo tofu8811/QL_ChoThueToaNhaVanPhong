@@ -55,8 +55,16 @@ class TenantPortalWorkspace extends Component
         }
 
         // Kiểm tra Sanctum Token từ cookie hoặc header
-        $token = request()->bearerToken() ?? request()->cookie('auth_token');
-        if ($token) {
+        $rawToken = request()->bearerToken() ?? request()->cookie('auth_token') ?? $_COOKIE['auth_token'] ?? null;
+        if ($rawToken) {
+            $token = (string) $rawToken;
+            try {
+                $decrypted = decrypt($rawToken, false);
+                $validated = \Illuminate\Cookie\CookieValuePrefix::validate('auth_token', $decrypted, [app('encrypter')->getKey()]);
+                $token = $validated ?? \Illuminate\Cookie\CookieValuePrefix::remove($decrypted);
+            } catch (\Throwable $e) {}
+
+            $token = urldecode(trim($token, "\"' "));
             $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
             if ($accessToken && $accessToken->tokenable instanceof Tenant) {
                 $this->tenantId = $accessToken->tokenable->id;

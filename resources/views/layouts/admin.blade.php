@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <!-- BMS & Portal Stylesheet -->
-  @include('portal.partials.styles')
+  @include('partials.styles')
   @livewireStyles
   @stack('styles')
 
@@ -49,23 +49,23 @@
   @yield('content')
 
   <!-- Modals Quản trị BMS -->
-  @include('portal.partials.modals')
+  @include('partials.modals')
 
   <!-- Core JavaScript & API Modules -->
-  @include('portal.scripts.main')
-  @include('portal.scripts.validation')
-  @include('portal.scripts.auth')
-  @include('portal.scripts.shell')
-  @include('portal.scripts.tickets')
-  @include('portal.scripts.staff')
-  @include('portal.scripts.assignments')
-  @include('portal.scripts.admin-buildings')
-  @include('portal.scripts.crm-leads')
-  @include('portal.scripts.tenants')
-  @include('portal.scripts.contracts')
-  @include('portal.scripts.mail-settings')
-  @include('portal.scripts.role-operations')
-  @include('portal.scripts.init')
+  @include('partials.scripts.main')
+  @include('partials.scripts.validation')
+  @include('partials.scripts.auth')
+  @include('partials.scripts.shell')
+  @include('partials.scripts.tickets')
+  @include('partials.scripts.staff')
+  @include('partials.scripts.assignments')
+  @include('partials.scripts.admin-buildings')
+  @include('partials.scripts.crm-leads')
+  @include('partials.scripts.tenants')
+  @include('partials.scripts.contracts')
+  @include('partials.scripts.mail-settings')
+  @include('partials.scripts.role-operations')
+  @include('partials.scripts.init')
 
   @livewireScripts
   @stack('scripts')

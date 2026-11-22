@@ -92,4 +92,22 @@ class SaleUserApiController extends BaseApiController
 
         return $this->successResponse(null, 'Xóa mềm nhân viên Sales thành công.');
     }
+
+    /**
+     * POST /api/v1/admin/users/sales/{id}/reset-password: Cấp lại mật khẩu cho nhân viên Sales.
+     */
+    public function resetPassword(string $id, Request $request): JsonResponse
+    {
+        /** @var Admin $admin */
+        $admin = $request->user();
+        if (!($admin instanceof Admin)) {
+            return $this->errorResponse('Chỉ Quản trị viên mới có quyền cấp lại mật khẩu cho nhân viên Sales.', 403);
+        }
+
+        $newPassword = $this->saleUserService->adminResetPassword($id, $admin);
+
+        return $this->successResponse([
+            'new_password' => $newPassword,
+        ], 'Cấp lại mật khẩu cho nhân viên Sales thành công. Thông tin mật khẩu mới đã được gửi qua email.');
+    }
 }

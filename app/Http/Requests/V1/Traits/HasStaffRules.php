@@ -52,9 +52,7 @@ trait HasStaffRules
                 new VietnamesePhoneNumber,
                 Rule::unique($table, 'phone')->ignore($ignoreId)->whereNull('deleted_at'),
             ],
-            'password'      => $isUpdate
-                ? ['sometimes', 'nullable', 'string', $passwordRule]
-                : ['required', 'string', $passwordRule],
+            'password'      => ['sometimes', 'nullable', 'string', $passwordRule],
             'status'        => [$isUpdate ? 'sometimes' : 'nullable', 'string', 'in:ACTIVE,LOCKED,PENDING'],
         ];
 

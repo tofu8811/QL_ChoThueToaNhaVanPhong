@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Exceptions\BusinessException;
+use App\Helpers\PasswordHelper;
 use App\Models\Accountant;
 use App\Models\Admin;
+use App\Notifications\Accountant\AccountantCredentialNotification;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -91,18 +93,23 @@ class AccountantUserService
             }
 
             // 2. Khởi tạo bản ghi Accountant
+            $plainPassword = !empty($data['password'])
+                ? trim((string) $data['password'])
+                : PasswordHelper::generateSecurePassword(10, 'Ac@');
+
             $accountant = Accountant::create([
                 'employee_code'          => $code,
                 'full_name'              => $data['full_name'],
                 'email'                  => $data['email'],
                 'phone'                  => $data['phone'] ?? null,
-                'password'               => Hash::make($data['password']),
+                'password'               => Hash::make($plainPassword),
                 'can_approve_adjustment' => (bool) ($data['can_approve_adjustment'] ?? false),
                 'status'                 => $data['status'] ?? 'ACTIVE',
                 'created_by_admin_id'    => $admin->id,
             ]);
 
             // 3. Phân công tòa nhà theo dõi công nợ
+            $buildingNames = [];
             if (!empty($data['building_ids']) && is_array($data['building_ids'])) {
                 $syncData = [];
                 foreach ($data['building_ids'] as $buildingId) {
@@ -112,7 +119,20 @@ class AccountantUserService
                     ];
                 }
                 $accountant->buildings()->sync($syncData);
+                $buildingNames = $accountant->buildings()->pluck('name')->toArray();
             }
+
+            // 4. Gửi email thông báo cấp tài khoản Kế toán sau khi commit
+            $accountant->notify(
+                (new AccountantCredentialNotification(
+                    plainPassword: $plainPassword,
+                    accountant: $accountant,
+                    assignedBuildings: $buildingNames,
+                    isReset: false
+                ))->afterCommit()
+            );
+
+            $accountant->plain_password = $plainPassword;
 
             return $accountant->load(['buildings']);
         });
@@ -213,5 +233,43 @@ class AccountantUserService
         $accountant = Accountant::findOrFail($id);
 
         return (bool) $accountant->delete();
+    }
+
+    /**
+     * Cấp lại mật khẩu cho nhân viên Kế toán (Admin-Assisted Reset).
+     *
+     * @param string $id
+     * @param Admin $actor
+     * @return string Mật khẩu ngẫu nhiên mới sinh ra (chuỗi thuần)
+     */
+    public function adminResetPassword(string $id, Admin $actor): string
+    {
+        return DB::transaction(function () use ($id, $actor) {
+            $accountant = Accountant::findOrFail($id);
+
+            $newPassword = PasswordHelper::generateSecurePassword(10, 'Ac@');
+
+            $accountant->update([
+                'password' => Hash::make($newPassword),
+            ]);
+
+            // Thu hồi toàn bộ Sanctum tokens phiên cũ để chặn truy cập trái phép
+            $accountant->tokens()->delete();
+
+            // Lấy danh sách tên các tòa nhà phụ trách
+            $buildingNames = $accountant->buildings()->pluck('name')->toArray();
+
+            // Gửi email thông báo cấp lại mật khẩu qua Queue sau khi Commit
+            $accountant->notify(
+                (new AccountantCredentialNotification(
+                    plainPassword: $newPassword,
+                    accountant: $accountant,
+                    assignedBuildings: $buildingNames,
+                    isReset: true
+                ))->afterCommit()
+            );
+
+            return $newPassword;
+        });
     }
 }

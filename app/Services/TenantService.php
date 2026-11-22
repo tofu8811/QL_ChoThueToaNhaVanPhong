@@ -225,7 +225,7 @@ class TenantService
 
             if ($latestContract) {
                 $tenant->notify(
-                    (new \App\Notifications\TenantCredentialNotification($latestContract, $newPassword))->afterCommit()
+                    (new \App\Notifications\Tenant\TenantCredentialNotification($latestContract, $newPassword))->afterCommit()
                 );
             }
 

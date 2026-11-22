@@ -97,7 +97,7 @@ class Tenant extends Authenticatable
      */
     public function sendPasswordResetNotification($token): void
     {
-        $this->notify(new \App\Notifications\TenantResetPasswordNotification($token));
+        $this->notify(new \App\Notifications\Tenant\TenantResetPasswordNotification($token));
     }
 
     /**

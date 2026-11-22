@@ -38,16 +38,21 @@
             </div>
 
             <div id="admin-form-password-group" style="margin-bottom: 14px;">
-              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">
-                Mật khẩu đăng nhập <span id="admin-form-password-req" style="color:#ef4444;">*</span>
-              </label>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                <label style="font-size:13px; font-weight:600; margin-bottom:0;">
+                  Mật khẩu đăng nhập <span id="admin-form-password-req" style="color:#ef4444; display:none;">*</span>
+                </label>
+                <button type="button" onclick="generateRandomPasswordForInput('admin-form-password', 'Ad@')" class="btn-mo-outline" style="padding:2px 8px; font-size:11px; border-radius:4px;" title="Sinh mật khẩu an toàn">
+                  <i class="fa-solid fa-dice"></i> Sinh MK Ngẫu Nhiên
+                </button>
+              </div>
               <div style="position:relative;">
-                <input type="password" id="admin-form-password" class="form-control" placeholder="Tối thiểu 8 ký tự (hoa, thường, số, ký tự đặc biệt)" oninput="moClearFieldError('admin-form-password', 'err-admin-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
+                <input type="password" id="admin-form-password" class="form-control" placeholder="Để trống để hệ thống tự sinh mật khẩu an toàn..." oninput="moClearFieldError('admin-form-password', 'err-admin-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
                 <button type="button" onclick="moTogglePasswordVisibility('admin-form-password', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; padding:4px;" title="Ẩn/Hiện mật khẩu">
                   <i class="fa-regular fa-eye"></i>
                 </button>
               </div>
-              <small id="admin-form-password-hint" style="color:#64748b; font-size:11.5px; display:none; margin-top:4px;">Để trống nếu không muốn đổi mật khẩu.</small>
+              <small id="admin-form-password-hint" style="color:#64748b; font-size:11.5px; display:block; margin-top:4px;">Để trống nếu không muốn đổi (khi sửa) hoặc để hệ thống tự sinh và gửi email (khi tạo mới).</small>
               <div id="err-admin-password" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
             </div>
 
@@ -143,16 +148,21 @@
             </div>
 
             <div id="sale-form-password-group" style="margin-bottom: 14px;">
-              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">
-                Mật khẩu đăng nhập <span id="sale-form-password-req" style="color:#ef4444;">*</span>
-              </label>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                <label style="font-size:13px; font-weight:600; margin-bottom:0;">
+                  Mật khẩu đăng nhập <span id="sale-form-password-req" style="color:#ef4444; display:none;">*</span>
+                </label>
+                <button type="button" onclick="generateRandomPasswordForInput('sale-form-password', 'Sa@')" class="btn-mo-outline" style="padding:2px 8px; font-size:11px; border-radius:4px;" title="Sinh mật khẩu an toàn">
+                  <i class="fa-solid fa-dice"></i> Sinh MK Ngẫu Nhiên
+                </button>
+              </div>
               <div style="position:relative;">
-                <input type="password" id="sale-form-password" class="form-control" placeholder="Tối thiểu 8 ký tự" oninput="moClearFieldError('sale-form-password', 'err-sale-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
+                <input type="password" id="sale-form-password" class="form-control" placeholder="Để trống để hệ thống tự sinh mật khẩu an toàn..." oninput="moClearFieldError('sale-form-password', 'err-sale-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
                 <button type="button" onclick="moTogglePasswordVisibility('sale-form-password', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; padding:4px;" title="Ẩn/Hiện mật khẩu">
                   <i class="fa-regular fa-eye"></i>
                 </button>
               </div>
-              <small id="sale-form-password-hint" style="color:#64748b; font-size:11.5px; display:none; margin-top:4px;">Để trống nếu không đổi mật khẩu.</small>
+              <small id="sale-form-password-hint" style="color:#64748b; font-size:11.5px; display:block; margin-top:4px;">Để trống nếu không muốn đổi (khi sửa) hoặc để hệ thống tự sinh và gửi email (khi tạo mới).</small>
               <div id="err-sale-password" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
             </div>
 
@@ -261,16 +271,21 @@
             </div>
 
             <div id="pm-form-password-group" style="margin-bottom: 14px;">
-              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">
-                Mật khẩu đăng nhập <span id="pm-form-password-req" style="color:#ef4444;">*</span>
-              </label>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                <label style="font-size:13px; font-weight:600; margin-bottom:0;">
+                  Mật khẩu đăng nhập <span id="pm-form-password-req" style="color:#ef4444; display:none;">*</span>
+                </label>
+                <button type="button" onclick="generateRandomPasswordForInput('pm-form-password', 'Pm@')" class="btn-mo-outline" style="padding:2px 8px; font-size:11px; border-radius:4px;" title="Sinh mật khẩu an toàn">
+                  <i class="fa-solid fa-dice"></i> Sinh MK Ngẫu Nhiên
+                </button>
+              </div>
               <div style="position:relative;">
-                <input type="password" id="pm-form-password" class="form-control" placeholder="Tối thiểu 8 ký tự" oninput="moClearFieldError('pm-form-password', 'err-pm-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
+                <input type="password" id="pm-form-password" class="form-control" placeholder="Để trống để hệ thống tự sinh mật khẩu an toàn..." oninput="moClearFieldError('pm-form-password', 'err-pm-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
                 <button type="button" onclick="moTogglePasswordVisibility('pm-form-password', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; padding:4px;" title="Ẩn/Hiện mật khẩu">
                   <i class="fa-regular fa-eye"></i>
                 </button>
               </div>
-              <small id="pm-form-password-hint" style="color:#64748b; font-size:11.5px; display:none; margin-top:4px;">Để trống nếu không đổi mật khẩu.</small>
+              <small id="pm-form-password-hint" style="color:#64748b; font-size:11.5px; display:block; margin-top:4px;">Để trống nếu không muốn đổi (khi sửa) hoặc để hệ thống tự sinh và gửi email (khi tạo mới).</small>
               <div id="err-pm-password" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
             </div>
 
@@ -358,16 +373,21 @@
             </div>
 
             <div id="acc-form-password-group" style="margin-bottom: 14px;">
-              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:5px;">
-                Mật khẩu đăng nhập <span id="acc-form-password-req" style="color:#ef4444;">*</span>
-              </label>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                <label style="font-size:13px; font-weight:600; margin-bottom:0;">
+                  Mật khẩu đăng nhập <span id="acc-form-password-req" style="color:#ef4444; display:none;">*</span>
+                </label>
+                <button type="button" onclick="generateRandomPasswordForInput('acc-form-password', 'Ac@')" class="btn-mo-outline" style="padding:2px 8px; font-size:11px; border-radius:4px;" title="Sinh mật khẩu an toàn">
+                  <i class="fa-solid fa-dice"></i> Sinh MK Ngẫu Nhiên
+                </button>
+              </div>
               <div style="position:relative;">
-                <input type="password" id="acc-form-password" class="form-control" placeholder="Tối thiểu 8 ký tự" oninput="moClearFieldError('acc-form-password', 'err-acc-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
+                <input type="password" id="acc-form-password" class="form-control" placeholder="Để trống để hệ thống tự sinh mật khẩu an toàn..." oninput="moClearFieldError('acc-form-password', 'err-acc-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
                 <button type="button" onclick="moTogglePasswordVisibility('acc-form-password', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; padding:4px;" title="Ẩn/Hiện mật khẩu">
                   <i class="fa-regular fa-eye"></i>
                 </button>
               </div>
-              <small id="acc-form-password-hint" style="color:#64748b; font-size:11.5px; display:none; margin-top:4px;">Để trống nếu không đổi mật khẩu.</small>
+              <small id="acc-form-password-hint" style="color:#64748b; font-size:11.5px; display:block; margin-top:4px;">Để trống nếu không muốn đổi (khi sửa) hoặc để hệ thống tự sinh và gửi email (khi tạo mới).</small>
               <div id="err-acc-password" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
             </div>
 
@@ -414,6 +434,54 @@
         </div>
         <div class="mo-modal-body" style="padding: 20px;" id="body-staff-accountant-detail">
           <div style="text-align:center; padding:30px;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải dữ liệu...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. MODAL THÔNG BÁO MẬT KHẨU KHỞI TẠO / CẤP LẠI (ONE-TIME CREDENTIAL MODAL) -->
+    <div id="staff-credential-success-modal" class="mo-modal">
+      <div class="mo-modal-content" style="max-width: 480px; border-radius: 14px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);">
+        <div class="mo-modal-header" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; padding: 18px 24px;">
+          <h3 id="staff-credential-modal-title" style="margin:0; font-size: 16.5px; font-weight: 700; display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-circle-check"></i> Cấp Mật Khẩu Thành Công
+          </h3>
+          <button class="mo-modal-close" style="color: #fff;" onclick="closeModal('staff-credential-success-modal')">&times;</button>
+        </div>
+        <div class="mo-modal-body" style="padding: 22px;">
+          <p id="staff-credential-modal-desc" style="font-size: 13.5px; color: #334155; margin-bottom: 16px; line-height: 1.5;">
+            Tài khoản nhân sự đã được thiết lập thành công. Vui lòng sao chép mật khẩu bên dưới:
+          </p>
+          
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px;">
+              <span style="color:#64748b;">Họ và tên:</span>
+              <strong id="staff-credential-name" style="color:#0f172a;">---</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px;">
+              <span style="color:#64748b;">Email đăng nhập:</span>
+              <strong id="staff-credential-email" style="color:#0f172a; font-family:monospace;">---</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px dashed #cbd5e1;">
+              <span style="color:#64748b; font-size:13px; font-weight:600;">Mật khẩu:</span>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <code id="staff-credential-password" style="font-size:16px; font-weight:700; color:#2563eb; background:#eff6ff; padding:4px 10px; border-radius:6px; letter-spacing:1px;">---</code>
+                <button type="button" class="btn-mo-outline" onclick="copyStaffCredentialPassword()" style="padding:5px 10px; font-size:12px;" title="Sao chép mật khẩu">
+                  <i class="fa-regular fa-copy"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div style="background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 6px; padding: 10px 14px; margin-bottom: 20px; font-size: 12.5px; color: #166534; display:flex; gap:8px; align-items:flex-start;">
+            <i class="fa-solid fa-envelope-circle-check" style="margin-top:2px; font-size:14px;"></i>
+            <span>Thông tin tài khoản và mật khẩu đã được tự động xếp vào hàng đợi gửi email thông báo cho nhân sự.</span>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end;">
+            <button type="button" class="btn-mo-primary" style="padding:8px 20px; font-size:13px; border-radius:6px;" onclick="closeModal('staff-credential-success-modal')">
+              <i class="fa-solid fa-check"></i> Đã Hiểu & Đóng
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -42,6 +42,11 @@ class VietnamesePhoneNumber implements ValidationRule
         // Làm sạch ký tự không phải số
         $cleanPhone = preg_replace('/[^0-9]/', '', $raw);
 
+        // Hỗ trợ hotline tổng đài doanh nghiệp (1900, 1800 gồm 8-10 chữ số)
+        if (preg_match('/^(1900|1800)[0-9]{4,6}$/', $cleanPhone)) {
+            return;
+        }
+
         // Regex chuẩn Việt Nam: bắt đầu bằng 0, tổng độ dài 10 hoặc 11 chữ số
         if (! preg_match('/^0[0-9]{9,10}$/', $cleanPhone)) {
             $fail('Vui lòng cung cấp số điện thoại hợp lệ (bắt đầu bằng số 0, gồm 10 hoặc 11 chữ số).');

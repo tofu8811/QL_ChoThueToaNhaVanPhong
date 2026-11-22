@@ -404,7 +404,7 @@ class ContractService
             // Đẩy Job gửi email bàn giao tài khoản vào Laravel Queue sau khi DB transaction commit
             if ($plainPassword && $tenant) {
                 $tenant->notify(
-                    (new \App\Notifications\TenantCredentialNotification($freshContract, $plainPassword))->afterCommit()
+                    (new \App\Notifications\Tenant\TenantCredentialNotification($freshContract, $plainPassword))->afterCommit()
                 );
 
                 // Gắn thông tin tài khoản vào model để UI Livewire / API hiển thị One-Time Modal

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Notifications;
+namespace App\Notifications\Tenant;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -58,21 +58,13 @@ class TenantResetPasswordNotification extends Notification implements ShouldQueu
             ->replyTo(config('mail.reply_to.address', 'noreply@noreply.invalid'), config('mail.reply_to.name', 'No-Reply (Do Not Reply)'))
             ->subject('[Hệ thống Quản lý Tòa nhà] Yêu cầu đặt lại mật khẩu Cổng Khách Thuê')
             ->line("⛔ **THƯ TỰ ĐỘNG - VUI LÒNG KHÔNG PHẢN HỒI (NO-REPLY)**")
-            ->line("Hộp thư này được gửi tự động và không có nhân viên trực tiếp nhận phản hồi. Vui lòng không nhấn nút 'Trả lời' (Reply).")
+            ->line("Hộp thư này được gửi tự động từ hệ thống quản lý tòa nhà và không tiếp nhận thư trả lời.")
             ->line("---")
-            ->greeting("Kính gửi Quý Khách thuê {$notifiable->company_name},")
-            ->line('Hệ thống vừa nhận được yêu cầu đặt lại mật khẩu truy cập Cổng Khách Thuê cho tài khoản email: **' . $email . '**.')
-            ->line('Vui lòng bấm vào nút bên dưới để thiết lập mật khẩu mới:')
+            ->greeting("Kính gửi Quý Doanh nghiệp,")
+            ->line("Ban Quản Lý Tòa Nhà nhận được yêu cầu khôi phục mật khẩu truy cập **Cổng Thông Tin Khách Thuê (Tenant Portal)** cho địa chỉ email: **{$email}**.")
+            ->line("Nếu Quý khách thực hiện yêu cầu này, vui lòng bấm vào nút bên dưới để tiến hành thiết lập mật khẩu mới (liên kết có hiệu lực trong 60 phút):")
             ->action('Đặt Lại Mật Khẩu Ngay', $resetUrl)
-            ->line('Liên kết này có hiệu lực trong vòng **30 phút**. Sau thời gian này, liên kết sẽ tự động hết hạn.')
-            ->line('Nếu Quý khách không gửi yêu cầu này, vui lòng bỏ qua email và mật khẩu hiện tại vẫn được giữ nguyên an toàn.')
-            ->line("---")
-            ->line('📌 *Nếu cần hỗ trợ kỹ thuật, Quý khách vui lòng liên hệ trực tiếp số hotline của Ban Quản Lý Tòa Nhà.*')
-            ->salutation("Trân trọng,\nBan Quản Trị Hệ Thống Quản Lý Tòa Nhà")
-            ->withSymfonyMessage(function (\Symfony\Component\Mime\Email $message) {
-                $message->getHeaders()->addTextHeader('Auto-Submitted', 'auto-generated');
-                $message->getHeaders()->addTextHeader('X-Auto-Response-Suppress', 'All');
-                $message->getHeaders()->addTextHeader('Precedence', 'bulk');
-            });
+            ->line("⚠️ **Lưu ý bảo mật:** Nếu Quý khách KHÔNG gửi yêu cầu này, vui lòng bỏ qua email hoặc thông báo khẩn cấp cho Ban Quản Lý Tòa Nhà để kiểm tra bảo mật tài khoản.")
+            ->salutation("Trân trọng,\nBan Quản Lý Tòa Nhà");
     }
 }

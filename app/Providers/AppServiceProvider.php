@@ -24,6 +24,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Nạp cấu hình email gửi thông báo động từ file tùy chỉnh nếu có
+        try {
+            app(\App\Services\MailSettingService::class)->applyConfig();
+        } catch (\Throwable $e) {
+            // Fallback an toàn giữ nguyên cấu hình .env nếu có lỗi
+        }
+
         // Share nationwide regional hubs data with portal views
         View::composer([
             'portal.components.header',

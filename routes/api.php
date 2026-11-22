@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\BuildingAssignmentApiController;
 use App\Http\Controllers\Api\V1\ContractApiController;
 use App\Http\Controllers\Api\V1\CrmLeadApiController;
 use App\Http\Controllers\Api\V1\LeadActivityApiController;
+use App\Http\Controllers\Api\V1\MailSettingApiController;
 use App\Http\Controllers\Api\V1\PortalLeadApiController;
 use App\Http\Controllers\Api\V1\PropertyManagerApiController;
 use App\Http\Controllers\Api\V1\ProvinceApiController;
@@ -302,6 +303,17 @@ Route::prefix('v1')->group(function () {
         Route::post('accountants', [BuildingAssignmentApiController::class, 'assignAccountant'])->name('v1.admin.buildings.assignments.accountants.store');
         // 98. Gỡ Kế toán khỏi Tòa nhà
         Route::delete('accountants/{accountantId}', [BuildingAssignmentApiController::class, 'removeAccountant'])->name('v1.admin.buildings.assignments.accountants.destroy');
+    });
+
+    // =========================================================================
+    // HỆ THỐNG: CẤU HÌNH EMAIL GỬI THÔNG BÁO (SYSTEM MAIL SETTINGS)
+    // =========================================================================
+    Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin/mail-settings')->group(function () {
+        Route::get('', [MailSettingApiController::class, 'show'])->name('v1.admin.mail-settings.show');
+        Route::put('', [MailSettingApiController::class, 'update'])->name('v1.admin.mail-settings.update');
+        Route::post('toggle', [MailSettingApiController::class, 'toggle'])->name('v1.admin.mail-settings.toggle');
+        Route::post('test', [MailSettingApiController::class, 'test'])->name('v1.admin.mail-settings.test');
+        Route::post('reset', [MailSettingApiController::class, 'reset'])->name('v1.admin.mail-settings.reset');
     });
 
 });

@@ -106,13 +106,19 @@
           </a>
         </div>
 
-        <!-- Section 3: HỆ THỐNG & PHÂN QUYỀN (Super Admin) -->
-        <div class="filament-nav-section" id="nav-group-system" style="padding-top:8px;">
+        <!-- Section 3: HỆ THỐNG & PHÂN QUYỀN (Chỉ dành riêng cho Admin hệ thống) -->
+        <div class="filament-nav-section" id="nav-group-system" style="padding-top:8px;display:none;">
           <div class="filament-section-heading">HỆ THỐNG & CÀI ĐẶT</div>
           <a class="filament-link" id="nav-item-staff" data-breadcrumb="Quản trị nhân sự & phân quyền" onclick="switchFilamentTab('tab-admin-staff', this)">
             <div class="filament-link-content">
               <i class="fa-solid fa-sliders"></i>
               <span>Nhân sự & Phân quyền</span>
+            </div>
+          </a>
+          <a class="filament-link" id="nav-item-mail-settings" data-breadcrumb="Thiết lập email" style="display:none;" onclick="switchFilamentTab('tab-admin-mail-settings', this)">
+            <div class="filament-link-content">
+              <i class="fa-solid fa-envelope-open-text"></i>
+              <span>Thiết lập Email</span>
             </div>
           </a>
         </div>
@@ -235,6 +241,7 @@
           @include('portal.admin.tabs.sales')
           @include('portal.admin.tabs.staff-rbac')
           @include('portal.admin.tabs.billing')
+          @include('portal.admin.tabs.mail-settings')
         </div>
       </div>
     </div>

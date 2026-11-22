@@ -70,16 +70,17 @@ class SaleUserService
             // 1. Tự động sinh mã nhân viên nếu chưa có (VD: NV-SALE-001)
             $code = $data['employee_code'] ?? null;
             if (empty($code)) {
-                $latest = Sale::where('employee_code', 'like', 'NV-SALE-%')
-                    ->orderBy('employee_code', 'desc')
-                    ->lockForUpdate()
-                    ->value('employee_code');
-
-                $seq = 1;
-                if ($latest && preg_match('/-(\d+)$/', $latest, $m)) {
-                    $seq = ((int) $m[1]) + 1;
+                $codes = Sale::whereNotNull('employee_code')->pluck('employee_code');
+                $maxSeq = 0;
+                foreach ($codes as $c) {
+                    if (preg_match('/(\d+)$/', (string) $c, $m)) {
+                        $n = (int) $m[1];
+                        if ($n > $maxSeq) {
+                            $maxSeq = $n;
+                        }
+                    }
                 }
-                $code = sprintf('NV-SALE-%03d', $seq);
+                $code = sprintf('NV-SALE-%03d', $maxSeq + 1);
             }
 
             // 2. Khởi tạo bản ghi Sales

@@ -59,7 +59,7 @@
             <option value="{{ $bld->id }}" selected>{{ $bld->name }} ({{ $bld->district ?? 'TP.HCM' }})</option>
           @endforeach
         </select>
-        <div id="err-ticket-building-id" class="field-error-msg" style="display:none;"></div>
+        <div id="err-ticket-building-id" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
       </div>
 
       <!-- Tiêu đề sự cố / yêu cầu -->
@@ -68,7 +68,7 @@
           <i class="fa-solid fa-pen" style="color:#d97706;"></i> TIÊU ĐỀ SỰ CỐ / YÊU CẦU <span style="color:#ef4444;">*</span>
         </label>
         <input type="text" id="ticket-title" class="filament-input" placeholder="VD: Hỏng bóng đèn led hành lang, Điều hòa phát tiếng kêu..." oninput="clearTicketSingleFieldError('ticket-title')" style="width:100%;">
-        <div id="err-ticket-title" class="field-error-msg" style="display:none;"></div>
+        <div id="err-ticket-title" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
       </div>
 
       <!-- Danh mục & Mức độ ưu tiên -->
@@ -103,7 +103,7 @@
           <i class="fa-solid fa-align-left" style="color:#0284c7;"></i> MÔ TẢ HIỆN TRẠNG CHI TIẾT <span style="color:#ef4444;">*</span>
         </label>
         <textarea id="ticket-desc" class="filament-input" rows="3" placeholder="Mô tả cụ thể vị trí phòng, tầng, thời điểm bắt đầu xảy ra sự cố..." oninput="clearTicketSingleFieldError('ticket-desc')" style="width:100%;"></textarea>
-        <div id="err-ticket-desc" class="field-error-msg" style="display:none;"></div>
+        <div id="err-ticket-desc" class="field-error-slot" style="display:none; color:#ef4444; font-size:11.5px; margin-top:4px; gap:4px; align-items:center;"></div>
       </div>
 
       <!-- Ảnh hiện trạng ban đầu -->

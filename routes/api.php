@@ -219,6 +219,10 @@ Route::prefix('v1')->group(function () {
     // =========================================================================
     // MODULE 5: QUẢN TRỊ NHÂN SỰ & QUẢN TRỊ VIÊN (ADMINS)
     // =========================================================================
+    Route::get('admin/users/next-employee-code', [AdminUserApiController::class, 'nextEmployeeCode'])
+        ->middleware('auth:sanctum')
+        ->name('v1.admin.users.next-code');
+
     Route::middleware(['auth:sanctum', 'super_admin'])->prefix('admin/users/admins')->group(function () {
         // 72. Danh sách Quản trị viên
         Route::get('', [AdminUserApiController::class, 'index'])->name('v1.admin.users.admins.index');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V1\Tenant;
 
+use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreTenantRequest extends FormRequest
@@ -24,7 +25,7 @@ class StoreTenantRequest extends FormRequest
             'headquarter_address' => ['required', 'string', 'max:255'],
             'login_email' => ['required', 'email', 'max:150', 'unique:tenants,login_email'],
             'billing_email' => ['nullable', 'email', 'max:150'],
-            'contact_phone' => ['required', 'string', 'max:20'],
+            'contact_phone' => ['required', 'string', new VietnamesePhoneNumber],
             'password' => ['nullable', 'string', 'min:8'],
             'business_license_private_path' => ['nullable', 'string', 'max:255'],
             'converted_from_lead_id' => ['nullable', 'uuid', 'exists:leads,id'],

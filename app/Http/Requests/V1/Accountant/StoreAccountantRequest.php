@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V1\Accountant;
 
+use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -22,7 +23,7 @@ class StoreAccountantRequest extends FormRequest
             'employee_code'          => ['nullable', 'string', 'max:30', Rule::unique('accountants', 'employee_code')->whereNull('deleted_at')],
             'full_name'              => ['required', 'string', 'max:120'],
             'email'                  => ['required', 'string', 'email', 'max:150', Rule::unique('accountants', 'email')->whereNull('deleted_at')],
-            'phone'                  => ['nullable', 'string', 'max:20', Rule::unique('accountants', 'phone')->whereNull('deleted_at')],
+            'phone'                  => ['nullable', 'string', new VietnamesePhoneNumber, Rule::unique('accountants', 'phone')->whereNull('deleted_at')],
             'password'               => ['required', 'string', Password::min(8)],
             'can_approve_adjustment' => ['nullable', 'boolean'],
             'status'                 => ['nullable', 'string', 'in:ACTIVE,LOCKED,PENDING'],

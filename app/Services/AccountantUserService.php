@@ -77,16 +77,17 @@ class AccountantUserService
             // 1. Tự động sinh mã nhân viên nếu chưa có (VD: NV-KT-001)
             $code = $data['employee_code'] ?? null;
             if (empty($code)) {
-                $latest = Accountant::where('employee_code', 'like', 'NV-KT-%')
-                    ->orderBy('employee_code', 'desc')
-                    ->lockForUpdate()
-                    ->value('employee_code');
-
-                $seq = 1;
-                if ($latest && preg_match('/-(\d+)$/', $latest, $m)) {
-                    $seq = ((int) $m[1]) + 1;
+                $codes = Accountant::whereNotNull('employee_code')->pluck('employee_code');
+                $maxSeq = 0;
+                foreach ($codes as $c) {
+                    if (preg_match('/(\d+)$/', (string) $c, $m)) {
+                        $n = (int) $m[1];
+                        if ($n > $maxSeq) {
+                            $maxSeq = $n;
+                        }
+                    }
                 }
-                $code = sprintf('NV-KT-%03d', $seq);
+                $code = sprintf('NV-KT-%03d', $maxSeq + 1);
             }
 
             // 2. Khởi tạo bản ghi Accountant

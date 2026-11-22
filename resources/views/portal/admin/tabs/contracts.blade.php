@@ -46,21 +46,23 @@
 
   <!-- Bảng dữ liệu Hợp đồng -->
   <div class="filament-card">
-    <table class="mo-table">
-      <thead>
-        <tr>
-          <th>Mã Hợp Đồng</th>
-          <th>Doanh Nghiệp Thuê</th>
-          <th>Tòa Nhà & Sàn Thuê</th>
-          <th>Thời Hạn Thuê</th>
-          <th>Giá Thuê / Cọc</th>
-          <th>Trạng Thái</th>
-          <th style="text-align:right;">Thao Tác</th>
-        </tr>
-      </thead>
-      <tbody id="admin-contracts-tbody">
-        <!-- Rendered via JS contracts.blade.php -->
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="mo-table">
+        <thead>
+          <tr>
+            <th>Mã Hợp Đồng</th>
+            <th>Doanh Nghiệp Thuê</th>
+            <th>Tòa Nhà & Sàn Thuê</th>
+            <th>Thời Hạn Thuê</th>
+            <th>Giá Thuê / Cọc</th>
+            <th>Trạng Thái</th>
+            <th style="text-align:right;">Thao Tác</th>
+          </tr>
+        </thead>
+        <tbody id="admin-contracts-tbody">
+          <!-- Rendered via JS contracts.blade.php -->
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>

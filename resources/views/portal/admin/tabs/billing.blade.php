@@ -89,6 +89,7 @@
       </div>
     </div>
 
+    <div class="table-responsive">
     <table class="mo-table">
       <thead>
         <tr>
@@ -164,6 +165,7 @@
         @endforelse
       </tbody>
     </table>
+    </div>
   </div>
 </div>
 

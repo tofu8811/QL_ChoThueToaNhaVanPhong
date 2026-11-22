@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V1\Lead;
 
+use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ConvertLeadToTenantRequest extends FormRequest
@@ -29,7 +30,7 @@ class ConvertLeadToTenantRequest extends FormRequest
             'headquarter_address' => ['nullable', 'string', 'max:255'],
             'business_license_private_path' => ['nullable', 'string', 'max:255'],
             'billing_email' => ['nullable', 'email', 'max:150'],
-            'contact_phone' => ['nullable', 'string', 'max:20'],
+            'contact_phone' => ['nullable', 'string', new VietnamesePhoneNumber],
             'password' => ['nullable', 'string', 'min:8'],
         ];
     }

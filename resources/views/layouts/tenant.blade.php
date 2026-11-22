@@ -77,6 +77,7 @@
 
   <!-- Core JavaScript & API Modules -->
   @include('portal.scripts.main')
+  @include('portal.scripts.validation')
   @include('portal.scripts.auth')
   @include('portal.scripts.tickets')
   @include('portal.scripts.role-operations')

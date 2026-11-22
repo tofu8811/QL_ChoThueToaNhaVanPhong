@@ -1,5 +1,8 @@
 <div id="admin-wrapper" style="display: block;">
     <div class="filament-shell">
+      <!-- Mobile Sidebar Backdrop Overlay -->
+      <div id="bms-sidebar-backdrop" class="bms-sidebar-backdrop" onclick="closeBmsMobileSidebar()"></div>
+
       <!-- VIETOFFICE BMS - PROPTECH CORE SIDEBAR (KẾT HỢP HÌNH 1 & HÌNH 2) -->
       <aside class="filament-sidebar" id="bms-main-sidebar">
         <!-- Brand Header -->
@@ -135,10 +138,15 @@
       <div class="filament-main">
         <!-- Topbar (Breadcrumb động bên trái + Tìm kiếm + Thông báo + Hồ sơ User bên phải) -->
         <header class="filament-topbar">
-          <div class="bms-topbar-left">
-            <span style="cursor:pointer;" title="Về trang Tổng quan (Dashboard)" onclick="handleDashboardLogoClick(event)">Trang chủ</span>
-            <i class="fa-solid fa-chevron-right" style="font-size:9px;color:#cbd5e1;"></i>
-            <span class="bms-bc-current" id="topbar-current-breadcrumb">Tổng quan hệ thống</span>
+          <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+            <button type="button" class="bms-mobile-menu-btn" onclick="toggleBmsMobileSidebar()" title="Mở danh mục điều hướng">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="bms-topbar-left" style="min-width:0;">
+              <span class="bms-topbar-home-link" style="cursor:pointer;" title="Về trang Tổng quan (Dashboard)" onclick="handleDashboardLogoClick(event)">Trang chủ</span>
+              <i class="fa-solid fa-chevron-right bms-topbar-sep" style="font-size:9px;color:#cbd5e1;"></i>
+              <span class="bms-bc-current" id="topbar-current-breadcrumb">Tổng quan hệ thống</span>
+            </div>
           </div>
 
           <div class="filament-topbar-actions">

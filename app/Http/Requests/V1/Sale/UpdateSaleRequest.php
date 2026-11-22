@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V1\Sale;
 
+use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -34,7 +35,7 @@ class UpdateSaleRequest extends FormRequest
                 'sometimes',
                 'nullable',
                 'string',
-                'max:20',
+                new VietnamesePhoneNumber,
                 Rule::unique('sales', 'phone')->ignore($saleId)->whereNull('deleted_at'),
             ],
             'password'             => ['sometimes', 'nullable', 'string', Password::min(8)],

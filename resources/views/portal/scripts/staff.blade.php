@@ -446,11 +446,24 @@
           return;
         }
 
+        const authUserStr = localStorage.getItem('auth_user');
+        let currentAdminId = null;
+        let currentAdminEmail = null;
+        if (authUserStr) {
+          try {
+            const u = JSON.parse(authUserStr);
+            currentAdminId = u?.id;
+            currentAdminEmail = u?.email;
+          } catch(e) {}
+        }
+
         tbody.innerHTML = admins.map(a => {
           const isSuper = !!a.is_super_admin;
           const statusClass = (a.status === 'ACTIVE') ? 'success' : ((a.status === 'LOCKED') ? 'danger' : 'warning');
           const statusText = (a.status === 'ACTIVE') ? 'Hoạt động' : ((a.status === 'LOCKED') ? 'Đã khóa' : 'Chờ kích hoạt');
           const createdDate = a.created_at ? new Date(a.created_at).toLocaleDateString('vi-VN') : '---';
+          const isSelf = (currentAdminId && String(currentAdminId) === String(a.id)) ||
+                         (currentAdminEmail && String(currentAdminEmail).toLowerCase() === String(a.email).toLowerCase());
 
           return `
             <tr>
@@ -461,6 +474,7 @@
                   </div>
                   <div>
                     <strong style="color:#0f172a; font-size:13.5px;">${escapeHtml(a.full_name || a.name || '---')}</strong>
+                    ${isSelf ? '<span style="background:#dbeafe; color:#1d4ed8; font-size:10.5px; font-weight:700; padding:1px 6px; border-radius:4px; margin-left:6px;"><i class="fa-solid fa-user-check"></i> Bạn</span>' : ''}
                   </div>
                 </div>
               </td>
@@ -480,9 +494,10 @@
                 <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditAdminModal('${a.id}')" title="Chỉnh sửa">
                   <i class="fa-regular fa-pen-to-square"></i>
                 </button>
-                <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffAdmin('${a.id}', '${escapeHtml(a.full_name || a.name)}')" title="Xóa mềm">
-                  <i class="fa-regular fa-trash-can"></i>
-                </button>
+                ${isSelf 
+                  ? `<button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#94a3b8; border-color:#e2e8f0; cursor:not-allowed; opacity:0.5;" disabled title="Không thể tự xóa tài khoản của chính mình"><i class="fa-regular fa-trash-can"></i></button>`
+                  : `<button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffAdmin('${a.id}', '${escapeHtml(a.full_name || a.name)}')" title="Xóa mềm"><i class="fa-regular fa-trash-can"></i></button>`
+                }
               </td>
             </tr>
           `;
@@ -527,21 +542,75 @@
       }
     }
 
+    // Helper toàn cục: Lấy mã nhân viên tự động từ CSDL
+    async function fetchNextEmployeeCode(role, inputId) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      input.value = 'Đang tải mã...';
+      try {
+        const token = getSanctumToken();
+        const res = await fetch(`/api/v1/admin/users/next-employee-code?role=${role}`, {
+          headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token }
+        });
+        const json = await res.json();
+        if (res.ok && json.data && json.data.next_code) {
+          input.value = json.data.next_code;
+        } else {
+          input.value = '';
+        }
+      } catch (e) {
+        console.error('Fetch next employee code error:', e);
+        input.value = '';
+      }
+    }
+
     // Mở modal tạo mới Admin
     function openCreateAdminModal() {
       document.getElementById('form-staff-admin').reset();
       document.getElementById('admin-form-id').value = '';
       document.getElementById('admin-form-mode').value = 'create';
       document.getElementById('staff-admin-modal-title').innerHTML = '<i class="fa-solid fa-user-plus"></i> Thêm Quản Trị Viên Mới';
-      document.getElementById('admin-form-password').required = true;
       document.getElementById('admin-form-password-req').style.display = 'inline';
       document.getElementById('admin-form-password-hint').style.display = 'none';
+
+      // Reset quyền Super Admin & Trạng thái tài khoản
+      const isSuperCb = document.getElementById('admin-form-issuper');
+      const isSuperLabel = document.getElementById('admin-form-issuper-label');
+      const isSuperHint = document.getElementById('admin-form-issuper-hint');
+      const statusSelect = document.getElementById('admin-form-status');
+      const statusHint = document.getElementById('admin-form-status-hint');
+
+      if (isSuperCb) {
+        isSuperCb.disabled = false;
+        isSuperCb.checked = false;
+      }
+      if (isSuperLabel) isSuperLabel.style.cursor = 'pointer';
+      if (isSuperHint) isSuperHint.style.display = 'none';
+
+      if (statusSelect) {
+        statusSelect.disabled = false;
+        statusSelect.value = 'ACTIVE';
+        statusSelect.style.background = '#fff';
+        statusSelect.style.cursor = 'default';
+      }
+      if (statusHint) statusHint.style.display = 'none';
+
+      moClearFieldError('admin-form-fullname', 'err-admin-fullname');
+      moClearFieldError('admin-form-email', 'err-admin-email');
+      moClearFieldError('admin-form-phone', 'err-admin-phone');
+      moClearFieldError('admin-form-password', 'err-admin-password');
+
       openModal('staff-admin-modal');
     }
 
     // Mở modal sửa Admin (API 74 + 75)
     async function openEditAdminModal(id) {
       const token = getSanctumToken();
+      moClearFieldError('admin-form-fullname', 'err-admin-fullname');
+      moClearFieldError('admin-form-email', 'err-admin-email');
+      moClearFieldError('admin-form-phone', 'err-admin-phone');
+      moClearFieldError('admin-form-password', 'err-admin-password');
+
       try {
         const res = await fetch(`/api/v1/admin/users/admins/${id}`, {
           headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token }
@@ -557,12 +626,62 @@
         document.getElementById('admin-form-fullname').value = a.full_name || a.name || '';
         document.getElementById('admin-form-email').value = a.email || '';
         document.getElementById('admin-form-phone').value = a.phone || '';
-        document.getElementById('admin-form-issuper').checked = !!a.is_super_admin;
-        document.getElementById('admin-form-status').value = a.status || 'ACTIVE';
+
+        // Kiểm tra xem có đang chỉnh sửa chính tài khoản đang đăng nhập hay không
+        const authUserStr = localStorage.getItem('auth_user');
+        let currentAdminId = null;
+        let currentAdminEmail = null;
+        if (authUserStr) {
+          try {
+            const u = JSON.parse(authUserStr);
+            currentAdminId = u?.id;
+            currentAdminEmail = u?.email;
+          } catch(e) {}
+        }
+        const isSelf = (currentAdminId && String(currentAdminId) === String(a.id)) ||
+                       (currentAdminEmail && String(currentAdminEmail).toLowerCase() === String(a.email).toLowerCase());
+
+        const isSuperCb = document.getElementById('admin-form-issuper');
+        const isSuperLabel = document.getElementById('admin-form-issuper-label');
+        const isSuperHint = document.getElementById('admin-form-issuper-hint');
+        const statusSelect = document.getElementById('admin-form-status');
+        const statusHint = document.getElementById('admin-form-status-hint');
+
+        isSuperCb.checked = !!a.is_super_admin;
+        statusSelect.value = a.status || 'ACTIVE';
+
+        if (isSelf) {
+          // Bảo vệ tài khoản Super Admin đang đăng nhập: Không cho tự hạ quyền
+          if (a.is_super_admin) {
+            isSuperCb.disabled = true;
+            isSuperCb.checked = true;
+            if (isSuperLabel) isSuperLabel.style.cursor = 'not-allowed';
+            if (isSuperHint) isSuperHint.style.display = 'flex';
+          } else {
+            isSuperCb.disabled = false;
+            if (isSuperLabel) isSuperLabel.style.cursor = 'pointer';
+            if (isSuperHint) isSuperHint.style.display = 'none';
+          }
+
+          // Bảo vệ trạng thái hoạt động: Không cho tự khóa tài khoản của chính mình
+          statusSelect.value = 'ACTIVE';
+          statusSelect.disabled = true;
+          statusSelect.style.background = '#f1f5f9';
+          statusSelect.style.cursor = 'not-allowed';
+          if (statusHint) statusHint.style.display = 'flex';
+        } else {
+          isSuperCb.disabled = false;
+          if (isSuperLabel) isSuperLabel.style.cursor = 'pointer';
+          if (isSuperHint) isSuperHint.style.display = 'none';
+
+          statusSelect.disabled = false;
+          statusSelect.style.background = '#fff';
+          statusSelect.style.cursor = 'default';
+          if (statusHint) statusHint.style.display = 'none';
+        }
 
         // Password optional khi sửa
         document.getElementById('admin-form-password').value = '';
-        document.getElementById('admin-form-password').required = false;
         document.getElementById('admin-form-password-req').style.display = 'none';
         document.getElementById('admin-form-password-hint').style.display = 'block';
 
@@ -580,15 +699,87 @@
       const id = document.getElementById('admin-form-id').value;
       const token = getSanctumToken();
 
+      moClearFieldError('admin-form-fullname', 'err-admin-fullname');
+      moClearFieldError('admin-form-email', 'err-admin-email');
+      moClearFieldError('admin-form-phone', 'err-admin-phone');
+      moClearFieldError('admin-form-password', 'err-admin-password');
+
+      const fullName = document.getElementById('admin-form-fullname').value.trim();
+      const email = document.getElementById('admin-form-email').value.trim();
+      const phone = document.getElementById('admin-form-phone').value.trim();
+      const pwd = document.getElementById('admin-form-password').value;
+
+      // Validation 0ms
+      const vName = moValidateFullName(fullName, 2);
+      if (!vName.valid) {
+        moSetFieldError('admin-form-fullname', 'err-admin-fullname', vName.message);
+        document.getElementById('admin-form-fullname').focus();
+        return;
+      }
+
+      const vEmail = moValidateEmail(email);
+      if (!vEmail.valid) {
+        moSetFieldError('admin-form-email', 'err-admin-email', vEmail.message);
+        document.getElementById('admin-form-email').focus();
+        return;
+      }
+
+      if (phone) {
+        const vPhone = moValidatePhone(phone);
+        if (!vPhone.valid) {
+          moSetFieldError('admin-form-phone', 'err-admin-phone', vPhone.message);
+          document.getElementById('admin-form-phone').focus();
+          return;
+        }
+      }
+
+      if (mode === 'create') {
+        if (!pwd || pwd.trim().length === 0) {
+          moSetFieldError('admin-form-password', 'err-admin-password', 'Mật khẩu là bắt buộc khi tạo tài khoản quản trị.');
+          document.getElementById('admin-form-password').focus();
+          return;
+        }
+        if (pwd.length < 8) {
+          moSetFieldError('admin-form-password', 'err-admin-password', 'Mật khẩu phải có tối thiểu 8 ký tự.');
+          document.getElementById('admin-form-password').focus();
+          return;
+        }
+      } else if (pwd && pwd.length < 8) {
+        moSetFieldError('admin-form-password', 'err-admin-password', 'Mật khẩu mới phải có tối thiểu 8 ký tự.');
+        document.getElementById('admin-form-password').focus();
+        return;
+      }
+
+      // Xác định nếu đang sửa tài khoản của chính mình
+      const authUserStr = localStorage.getItem('auth_user');
+      let currentAdminId = null;
+      let currentAdminEmail = null;
+      if (authUserStr) {
+        try {
+          const u = JSON.parse(authUserStr);
+          currentAdminId = u?.id;
+          currentAdminEmail = u?.email;
+        } catch(e) {}
+      }
+      const isSelf = (currentAdminId && String(currentAdminId) === String(id)) ||
+                     (currentAdminEmail && String(currentAdminEmail).toLowerCase() === String(email).toLowerCase());
+
+      let isSuperAdminVal = document.getElementById('admin-form-issuper').checked;
+      let statusVal = document.getElementById('admin-form-status').value;
+
+      if (mode === 'edit' && isSelf) {
+        isSuperAdminVal = true; // Luôn bảo lưu quyền Super Admin
+        statusVal = 'ACTIVE';    // Luôn bảo lưu trạng thái ACTIVE
+      }
+
       const payload = {
-        full_name: document.getElementById('admin-form-fullname').value.trim(),
-        email: document.getElementById('admin-form-email').value.trim(),
-        phone: document.getElementById('admin-form-phone').value.trim() || null,
-        is_super_admin: document.getElementById('admin-form-issuper').checked,
-        status: document.getElementById('admin-form-status').value
+        full_name: fullName,
+        email: email,
+        phone: phone || null,
+        is_super_admin: isSuperAdminVal,
+        status: statusVal
       };
 
-      const pwd = document.getElementById('admin-form-password').value;
       if (pwd) payload.password = pwd;
 
       const url = (mode === 'create') 
@@ -617,7 +808,14 @@
           closeModal('staff-admin-modal');
           loadStaffAdmins(1);
         } else {
-          alert('Lỗi: ' + (json.message || JSON.stringify(json.errors || 'Thất bại')));
+          if (json.errors) {
+            if (json.errors.full_name) moSetFieldError('admin-form-fullname', 'err-admin-fullname', json.errors.full_name[0]);
+            if (json.errors.email) moSetFieldError('admin-form-email', 'err-admin-email', json.errors.email[0]);
+            if (json.errors.phone) moSetFieldError('admin-form-phone', 'err-admin-phone', json.errors.phone[0]);
+            if (json.errors.password) moSetFieldError('admin-form-password', 'err-admin-password', json.errors.password[0]);
+          } else {
+            alert('Lỗi: ' + (json.message || 'Thao tác không thành công.'));
+          }
         }
       } catch (err) {
         console.error('Submit admin error:', err);
@@ -786,18 +984,26 @@
       document.getElementById('sale-form-id').value = '';
       document.getElementById('sale-form-mode').value = 'create';
       document.getElementById('staff-sale-modal-title').innerHTML = '<i class="fa-solid fa-user-plus"></i> Thêm Nhân Viên Sales Mới';
-      document.getElementById('sale-form-password').required = true;
       document.getElementById('sale-form-password-req').style.display = 'inline';
       document.getElementById('sale-form-password-hint').style.display = 'none';
 
-      await fetchStaffBuildingsList();
-      renderBuildingCheckboxes('sale-form-buildings', []);
+      moClearFieldError('sale-form-fullname', 'err-sale-fullname');
+      moClearFieldError('sale-form-email', 'err-sale-email');
+      moClearFieldError('sale-form-phone', 'err-sale-phone');
+      moClearFieldError('sale-form-password', 'err-sale-password');
+
+      await fetchNextEmployeeCode('sales', 'sale-form-code');
       openModal('staff-sale-modal');
     }
 
     // Mở modal sửa Sales (API 79 + 80)
     async function openEditSaleModal(id) {
       const token = getSanctumToken();
+      moClearFieldError('sale-form-fullname', 'err-sale-fullname');
+      moClearFieldError('sale-form-email', 'err-sale-email');
+      moClearFieldError('sale-form-phone', 'err-sale-phone');
+      moClearFieldError('sale-form-password', 'err-sale-password');
+
       try {
         const res = await fetch(`/api/v1/admin/users/sales/${id}`, {
           headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token }
@@ -819,13 +1025,8 @@
         document.getElementById('sale-form-status').value = s.status || 'ACTIVE';
 
         document.getElementById('sale-form-password').value = '';
-        document.getElementById('sale-form-password').required = false;
         document.getElementById('sale-form-password-req').style.display = 'none';
         document.getElementById('sale-form-password-hint').style.display = 'block';
-
-        await fetchStaffBuildingsList();
-        const assignedIds = (s.sale_buildings || s.buildings || []).map(b => b.id || b.building_id);
-        renderBuildingCheckboxes('sale-form-buildings', assignedIds);
 
         document.getElementById('staff-sale-modal-title').innerHTML = '<i class="fa-solid fa-user-pen"></i> Cập Nhật Nhân Viên Sales';
         openModal('staff-sale-modal');
@@ -841,18 +1042,68 @@
       const id = document.getElementById('sale-form-id').value;
       const token = getSanctumToken();
 
+      moClearFieldError('sale-form-fullname', 'err-sale-fullname');
+      moClearFieldError('sale-form-email', 'err-sale-email');
+      moClearFieldError('sale-form-phone', 'err-sale-phone');
+      moClearFieldError('sale-form-password', 'err-sale-password');
+
+      const fullName = document.getElementById('sale-form-fullname').value.trim();
+      const email = document.getElementById('sale-form-email').value.trim();
+      const phone = document.getElementById('sale-form-phone').value.trim();
+      const pwd = document.getElementById('sale-form-password').value;
+
+      // Validation 0ms
+      const vName = moValidateFullName(fullName, 2);
+      if (!vName.valid) {
+        moSetFieldError('sale-form-fullname', 'err-sale-fullname', vName.message);
+        document.getElementById('sale-form-fullname').focus();
+        return;
+      }
+
+      const vEmail = moValidateEmail(email);
+      if (!vEmail.valid) {
+        moSetFieldError('sale-form-email', 'err-sale-email', vEmail.message);
+        document.getElementById('sale-form-email').focus();
+        return;
+      }
+
+      if (phone) {
+        const vPhone = moValidatePhone(phone);
+        if (!vPhone.valid) {
+          moSetFieldError('sale-form-phone', 'err-sale-phone', vPhone.message);
+          document.getElementById('sale-form-phone').focus();
+          return;
+        }
+      }
+
+      if (mode === 'create') {
+        if (!pwd || pwd.trim().length === 0) {
+          moSetFieldError('sale-form-password', 'err-sale-password', 'Mật khẩu là bắt buộc khi tạo nhân viên Sales mới.');
+          document.getElementById('sale-form-password').focus();
+          return;
+        }
+        if (pwd.length < 8) {
+          moSetFieldError('sale-form-password', 'err-sale-password', 'Mật khẩu phải có tối thiểu 8 ký tự.');
+          document.getElementById('sale-form-password').focus();
+          return;
+        }
+      } else if (pwd && pwd.length < 8) {
+        moSetFieldError('sale-form-password', 'err-sale-password', 'Mật khẩu mới phải có tối thiểu 8 ký tự.');
+        document.getElementById('sale-form-password').focus();
+        return;
+      }
+
       const payload = {
         employee_code: document.getElementById('sale-form-code').value.trim() || null,
-        full_name: document.getElementById('sale-form-fullname').value.trim(),
-        email: document.getElementById('sale-form-email').value.trim(),
-        phone: document.getElementById('sale-form-phone').value.trim() || null,
+        full_name: fullName,
+        email: email,
+        phone: phone || null,
         max_concurrent_leads: parseInt(document.getElementById('sale-form-max-leads').value) || 10,
         commission_rate: parseFloat(document.getElementById('sale-form-commission').value) || null,
         status: document.getElementById('sale-form-status').value,
-        building_ids: getSelectedBuildingIds('sale-form-buildings')
+        building_ids: []
       };
 
-      const pwd = document.getElementById('sale-form-password').value;
       if (pwd) payload.password = pwd;
 
       const url = (mode === 'create') ? '/api/v1/admin/users/sales' : `/api/v1/admin/users/sales/${id}`;
@@ -879,10 +1130,18 @@
           closeModal('staff-sale-modal');
           loadStaffSales(1);
         } else {
-          alert('Lỗi: ' + (json.message || JSON.stringify(json.errors || 'Thất bại')));
+          if (json.errors) {
+            if (json.errors.full_name) moSetFieldError('sale-form-fullname', 'err-sale-fullname', json.errors.full_name[0]);
+            if (json.errors.email) moSetFieldError('sale-form-email', 'err-sale-email', json.errors.email[0]);
+            if (json.errors.phone) moSetFieldError('sale-form-phone', 'err-sale-phone', json.errors.phone[0]);
+            if (json.errors.password) moSetFieldError('sale-form-password', 'err-sale-password', json.errors.password[0]);
+          } else {
+            alert('Lỗi: ' + (json.message || 'Thao tác không thành công.'));
+          }
         }
       } catch (err) {
         console.error('Submit sale error:', err);
+        alert('Lỗi kết nối máy chủ khi lưu Sales.');
       } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
@@ -1057,10 +1316,16 @@
       document.getElementById('pm-form-id').value = '';
       document.getElementById('pm-form-mode').value = 'create';
       document.getElementById('staff-pm-modal-title').innerHTML = '<i class="fa-solid fa-user-plus"></i> Thêm Nhân Sự Ban Quản Lý (PM)';
-      document.getElementById('pm-form-password').required = true;
       document.getElementById('pm-form-password-req').style.display = 'inline';
       document.getElementById('pm-form-password-hint').style.display = 'none';
 
+      moClearFieldError('pm-form-fullname', 'err-pm-fullname');
+      moClearFieldError('pm-form-email', 'err-pm-email');
+      moClearFieldError('pm-form-phone', 'err-pm-phone');
+      moClearFieldError('pm-form-hotline', 'err-pm-hotline');
+      moClearFieldError('pm-form-password', 'err-pm-password');
+
+      await fetchNextEmployeeCode('pm', 'pm-form-code');
       await fetchStaffBuildingsList();
       renderBuildingCheckboxes('pm-form-buildings', []);
       openModal('staff-pm-modal');
@@ -1069,6 +1334,12 @@
     // Mở modal sửa PM (API 84 + 85)
     async function openEditPmModal(id) {
       const token = getSanctumToken();
+      moClearFieldError('pm-form-fullname', 'err-pm-fullname');
+      moClearFieldError('pm-form-email', 'err-pm-email');
+      moClearFieldError('pm-form-phone', 'err-pm-phone');
+      moClearFieldError('pm-form-hotline', 'err-pm-hotline');
+      moClearFieldError('pm-form-password', 'err-pm-password');
+
       try {
         const res = await fetch(`/api/v1/admin/users/property-managers/${id}`, {
           headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token }
@@ -1090,7 +1361,6 @@
         document.getElementById('pm-form-status').value = p.status || 'ACTIVE';
 
         document.getElementById('pm-form-password').value = '';
-        document.getElementById('pm-form-password').required = false;
         document.getElementById('pm-form-password-req').style.display = 'none';
         document.getElementById('pm-form-password-hint').style.display = 'block';
 
@@ -1112,18 +1382,79 @@
       const id = document.getElementById('pm-form-id').value;
       const token = getSanctumToken();
 
+      moClearFieldError('pm-form-fullname', 'err-pm-fullname');
+      moClearFieldError('pm-form-email', 'err-pm-email');
+      moClearFieldError('pm-form-phone', 'err-pm-phone');
+      moClearFieldError('pm-form-hotline', 'err-pm-hotline');
+      moClearFieldError('pm-form-password', 'err-pm-password');
+
+      const fullName = document.getElementById('pm-form-fullname').value.trim();
+      const email = document.getElementById('pm-form-email').value.trim();
+      const phone = document.getElementById('pm-form-phone').value.trim();
+      const hotline = document.getElementById('pm-form-hotline').value.trim();
+      const pwd = document.getElementById('pm-form-password').value;
+
+      // Validation 0ms
+      const vName = moValidateFullName(fullName, 2);
+      if (!vName.valid) {
+        moSetFieldError('pm-form-fullname', 'err-pm-fullname', vName.message);
+        document.getElementById('pm-form-fullname').focus();
+        return;
+      }
+
+      const vEmail = moValidateEmail(email);
+      if (!vEmail.valid) {
+        moSetFieldError('pm-form-email', 'err-pm-email', vEmail.message);
+        document.getElementById('pm-form-email').focus();
+        return;
+      }
+
+      if (phone) {
+        const vPhone = moValidatePhone(phone);
+        if (!vPhone.valid) {
+          moSetFieldError('pm-form-phone', 'err-pm-phone', vPhone.message);
+          document.getElementById('pm-form-phone').focus();
+          return;
+        }
+      }
+
+      if (hotline) {
+        const vHotline = moValidatePhone(hotline);
+        if (!vHotline.valid) {
+          moSetFieldError('pm-form-hotline', 'err-pm-hotline', 'Hotline sự cố không hợp lệ (bắt đầu bằng 0, gồm 10 hoặc 11 chữ số).');
+          document.getElementById('pm-form-hotline').focus();
+          return;
+        }
+      }
+
+      if (mode === 'create') {
+        if (!pwd || pwd.trim().length === 0) {
+          moSetFieldError('pm-form-password', 'err-pm-password', 'Mật khẩu là bắt buộc khi tạo nhân sự BQL mới.');
+          document.getElementById('pm-form-password').focus();
+          return;
+        }
+        if (pwd.length < 8) {
+          moSetFieldError('pm-form-password', 'err-pm-password', 'Mật khẩu phải có tối thiểu 8 ký tự.');
+          document.getElementById('pm-form-password').focus();
+          return;
+        }
+      } else if (pwd && pwd.length < 8) {
+        moSetFieldError('pm-form-password', 'err-pm-password', 'Mật khẩu mới phải có tối thiểu 8 ký tự.');
+        document.getElementById('pm-form-password').focus();
+        return;
+      }
+
       const payload = {
         employee_code: document.getElementById('pm-form-code').value.trim() || null,
-        full_name: document.getElementById('pm-form-fullname').value.trim(),
-        email: document.getElementById('pm-form-email').value.trim(),
-        phone: document.getElementById('pm-form-phone').value.trim() || null,
-        emergency_hotline: document.getElementById('pm-form-hotline').value.trim() || null,
+        full_name: fullName,
+        email: email,
+        phone: phone || null,
+        emergency_hotline: hotline || null,
         department: document.getElementById('pm-form-department').value,
         status: document.getElementById('pm-form-status').value,
         building_ids: getSelectedBuildingIds('pm-form-buildings')
       };
 
-      const pwd = document.getElementById('pm-form-password').value;
       if (pwd) payload.password = pwd;
 
       const url = (mode === 'create') ? '/api/v1/admin/users/property-managers' : `/api/v1/admin/users/property-managers/${id}`;
@@ -1150,10 +1481,19 @@
           closeModal('staff-pm-modal');
           loadStaffPm(1);
         } else {
-          alert('Lỗi: ' + (json.message || JSON.stringify(json.errors || 'Thất bại')));
+          if (json.errors) {
+            if (json.errors.full_name) moSetFieldError('pm-form-fullname', 'err-pm-fullname', json.errors.full_name[0]);
+            if (json.errors.email) moSetFieldError('pm-form-email', 'err-pm-email', json.errors.email[0]);
+            if (json.errors.phone) moSetFieldError('pm-form-phone', 'err-pm-phone', json.errors.phone[0]);
+            if (json.errors.emergency_hotline) moSetFieldError('pm-form-hotline', 'err-pm-hotline', json.errors.emergency_hotline[0]);
+            if (json.errors.password) moSetFieldError('pm-form-password', 'err-pm-password', json.errors.password[0]);
+          } else {
+            alert('Lỗi: ' + (json.message || 'Thao tác không thành công.'));
+          }
         }
       } catch (err) {
         console.error('Submit PM error:', err);
+        alert('Lỗi kết nối máy chủ khi lưu BQL.');
       } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
@@ -1318,10 +1658,15 @@
       document.getElementById('acc-form-id').value = '';
       document.getElementById('acc-form-mode').value = 'create';
       document.getElementById('staff-accountant-modal-title').innerHTML = '<i class="fa-solid fa-user-plus"></i> Thêm Nhân Viên Kế Toán Mới';
-      document.getElementById('acc-form-password').required = true;
       document.getElementById('acc-form-password-req').style.display = 'inline';
       document.getElementById('acc-form-password-hint').style.display = 'none';
 
+      moClearFieldError('acc-form-fullname', 'err-acc-fullname');
+      moClearFieldError('acc-form-email', 'err-acc-email');
+      moClearFieldError('acc-form-phone', 'err-acc-phone');
+      moClearFieldError('acc-form-password', 'err-acc-password');
+
+      await fetchNextEmployeeCode('accountant', 'acc-form-code');
       await fetchStaffBuildingsList();
       renderBuildingCheckboxes('acc-form-buildings', []);
       openModal('staff-accountant-modal');
@@ -1330,6 +1675,11 @@
     // Mở modal sửa Kế toán (API 89 + 90)
     async function openEditAccountantModal(id) {
       const token = getSanctumToken();
+      moClearFieldError('acc-form-fullname', 'err-acc-fullname');
+      moClearFieldError('acc-form-email', 'err-acc-email');
+      moClearFieldError('acc-form-phone', 'err-acc-phone');
+      moClearFieldError('acc-form-password', 'err-acc-password');
+
       try {
         const res = await fetch(`/api/v1/admin/users/accountants/${id}`, {
           headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token }
@@ -1350,7 +1700,6 @@
         document.getElementById('acc-form-status').value = a.status || 'ACTIVE';
 
         document.getElementById('acc-form-password').value = '';
-        document.getElementById('acc-form-password').required = false;
         document.getElementById('acc-form-password-req').style.display = 'none';
         document.getElementById('acc-form-password-hint').style.display = 'block';
 
@@ -1372,17 +1721,67 @@
       const id = document.getElementById('acc-form-id').value;
       const token = getSanctumToken();
 
+      moClearFieldError('acc-form-fullname', 'err-acc-fullname');
+      moClearFieldError('acc-form-email', 'err-acc-email');
+      moClearFieldError('acc-form-phone', 'err-acc-phone');
+      moClearFieldError('acc-form-password', 'err-acc-password');
+
+      const fullName = document.getElementById('acc-form-fullname').value.trim();
+      const email = document.getElementById('acc-form-email').value.trim();
+      const phone = document.getElementById('acc-form-phone').value.trim();
+      const pwd = document.getElementById('acc-form-password').value;
+
+      // Validation 0ms
+      const vName = moValidateFullName(fullName, 2);
+      if (!vName.valid) {
+        moSetFieldError('acc-form-fullname', 'err-acc-fullname', vName.message);
+        document.getElementById('acc-form-fullname').focus();
+        return;
+      }
+
+      const vEmail = moValidateEmail(email);
+      if (!vEmail.valid) {
+        moSetFieldError('acc-form-email', 'err-acc-email', vEmail.message);
+        document.getElementById('acc-form-email').focus();
+        return;
+      }
+
+      if (phone) {
+        const vPhone = moValidatePhone(phone);
+        if (!vPhone.valid) {
+          moSetFieldError('acc-form-phone', 'err-acc-phone', vPhone.message);
+          document.getElementById('acc-form-phone').focus();
+          return;
+        }
+      }
+
+      if (mode === 'create') {
+        if (!pwd || pwd.trim().length === 0) {
+          moSetFieldError('acc-form-password', 'err-acc-password', 'Mật khẩu là bắt buộc khi tạo tài khoản kế toán mới.');
+          document.getElementById('acc-form-password').focus();
+          return;
+        }
+        if (pwd.length < 8) {
+          moSetFieldError('acc-form-password', 'err-acc-password', 'Mật khẩu phải có tối thiểu 8 ký tự.');
+          document.getElementById('acc-form-password').focus();
+          return;
+        }
+      } else if (pwd && pwd.length < 8) {
+        moSetFieldError('acc-form-password', 'err-acc-password', 'Mật khẩu mới phải có tối thiểu 8 ký tự.');
+        document.getElementById('acc-form-password').focus();
+        return;
+      }
+
       const payload = {
         employee_code: document.getElementById('acc-form-code').value.trim() || null,
-        full_name: document.getElementById('acc-form-fullname').value.trim(),
-        email: document.getElementById('acc-form-email').value.trim(),
-        phone: document.getElementById('acc-form-phone').value.trim() || null,
+        full_name: fullName,
+        email: email,
+        phone: phone || null,
         can_approve_adjustment: document.getElementById('acc-form-can-adjust').checked,
         status: document.getElementById('acc-form-status').value,
         building_ids: getSelectedBuildingIds('acc-form-buildings')
       };
 
-      const pwd = document.getElementById('acc-form-password').value;
       if (pwd) payload.password = pwd;
 
       const url = (mode === 'create') ? '/api/v1/admin/users/accountants' : `/api/v1/admin/users/accountants/${id}`;
@@ -1409,10 +1808,18 @@
           closeModal('staff-accountant-modal');
           loadStaffAccountants(1);
         } else {
-          alert('Lỗi: ' + (json.message || JSON.stringify(json.errors || 'Thất bại')));
+          if (json.errors) {
+            if (json.errors.full_name) moSetFieldError('acc-form-fullname', 'err-acc-fullname', json.errors.full_name[0]);
+            if (json.errors.email) moSetFieldError('acc-form-email', 'err-acc-email', json.errors.email[0]);
+            if (json.errors.phone) moSetFieldError('acc-form-phone', 'err-acc-phone', json.errors.phone[0]);
+            if (json.errors.password) moSetFieldError('acc-form-password', 'err-acc-password', json.errors.password[0]);
+          } else {
+            alert('Lỗi: ' + (json.message || 'Thao tác không thành công.'));
+          }
         }
       } catch (err) {
         console.error('Submit Accountant error:', err);
+        alert('Lỗi kết nối máy chủ khi lưu Kế toán.');
       } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;

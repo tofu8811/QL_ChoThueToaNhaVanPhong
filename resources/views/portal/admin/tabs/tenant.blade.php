@@ -202,6 +202,7 @@
     </div>
 
     <div class="filament-card">
+        <div class="table-responsive">
         <table class="mo-table">
             <thead>
                 <tr>
@@ -218,6 +219,7 @@
                 <!-- Rendered via JS -->
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 
@@ -240,6 +242,7 @@
         <h3 style="font-size:15px;font-weight:700;color:#0f172a;margin:0 0 12px 0;">
           <i class="fa-solid fa-clock-rotate-left"></i> Lịch Sử Thông Báo Phí & Trạng Thái Đối Soát Kế Toán
         </h3>
+        <div class="table-responsive">
         <table class="mo-table">
             <thead>
                 <tr>
@@ -305,5 +308,6 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
 </div>

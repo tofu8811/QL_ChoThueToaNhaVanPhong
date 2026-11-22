@@ -90,6 +90,7 @@
       </div>
     </div>
 
+    <div class="table-responsive">
     <table class="mo-table">
       <thead>
         <tr>
@@ -133,6 +134,7 @@
         @endforelse
       </tbody>
     </table>
+    </div>
   </div>
 </div>
 
@@ -190,22 +192,24 @@
 
   <!-- Bảng dữ liệu Leads (Chế độ xem Bảng) -->
   <div class="filament-card" id="crm-table-view">
-    <table class="mo-table">
-      <thead>
-        <tr>
-          <th>Mã Lead / Ngày</th>
-          <th>Khách Hàng / Công Ty</th>
-          <th>Tòa Nhà / Nhu Cầu</th>
-          <th>Trạng Thái Pipeline</th>
-          <th>Sales Phụ Trách</th>
-          <th>Ghi Chú</th>
-          <th style="text-align:right;">Thao Tác</th>
-        </tr>
-      </thead>
-      <tbody id="crm-leads-tbody">
-        <!-- Rendered via JS crm-leads.blade.php -->
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="mo-table">
+        <thead>
+          <tr>
+            <th>Mã Lead / Ngày</th>
+            <th>Khách Hàng / Công Ty</th>
+            <th>Tòa Nhà / Nhu Cầu</th>
+            <th>Trạng Thái Pipeline</th>
+            <th>Sales Phụ Trách</th>
+            <th>Ghi Chú</th>
+            <th style="text-align:right;">Thao Tác</th>
+          </tr>
+        </thead>
+        <tbody id="crm-leads-tbody">
+          <!-- Rendered via JS crm-leads.blade.php -->
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <!-- Bảng Kanban Pipeline CRM (Chế độ xem Kanban) -->

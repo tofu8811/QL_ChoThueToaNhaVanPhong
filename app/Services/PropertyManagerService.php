@@ -71,16 +71,17 @@ class PropertyManagerService
             // 1. Tự động sinh mã nhân viên nếu chưa có (VD: NV-BQL-001)
             $code = $data['employee_code'] ?? null;
             if (empty($code)) {
-                $latest = PropertyManager::where('employee_code', 'like', 'NV-BQL-%')
-                    ->orderBy('employee_code', 'desc')
-                    ->lockForUpdate()
-                    ->value('employee_code');
-
-                $seq = 1;
-                if ($latest && preg_match('/-(\d+)$/', $latest, $m)) {
-                    $seq = ((int) $m[1]) + 1;
+                $codes = PropertyManager::whereNotNull('employee_code')->pluck('employee_code');
+                $maxSeq = 0;
+                foreach ($codes as $c) {
+                    if (preg_match('/(\d+)$/', (string) $c, $m)) {
+                        $n = (int) $m[1];
+                        if ($n > $maxSeq) {
+                            $maxSeq = $n;
+                        }
+                    }
                 }
-                $code = sprintf('NV-BQL-%03d', $seq);
+                $code = sprintf('NV-BQL-%03d', $maxSeq + 1);
             }
 
             // 2. Khởi tạo bản ghi PropertyManager

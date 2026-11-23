@@ -10,7 +10,10 @@
         <span>Office</span>
       </div>
     </a>
-    <span class="filament-badge-role" style="background:rgba(16,185,129,0.18);color:#34d399;border:1px solid rgba(16,185,129,0.3);">Kế Toán</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="filament-badge-role" style="background:rgba(16,185,129,0.18);color:#34d399;border:1px solid rgba(16,185,129,0.3);">Kế Toán</span>
+      <button type="button" class="bms-sidebar-close-btn" onclick="closeBmsMobileSidebar()" title="Đóng menu">&times;</button>
+    </div>
   </div>
 
   <!-- Section: PHÂN HỆ TÀI CHÍNH & CÔNG NỢ -->

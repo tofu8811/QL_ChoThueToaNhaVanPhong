@@ -436,7 +436,7 @@
       if (!container) return;
 
       container.innerHTML = `
-        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:20px;">
+        <div class="bms-modal-two-col" style="display:grid;grid-template-columns:1.2fr 1fr;gap:20px;">
           <!-- Cột trái: Thông tin liên hệ & Nhu cầu -->
           <div style="background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -483,7 +483,7 @@
 
             ${lead.pipeline_status === 'WON' ? `
               <div style="margin-top:12px;">
-                <button type="button" class="btn-mo-primary" style="width:100%;background:#16a34a;border:none;padding:9px 12px;font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:6px;cursor:pointer;" onclick="window.location.href='/admin/contracts?open_create=1&tenant_id=${lead.converted_tenant_id || ''}&building_id=${lead.building_id || ''}&unit_id=${lead.unit_id || ''}'">
+                <button type="button" class="btn-mo-primary" style="width:100%;background:#16a34a;border:none;padding:9px 12px;font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:6px;cursor:pointer;" onclick="const base = (window.location.pathname.startsWith('/sales') || window.currentUiRole === 'sales') ? '/sales/contracts' : '/admin/contracts'; window.location.href = base + '?open_create=1&tenant_id=${lead.converted_tenant_id || ''}&building_id=${lead.building_id || ''}&unit_id=${lead.unit_id || ''}';">
                   <i class="fa-solid fa-file-signature"></i> Lập Hợp Đồng Thuê (Bản Nháp)
                 </button>
               </div>
@@ -903,7 +903,8 @@
         gotoBtn.onclick = function() {
           const bldId = leadObj?.building_id || '';
           const untId = leadObj?.unit_id || '';
-          window.location.href = `/admin/contracts?open_create=1&tenant_id=${tenant.id}&building_id=${bldId}&unit_id=${untId}`;
+          const base = (window.location.pathname.startsWith('/sales') || window.currentUiRole === 'sales') ? '/sales/contracts' : '/admin/contracts';
+          window.location.href = `${base}?open_create=1&tenant_id=${tenant.id}&building_id=${bldId}&unit_id=${untId}`;
         };
       }
 

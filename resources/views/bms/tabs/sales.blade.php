@@ -309,7 +309,7 @@
   <div class="filament-page-header" style="align-items:center;">
     <div>
       <h1 class="filament-page-title" style="font-size:23px;margin-bottom:4px;">Lập Báo Giá & Thư Ngỏ Thuê Văn Phòng (Quotation / LOI)</h1>
-      <p style="font-size:13.5px;color:#64748b;margin:0;">Chọn mặt bằng trống, tính toán chi phí thuê, phí dịch vụ, thời gian miễn phí thi công (fit-out) và xuất file báo giá gửi khách hàng.</p>
+      <p style="font-size:13.5px;color:#64748b;margin:0;">Chọn mặt bằng trống, tính toán chi phí thuê, phí dịch vụ, thời gian miễn phí thi công ban đầu và xuất file báo giá gửi khách hàng.</p>
     </div>
   </div>
 
@@ -340,7 +340,7 @@
         <input type="number" id="calc-service" value="120000" step="10000" min="0" oninput="calculateQuickQuoteDetail()" class="filament-input" style="width:100%;">
       </div>
       <div class="form-field">
-        <label style="font-size:12px;font-weight:700;color:#334155;">Miễn Phí Thi Công (Fit-out)</label>
+        <label style="font-size:12px;font-weight:700;color:#334155;">Miễn Phí Thi Công Ban Đầu</label>
         <select id="calc-fitout-days" class="filament-input" style="width:100%;">
           <option value="30" selected>30 ngày miễn phí</option>
           <option value="45">45 ngày miễn phí</option>
@@ -403,7 +403,7 @@
     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
       <div style="font-size:13px;color:#475569;">
         <i class="fa-solid fa-circle-check" style="color:#10b981;margin-right:6px;"></i>
-        Báo giá kèm điều khoản ưu đãi miễn phí thi công Fit-out, bảo vệ 24/7 và điều hòa trung tâm.
+        Báo giá kèm điều khoản ưu đãi miễn phí thi công ban đầu, bảo vệ 24/7 và điều hòa trung tâm.
       </div>
       <div style="display:flex;gap:10px;">
         <button class="btn-mo-primary" type="button" style="background:#2563eb;" onclick="exportQuickQuoteCsv()">

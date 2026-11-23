@@ -22,10 +22,10 @@ class StoreContractRequest extends BaseApiRequest
             'payment_due_day' => ['nullable', 'integer', 'between:1,28'],
             'late_fee_interest_percent' => ['nullable', 'numeric', 'min:0'],
             'annual_price_escalation_percent' => ['nullable', 'numeric', 'min:0'],
-            'units' => ['nullable', 'array'],
-            'units.*.unit_id' => ['required_with:units', 'uuid', 'exists:units,id'],
-            'units.*.leased_area_sqm' => ['required_with:units', 'numeric', 'gt:0'],
-            'units.*.agreed_rental_price_per_sqm' => ['required_with:units', 'numeric', 'gt:0'],
+            'units' => ['required', 'array', 'min:1'],
+            'units.*.unit_id' => ['required', 'uuid', 'exists:units,id'],
+            'units.*.leased_area_sqm' => ['required', 'numeric', 'gt:0'],
+            'units.*.agreed_rental_price_per_sqm' => ['required', 'numeric', 'gt:0'],
             'units.*.agreed_service_fee_per_sqm' => ['nullable', 'numeric', 'min:0'],
         ];
     }

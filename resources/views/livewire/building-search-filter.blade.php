@@ -63,12 +63,6 @@
         $wire.resetFilters();
       }
     }">
-      <div class="mo-filter-tabs">
-        <div class="mo-filter-tab active"><i class="fa-solid fa-building"></i> Cho Thuê Văn Phòng</div>
-        <div class="mo-filter-tab" onclick="alert('Đã chọn phân hệ Văn Phòng Trọn Gói / Coworking Space!')"><i class="fa-solid fa-briefcase"></i> Văn Phòng Trọn Gói</div>
-        <div class="mo-filter-tab" onclick="alert('Đã chọn phân hệ Tòa Nhà Nguyên Căn!')"><i class="fa-solid fa-city"></i> Tòa Nhà Nguyên Căn</div>
-      </div>
-
       <div class="mo-filter-grid">
         <!-- Search Keyword -->
         <div class="mo-filter-group">

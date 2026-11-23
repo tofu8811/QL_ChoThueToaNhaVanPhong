@@ -36,6 +36,18 @@ class ContractApiController extends BaseApiController
     }
 
     /**
+     * Tự động sinh mã hợp đồng kế tiếp từ CSDL theo tòa nhà.
+     */
+    public function nextContractCode(Request $request): JsonResponse
+    {
+        $buildingId = $request->input('building_id');
+        $prefix = $request->input('prefix', 'HD');
+        $nextCode = $this->contractService->getNextContractCode($buildingId, $prefix);
+
+        return $this->successResponse(['next_code' => $nextCode], 'Lấy mã hợp đồng tự động thành công.');
+    }
+
+    /**
      * Khởi tạo Hợp đồng thuê bản nháp (DRAFT).
      */
     public function store(StoreContractRequest $request): JsonResponse
@@ -84,6 +96,25 @@ class ContractApiController extends BaseApiController
     public function update(UpdateContractRequest $request, string $id): JsonResponse
     {
         $contract = Contract::findOrFail($id);
+        $user = auth('sanctum')->user() ?? $request->user() ?? auth()->user();
+
+        // Kiểm tra quyền sở hữu với tài khoản Sales
+        if ($user instanceof \App\Models\Sale) {
+            if ($contract->created_by_sales_id !== $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bạn không có quyền chỉnh sửa hợp đồng do nhân sự khác tạo.',
+                ], 403);
+            }
+        }
+
+        if (!in_array($contract->status, [\App\Enums\ContractStatus::DRAFT, \App\Enums\ContractStatus::RESERVED])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tuyệt đối cấm sửa hợp đồng đã được phê duyệt hoặc có hiệu lực pháp lý.',
+            ], 403);
+        }
+
         $updatedContract = $this->contractService->updateDraftContract($contract, $request->validated());
 
         return $this->successResponse($updatedContract, 'Cập nhật điều khoản hợp đồng thành công.');
@@ -92,9 +123,28 @@ class ContractApiController extends BaseApiController
     /**
      * Xóa hợp đồng bản nháp hoặc giữ chỗ.
      */
-    public function destroy(string $id): JsonResponse
+    public function destroy(string $id, Request $request): JsonResponse
     {
         $contract = Contract::findOrFail($id);
+        $user = auth('sanctum')->user() ?? $request->user() ?? auth()->user();
+
+        // Kiểm tra quyền sở hữu với tài khoản Sales
+        if ($user instanceof \App\Models\Sale) {
+            if ($contract->created_by_sales_id !== $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bạn không có quyền xóa hợp đồng do nhân sự khác tạo.',
+                ], 403);
+            }
+        }
+
+        if (!in_array($contract->status, [\App\Enums\ContractStatus::DRAFT, \App\Enums\ContractStatus::RESERVED])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tuyệt đối cấm xóa hợp đồng đã được ký duyệt hoặc có hiệu lực pháp lý.',
+            ], 403);
+        }
+
         $this->contractService->deleteDraftContract($contract);
 
         return $this->successResponse(null, 'Xóa hợp đồng nháp thành công.');

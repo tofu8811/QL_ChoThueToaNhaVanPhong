@@ -4,6 +4,8 @@
 <div id="admin-wrapper" style="display: block;">
   <div class="filament-shell">
     @yield('sidebar')
+    <!-- Backdrop làm mờ khi mở mobile sidebar -->
+    <div id="bms-sidebar-backdrop" class="bms-sidebar-backdrop" onclick="closeBmsMobileSidebar()"></div>
 
     <div class="filament-main">
       @include('components.topbar')

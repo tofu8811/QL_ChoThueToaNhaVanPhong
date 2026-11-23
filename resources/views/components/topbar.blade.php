@@ -1,8 +1,12 @@
 <!-- Topbar (Breadcrumb động bên trái + Tìm kiếm + Thông báo + Hồ sơ User bên phải) -->
 <header class="filament-topbar">
-  <div class="bms-topbar-left">
-    <a href="{{ route('home') }}" style="color:#64748b;text-decoration:none;font-weight:600;" title="Về trang chủ Portal">Cổng thông tin</a>
-    <i class="fa-solid fa-chevron-right" style="font-size:9px;color:#cbd5e1;"></i>
+  <div class="bms-topbar-left" style="display:flex;align-items:center;gap:10px;">
+    <!-- Nút Hamburger Menu Sidebar trên màn hình nhỏ -->
+    <button type="button" class="bms-mobile-menu-btn" onclick="toggleBmsMobileSidebar()" title="Mở danh mục điều hướng (Sidebar)">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <a href="{{ route('home') }}" class="bms-topbar-home-link" style="color:#64748b;text-decoration:none;font-weight:600;" title="Về trang chủ Portal">Cổng thông tin</a>
+    <i class="fa-solid fa-chevron-right bms-topbar-sep" style="font-size:9px;color:#cbd5e1;"></i>
     <span class="bms-bc-current" id="topbar-current-breadcrumb">@yield('breadcrumb', 'Tổng quan hệ thống')</span>
   </div>
 

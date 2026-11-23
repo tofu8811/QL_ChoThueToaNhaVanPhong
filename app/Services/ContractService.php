@@ -109,14 +109,26 @@ class ContractService
     {
         return DB::transaction(function () use ($data, $salesId) {
             $building = Building::findOrFail($data['building_id']);
+
+            // Kiểm tra phân quyền: Sales chỉ được tạo hợp đồng cho tòa nhà mình được phân công
+            if ($salesId) {
+                $sale = Sale::find($salesId);
+                if ($sale && !$sale->buildings()->where('buildings.id', $data['building_id'])->exists()) {
+                    throw new BusinessException('Bạn không được phân công phụ trách tòa nhà ' . $building->name . ' nên không thể tạo hợp đồng.', 403);
+                }
+            }
+
+            // Bắt buộc hợp đồng phải có ít nhất 1 mặt bằng cho thuê
+            if (empty($data['units']) || !is_array($data['units']) || count($data['units']) === 0) {
+                throw new BusinessException('Hợp đồng phải có ít nhất một mặt bằng cho thuê.', 422);
+            }
+
             $contractNumber = $data['contract_number'] ?? $this->generateContractNumber($building->building_code);
 
             // Tính tổng diện tích ban đầu để thỏa mãn constraint chk_contracts_area (total_leased_area_sqm > 0)
             $initialTotalArea = 0.0;
-            if (!empty($data['units']) && is_array($data['units'])) {
-                foreach ($data['units'] as $unitItem) {
-                    $initialTotalArea += (float) ($unitItem['leased_area_sqm'] ?? 0.0);
-                }
+            foreach ($data['units'] as $unitItem) {
+                $initialTotalArea += (float) ($unitItem['leased_area_sqm'] ?? 0.0);
             }
             if ($initialTotalArea <= 0.0) {
                 $initialTotalArea = 1.0;
@@ -163,6 +175,15 @@ class ContractService
     {
         return DB::transaction(function () use ($data, $salesId) {
             $building = Building::findOrFail($data['building_id']);
+
+            // Kiểm tra phân quyền: Sales chỉ được đặt cọc giữ chỗ cho tòa nhà mình được phân công
+            if ($salesId) {
+                $sale = Sale::find($salesId);
+                if ($sale && !$sale->buildings()->where('buildings.id', $data['building_id'])->exists()) {
+                    throw new BusinessException('Bạn không được phân công phụ trách tòa nhà ' . $building->name . ' nên không thể đặt cọc giữ chỗ.', 403);
+                }
+            }
+
             $contractNumber = $data['contract_number'] ?? $this->generateContractNumber($building->building_code, 'BOOKING');
 
             // Tính tổng diện tích ban đầu để thỏa mãn constraint chk_contracts_area (total_leased_area_sqm > 0)
@@ -213,22 +234,58 @@ class ContractService
     public function updateDraftContract(Contract $contract, array $data): Contract
     {
         if (!in_array($contract->status, [ContractStatus::DRAFT, ContractStatus::RESERVED])) {
-            throw new BusinessException('Chỉ có thể chỉnh sửa điều khoản khi hợp đồng ở trạng thái Dự thảo (DRAFT) hoặc Giữ chỗ (RESERVED).', 422);
+            throw new BusinessException('Tuyệt đối cấm sửa hợp đồng đã được phê duyệt hoặc có hiệu lực pháp lý.', 403);
         }
 
         return DB::transaction(function () use ($contract, $data) {
             $startDate = $data['start_date'] ?? $contract->start_date->toDateString();
             $endDate = $data['end_date'] ?? $contract->end_date->toDateString();
 
-            // Nếu thay đổi ngày, kiểm tra lại xung đột lịch của toàn bộ các phòng đã gán
-            if ($startDate !== $contract->start_date->toDateString() || $endDate !== $contract->end_date->toDateString()) {
+            // Nếu cập nhật danh sách mặt bằng (hỗ trợ nhiều mặt bằng)
+            if (isset($data['units'])) {
+                if (!is_array($data['units']) || count($data['units']) === 0) {
+                    throw new BusinessException('Hợp đồng phải có ít nhất một mặt bằng cho thuê.', 422);
+                }
+
+                $newUnitIds = [];
+                foreach ($data['units'] as $unitData) {
+                    $newUnitIds[] = $unitData['unit_id'];
+                    $this->validateNoOverlap($unitData['unit_id'], $startDate, $endDate, $contract->id);
+                }
+
+                // Gỡ các mặt bằng cũ không còn trong danh sách mới
+                $contract->contractUnits()->whereNotIn('unit_id', $newUnitIds)->delete();
+
+                // Gán / Cập nhật các mặt bằng trong danh sách mới
+                foreach ($data['units'] as $unitData) {
+                    $this->attachUnitToContract(
+                        $contract,
+                        $unitData['unit_id'],
+                        (float) $unitData['leased_area_sqm'],
+                        (float) $unitData['agreed_rental_price_per_sqm'],
+                        (float) ($unitData['agreed_service_fee_per_sqm'] ?? 0.0)
+                    );
+                }
+            } elseif ($startDate !== $contract->start_date->toDateString() || $endDate !== $contract->end_date->toDateString()) {
+                // Nếu thay đổi ngày nhưng giữ nguyên danh sách phòng, kiểm tra lại xung đột lịch
                 $assignedUnitIds = $contract->contractUnits()->pluck('unit_id')->toArray();
                 foreach ($assignedUnitIds as $unitId) {
                     $this->validateNoOverlap($unitId, $startDate, $endDate, $contract->id);
                 }
             }
 
-            $contract->update($data);
+            // Loại bỏ 'units' khỏi $data trước khi update bảng contracts
+            $contractFields = collect($data)->except(['units'])->toArray();
+            if (!empty($contractFields)) {
+                $contract->update($contractFields);
+            }
+
+            // Tính lại tổng diện tích sàn
+            $totalArea = $contract->contractUnits()->sum('leased_area_sqm');
+            if ($totalArea > 0) {
+                $contract->update(['total_leased_area_sqm' => $totalArea]);
+            }
+
             return $contract->fresh(['contractUnits.unit']);
         });
     }
@@ -239,7 +296,7 @@ class ContractService
     public function deleteDraftContract(Contract $contract): void
     {
         if (!in_array($contract->status, [ContractStatus::DRAFT, ContractStatus::RESERVED])) {
-            throw new BusinessException('Không thể xóa hợp đồng đã có hiệu lực pháp lý hoặc đã thanh lý.', 422);
+            throw new BusinessException('Tuyệt đối cấm xóa hợp đồng đã được phê duyệt hoặc có hiệu lực pháp lý.', 403);
         }
 
         DB::transaction(function () use ($contract) {
@@ -732,14 +789,81 @@ class ContractService
     }
 
     /**
-     * Tự động sinh số hiệu hợp đồng pháp lý: HD-{YYYY}/{MM}-{BUILDING_CODE}-{SEQ}.
+     * Tự động sinh mã hợp đồng kế tiếp duy nhất từ CSDL.
+     * Quy tắc chuẩn: HD-{BUILDING_CODE}-{YYYY}-{SEQ:0004}
+     * Ví dụ: HD-NEXUS-2026-0003
+     */
+    public function getNextContractCode(?string $buildingId = null, string $prefix = 'HD'): string
+    {
+        $year = date('Y');
+        $bCode = 'NEXUS';
+        if ($buildingId) {
+            $building = Building::find($buildingId);
+            if ($building) {
+                $rawCode = strtoupper(trim($building->building_code ?: $building->name));
+                $parts = explode('-', $rawCode);
+                $bCode = $parts[0] ?: 'GEN';
+                $bCode = preg_replace('/[^A-Z0-9]/', '', $bCode);
+                if (empty($bCode)) $bCode = 'NEXUS';
+            }
+        }
+
+        $codePattern = sprintf('%s-%s-%s-', $prefix, $bCode, $year);
+
+        // Tìm tất cả các mã hợp đồng hiện có theo pattern này
+        $existingCodes = Contract::withTrashed()
+            ->where('contract_number', 'LIKE', $codePattern . '%')
+            ->pluck('contract_number');
+
+        $maxSeq = 0;
+        foreach ($existingCodes as $code) {
+            if (preg_match('/-(\d+)$/', (string) $code, $matches)) {
+                $seq = (int) $matches[1];
+                if ($seq > $maxSeq) {
+                    $maxSeq = $seq;
+                }
+            }
+        }
+
+        do {
+            $maxSeq++;
+            $candidate = sprintf('%s-%s-%s-%04d', $prefix, $bCode, $year, $maxSeq);
+        } while (Contract::withTrashed()->where('contract_number', $candidate)->exists());
+
+        return $candidate;
+    }
+
+    /**
+     * Tự động sinh số hiệu hợp đồng pháp lý duy nhất: HD-{BUILDING_CODE}-{YYYY}-{SEQ:0004}.
      */
     public function generateContractNumber(string $buildingCode, string $prefix = 'HD'): string
     {
         $year = date('Y');
-        $month = date('m');
-        $count = Contract::withTrashed()->whereYear('created_at', $year)->count() + 1;
-        return sprintf('%s-%s/%s-%s-%04d', $prefix, $year, $month, strtoupper($buildingCode), $count);
+        $parts = explode('-', strtoupper($buildingCode));
+        $bCode = preg_replace('/[^A-Z0-9]/', '', $parts[0] ?: 'GEN');
+        if (empty($bCode)) $bCode = 'NEXUS';
+
+        $codePattern = sprintf('%s-%s-%s-', $prefix, $bCode, $year);
+        $existingCodes = Contract::withTrashed()
+            ->where('contract_number', 'LIKE', $codePattern . '%')
+            ->pluck('contract_number');
+
+        $maxSeq = 0;
+        foreach ($existingCodes as $code) {
+            if (preg_match('/-(\d+)$/', (string) $code, $matches)) {
+                $seq = (int) $matches[1];
+                if ($seq > $maxSeq) {
+                    $maxSeq = $seq;
+                }
+            }
+        }
+
+        do {
+            $maxSeq++;
+            $candidate = sprintf('%s-%s-%s-%04d', $prefix, $bCode, $year, $maxSeq);
+        } while (Contract::withTrashed()->where('contract_number', $candidate)->exists());
+
+        return $candidate;
     }
 
     /**

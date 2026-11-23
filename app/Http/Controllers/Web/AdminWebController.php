@@ -39,8 +39,13 @@ class AdminWebController extends Controller
     /**
      * Quản lý Hợp đồng thuê & Biên bản bàn giao.
      */
-    public function contracts(Request $request): View
+    public function contracts(Request $request): View|RedirectResponse
     {
+        $user = $request->attributes->get('current_web_user') ?? auth()->user();
+        $currentRole = $request->attributes->get('current_web_role');
+        if (($user instanceof \App\Models\Sale || $currentRole === 'sales') && !$request->is('sales/*')) {
+            return redirect()->route('sales.contracts');
+        }
         $viewData = $this->getAdminViewData($request, 'contracts', 'Hợp đồng thuê & Biên bản bàn giao');
         return view('admin.contracts', $viewData);
     }
@@ -124,12 +129,10 @@ class AdminWebController extends Controller
             $viewData['roleBadge'] = 'Chuyên Viên Sales';
 
             $assignedBuildingIds = $user->buildings()->pluck('buildings.id')->toArray();
-            if (!empty($assignedBuildingIds)) {
-                $viewData['serverBuildings'] = collect($viewData['serverBuildings'] ?? [])->filter(function ($b) use ($assignedBuildingIds) {
-                    $bId = is_array($b) ? ($b['id'] ?? '') : ($b->id ?? '');
-                    return in_array($bId, $assignedBuildingIds);
-                })->values();
-            }
+            $viewData['serverBuildings'] = collect($viewData['serverBuildings'] ?? [])->filter(function ($b) use ($assignedBuildingIds) {
+                $bId = is_array($b) ? ($b['id'] ?? '') : ($b->id ?? '');
+                return in_array($bId, $assignedBuildingIds);
+            })->values();
 
             if (!empty($viewData['recentContracts'])) {
                 $viewData['recentContracts'] = collect($viewData['recentContracts'])->filter(function ($c) use ($user) {

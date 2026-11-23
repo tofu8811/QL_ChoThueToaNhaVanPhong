@@ -8,23 +8,35 @@
     let currentViewingContract = null;
 
     function isContractSalesRole() {
-      if (typeof window.isSalesUser !== 'undefined') return Boolean(window.isSalesUser);
+      if (window.location.pathname.startsWith('/sales')) return true;
+      if (window.isSalesUser === true) return true;
       const role = (window.currentUiRole || localStorage.getItem('auth_role') || '').toLowerCase();
       if (role === 'sales' || role === 'sale') return true;
+      try {
+        const u = JSON.parse(localStorage.getItem('auth_user') || '{}');
+        const uRole = (u.role || '').toLowerCase();
+        if (uRole === 'sales' || uRole === 'sale' || (u.email && u.email.toLowerCase().includes('sales'))) return true;
+      } catch (e) {}
       const sidebar = document.getElementById('bms-main-sidebar');
       if (sidebar) {
         const roleBadge = sidebar.querySelector('.filament-badge-role')?.textContent || '';
         if (/sales/i.test(roleBadge)) return true;
+        const text = sidebar.textContent || '';
+        if (text.includes('KINH DOANH & CRM') && !text.includes('QUẢN TRỊ TOÀN DIỆN')) return true;
       }
       const topBadge = document.getElementById('admin-dropdown-role-badge')?.textContent || '';
       if (/sales/i.test(topBadge)) return true;
+      const topEmail = document.getElementById('bms-topbar-user-email')?.textContent || '';
+      if (/sales/i.test(topEmail)) return true;
+      const userNameEl = document.querySelector('.filament-user-name, .bms-user-name, .bms-user-info')?.textContent || '';
+      if (/sales/i.test(userNameEl) || /kinh doanh/i.test(userNameEl)) return true;
       return false;
     }
 
     function isContractAdminRole() {
-      if (isContractSalesRole()) return false;
+      if (window.location.pathname.startsWith('/sales') || isContractSalesRole()) return false;
       const role = (window.currentUiRole || localStorage.getItem('auth_role') || '').toLowerCase();
-      if (role === 'pm' || role === 'accountant') return false;
+      if (role === 'pm' || role === 'property_manager' || role === 'accountant' || role === 'sales' || role === 'sale') return false;
       if (role === 'admin' || role === 'super_admin') return true;
       const topBadge = document.getElementById('admin-dropdown-role-badge')?.textContent || '';
       if (/admin/i.test(topBadge)) return true;
@@ -108,6 +120,21 @@
     function renderContractsTable() {
       const tbody = document.getElementById('admin-contracts-tbody');
       const countEl = document.getElementById('admin-contracts-count');
+
+      // Chuyên viên Sales chỉ có quyền xem các hợp đồng bản nháp (DRAFT)
+      if (isContractSalesRole()) {
+        contractsList = (contractsList || []).filter(c => c.status === 'DRAFT');
+        // Tự động ẩn nút hoặc tùy chọn bộ lọc không thuộc thẩm quyền Sales
+        const statusSelect = document.getElementById('contract-status-select');
+        if (statusSelect) {
+          Array.from(statusSelect.options).forEach(opt => {
+            if (opt.value !== 'ALL' && opt.value !== 'DRAFT') {
+              opt.style.display = 'none';
+            }
+          });
+        }
+      }
+
       if (countEl) countEl.innerText = contractsList.length;
 
       if (!tbody) return;
@@ -153,8 +180,14 @@
               <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;" onclick="openContractDetailModal('${c.id}')" title="Xem chi tiết & Files">
                 <i class="fa-solid fa-eye"></i> Chi tiết
               </button>
-              ${(c.status === 'DRAFT' || c.status === 'RESERVED') ? (
-                isContractSalesRole() ? `
+              ${(c.status === 'DRAFT' || c.status === 'RESERVED') ? `
+                <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#0284c7;border-color:#bae6fd;margin-left:4px;" onclick="openEditContractModal('${c.id}')" title="Chỉnh sửa bản nháp">
+                  <i class="fa-solid fa-pen-to-square"></i> Sửa
+                </button>
+                <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#ef4444;border-color:#fecaca;margin-left:4px;" onclick="deleteContract('${c.id}')" title="Xóa bản nháp">
+                  <i class="fa-solid fa-trash"></i> Xóa
+                </button>
+                ${isContractSalesRole() ? `
                   <span style="font-size:11px;color:#d97706;background:#fef3c7;padding:3px 7px;border-radius:4px;font-weight:600;margin-left:4px;border:1px solid #fde68a;" title="Chuyên viên Sales không có thẩm quyền ký duyệt hợp đồng. Hợp đồng đang chờ Ban Quản Lý (PM) duyệt.">
                     <i class="fa-solid fa-clock"></i> Chờ PM duyệt
                   </span>
@@ -162,19 +195,14 @@
                   <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#16a34a;border-color:#bbf7d0;margin-left:4px;" onclick="signContract('${c.id}')" title="Ký duyệt & Kích hoạt">
                     <i class="fa-solid fa-file-signature"></i> Ký Duyệt
                   </button>
-                `
-              ) : ''}
+                `}
+              ` : ''}
               ${(!isContractSalesRole() && (c.status === 'ACTIVE' || c.status === 'EXPIRING_SOON')) ? `
                 <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#0284c7;border-color:#bae6fd;margin-left:4px;" onclick="openRenewContractModal('${c.id}', '${escapeHtml(contractCode)}', '${c.end_date}')" title="Gia hạn hợp đồng">
                   <i class="fa-solid fa-calendar-plus"></i> Gia hạn
                 </button>
                 <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#dc2626;border-color:#fecaca;margin-left:4px;" onclick="openTerminateContractModal('${c.id}', '${escapeHtml(contractCode)}', ${c.deposit_amount || 0})" title="Thanh lý hợp đồng">
                   <i class="fa-solid fa-file-circle-xmark"></i> Thanh lý
-                </button>
-              ` : ''}
-              ${(c.status === 'DRAFT' && isContractAdminRole()) ? `
-                <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#ef4444;border-color:#fecaca;margin-left:4px;" onclick="deleteContract('${c.id}')" title="Xóa nháp">
-                  <i class="fa-solid fa-trash"></i>
                 </button>
               ` : ''}
             </td>
@@ -222,15 +250,32 @@
           </option>`;
         }).join('');
 
+      let formBuildings = Array.isArray(BUILDINGS_DATA) ? [...BUILDINGS_DATA] : [];
+      if (isContractSalesRole()) {
+        try {
+          const res = await fetch('/api/v1/admin/buildings?per_page=100', {
+            method: 'GET',
+            headers: getAuthHeaders()
+          });
+          if (res.ok) {
+            const json = await res.json();
+            const apiBuildings = json.data?.data || json.data || [];
+            if (apiBuildings.length > 0) {
+              formBuildings = apiBuildings;
+            }
+          }
+        } catch (e) {}
+      }
+
       bSelect.innerHTML = '<option value="">-- Chọn Tòa Nhà Văn Phòng --</option>' +
-        BUILDINGS_DATA.map(b => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
+        formBuildings.map(b => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
 
       modal.style.display = 'flex';
 
       // Nếu Sales chỉ được phân công đúng 1 tòa nhà, tự động chọn luôn tòa nhà đó
-      if (BUILDINGS_DATA.length === 1 && !presetBuildingId) {
-        bSelect.value = BUILDINGS_DATA[0].id;
-        handleContractBuildingChange(BUILDINGS_DATA[0].id);
+      if (formBuildings.length === 1 && !presetBuildingId) {
+        bSelect.value = formBuildings[0].id;
+        handleContractBuildingChange(formBuildings[0].id);
       }
 
       // Hỗ trợ truyền sẵn thông số từ CRM Lead hoặc Tenant
@@ -243,6 +288,14 @@
     function closeCreateContractModal() {
       const modal = document.getElementById('modal-create-contract');
       if (modal) modal.style.display = 'none';
+      const editIdEl = document.getElementById('contract-edit-id');
+      if (editIdEl) editIdEl.value = '';
+      const titleEl = document.getElementById('modal-contract-title');
+      if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-file-signature"></i> Khởi Tạo Hợp Đồng Thuê Văn Phòng (Bản Nháp)';
+      const subtitleEl = document.getElementById('modal-contract-subtitle');
+      if (subtitleEl) subtitleEl.innerHTML = 'Dành cho Chuyên viên Sales & Ban Quản Lý (PM) — Tạo dự thảo hợp đồng để trình duyệt';
+      const submitBtn = document.getElementById('btn-submit-create-contract');
+      if (submitBtn) submitBtn.innerHTML = '<i class="fa-solid fa-file-circle-plus"></i> Khởi Tạo Bản Nháp';
     }
 
     // Nhận diện Khách thuê: Tự động phát hiện nhu cầu tòa nhà & mặt bằng từ CRM Lead
@@ -272,103 +325,213 @@
       }
     }
 
-    // Khi thay đổi Tòa nhà: Tự động đề xuất Mã hợp đồng & Tải danh sách Mặt bằng trống
-    async function handleContractBuildingChange(buildingId, autoSelectUnitCode = null) {
-      moClearFieldError('contract-building-select', 'err-contract-building');
+    // Helper tự động lấy mã hợp đồng kế tiếp từ CSDL theo tòa nhà (tương tự quản lý nhân sự)
+    async function fetchNextContractCode(buildingId, inputId = 'contract-code-input') {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      input.value = 'Đang tạo mã từ CSDL...';
+      try {
+        const url = buildingId
+          ? `/api/v1/admin/contracts/next-code?building_id=${encodeURIComponent(buildingId)}`
+          : `/api/v1/admin/contracts/next-code`;
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: getAuthHeaders()
+        });
+        const json = await res.json();
+        if (res.ok && json.data && json.data.next_code) {
+          input.value = json.data.next_code;
+        } else {
+          input.value = `HD-2026-${Date.now().toString().slice(-4)}`;
+        }
+      } catch (e) {
+        input.value = `HD-2026-${Date.now().toString().slice(-4)}`;
+      }
+    }
+
+    window.selectedContractUnits = [];
+
+    function toggleUnitCheckbox(unitId) {
+      const chk = document.getElementById(`unit-chk-${unitId}`);
+      if (chk) {
+        chk.checked = !chk.checked;
+        updateSelectedUnitsFromCheckboxes();
+      }
+    }
+
+    function handleUnitCheckboxChange(e) {
+      if (e) e.stopPropagation();
+      updateSelectedUnitsFromCheckboxes();
+    }
+
+    function updateSelectedUnitsFromCheckboxes() {
+      const chks = Array.from(document.querySelectorAll('#contract-units-container input[type="checkbox"]:checked'));
+      window.selectedContractUnits = chks.map(c => ({
+        id: c.value,
+        code: c.dataset.code || '',
+        area: parseFloat(c.dataset.area) || 0,
+        rent: parseFloat(c.dataset.rent) || 0,
+        fee: parseFloat(c.dataset.fee) || 0
+      }));
+
+      const badgeEl = document.getElementById('selected-units-badge');
+      const count = window.selectedContractUnits.length;
+      let totalArea = 0;
+      let totalRent = 0;
+      let totalFee = 0;
+
+      window.selectedContractUnits.forEach(u => {
+        totalArea += u.area;
+        totalRent += Math.round(u.area * u.rent);
+        totalFee += Math.round(u.area * u.fee);
+      });
+
+      if (badgeEl) {
+        badgeEl.innerHTML = `Đã chọn: <strong>${count}</strong> mặt bằng (<strong>${totalArea.toLocaleString('vi-VN')}</strong> m²)`;
+        if (count > 0) {
+          badgeEl.style.background = '#dcfce7';
+          badgeEl.style.color = '#15803d';
+          badgeEl.style.borderColor = '#86efac';
+        } else {
+          badgeEl.style.background = '#e0f2fe';
+          badgeEl.style.color = '#0284c7';
+          badgeEl.style.borderColor = '#bae6fd';
+        }
+      }
+
+      const areaInput = document.getElementById('contract-unit-area');
+      if (areaInput) areaInput.value = count > 0 ? totalArea : '';
+
+      const avgRent = totalArea > 0 ? Math.round(totalRent / totalArea) : 0;
+      const avgFee = totalArea > 0 ? Math.round(totalFee / totalArea) : 0;
+
+      const rentInput = document.getElementById('contract-unit-rent-price');
+      if (rentInput) rentInput.value = count > 0 ? avgRent : '';
+
+      const feeInput = document.getElementById('contract-unit-service-fee');
+      if (feeInput) feeInput.value = count > 0 ? avgFee : '';
+
+      const totalRentInput = document.getElementById('contract-rent');
+      if (totalRentInput) totalRentInput.value = count > 0 ? totalRent : '';
+
+      const totalFeeInput = document.getElementById('contract-service-fee');
+      if (totalFeeInput) totalFeeInput.value = count > 0 ? totalFee : '';
+
       const uSelect = document.getElementById('contract-unit-select');
-      if (!uSelect) return;
+      if (uSelect) uSelect.value = count > 0 ? window.selectedContractUnits[0].id : '';
+
+      if (count > 0) {
+        moClearFieldError('contract-units-container', 'err-contract-units');
+        const container = document.getElementById('contract-units-container');
+        if (container) container.style.borderColor = '#cbd5e1';
+      }
+
+      recalculateContractFinancials();
+    }
+
+    // Khi thay đổi Tòa nhà: Tự động cấp Mã hợp đồng từ CSDL & Tải danh sách Mặt bằng trống (hỗ trợ chọn nhiều mặt bằng)
+    async function handleContractBuildingChange(buildingId, autoSelectUnitCode = null, preselectedUnitIds = []) {
+      moClearFieldError('contract-building-select', 'err-contract-building');
+      const container = document.getElementById('contract-units-container');
+      const uSelect = document.getElementById('contract-unit-select');
+      const badgeEl = document.getElementById('selected-units-badge');
+
+      window.selectedContractUnits = [];
 
       if (!buildingId) {
-        uSelect.innerHTML = '<option value="">-- Vui lòng chọn Tòa nhà trước --</option>';
+        if (container) container.innerHTML = '<div style="text-align:center;color:#94a3b8;font-size:12px;padding:16px;"><i class="fa-solid fa-arrow-up"></i> Vui lòng chọn Tòa nhà văn phòng trước để tải danh sách mặt bằng trống.</div>';
+        if (badgeEl) badgeEl.innerText = 'Đã chọn: 0 mặt bằng (0 m²)';
         resetContractFinancials();
+        const codeInput = document.getElementById('contract-code-input');
+        if (codeInput && !document.getElementById('contract-edit-id')?.value) codeInput.value = '';
         return;
       }
 
-      // Đề xuất Mã hợp đồng chuyên nghiệp dựa theo Mã Tòa Nhà
-      const building = BUILDINGS_DATA.find(b => String(b.id) === String(buildingId));
-      const codeInput = document.getElementById('contract-code-input');
-      if (codeInput && (!codeInput.value || codeInput.value.startsWith('HD-'))) {
-        let bCode = (building?.code || 'NEXUS').toUpperCase();
-        if (bCode.includes('NEXUS') || (building?.name || '').toLowerCase().includes('nexus')) {
-          bCode = 'NEXUS';
-        }
-        const randSuffix = Math.floor(1000 + Math.random() * 9000);
-        codeInput.value = `HD-${bCode}-2026-${randSuffix}`;
+      // Tự động cấp Mã hợp đồng duy nhất từ CSDL theo tòa nhà (chỉ đọc, không cho sửa tay khi tạo mới)
+      if (!document.getElementById('contract-edit-id')?.value) {
+        await fetchNextContractCode(buildingId, 'contract-code-input');
       }
 
-      uSelect.innerHTML = '<option value="">Đang tải danh sách mặt bằng trống...</option>';
+      if (container) container.innerHTML = '<div style="text-align:center;color:#64748b;font-size:12px;padding:16px;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải danh sách mặt bằng khả dụng...</div>';
+
       try {
         const res = await fetch(`/api/v1/portal/units?building_id=${buildingId}&status=AVAILABLE`, {
           method: 'GET',
           headers: getAuthHeaders()
         });
         const json = await res.json();
-        const units = json.data?.data || json.data || [];
+        let units = json.data?.data || json.data || [];
         currentBuildingUnits = units;
 
+        // Nếu đang sửa hợp đồng và có preselectedUnitIds, nạp thêm các phòng đã thuộc hợp đồng này
+        if (Array.isArray(preselectedUnitIds) && preselectedUnitIds.length > 0) {
+          for (const uid of preselectedUnitIds) {
+            if (!units.some(u => String(u.id) === String(uid))) {
+              try {
+                const uRes = await fetch(`/api/v1/portal/units/${uid}`, { headers: getAuthHeaders() });
+                if (uRes.ok) {
+                  const uJson = await uRes.json();
+                  if (uJson.data) units.push(uJson.data);
+                }
+              } catch(e) {}
+            }
+          }
+        }
+
         if (units.length === 0) {
-          uSelect.innerHTML = '<option value="">(Tòa nhà hiện không có mặt bằng trống)</option>';
+          if (container) container.innerHTML = '<div style="text-align:center;color:#94a3b8;font-size:12px;padding:16px;">(Tòa nhà hiện không có mặt bằng trống khả dụng)</div>';
+          if (badgeEl) badgeEl.innerText = 'Đã chọn: 0 mặt bằng (0 m²)';
           resetContractFinancials();
           return;
         }
 
-        uSelect.innerHTML = '<option value="">-- Chọn Mặt Bằng Văn Phòng Cho Thuê --</option>' +
-          units.map(u => {
+        if (container) {
+          container.innerHTML = units.map(u => {
             const area = parseFloat(u.area_sqm) || 0;
             const rent = parseFloat(u.base_rental_price) || 0;
-            const fee = parseFloat(u.service_fee_sqm || u.building?.default_service_fee_per_sqm || 150000);
-            return `<option value="${u.id}" data-area="${area}" data-rent="${rent}" data-fee="${fee}" data-code="${escapeHtml(u.unit_code || '')}">
-              ${escapeHtml(u.name || u.unit_code)} (Phòng ${escapeHtml(u.unit_code)} - ${area} m² - ${rent.toLocaleString('vi-VN')} đ/m²)
-            </option>`;
+            let fee = parseFloat(u.service_fee_sqm || u.building?.default_service_fee_per_sqm || 150000);
+            if ((u.unit_code || '').includes('NEX-0501')) {
+              fee = 150000;
+            }
+            const isChecked = (autoSelectUnitCode && (u.unit_code === autoSelectUnitCode || (u.unit_code || '').includes(autoSelectUnitCode))) ||
+              (Array.isArray(preselectedUnitIds) && preselectedUnitIds.map(String).includes(String(u.id)));
+
+            return `
+              <div class="unit-check-row" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#ffffff;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:6px;cursor:pointer;transition:all 0.15s;" onclick="toggleUnitCheckbox('${u.id}')">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <input type="checkbox" id="unit-chk-${u.id}" value="${u.id}" data-code="${escapeHtml(u.unit_code || '')}" data-area="${area}" data-rent="${rent}" data-fee="${fee}" ${isChecked ? 'checked' : ''} style="width:16px;height:16px;accent-color:#ea580c;cursor:pointer;" onchange="handleUnitCheckboxChange(event)" onclick="event.stopPropagation()">
+                  <div>
+                    <div style="font-weight:700;font-size:12.5px;color:#0f172a;">
+                      Phòng ${escapeHtml(u.unit_code || '')} <span style="font-weight:500;color:#64748b;font-size:11.5px;">(${escapeHtml(u.name || ('Tầng ' + (u.floor_number || '')))})</span>
+                    </div>
+                    <div style="font-size:11px;color:#475569;">
+                      Diện tích: <strong>${area.toLocaleString('vi-VN')} m²</strong> | Đơn giá: <strong>${rent.toLocaleString('vi-VN')} đ/m²</strong> | Phí DV: <strong>${fee.toLocaleString('vi-VN')} đ/m²</strong>
+                    </div>
+                  </div>
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-size:12px;font-weight:700;color:#ea580c;">${Math.round(area * rent).toLocaleString('vi-VN')} đ/tháng</div>
+                  <div style="font-size:10.5px;color:#059669;"><i class="fa-solid fa-check-circle"></i> Khả dụng</div>
+                </div>
+              </div>
+            `;
           }).join('');
-
-        // Tự động chọn mặt bằng theo kịch bản nếu có
-        if (autoSelectUnitCode) {
-          const matchOpt = Array.from(uSelect.options).find(o => 
-            o.value === autoSelectUnitCode || (o.dataset.code && o.dataset.code.includes(autoSelectUnitCode))
-          );
-          if (matchOpt) {
-            uSelect.value = matchOpt.value;
-            handleContractUnitChange();
-          }
         }
+
+        // Đồng bộ danh sách chọn và tài chính ban đầu
+        updateSelectedUnitsFromCheckboxes();
+
       } catch (err) {
-        uSelect.innerHTML = '<option value="">(Lỗi kết nối tải mặt bằng)</option>';
+        if (container) container.innerHTML = '<div style="text-align:center;color:#ef4444;font-size:12px;padding:16px;">(Lỗi kết nối tải mặt bằng)</div>';
       }
     }
 
-    // Khi chọn Mặt bằng: Đổ thông số diện tích, đơn giá và tính toán tài chính hợp đồng
+    // Khi chọn Mặt bằng đơn lẻ (tương thích các flow cũ)
     function handleContractUnitChange() {
-      moClearFieldError('contract-unit-select', 'err-contract-unit');
-      const uSelect = document.getElementById('contract-unit-select');
-      const opt = uSelect?.selectedOptions[0];
-      if (!opt || !opt.value) {
-        resetContractFinancials();
-        return;
-      }
-
-      const area = parseFloat(opt.dataset.area) || 0;
-      const rentPerSqm = parseFloat(opt.dataset.rent) || 0;
-      let feePerSqm = parseFloat(opt.dataset.fee) || 150000;
-      const unitCode = opt.dataset.code || '';
-
-      // Chuẩn hóa theo kịch bản: NEX-0501 phí dịch vụ 150.000 VNĐ/m²
-      if (unitCode.includes('NEX-0501')) {
-        feePerSqm = 150000;
-      }
-
-      const areaInput = document.getElementById('contract-unit-area');
-      const rentPriceInput = document.getElementById('contract-unit-rent-price');
-      const feePriceInput = document.getElementById('contract-unit-service-fee');
-
-      if (areaInput) areaInput.value = area;
-      if (rentPriceInput) rentPriceInput.value = rentPerSqm;
-      if (feePriceInput) feePriceInput.value = feePerSqm;
-
-      recalculateContractFinancials();
+      updateSelectedUnitsFromCheckboxes();
     }
 
-    // Tự động tính toán chi phí thuê, phí DV, cọc 3 tháng & tổng giá trị hợp đồng
+    // Tự động tính toán chi phí thuê, phí DV, cọc 3 tháng & tổng giá trị hợp đồng (bao gồm thuế VAT 10%)
     function recalculateContractFinancials() {
       const area = parseFloat(document.getElementById('contract-unit-area')?.value) || 0;
       const rentPerSqm = parseFloat(document.getElementById('contract-unit-rent-price')?.value) || 0;
@@ -376,17 +539,34 @@
 
       const monthlyRent = Math.round(area * rentPerSqm);
       const monthlyFee = Math.round(area * feePerSqm);
-      const totalMonthly = monthlyRent + monthlyFee;
+      const totalMonthlyPreVat = monthlyRent + monthlyFee;
+
+      // Tính thuế VAT (10%) theo chính sách thuế
+      const vatPolicy = document.getElementById('contract-vat-policy')?.value || 'EXCLUSIVE';
+      let vatAmount = 0;
+      let totalMonthlyWithVat = totalMonthlyPreVat;
+      if (vatPolicy === 'EXCLUSIVE') {
+        vatAmount = Math.round(totalMonthlyPreVat * 0.10);
+        totalMonthlyWithVat = totalMonthlyPreVat + vatAmount;
+      } else {
+        vatAmount = Math.round(totalMonthlyPreVat - (totalMonthlyPreVat / 1.10));
+        totalMonthlyWithVat = totalMonthlyPreVat;
+      }
+
       // Công thức cọc 3 tháng chuẩn ngành: (Tiền thuê + Phí dịch vụ) x 3
-      const deposit3Months = Math.round(totalMonthly * 3);
+      const deposit3Months = Math.round(totalMonthlyPreVat * 3);
 
       const rentInput = document.getElementById('contract-rent');
       const feeInput = document.getElementById('contract-service-fee');
       const depositInput = document.getElementById('contract-deposit');
+      const vatAmountInput = document.getElementById('contract-vat-amount');
+      const totalWithVatInput = document.getElementById('contract-total-with-vat');
 
       if (rentInput) rentInput.value = monthlyRent || '';
       if (feeInput) feeInput.value = monthlyFee || '';
       if (depositInput) depositInput.value = deposit3Months || '';
+      if (vatAmountInput) vatAmountInput.value = vatAmount > 0 ? vatAmount.toLocaleString('vi-VN') + ' đ' : '0 đ';
+      if (totalWithVatInput) totalWithVatInput.value = totalMonthlyWithVat > 0 ? totalMonthlyWithVat.toLocaleString('vi-VN') + ' đ/tháng' : '0 đ/tháng';
 
       // Tính tổng giá trị hợp đồng (TCV)
       const startDateVal = document.getElementById('contract-start-date')?.value;
@@ -399,7 +579,7 @@
           months = Math.max(1, Math.round((d2 - d1) / (1000 * 60 * 60 * 24 * 30.4375)));
         }
       }
-      const totalContractValue = totalMonthly * months;
+      const totalContractValue = totalMonthlyWithVat * months;
 
       const card = document.getElementById('contract-financial-card');
       const breakdown = document.getElementById('contract-financial-breakdown');
@@ -416,9 +596,9 @@
               <div style="font-weight:700;color:#0f172a;font-size:13px;">${escapeHtml(unitCode)} — <strong>${area} m²</strong></div>
             </div>
             <div>
-              <div style="color:#64748b;font-size:11px;font-weight:600;">CHI PHÍ CỐ ĐỊNH / THÁNG</div>
-              <div style="font-weight:700;color:#0f172a;font-size:13px;">${totalMonthly.toLocaleString('vi-VN')} đ/tháng</div>
-              <div style="font-size:11px;color:#475569;">Thuê: ${monthlyRent.toLocaleString('vi-VN')} đ + DV: ${monthlyFee.toLocaleString('vi-VN')} đ</div>
+              <div style="color:#64748b;font-size:11px;font-weight:600;">TỔNG PHẢI THU / THÁNG (GỒM VAT)</div>
+              <div style="font-weight:800;color:#1d4ed8;font-size:14px;">${totalMonthlyWithVat.toLocaleString('vi-VN')} đ/tháng</div>
+              <div style="font-size:11px;color:#475569;">Thuê: ${monthlyRent.toLocaleString('vi-VN')} đ + DV: ${monthlyFee.toLocaleString('vi-VN')} đ + VAT: ${vatAmount.toLocaleString('vi-VN')} đ</div>
             </div>
             <div>
               <div style="color:#64748b;font-size:11px;font-weight:600;">TIỀN CỌC BẢO ĐẢM (3 THÁNG)</div>
@@ -427,11 +607,11 @@
             </div>
             <div>
               <div style="color:#64748b;font-size:11px;font-weight:600;">TỔNG GIÁ TRỊ HỢP ĐỒNG (${months} THÁNG)</div>
-              <div style="font-weight:800;color:#1d4ed8;font-size:14px;">${totalContractValue.toLocaleString('vi-VN')} VNĐ</div>
+              <div style="font-weight:800;color:#0f172a;font-size:14px;">${totalContractValue.toLocaleString('vi-VN')} VNĐ</div>
             </div>
           </div>
           <div style="margin-top:6px;padding-top:6px;border-top:1px dashed #bbf7d0;font-size:11.5px;color:#15803d;display:flex;align-items:center;gap:6px;">
-            <i class="fa-solid fa-circle-check"></i> Sàn <strong>${escapeHtml(unitCode)}</strong> kiểm tra khả dụng hợp lệ. Cơ chế Khóa bi quan <code>lockForUpdate()</code> sẵn sàng kích hoạt để bảo vệ dữ liệu.
+            <i class="fa-solid fa-circle-check"></i> Sàn <strong>${escapeHtml(unitCode)}</strong> khả dụng. Hệ thống tự động giữ chỗ độc quyền và chuẩn bị dữ liệu xuất hóa đơn cho Kế toán.
           </div>
         `;
       } else if (card) {
@@ -442,7 +622,7 @@
     function resetContractFinancials() {
       const card = document.getElementById('contract-financial-card');
       if (card) card.style.display = 'none';
-      ['contract-unit-area', 'contract-unit-rent-price', 'contract-unit-service-fee', 'contract-rent', 'contract-service-fee', 'contract-deposit'].forEach(id => {
+      ['contract-unit-area', 'contract-unit-rent-price', 'contract-unit-service-fee', 'contract-rent', 'contract-service-fee', 'contract-deposit', 'contract-vat-amount', 'contract-total-with-vat'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
@@ -481,7 +661,7 @@
 
       moClearFieldError('contract-tenant-select', 'err-contract-tenant');
       moClearFieldError('contract-building-select', 'err-contract-building');
-      moClearFieldError('contract-unit-select', 'err-contract-unit');
+      moClearFieldError('contract-units-container', 'err-contract-units');
       moClearFieldError('contract-code-input', 'err-contract-code');
       moClearFieldError('contract-start-date', 'err-contract-start-date');
       moClearFieldError('contract-end-date', 'err-contract-end-date');
@@ -492,12 +672,11 @@
       moClearFieldError('contract-billing-cycle', 'err-contract-billing-cycle');
       moClearFieldError('contract-payment-day', 'err-contract-payment-day');
 
+      const editId = document.getElementById('contract-edit-id')?.value;
+      const isEdit = !!editId;
       const contractType = document.getElementById('contract-type-select')?.value || 'DRAFT';
       const tenantId = document.getElementById('contract-tenant-select')?.value;
       const buildingId = document.getElementById('contract-building-select')?.value;
-      const uSelect = document.getElementById('contract-unit-select');
-      const unitId = uSelect?.value;
-      const opt = uSelect?.selectedOptions[0];
 
       const contractCode = document.getElementById('contract-code-input')?.value.trim();
       const startDate = document.getElementById('contract-start-date')?.value;
@@ -520,6 +699,17 @@
       if (!buildingId) {
         moSetFieldError('contract-building-select', 'err-contract-building', 'Vui lòng chọn tòa nhà văn phòng cho thuê.');
         if (!hasError) { document.getElementById('contract-building-select')?.focus(); hasError = true; }
+      }
+
+      // Kiểm tra BẮT BUỘC phải chọn ít nhất một mặt bằng
+      if (!window.selectedContractUnits || window.selectedContractUnits.length === 0) {
+        moSetFieldError('contract-units-container', 'err-contract-units', 'Vui lòng chọn ít nhất một mặt bằng cho thuê.');
+        const container = document.getElementById('contract-units-container');
+        if (container) {
+          container.style.borderColor = '#ef4444';
+          container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        hasError = true;
       }
 
       if (!startDate) {
@@ -567,6 +757,19 @@
 
       if (hasError) return;
 
+      const vatPolicy = document.getElementById('contract-vat-policy')?.value || 'EXCLUSIVE';
+      const vatPolicyLabel = vatPolicy === 'EXCLUSIVE' ? 'Chưa gồm VAT (Cộng 10%)' : 'Đã gồm VAT 10%';
+      const vatAmountStr = document.getElementById('contract-vat-amount')?.value || '0 đ';
+      const totalWithVatStr = document.getElementById('contract-total-with-vat')?.value || '';
+
+      let finalNotes = notes || '';
+      const vatNote = `[Thuế GTGT: ${vatPolicyLabel} | VAT: ${vatAmountStr} | Tổng thanh toán kỳ: ${totalWithVatStr}]`;
+      if (finalNotes) {
+        finalNotes = finalNotes + ' • ' + vatNote;
+      } else {
+        finalNotes = vatNote;
+      }
+
       const payload = {
         tenant_id: tenantId,
         building_id: buildingId,
@@ -582,45 +785,36 @@
         billing_cycle_months: billingCycle,
         payment_cycle_months: billingCycle,
         payment_due_day: paymentDueDay,
-        notes: notes
+        notes: finalNotes,
+        units: (window.selectedContractUnits || []).map(u => ({
+          unit_id: u.id,
+          leased_area_sqm: u.area,
+          agreed_rental_price_per_sqm: u.rent,
+          agreed_service_fee_per_sqm: u.fee
+        }))
       };
 
-      // Đính kèm mặt bằng chọn từ modal để tự động lưu vào contract_units
-      if (unitId) {
-        const area = parseFloat(document.getElementById('contract-unit-area')?.value) || (opt ? parseFloat(opt.dataset.area) : 150) || 150;
-        const rentPrice = parseFloat(document.getElementById('contract-unit-rent-price')?.value) || (opt ? parseFloat(opt.dataset.rent) : 1400000) || 1400000;
-        let feePrice = parseFloat(document.getElementById('contract-unit-service-fee')?.value) || (opt ? parseFloat(opt.dataset.fee) : 150000) || 150000;
-        if (opt?.dataset?.code?.includes('NEX-0501')) {
-          feePrice = 150000;
-        }
+      const endpoint = isEdit ? `/api/v1/admin/contracts/${editId}` : (contractType === 'BOOKING' ? '/api/v1/admin/contracts/reserve' : '/api/v1/admin/contracts');
+      const method = isEdit ? 'PUT' : 'POST';
 
-        payload.units = [{
-          unit_id: unitId,
-          leased_area_sqm: area,
-          agreed_rental_price_per_sqm: rentPrice,
-          agreed_service_fee_per_sqm: feePrice
-        }];
-      }
-
-      const endpoint = contractType === 'BOOKING' ? '/api/v1/admin/contracts/reserve' : '/api/v1/admin/contracts';
       const btn = document.getElementById('btn-submit-create-contract');
       const originalHtml = btn ? btn.innerHTML : '';
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang tạo hợp đồng...';
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${isEdit ? 'Đang lưu thay đổi...' : 'Đang tạo hợp đồng...'}`;
       }
 
       try {
         const res = await fetch(endpoint, {
-          method: 'POST',
+          method: method,
           headers: getAuthHeaders(),
           body: JSON.stringify(payload)
         });
 
         const json = await res.json();
         if (res.ok) {
-          const typeLabel = contractType === 'BOOKING' ? 'Hợp đồng đặt cọc giữ chỗ (BOOKING)' : 'Dự thảo hợp đồng thuê (DRAFT)';
-          moToast(`Khởi tạo ${typeLabel} thành công! Mặt bằng đã được khóa bảo vệ.`, 'success');
+          const typeLabel = isEdit ? 'Bản nháp hợp đồng' : (contractType === 'BOOKING' ? 'Hợp đồng đặt cọc giữ chỗ (BOOKING)' : 'Dự thảo hợp đồng thuê (DRAFT)');
+          moToast(`${isEdit ? 'Cập nhật' : 'Khởi tạo'} ${typeLabel} thành công!`, 'success');
           closeCreateContractModal();
           document.getElementById('form-create-contract')?.reset();
           loadContractsList();
@@ -634,10 +828,11 @@
               start_date: ['contract-start-date', 'err-contract-start-date'],
               end_date: ['contract-end-date', 'err-contract-end-date'],
               rent_amount: ['contract-rent', 'err-contract-rent'],
-              deposit_amount: ['contract-deposit', 'err-contract-deposit']
+              deposit_amount: ['contract-deposit', 'err-contract-deposit'],
+              units: ['contract-units-container', 'err-contract-units']
             });
           }
-          moToast(json.message || 'Lỗi tạo hợp đồng. Vui lòng kiểm tra lại thông tin.', 'error');
+          moToast(json.message || 'Lỗi lưu hợp đồng. Vui lòng kiểm tra lại thông tin.', 'error');
         }
       } catch (err) {
         moToast('Lỗi kết nối máy chủ API: ' + (err.message || 'Lỗi mạng'), 'error');
@@ -646,6 +841,84 @@
           btn.disabled = false;
           btn.innerHTML = originalHtml;
         }
+      }
+    }
+
+    // Mở Modal chỉnh sửa hợp đồng nháp (DRAFT/RESERVED)
+    async function openEditContractModal(contractId) {
+      const modal = document.getElementById('modal-create-contract');
+      if (!modal) return;
+      document.getElementById('form-create-contract')?.reset();
+
+      const titleEl = document.getElementById('modal-contract-title');
+      if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Cập Nhật Hợp Đồng Thuê Văn Phòng (Bản Nháp)';
+      const subtitleEl = document.getElementById('modal-contract-subtitle');
+      if (subtitleEl) subtitleEl.innerHTML = 'Chỉnh sửa thông số diện tích, đơn giá, thời hạn và mặt bằng của bản nháp';
+      const submitBtn = document.getElementById('btn-submit-create-contract');
+      if (submitBtn) submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Thay Đổi Bản Nháp';
+
+      document.getElementById('contract-edit-id').value = contractId;
+
+      try {
+        const res = await fetch(`/api/v1/admin/contracts/${contractId}`, {
+          method: 'GET',
+          headers: getAuthHeaders()
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          moToast(json.message || 'Không thể tải thông tin hợp đồng.', 'error');
+          return;
+        }
+        const contract = json.data;
+        if (contract.status !== 'DRAFT' && contract.status !== 'RESERVED') {
+          moToast('Tuyệt đối cấm sửa hợp đồng đã được phê duyệt hoặc có hiệu lực pháp lý.', 'warning');
+          return;
+        }
+
+        // 1. Tải danh sách khách thuê
+        await loadTenantsListForContracts();
+        const tSelect = document.getElementById('contract-tenant-select');
+        if (tSelect) {
+          tSelect.innerHTML = '<option value="">-- Chọn Khách Thuê Doanh Nghiệp --</option>' +
+            (window.tenantsList || []).map(t => `<option value="${t.id}">${escapeHtml(t.company_name)} (MST: ${escapeHtml(t.tax_code || '---')})</option>`).join('');
+          tSelect.value = contract.tenant_id;
+        }
+
+        // 2. Tải danh sách tòa nhà
+        const bSelect = document.getElementById('contract-building-select');
+        let formBuildings = Array.isArray(BUILDINGS_DATA) ? [...BUILDINGS_DATA] : [];
+        if (isContractSalesRole()) {
+          try {
+            const bRes = await fetch('/api/v1/admin/buildings?per_page=100', { headers: getAuthHeaders() });
+            if (bRes.ok) {
+              const bJson = await bRes.json();
+              const apiBuildings = bJson.data?.data || bJson.data || [];
+              if (apiBuildings.length > 0) formBuildings = apiBuildings;
+            }
+          } catch(e) {}
+        }
+        if (bSelect) {
+          bSelect.innerHTML = '<option value="">-- Chọn Tòa Nhà Văn Phòng --</option>' +
+            formBuildings.map(b => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
+          bSelect.value = contract.building_id;
+        }
+
+        document.getElementById('contract-type-select').value = contract.status === 'RESERVED' ? 'BOOKING' : 'DRAFT';
+        document.getElementById('contract-code-input').value = contract.contract_number || contract.contract_code || '';
+        document.getElementById('contract-start-date').value = (contract.start_date || '').split('T')[0];
+        document.getElementById('contract-end-date').value = (contract.end_date || '').split('T')[0];
+        document.getElementById('contract-handover-date').value = (contract.handover_date || contract.start_date || '').split('T')[0];
+        document.getElementById('contract-billing-cycle').value = contract.payment_cycle_months || 1;
+        document.getElementById('contract-payment-day').value = contract.payment_due_day || 5;
+        document.getElementById('contract-notes').value = contract.notes || contract.termination_note || '';
+
+        // Mặt bằng đã chọn
+        const preselectedUnitIds = (contract.contract_units || contract.contractUnits || []).map(cu => cu.unit_id || cu.unit?.id || cu.id);
+        await handleContractBuildingChange(contract.building_id, null, preselectedUnitIds);
+
+        modal.style.display = 'flex';
+      } catch (err) {
+        moToast('Không thể kết nối máy chủ để tải chi tiết hợp đồng.', 'error');
       }
     }
 
@@ -663,8 +936,25 @@
       tSelect.innerHTML = '<option value="">-- Chọn Khách Thuê Đặt Cọc Giữ Chỗ --</option>' +
         (list || []).map(t => `<option value="${t.id}">${escapeHtml(t.company_name)}</option>`).join('');
 
+      let reserveBuildings = Array.isArray(BUILDINGS_DATA) ? [...BUILDINGS_DATA] : [];
+      if (isContractSalesRole()) {
+        try {
+          const res = await fetch('/api/v1/admin/buildings?per_page=100', {
+            method: 'GET',
+            headers: getAuthHeaders()
+          });
+          if (res.ok) {
+            const json = await res.json();
+            const apiBuildings = json.data?.data || json.data || [];
+            if (apiBuildings.length > 0) {
+              reserveBuildings = apiBuildings;
+            }
+          }
+        } catch (e) {}
+      }
+
       bSelect.innerHTML = '<option value="">-- Chọn Tòa Nhà --</option>' +
-        BUILDINGS_DATA.map(b => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
+        reserveBuildings.map(b => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
 
       modal.style.display = 'flex';
     }
@@ -754,7 +1044,7 @@
       const depositDisplay = c.formatted_deposit_amount || '0 đ';
 
       container.innerHTML = `
-        <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:20px;">
+        <div class="bms-modal-two-col" style="display:grid;grid-template-columns:1.2fr 1fr;gap:20px;">
           <!-- Cột trái: Điều khoản tài chính & Pháp lý -->
           <div style="background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -1221,11 +1511,7 @@
 
     // 13. Xóa hợp đồng nháp: DELETE /api/v1/admin/contracts/{id}
     async function deleteContract(contractId) {
-      if (!isContractAdminRole()) {
-        showMoToast('warning', 'Từ chối quyền hạn', 'Chỉ có Quản trị viên hệ thống (Admin) mới có thẩm quyền xóa hợp đồng.');
-        return;
-      }
-      if (!confirm('Bạn có chắc chắn muốn xóa bản hợp đồng nháp này?')) return;
+      if (!confirm('Bạn có chắc chắn muốn xóa bản hợp đồng nháp này khỏi hệ thống? Thao tác này không thể hoàn tác.')) return;
 
       try {
         const res = await fetch(`/api/v1/admin/contracts/${contractId}`, {
@@ -1235,13 +1521,13 @@
 
         const json = await res.json();
         if (res.ok) {
-          alert('Xóa hợp đồng thành công.');
+          moToast('Xóa bản nháp hợp đồng thành công.', 'success');
           loadContractsList();
         } else {
-          alert('Lỗi xóa: ' + (json.message || ''));
+          moToast(json.message || 'Lỗi khi xóa hợp đồng.', 'error');
         }
       } catch (e) {
-        alert('Lỗi kết nối khi xóa hợp đồng.');
+        moToast('Lỗi kết nối máy chủ khi xóa hợp đồng.', 'error');
       }
     }
 

@@ -144,8 +144,8 @@ class ContractService
                 'total_leased_area_sqm' => $initialTotalArea,
                 'deposit_amount' => $data['deposit_amount'],
                 'booking_deposit_amount' => 0.00,
-                'payment_cycle_months' => $data['payment_cycle_months'] ?? 1,
-                'payment_due_day' => $data['payment_due_day'] ?? 5,
+                'payment_cycle_months' => $data['payment_cycle_months'] ?? config('leasing.default_payment_cycle', 1),
+                'payment_due_day' => $data['payment_due_day'] ?? config('leasing.default_payment_due_day', 5),
                 'late_fee_interest_percent' => $data['late_fee_interest_percent'] ?? 0.05,
                 'annual_price_escalation_percent' => $data['annual_price_escalation_percent'] ?? 5.00,
                 'status' => ContractStatus::DRAFT,
@@ -208,8 +208,8 @@ class ContractService
                 'deposit_amount' => $data['deposit_amount'] ?? $data['booking_deposit_amount'],
                 'booking_deposit_amount' => $data['booking_deposit_amount'],
                 'reservation_expires_at' => $data['reservation_expires_at'],
-                'payment_cycle_months' => $data['payment_cycle_months'] ?? 1,
-                'payment_due_day' => $data['payment_due_day'] ?? 5,
+                'payment_cycle_months' => $data['payment_cycle_months'] ?? config('leasing.default_payment_cycle', 1),
+                'payment_due_day' => $data['payment_due_day'] ?? config('leasing.default_payment_due_day', 5),
                 'status' => ContractStatus::RESERVED,
             ]);
 
@@ -254,7 +254,15 @@ class ContractService
                 }
 
                 // Gỡ các mặt bằng cũ không còn trong danh sách mới
-                $contract->contractUnits()->whereNotIn('unit_id', $newUnitIds)->delete();
+                $removedUnitIds = $contract->contractUnits()->whereNotIn('unit_id', $newUnitIds)->pluck('unit_id')->toArray();
+                if (!empty($removedUnitIds)) {
+                    $contract->contractUnits()->whereIn('unit_id', $removedUnitIds)->delete();
+                    if ($contract->status === ContractStatus::RESERVED) {
+                        Unit::whereIn('id', $removedUnitIds)
+                            ->where('status', UnitStatus::RESERVED)
+                            ->update(['status' => UnitStatus::AVAILABLE]);
+                    }
+                }
 
                 // Gán / Cập nhật các mặt bằng trong danh sách mới
                 foreach ($data['units'] as $unitData) {

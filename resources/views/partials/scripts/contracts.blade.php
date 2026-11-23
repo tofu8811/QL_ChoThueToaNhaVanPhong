@@ -2,6 +2,15 @@
     /* ==========================================================================
        MODULE 3: CONTRACTS & TENANT PORTAL JAVASCRIPT (ENDPOINTS 43 - 56)
        ========================================================================== */
+    window.LEASING_CONFIG = {
+      vatRate: {{ (float) config('leasing.vat_rate', 0.10) }},
+      vatPercent: {{ (float) (config('leasing.vat_rate', 0.10) * 100) }},
+      depositMonths: {{ (int) config('leasing.deposit_months', 3) }},
+      defaultPaymentCycle: {{ (int) config('leasing.default_payment_cycle', 1) }},
+      defaultPaymentDueDay: {{ (int) config('leasing.default_payment_due_day', 5) }},
+      defaultServiceFeeSqm: {{ (float) config('leasing.default_service_fee_sqm', 150000) }}
+    };
+
     let contractsList = [];
     let currentContractStatus = 'ALL';
     let currentContractSearch = '';
@@ -278,6 +287,11 @@
         handleContractBuildingChange(formBuildings[0].id);
       }
 
+      // Reset loại hợp đồng về DRAFT mặc định
+      const typeSelect = document.getElementById('contract-type-select');
+      if (typeSelect) typeSelect.value = 'DRAFT';
+      handleContractTypeChange('DRAFT');
+
       // Hỗ trợ truyền sẵn thông số từ CRM Lead hoặc Tenant
       if (presetTenantId) {
         tSelect.value = presetTenantId;
@@ -290,6 +304,7 @@
       if (modal) modal.style.display = 'none';
       const editIdEl = document.getElementById('contract-edit-id');
       if (editIdEl) editIdEl.value = '';
+      handleContractTypeChange('DRAFT');
       const titleEl = document.getElementById('modal-contract-title');
       if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-file-signature"></i> Khởi Tạo Hợp Đồng Thuê Văn Phòng (Bản Nháp)';
       const subtitleEl = document.getElementById('modal-contract-subtitle');
@@ -297,6 +312,34 @@
       const submitBtn = document.getElementById('btn-submit-create-contract');
       if (submitBtn) submitBtn.innerHTML = '<i class="fa-solid fa-file-circle-plus"></i> Khởi Tạo Bản Nháp';
     }
+
+    // Xử lý chuyển đổi loại hợp đồng (DRAFT vs BOOKING)
+    function handleContractTypeChange(val) {
+      const bookingRow = document.getElementById('booking-fields-row');
+      if (!bookingRow) return;
+      if (val === 'BOOKING') {
+        bookingRow.style.display = 'block';
+        const expInput = document.getElementById('contract-reservation-expires-at');
+        if (expInput && !expInput.value) {
+          const now = new Date();
+          now.setDate(now.getDate() + 7);
+          const yyyy = now.getFullYear();
+          const mm = String(now.getMonth() + 1).padStart(2, '0');
+          const dd = String(now.getDate()).padStart(2, '0');
+          expInput.value = `${yyyy}-${mm}-${dd}`;
+        }
+        const rent = parseFloat(document.getElementById('contract-rent')?.value) || 0;
+        const bookingDepInput = document.getElementById('contract-booking-deposit');
+        if (bookingDepInput && (!bookingDepInput.value || bookingDepInput.value === '0') && rent > 0) {
+          bookingDepInput.value = Math.round(rent * 0.5);
+        }
+      } else {
+        bookingRow.style.display = 'none';
+        moClearFieldError('contract-booking-deposit', 'err-contract-booking-deposit');
+        moClearFieldError('contract-reservation-expires-at', 'err-contract-reservation-expires-at');
+      }
+    }
+    window.handleContractTypeChange = handleContractTypeChange;
 
     // Nhận diện Khách thuê: Tự động phát hiện nhu cầu tòa nhà & mặt bằng từ CRM Lead
     async function handleContractTenantChange(tenantId, presetBuildingId = null, presetUnitId = null) {
@@ -489,9 +532,10 @@
           container.innerHTML = units.map(u => {
             const area = parseFloat(u.area_sqm) || 0;
             const rent = parseFloat(u.base_rental_price) || 0;
-            let fee = parseFloat(u.service_fee_sqm || u.building?.default_service_fee_per_sqm || 150000);
+            const defaultFee = window.LEASING_CONFIG?.defaultServiceFeeSqm || 150000;
+            let fee = parseFloat(u.service_fee_sqm || u.building?.default_service_fee_per_sqm || defaultFee);
             if ((u.unit_code || '').includes('NEX-0501')) {
-              fee = 150000;
+              fee = defaultFee;
             }
             const isChecked = (autoSelectUnitCode && (u.unit_code === autoSelectUnitCode || (u.unit_code || '').includes(autoSelectUnitCode))) ||
               (Array.isArray(preselectedUnitIds) && preselectedUnitIds.map(String).includes(String(u.id)));
@@ -541,20 +585,23 @@
       const monthlyFee = Math.round(area * feePerSqm);
       const totalMonthlyPreVat = monthlyRent + monthlyFee;
 
-      // Tính thuế VAT (10%) theo chính sách thuế
+      // Tính thuế VAT theo cấu hình hệ thống (config/leasing.php)
       const vatPolicy = document.getElementById('contract-vat-policy')?.value || 'EXCLUSIVE';
+      const vatRate = window.LEASING_CONFIG?.vatRate ?? 0.10;
+      const depositMonths = window.LEASING_CONFIG?.depositMonths ?? 3;
+
       let vatAmount = 0;
       let totalMonthlyWithVat = totalMonthlyPreVat;
       if (vatPolicy === 'EXCLUSIVE') {
-        vatAmount = Math.round(totalMonthlyPreVat * 0.10);
+        vatAmount = Math.round(totalMonthlyPreVat * vatRate);
         totalMonthlyWithVat = totalMonthlyPreVat + vatAmount;
       } else {
-        vatAmount = Math.round(totalMonthlyPreVat - (totalMonthlyPreVat / 1.10));
+        vatAmount = Math.round(totalMonthlyPreVat - (totalMonthlyPreVat / (1 + vatRate)));
         totalMonthlyWithVat = totalMonthlyPreVat;
       }
 
-      // Công thức cọc 3 tháng chuẩn ngành: (Tiền thuê + Phí dịch vụ) x 3
-      const deposit3Months = Math.round(totalMonthlyPreVat * 3);
+      // Công thức cọc theo cấu hình chuẩn ngành (config/leasing.php): (Tiền thuê + Phí dịch vụ) x số tháng cọc
+      const depositCalc = Math.round(totalMonthlyPreVat * depositMonths);
 
       const rentInput = document.getElementById('contract-rent');
       const feeInput = document.getElementById('contract-service-fee');
@@ -564,7 +611,7 @@
 
       if (rentInput) rentInput.value = monthlyRent || '';
       if (feeInput) feeInput.value = monthlyFee || '';
-      if (depositInput) depositInput.value = deposit3Months || '';
+      if (depositInput) depositInput.value = depositCalc || '';
       if (vatAmountInput) vatAmountInput.value = vatAmount > 0 ? vatAmount.toLocaleString('vi-VN') + ' đ' : '0 đ';
       if (totalWithVatInput) totalWithVatInput.value = totalMonthlyWithVat > 0 ? totalMonthlyWithVat.toLocaleString('vi-VN') + ' đ/tháng' : '0 đ/tháng';
 
@@ -601,8 +648,8 @@
               <div style="font-size:11px;color:#475569;">Thuê: ${monthlyRent.toLocaleString('vi-VN')} đ + DV: ${monthlyFee.toLocaleString('vi-VN')} đ + VAT: ${vatAmount.toLocaleString('vi-VN')} đ</div>
             </div>
             <div>
-              <div style="color:#64748b;font-size:11px;font-weight:600;">TIỀN CỌC BẢO ĐẢM (3 THÁNG)</div>
-              <div style="font-weight:800;color:#047857;font-size:14px;">${deposit3Months.toLocaleString('vi-VN')} VNĐ</div>
+              <div style="color:#64748b;font-size:11px;font-weight:600;">TIỀN CỌC BẢO ĐẢM (${depositMonths} THÁNG)</div>
+              <div style="font-weight:800;color:#047857;font-size:14px;">${depositCalc.toLocaleString('vi-VN')} VNĐ</div>
               <div style="font-size:10.5px;color:#16a34a;font-weight:600;">Chuẩn quy định BĐS thương mại</div>
             </div>
             <div>
@@ -633,7 +680,8 @@
       const rent = parseFloat(document.getElementById('contract-rent')?.value) || 0;
       const fee = parseFloat(document.getElementById('contract-service-fee')?.value) || 0;
       if (rent > 0 || fee > 0) {
-        const deposit = (rent + fee) * 3;
+        const depositMonths = window.LEASING_CONFIG?.depositMonths ?? 3;
+        const deposit = (rent + fee) * depositMonths;
         const depositInput = document.getElementById('contract-deposit');
         if (depositInput) depositInput.value = deposit;
       }
@@ -668,6 +716,8 @@
       moClearFieldError('contract-rent', 'err-contract-rent');
       moClearFieldError('contract-service-fee', 'err-contract-service-fee');
       moClearFieldError('contract-deposit', 'err-contract-deposit');
+      moClearFieldError('contract-booking-deposit', 'err-contract-booking-deposit');
+      moClearFieldError('contract-reservation-expires', 'err-contract-reservation-expires');
       moClearFieldError('contract-handover-date', 'err-contract-handover-date');
       moClearFieldError('contract-billing-cycle', 'err-contract-billing-cycle');
       moClearFieldError('contract-payment-day', 'err-contract-payment-day');
@@ -755,6 +805,27 @@
         if (!hasError) { document.getElementById('contract-payment-day')?.focus(); hasError = true; }
       }
 
+      // Kiểm tra riêng cho loại hợp đồng Đặt cọc giữ chỗ (BOOKING)
+      let bookingDeposit = null;
+      let reservationExpires = null;
+      if (contractType === 'BOOKING') {
+        const bDepositStr = document.getElementById('contract-booking-deposit')?.value?.trim();
+        bookingDeposit = bDepositStr ? parseFloat(bDepositStr) : 0;
+        if (!bDepositStr || isNaN(bookingDeposit) || bookingDeposit <= 0) {
+          moSetFieldError('contract-booking-deposit', 'err-contract-booking-deposit', 'Vui lòng nhập số tiền cọc giữ chỗ hợp lệ (> 0 VNĐ).');
+          if (!hasError) { document.getElementById('contract-booking-deposit')?.focus(); hasError = true; }
+        }
+
+        reservationExpires = document.getElementById('contract-reservation-expires')?.value?.trim();
+        if (!reservationExpires) {
+          moSetFieldError('contract-reservation-expires', 'err-contract-reservation-expires', 'Vui lòng chọn thời hạn giữ chỗ mặt bằng.');
+          if (!hasError) { document.getElementById('contract-reservation-expires')?.focus(); hasError = true; }
+        } else if (new Date(reservationExpires) <= new Date()) {
+          moSetFieldError('contract-reservation-expires', 'err-contract-reservation-expires', 'Hạn chót giữ chỗ phải lớn hơn thời điểm hiện tại.');
+          if (!hasError) { document.getElementById('contract-reservation-expires')?.focus(); hasError = true; }
+        }
+      }
+
       if (hasError) return;
 
       const vatPolicy = document.getElementById('contract-vat-policy')?.value || 'EXCLUSIVE';
@@ -779,7 +850,8 @@
         end_date: endDate,
         handover_date: handoverDate,
         deposit_amount: depositAmount,
-        booking_deposit_amount: contractType === 'BOOKING' ? depositAmount : 0,
+        booking_deposit_amount: contractType === 'BOOKING' ? (bookingDeposit || 0) : undefined,
+        reservation_expires_at: contractType === 'BOOKING' ? reservationExpires : undefined,
         rent_amount: rentAmount,
         service_fee_amount: serviceFee,
         billing_cycle_months: billingCycle,
@@ -829,6 +901,8 @@
               end_date: ['contract-end-date', 'err-contract-end-date'],
               rent_amount: ['contract-rent', 'err-contract-rent'],
               deposit_amount: ['contract-deposit', 'err-contract-deposit'],
+              booking_deposit_amount: ['contract-booking-deposit', 'err-contract-booking-deposit'],
+              reservation_expires_at: ['contract-reservation-expires', 'err-contract-reservation-expires'],
               units: ['contract-units-container', 'err-contract-units']
             });
           }
@@ -903,7 +977,22 @@
           bSelect.value = contract.building_id;
         }
 
-        document.getElementById('contract-type-select').value = contract.status === 'RESERVED' ? 'BOOKING' : 'DRAFT';
+        const isReserved = contract.status === 'RESERVED';
+        const typeSelect = document.getElementById('contract-type-select');
+        if (typeSelect) {
+          typeSelect.value = isReserved ? 'BOOKING' : 'DRAFT';
+          handleContractTypeChange(typeSelect.value);
+        }
+
+        if (isReserved) {
+          const bDepositInput = document.getElementById('contract-booking-deposit');
+          if (bDepositInput) bDepositInput.value = contract.booking_deposit_amount || '';
+          const rExpiresInput = document.getElementById('contract-reservation-expires');
+          if (rExpiresInput && contract.reservation_expires_at) {
+            rExpiresInput.value = contract.reservation_expires_at.replace(' ', 'T').substring(0, 16);
+          }
+        }
+
         document.getElementById('contract-code-input').value = contract.contract_number || contract.contract_code || '';
         document.getElementById('contract-start-date').value = (contract.start_date || '').split('T')[0];
         document.getElementById('contract-end-date').value = (contract.end_date || '').split('T')[0];
@@ -1068,7 +1157,12 @@
               <div><strong>Tăng giá định kỳ:</strong> ${c.annual_price_escalation_percent || 0}% / năm</div>
             </div>
 
-            <div style="margin-top:16px;padding-top:14px;border-top:1px solid #e2e8f0;display:flex;gap:8px;justify-content:flex-end;">
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid #e2e8f0;display:flex;gap:8px;justify-content:flex-end;align-items:center;">
+              ${(c.status === 'DRAFT' || c.status === 'RESERVED') ? `
+                <button class="btn-mo-outline" style="padding:6px 12px;font-size:12px;color:#0284c7;border-color:#bae6fd;" onclick="closeContractDetailModal();openEditContractModal('${c.id}')" title="Chỉnh sửa bản nháp">
+                  <i class="fa-solid fa-pen-to-square"></i> Sửa Bản Nháp
+                </button>
+              ` : ''}
               ${(c.status === 'DRAFT' || c.status === 'RESERVED') ? (
                 isContractSalesRole() ? `
                   <div style="background:#fef3c7;color:#d97706;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;border:1px solid #fde68a;display:inline-flex;align-items:center;gap:6px;">

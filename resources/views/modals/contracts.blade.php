@@ -18,10 +18,11 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="form-field">
           <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Loại Hợp Đồng <span style="color:#ef4444;">*</span></label>
-          <select id="contract-type-select" class="filament-input-sm">
+          <select id="contract-type-select" class="filament-input-sm" onchange="handleContractTypeChange(this.value)">
             <option value="DRAFT" selected>Dự thảo hợp đồng thuê (DRAFT)</option>
             <option value="BOOKING">Hợp đồng đặt cọc giữ chỗ (BOOKING)</option>
           </select>
+          <div class="field-error-slot" id="err-contract-type"></div>
         </div>
         <div class="form-field">
           <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Khách Thuê Doanh Nghiệp <span style="color:#ef4444;">*</span></label>
@@ -38,6 +39,25 @@
             <!-- Rendered via JS -->
           </select>
           <div class="field-error-slot" id="err-contract-building"></div>
+        </div>
+      </div>
+
+      <!-- KHỐI DÀNH RIÊNG CHO HỢP ĐỒNG ĐẶT CỌC GIỮ CHỖ (BOOKING) -->
+      <div id="booking-fields-row" style="display:none;background:#fffbeb;border:1px solid #fef3c7;border-radius:8px;padding:12px;margin-bottom:14px;">
+        <div style="font-size:12px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+          <i class="fa-solid fa-hourglass-half"></i> Thông số đặt cọc giữ chỗ (Booking)
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-field">
+            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Tiền Cọc Giữ Chỗ Tạm Thời (VNĐ) <span style="color:#ef4444;">*</span></label>
+            <input type="number" step="1000" id="contract-booking-deposit" class="filament-input-sm" placeholder="VD: 50000000" oninput="moClearFieldError('contract-booking-deposit', 'err-contract-booking-deposit')">
+            <div class="field-error-slot" id="err-contract-booking-deposit"></div>
+          </div>
+          <div class="form-field">
+            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Hạn Chót Giữ Chỗ Đến Ngày <span style="color:#ef4444;">*</span></label>
+            <input type="date" id="contract-reservation-expires-at" class="filament-input-sm" onchange="moClearFieldError('contract-reservation-expires-at', 'err-contract-reservation-expires-at')">
+            <div class="field-error-slot" id="err-contract-reservation-expires-at"></div>
+          </div>
         </div>
       </div>
 
@@ -96,23 +116,23 @@
             <div class="field-error-slot" id="err-contract-service-fee"></div>
           </div>
           <div class="form-field">
-            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Tiền Cọc Bảo Đảm (3 Tháng) <span style="color:#ef4444;">*</span></label>
-            <input type="number" step="1000" id="contract-deposit" class="filament-input-sm" style="font-weight:700;color:#047857;" placeholder="Quy chuẩn cọc 3 tháng" oninput="moClearFieldError('contract-deposit', 'err-contract-deposit')">
+            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Tiền Cọc Bảo Đảm ({{ config('leasing.deposit_months', 3) }} Tháng) <span style="color:#ef4444;">*</span></label>
+            <input type="number" step="1000" id="contract-deposit" class="filament-input-sm" style="font-weight:700;color:#047857;" placeholder="Quy chuẩn cọc {{ config('leasing.deposit_months', 3) }} tháng" oninput="moClearFieldError('contract-deposit', 'err-contract-deposit')">
             <div class="field-error-slot" id="err-contract-deposit"></div>
           </div>
         </div>
 
-        <!-- THUẾ VAT 10% VÀ TỔNG PHẢI THU HÀNG THÁNG -->
+        <!-- THUẾ VAT VÀ TỔNG PHẢI THU HÀNG THÁNG -->
         <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px;padding-top:10px;border-top:1px dashed #cbd5e1;">
           <div class="form-field">
-            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Chính Sách Thuế VAT (10%) <span style="color:#ef4444;">*</span></label>
+            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Chính Sách Thuế VAT ({{ (int)(config('leasing.vat_rate', 0.10) * 100) }}%) <span style="color:#ef4444;">*</span></label>
             <select id="contract-vat-policy" class="filament-input-sm" onchange="recalculateContractFinancials()">
-              <option value="EXCLUSIVE" selected>Chưa gồm VAT (Cộng thêm 10% VAT)</option>
-              <option value="INCLUSIVE">Đã bao gồm thuế VAT (10%)</option>
+              <option value="EXCLUSIVE" selected>Chưa gồm VAT (Cộng thêm {{ (int)(config('leasing.vat_rate', 0.10) * 100) }}% VAT)</option>
+              <option value="INCLUSIVE">Đã bao gồm thuế VAT ({{ (int)(config('leasing.vat_rate', 0.10) * 100) }}%)</option>
             </select>
           </div>
           <div class="form-field">
-            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Tiền Thuế VAT 10% (VNĐ/tháng)</label>
+            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Tiền Thuế VAT {{ (int)(config('leasing.vat_rate', 0.10) * 100) }}% (VNĐ/tháng)</label>
             <input type="text" id="contract-vat-amount" class="filament-input-sm" readonly style="background:#f1f5f9;cursor:not-allowed;font-weight:600;color:#0284c7;" placeholder="Tự động tính VAT">
           </div>
           <div class="form-field">
@@ -165,12 +185,12 @@
         </div>
         <div class="form-field">
           <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Kỳ Thanh Toán (Tháng)</label>
-          <input type="number" id="contract-billing-cycle" value="1" min="1" class="filament-input-sm" oninput="moClearFieldError('contract-billing-cycle', 'err-contract-billing-cycle')">
+          <input type="number" id="contract-billing-cycle" value="{{ config('leasing.default_payment_cycle', 1) }}" min="1" class="filament-input-sm" oninput="moClearFieldError('contract-billing-cycle', 'err-contract-billing-cycle')">
           <div class="field-error-slot" id="err-contract-billing-cycle"></div>
         </div>
         <div class="form-field">
           <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Hạn Đóng Tiền Hàng Tháng</label>
-          <input type="number" id="contract-payment-day" value="5" min="1" max="28" class="filament-input-sm" oninput="moClearFieldError('contract-payment-day', 'err-contract-payment-day')">
+          <input type="number" id="contract-payment-day" value="{{ config('leasing.default_payment_due_day', 5) }}" min="1" max="28" class="filament-input-sm" oninput="moClearFieldError('contract-payment-day', 'err-contract-payment-day')">
           <div class="field-error-slot" id="err-contract-payment-day"></div>
         </div>
       </div>

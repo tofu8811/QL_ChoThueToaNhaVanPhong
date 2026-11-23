@@ -23,7 +23,7 @@ class StoreContractRequest extends BaseApiRequest
             'late_fee_interest_percent' => ['nullable', 'numeric', 'min:0'],
             'annual_price_escalation_percent' => ['nullable', 'numeric', 'min:0'],
             'units' => ['required', 'array', 'min:1'],
-            'units.*.unit_id' => ['required', 'uuid', 'exists:units,id'],
+            'units.*.unit_id' => ['required', 'uuid', 'distinct', 'exists:units,id'],
             'units.*.leased_area_sqm' => ['required', 'numeric', 'gt:0'],
             'units.*.agreed_rental_price_per_sqm' => ['required', 'numeric', 'gt:0'],
             'units.*.agreed_service_fee_per_sqm' => ['nullable', 'numeric', 'min:0'],
@@ -45,8 +45,11 @@ class StoreContractRequest extends BaseApiRequest
             'end_date.after' => 'Ngày kết thúc phải diễn ra sau ngày bắt đầu thuê.',
             'deposit_amount.required' => 'Tiền đặt cọc hợp đồng là bắt buộc.',
             'deposit_amount.min' => 'Tiền đặt cọc không được là số âm.',
-            'units.required' => 'Hợp đồng bắt buộc phải chỉ định ít nhất một mặt bằng cho thuê.',
+            'units.required' => 'Hợp đồng bắt buộc phải chọn ít nhất một mặt bằng cho thuê.',
             'units.min' => 'Hợp đồng bắt buộc phải có ít nhất một mặt bằng.',
+            'units.*.unit_id.distinct' => 'Mỗi mặt bằng chỉ được thêm vào hợp đồng một lần duy nhất.',
+            'units.*.leased_area_sqm.gt' => 'Diện tích thuê của mỗi mặt bằng phải lớn hơn 0 m².',
+            'units.*.agreed_rental_price_per_sqm.gt' => 'Đơn giá thuê của mỗi mặt bằng phải lớn hơn 0 VNĐ.',
         ];
     }
 

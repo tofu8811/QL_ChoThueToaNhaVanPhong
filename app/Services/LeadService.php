@@ -98,11 +98,19 @@ class LeadService
                 'status' => $isAssigned ? LeadStatus::NEW : LeadStatus::PENDING_ASSIGN,
             ]);
 
-            // 4. Phát sóng Realtime qua Reverb
-            if ($isAssigned) {
+            // 4. Phát sóng Realtime qua Reverb (an toàn, không làm hỏng transaction nếu Reverb chưa bật)
+            try {
+                if ($isAssigned) {
+                    try {
                 LeadAssignedToSalesEvent::dispatch($lead);
-            } else {
-                LeadPendingAssignmentEvent::dispatch($lead);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Broadcast realtime failed: ' . $e->getMessage());
+            }
+                } else {
+                    LeadPendingAssignmentEvent::dispatch($lead);
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Broadcast realtime failed: ' . $e->getMessage());
             }
 
             return $lead;
@@ -320,7 +328,11 @@ class LeadService
             ]);
 
             if ($isAssigned) {
+                try {
                 LeadAssignedToSalesEvent::dispatch($lead);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Broadcast realtime failed: ' . $e->getMessage());
+            }
             } else {
                 LeadPendingAssignmentEvent::dispatch($lead);
             }
@@ -478,7 +490,11 @@ class LeadService
                 'event_at' => now(),
             ]);
 
-            LeadAssignedToSalesEvent::dispatch($lead);
+            try {
+                LeadAssignedToSalesEvent::dispatch($lead);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Broadcast realtime failed: ' . $e->getMessage());
+            }
 
             return $lead->fresh(['assignedSales', 'building']);
         });

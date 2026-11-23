@@ -359,10 +359,10 @@
         <!-- 7. Mặt bằng cụ thể (nếu có) -->
         <div class="form-field">
           <label for="lead-unit"><span>Mặt bằng / Tầng cụ thể <span style="font-size: 12px; color: #64748b; font-weight: normal;">(Tùy chọn)</span></span></label>
-          <select id="lead-unit" wire:model.defer="unit_id" {{ empty($building_id) ? 'disabled' : '' }}>
+          <select id="lead-unit" wire:model.live="unit_id" {{ empty($building_id) ? 'disabled' : '' }}>
             <option value="">{{ empty($building_id) ? '-- Hãy chọn tòa nhà trước --' : '-- Chọn mặt bằng sàn trống --' }}</option>
             @foreach($units as $u)
-              <option value="{{ $u->id }}">Tầng {{ $u->floor_number }} - {{ number_format($u->area_sqm, 0) }} m²</option>
+              <option value="{{ $u->id }}">{{ ($u->unit_code ? $u->unit_code . ' - ' : '') . ($u->name ? $u->name : ('Tầng ' . $u->floor_number)) }} ({{ number_format($u->area_sqm, 0) }} m²)</option>
             @endforeach
           </select>
           <div class="field-error-slot">

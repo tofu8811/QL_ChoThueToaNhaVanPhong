@@ -292,7 +292,8 @@
         if (bCode.includes('NEXUS') || (building?.name || '').toLowerCase().includes('nexus')) {
           bCode = 'NEXUS';
         }
-        codeInput.value = `HD-${bCode}-2026-0001`;
+        const randSuffix = Math.floor(1000 + Math.random() * 9000);
+        codeInput.value = `HD-${bCode}-2026-${randSuffix}`;
       }
 
       uSelect.innerHTML = '<option value="">Đang tải danh sách mặt bằng trống...</option>';

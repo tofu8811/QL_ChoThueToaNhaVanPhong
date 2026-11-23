@@ -24,12 +24,12 @@ Route::post('logout', [AuthWebController::class, 'logout'])->name('web.logout');
 // ==========================================================================
 // 2. PHÂN HỆ QUẢN TRỊ TOÀN HỆ THỐNG (/admin - Super Admin & Admin)
 // ==========================================================================
-// Hợp đồng thuê chung: Admin, PM, Sales đều có thẩm quyền xem & lập hợp đồng nháp
+// Hợp đồng thuê chung: Admin & PM có thẩm quyền xem & ký duyệt hợp đồng chính thức
 Route::get('admin/contracts', [AdminWebController::class, 'contracts'])
-    ->middleware(['role.web:admin,super_admin,sales,sale,pm,property_manager'])
+    ->middleware(['role.web:admin,super_admin,pm,property_manager'])
     ->name('admin.contracts');
 Route::get('admin/contracts/{id}/print', [PortalWebController::class, 'printContract'])
-    ->middleware(['role.web:admin,super_admin,sales,sale,pm,property_manager'])
+    ->middleware(['role.web:admin,super_admin,pm,property_manager,sales,sale'])
     ->name('contracts.print');
 
 Route::prefix('admin')->middleware(['role.web:admin,super_admin'])->group(function () {
@@ -66,7 +66,7 @@ Route::prefix('sales')->middleware(['role.web:sales,sale,admin,super_admin'])->g
     Route::get('dashboard', [SaleWebController::class, 'dashboard'])->name('sales.dashboard');
     Route::get('leads', [SaleWebController::class, 'leads'])->name('sales.leads');
     Route::get('quotes', [SaleWebController::class, 'quotes'])->name('sales.quotes');
-    Route::get('contracts', [AdminWebController::class, 'contracts'])->name('sales.contracts');
+    Route::get('contracts', [SaleWebController::class, 'contracts'])->name('sales.contracts');
     Route::get('available-units', [SaleWebController::class, 'availableUnits'])->name('sales.available-units');
 });
 

@@ -10,7 +10,10 @@
         <span>Office</span>
       </div>
     </a>
-    <span class="filament-badge-role" style="background:rgba(245,158,11,0.18);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);">Sales Rep</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="filament-badge-role" style="background:rgba(245,158,11,0.18);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);">Sales Rep</span>
+      <button type="button" class="bms-sidebar-close-btn" onclick="closeBmsMobileSidebar()" title="Đóng menu">&times;</button>
+    </div>
   </div>
 
   <!-- Section: PHÂN HỆ KINH DOANH & CRM -->
@@ -39,7 +42,7 @@
       </div>
     </a>
 
-    <a href="{{ route('admin.contracts') }}" class="filament-link {{ request()->routeIs('admin.contracts') || request()->routeIs('sales.contracts') ? 'active' : '' }}">
+    <a href="{{ route('sales.contracts') }}" class="filament-link {{ request()->routeIs('sales.contracts') || request()->routeIs('admin.contracts') ? 'active' : '' }}">
       <div class="filament-link-content">
         <i class="fa-solid fa-file-signature"></i>
         <span>Hợp đồng & Lập HĐ nháp</span>

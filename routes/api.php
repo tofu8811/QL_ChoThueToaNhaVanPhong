@@ -90,12 +90,13 @@ Route::prefix('v1')->group(function () {
         // =====================================================================
         // MODULE 3: QUẢN TRỊ HỢP ĐỒNG THUÊ VĂN PHÒNG (CONTRACTS & UNITS)
         // =====================================================================
+        Route::get('contracts/next-code', [ContractApiController::class, 'nextContractCode'])->name('v1.admin.contracts.next-code');
         Route::get('contracts', [ContractApiController::class, 'index'])->name('v1.admin.contracts.index');
         Route::post('contracts', [ContractApiController::class, 'store'])->middleware('role:admin,pm,sales')->name('v1.admin.contracts.store');
         Route::post('contracts/reserve', [ContractApiController::class, 'reserve'])->middleware('role:admin,sales')->name('v1.admin.contracts.reserve');
         Route::get('contracts/{id}', [ContractApiController::class, 'show'])->name('v1.admin.contracts.show');
-        Route::put('contracts/{id}', [ContractApiController::class, 'update'])->middleware('role:admin,pm')->name('v1.admin.contracts.update');
-        Route::delete('contracts/{id}', [ContractApiController::class, 'destroy'])->middleware('role:admin')->name('v1.admin.contracts.destroy');
+        Route::put('contracts/{id}', [ContractApiController::class, 'update'])->middleware('role:admin,pm,sales')->name('v1.admin.contracts.update');
+        Route::delete('contracts/{id}', [ContractApiController::class, 'destroy'])->middleware('role:admin,pm,sales')->name('v1.admin.contracts.destroy');
 
         Route::post('contracts/{id}/units', [ContractApiController::class, 'attachUnit'])->middleware('role:admin,pm')->name('v1.admin.contracts.units.attach');
         Route::delete('contracts/{id}/units/{unitId}', [ContractApiController::class, 'detachUnit'])->middleware('role:admin,pm')->name('v1.admin.contracts.units.detach');

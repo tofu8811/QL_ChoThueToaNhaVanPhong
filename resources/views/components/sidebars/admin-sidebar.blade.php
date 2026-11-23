@@ -10,7 +10,10 @@
         <span>Office</span>
       </div>
     </a>
-    <span class="filament-badge-role" style="background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.3);">{{ $roleBadge ?? 'Admin' }}</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="filament-badge-role" style="background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.3);">{{ $roleBadge ?? 'Admin' }}</span>
+      <button type="button" class="bms-sidebar-close-btn" onclick="closeBmsMobileSidebar()" title="Đóng menu">&times;</button>
+    </div>
   </div>
 
   <!-- Section 1: QUẢN TRỊ & VẬN HÀNH TOÀN CÔNG TY -->

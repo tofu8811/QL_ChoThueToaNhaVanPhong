@@ -5,7 +5,7 @@
       <h1 class="filament-page-title" style="font-size:23px;margin-bottom:4px;">Quản Lý Hợp Đồng Thuê Văn Phòng</h1>
       <p style="font-size:13.5px;color:#64748b;margin:0;">Theo dõi vòng đời hợp đồng thuê, đặt cọc giữ chỗ, ký duyệt hiệu lực, gia hạn và thanh lý hoàn trả mặt bằng.</p>
     </div>
-    <div style="display:flex;gap:8px;">
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
       <button class="btn-mo-outline" style="background:#fff;" onclick="loadContractsList()">
         <i class="fa-solid fa-arrows-rotate"></i> Làm mới
       </button>
@@ -21,7 +21,7 @@
   <!-- Bộ lọc nhanh & Tìm kiếm -->
   <div class="filament-card" style="margin-bottom:16px;padding:14px 18px;">
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;">
-      <div style="display:flex;gap:10px;align-items:center;flex:1;min-width:320px;">
+      <div style="display:flex;gap:10px;align-items:center;flex:1;min-width:240px;width:100%;">
         <div style="position:relative;flex:1;display:flex;align-items:center;">
           <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:12px;color:#94a3b8;font-size:13px;pointer-events:none;"></i>
           <input type="text" id="contract-search-input" class="filament-input-sm" placeholder="Tìm theo Mã HĐ, Tên doanh nghiệp..." oninput="toggleSearchClearBtn(this)" onkeydown="if(event.key==='Enter'){ event.preventDefault(); doContractSearch(); }" style="width:100%;padding-left:34px;padding-right:32px;height:38px;font-size:13px;border-radius:6px;">

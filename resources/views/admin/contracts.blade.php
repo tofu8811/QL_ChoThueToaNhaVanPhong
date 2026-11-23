@@ -30,8 +30,7 @@
   window.currentUiRole = '{{ ($currentRole === "sales" || $user instanceof \App\Models\Sale) ? "sales" : (($currentRole === "pm" || $user instanceof \App\Models\PropertyManager) ? "pm" : "admin") }}';
   @if($currentRole === 'sales' || $user instanceof \App\Models\Sale)
     window.isSalesUser = true;
-  @else
-    window.isSalesUser = false;
+    window.currentUiRole = 'sales';
   @endif
 
   document.addEventListener('DOMContentLoaded', function () {

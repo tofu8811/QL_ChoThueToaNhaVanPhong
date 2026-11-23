@@ -123,16 +123,72 @@
       </p>
       <div class="form-field" style="margin-bottom:12px;">
         <label style="font-size:12px;font-weight:600;color:#334155;">Tên Doanh Nghiệp / Công Ty <span style="color:#ef4444;">*</span></label>
-        <input type="text" id="convert-company-name" class="filament-input-sm" required placeholder="Công ty Cổ phần Alpha">
+        <input type="text" id="convert-company-name" class="filament-input-sm" required placeholder="Công ty Cổ phần Alpha" oninput="moClearFieldError('convert-company-name', 'err-convert-company-name')">
+        <div class="field-error-slot" id="err-convert-company-name"></div>
       </div>
       <div class="form-field" style="margin-bottom:16px;">
-        <label style="font-size:12px;font-weight:600;color:#334155;">Mã Số Thuế (MST)</label>
-        <input type="text" id="convert-tax-code" class="filament-input-sm" placeholder="0312345678">
+        <label style="font-size:12px;font-weight:600;color:#334155;">Mã Số Thuế (MST) <span style="color:#ef4444;">*</span></label>
+        <input type="text" id="convert-tax-code" class="filament-input-sm" required placeholder="VD: 0312345678" oninput="moClearFieldError('convert-tax-code', 'err-convert-tax-code')">
+        <div class="field-error-slot" id="err-convert-tax-code"></div>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;">
         <button type="button" class="btn-mo-outline" onclick="closeConvertToTenantModal()">Hủy</button>
         <button type="button" class="btn-mo-primary" style="background:#16a34a;border-color:#16a34a;" onclick="submitConvertToTenant()">
           <i class="fa-solid fa-arrow-right-to-bracket"></i> Tạo Khách Thuê & Chốt Won
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 5: THÔNG TIN BÀN GIAO TÀI KHOẢN KHÁCH THUÊ SAU KHI CONVERT -->
+<div id="modal-lead-converted-credential" class="mo-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.65);backdrop-filter:blur(4px);z-index:10000;align-items:center;justify-content:center;">
+  <div style="background:#ffffff;border-radius:12px;width:100%;max-width:500px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);overflow:hidden;border:1px solid #e2e8f0;">
+    <div style="background:#16a34a;color:#ffffff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="margin:0;font-size:16px;font-weight:700;">
+        <i class="fa-solid fa-circle-check"></i> Chốt Thành Công & Khởi Tạo Khách Thuê
+      </h3>
+      <button type="button" onclick="closeLeadCredentialModal()" style="background:none;border:none;color:#ffffff;font-size:18px;cursor:pointer;">&times;</button>
+    </div>
+    <div style="padding:22px;">
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px;margin-bottom:16px;">
+        <div style="font-size:13px;color:#166534;font-weight:600;margin-bottom:4px;">
+          <i class="fa-solid fa-sparkles"></i> Khách hàng đã được chuyển đổi sang hồ sơ Khách Thuê Doanh Nghiệp (Tenant)
+        </div>
+        <div style="font-size:12px;color:#15803d;">
+          Dưới đây là tài khoản đăng nhập Cổng thông tin Khách thuê (Tenant Portal). Sales vui lòng lưu lại để bàn giao:
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;color:#334155;background:#f8fafc;padding:14px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:18px;">
+        <div style="display:flex;justify-content:space-between;">
+          <span style="color:#64748b;">Mã Khách Thuê:</span>
+          <strong id="cred-lead-code" style="font-family:monospace;color:#1e40af;font-size:14px;">---</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span style="color:#64748b;">Doanh nghiệp:</span>
+          <strong id="cred-lead-company" style="color:#0f172a;max-width:240px;text-align:right;">---</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span style="color:#64748b;">Tài khoản (Email):</span>
+          <strong id="cred-lead-email" style="color:#0f172a;">---</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span style="color:#64748b;">Số điện thoại:</span>
+          <strong id="cred-lead-phone" style="color:#0f172a;">---</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px dashed #cbd5e1;">
+          <span style="color:#64748b;font-weight:600;">Mật khẩu ban đầu:</span>
+          <span id="cred-lead-password" style="font-family:monospace;font-size:16px;font-weight:800;color:#16a34a;background:#dcfce7;padding:3px 8px;border-radius:4px;border:1px solid #86efac;">---</span>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button type="button" id="btn-lead-copy-cred" class="btn-mo-outline" style="width:100%;padding:9px;font-size:13px;" onclick="copyLeadCredential()">
+          <i class="fa-solid fa-copy"></i> Sao Chép Thông Tin Bàn Giao
+        </button>
+        <button type="button" id="btn-lead-goto-contract" class="btn-mo-primary" style="width:100%;padding:10px;font-size:13.5px;background:#2563eb;font-weight:700;">
+          <i class="fa-solid fa-file-signature"></i> Chuyển Sang Lập Hợp Đồng Nháp
         </button>
       </div>
     </div>

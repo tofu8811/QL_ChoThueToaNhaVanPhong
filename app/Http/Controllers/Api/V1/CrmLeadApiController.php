@@ -124,6 +124,8 @@ class CrmLeadApiController extends BaseApiController
     public function convertToTenant(ConvertLeadToTenantRequest $request, string $id): JsonResponse
     {
         $lead = Lead::findOrFail($id);
+        $this->authorizeSalesAccess($request->user(), $lead);
+
         $tenant = $this->leadService->convertToTenant($lead, $request->validated());
 
         return $this->createdResponse($tenant, 'Chuyển đổi Lead sang Khách thuê chính thức thành công.');

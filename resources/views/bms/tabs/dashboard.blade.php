@@ -11,6 +11,9 @@
     $expArea = $stats['expiring_area'] ?? 2450;
     $totalUnitsArea = $stats['total_units_area'] ?? 21010;
 
+    $nlaArea = $stats['nla_area'] ?? ($rentedArea + $availArea);
+    $rentedPctArea = $stats['rented_pct_area'] ?? ($nlaArea > 0 ? round(($rentedArea / $nlaArea) * 100, 1) : 31.0);
+
     $rentedPct = $stats['rented_pct'] ?? 35.4;
     $availPct = $stats['available_pct'] ?? 60.0;
     $expPct = $stats['expiring_pct'] ?? 4.6;
@@ -21,6 +24,8 @@
     $buildingPerfs = $stats['building_performances'] ?? [];
     $tPriorityLabel = $stats['first_ticket_priority_label'] ?? 'Ưu tiên cao';
     $tStatusLabel = $stats['first_ticket_status_label'] ?? 'Đang xử lý';
+
+    $isPmView = request()->is('pm*') || (isset($currentUserRoleLabel) && str_contains($currentUserRoleLabel, 'BAN QUẢN LÝ'));
   @endphp
 
   <!-- Header Tổng quan vận hành & kinh doanh tòa nhà -->
@@ -35,7 +40,9 @@
       </h1>
       <p id="dashboard-page-subtitle" style="font-size:13.5px;color:#64748b;margin:0;">
         @if(($selectedBuildingId ?? 'ALL') !== 'ALL' && isset($selectedBuilding))
-          Bức tranh toàn cảnh về quy mô tài sản, hợp đồng thuê và trạng thái vận hành tại {{ $selectedBuilding->name }}.
+          Bức tranh toàn cảnh về quy mô tài sản, tỷ lệ lấp đầy diện tích sàn và trạng thái vận hành tại {{ $selectedBuilding->name }}.
+        @elseif($isPmView)
+          Bức tranh toàn cảnh về quy mô tài sản, tỷ lệ lấp đầy diện tích sàn, phiếu sự cố kỹ thuật và vận hành tại các cao ốc được phân quyền phụ trách.
         @else
           Bức tranh toàn cảnh về quy mô tài sản, hợp đồng thuê, doanh thu công nợ và trạng thái vận hành toàn hệ thống.
         @endif
@@ -70,7 +77,7 @@
   <!-- HÀNG 1: 4 THẺ KPI TRỤ CỘT TOÀN HỆ THỐNG (TÀI SẢN - HỢP ĐỒNG - DOANH THU - VẬN HÀNH) -->
   <div class="bms-kpi-grid">
     <!-- KPI 1: Quy mô tòa nhà & mặt bằng -->
-    <div class="bms-kpi-card" style="cursor:pointer;" onclick="switchFilamentTab('tab-admin-buildings', document.getElementById('nav-item-buildings'))">
+    <div class="bms-kpi-card" style="cursor:pointer;" onclick="if(window.location.pathname.startsWith('/pm')){ window.location.href='{{ route('pm.buildings') }}'; } else { switchFilamentTab('tab-admin-buildings', document.getElementById('nav-item-buildings')); }">
       <div>
         <div class="bms-kpi-top">
           <div class="bms-kpi-title" id="dashboard-card1-title">QUY MÔ TÀI SẢN & SÀN</div>
@@ -85,13 +92,13 @@
         </div>
       </div>
       <div class="bms-kpi-foot">
-        <span id="dashboard-card1-foot-label">Tổng diện tích quản lý:</span>
+        <span id="dashboard-card1-foot-label">{{ $isPmView ? 'Tổng diện tích sàn (GFA):' : 'Tổng diện tích quản lý:' }}</span>
         <strong id="dashboard-card1-foot-val">{{ number_format($stats['total_leasable_area'] ?? 428430, 0, ',', '.') }} m²</strong>
       </div>
     </div>
 
-    <!-- KPI 2: Hợp đồng & Khách thuê (Admin) / Tỷ lệ lấp đầy trung bình (PM theo feature/frontend) -->
-    <div class="bms-kpi-card" style="cursor:pointer;" onclick="switchFilamentTab('tab-admin-contracts', document.getElementById('nav-item-contracts'))">
+    <!-- KPI 2: Hợp đồng & Khách thuê (Admin) / Tổng diện tích cho thuê NLA (PM theo chuẩn Office Leasing) -->
+    <div class="bms-kpi-card" style="cursor:pointer;" onclick="if(window.location.pathname.startsWith('/pm')){ window.location.href='{{ route('pm.buildings') }}'; } else { switchFilamentTab('tab-admin-contracts', document.getElementById('nav-item-contracts')); }">
       <div class="kpi-admin-content" style="display:flex;flex-direction:column;justify-content:space-between;height:100%;">
         <div>
           <div class="bms-kpi-top">
@@ -114,25 +121,29 @@
       <div class="kpi-pm-content" style="display:none;flex-direction:column;justify-content:space-between;height:100%;">
         <div>
           <div class="bms-kpi-top">
-            <div class="bms-kpi-title">TỶ LỆ LẤP ĐẦY TRUNG BÌNH</div>
+            <div class="bms-kpi-title">TỔNG DIỆN TÍCH CHO THUÊ (NLA)</div>
             <div class="bms-kpi-icon" style="background:#eff6ff;color:#2563eb;">
-              <i class="fa-solid fa-arrow-trend-up"></i>
+              <i class="fa-solid fa-cube"></i>
             </div>
           </div>
           <div class="bms-kpi-main">
-            <span class="bms-kpi-number" id="pm-kpi-occupancy-rate" style="color:#2563eb;">{{ $rentedPct }}%</span>
-            <span class="bms-kpi-pill" style="background:#ecfdf5;color:#047857;">+4,2% so tháng trước</span>
+            <span class="bms-kpi-number" id="pm-kpi-nla-area" style="color:#2563eb;font-size:26px;">{{ number_format($nlaArea, 0, ',', '.') }}</span>
+            <span style="font-size:13.5px;font-weight:600;color:#64748b;">m²</span>
+            <span class="bms-kpi-pill" style="background:#eff6ff;color:#1d4ed8;">Khả dụng cho thuê</span>
           </div>
         </div>
-        <div class="bms-kpi-foot">
-          <span>Diện tích đang khai thác:</span>
+        <div class="bms-kpi-foot" style="font-size:12px;">
+          <span>Đã khai thác:</span>
           <strong id="pm-kpi-exploiting-area">{{ number_format($rentedArea, 0, ',', '.') }} m²</strong>
+          <span style="color:#cbd5e1;margin:0 4px;">|</span>
+          <span>Còn trống:</span>
+          <strong id="pm-kpi-vacant-area" style="color:#0284c7;">{{ number_format($availArea, 0, ',', '.') }} m²</strong>
         </div>
       </div>
     </div>
 
-    <!-- KPI 3: Doanh thu & Công nợ kỳ (Admin) / Tổng diện tích đang quản lý (PM theo feature/frontend) -->
-    <div class="bms-kpi-card" style="cursor:pointer;" onclick="if(window.currentUiRole==='admin'||window.currentUiRole==='super_admin'){ switchFilamentTab('tab-admin-billing', document.getElementById('nav-item-billing')); } else { switchFilamentTab('tab-admin-buildings', document.getElementById('nav-item-buildings')); }">
+    <!-- KPI 3: Doanh thu & Công nợ kỳ (Admin) / Tỷ lệ lấp đầy theo diện tích (PM theo chuẩn Office Leasing) -->
+    <div class="bms-kpi-card" style="cursor:pointer;" onclick="if(window.location.pathname.startsWith('/pm')){ window.location.href='{{ route('pm.buildings') }}'; } else if(window.currentUiRole==='admin'||window.currentUiRole==='super_admin'){ switchFilamentTab('tab-admin-billing', document.getElementById('nav-item-billing')); } else { switchFilamentTab('tab-admin-buildings', document.getElementById('nav-item-buildings')); }">
       <div class="kpi-admin-content" style="display:flex;flex-direction:column;justify-content:space-between;height:100%;">
         <div>
           <div class="bms-kpi-top">
@@ -154,26 +165,26 @@
       <div class="kpi-pm-content" style="display:none;flex-direction:column;justify-content:space-between;height:100%;">
         <div>
           <div class="bms-kpi-top">
-            <div class="bms-kpi-title">TỔNG DIỆN TÍCH QUẢN LÝ</div>
-            <div class="bms-kpi-icon" style="background:#eff6ff;color:#2563eb;">
-              <i class="fa-solid fa-cube"></i>
+            <div class="bms-kpi-title">TỶ LỆ LẤP ĐẦY THEO DIỆN TÍCH</div>
+            <div class="bms-kpi-icon" style="background:#ecfdf5;color:#059669;">
+              <i class="fa-solid fa-arrow-trend-up"></i>
             </div>
           </div>
           <div class="bms-kpi-main">
-            <span class="bms-kpi-number" id="pm-kpi-total-area" style="color:#2563eb;font-size:26px;">{{ number_format($totalUnitsArea, 0, ',', '.') }}</span>
-            <span style="font-size:13.5px;font-weight:600;color:#64748b;">m²</span>
-            <span class="bms-kpi-pill" style="background:#eff6ff;color:#1d4ed8;">Hạng A, B, C</span>
+            <span class="bms-kpi-number" id="pm-kpi-occupancy-rate" style="color:#059669;">{{ number_format($rentedPctArea, 1, ',', '.') }}%</span>
+            <span class="bms-kpi-pill" style="background:#ecfdf5;color:#047857;">+4,2% so tháng trước</span>
           </div>
         </div>
-        <div class="bms-kpi-foot">
-          <span>Diện tích còn trống:</span>
-          <strong id="pm-kpi-vacant-area" style="color:#0284c7;">{{ number_format($availArea, 0, ',', '.') }} m²</strong>
+        <div class="bms-kpi-foot" style="font-size:12px;">
+          <span>Theo số sàn:</span>
+          <strong id="pm-kpi-floors-ratio">{{ $rentedU }}/{{ $totalU }} sàn</strong>
+          <span style="color:#64748b;font-size:11.5px;margin-left:4px;">({{ round(($rentedU / max(1, $totalU)) * 100, 1) }}%)</span>
         </div>
       </div>
     </div>
 
     <!-- KPI 4: Bảo trì & Leads mới (Admin) / Ticket bảo trì đang mở (PM theo feature/frontend) -->
-    <div class="bms-kpi-card" style="cursor:pointer;" onclick="switchFilamentTab('tab-admin-tickets', document.getElementById('nav-item-tickets'))">
+    <div class="bms-kpi-card" style="cursor:pointer;" onclick="if(window.location.pathname.startsWith('/pm')){ window.location.href='{{ route('pm.tickets') }}'; } else { switchFilamentTab('tab-admin-tickets', document.getElementById('nav-item-tickets')); }">
       <div class="kpi-admin-content" style="display:flex;flex-direction:column;justify-content:space-between;height:100%;">
         <div>
           <div class="bms-kpi-top">
@@ -202,18 +213,17 @@
             </div>
           </div>
           <div class="bms-kpi-main">
-            <span class="bms-kpi-number" style="color:#e11d48;">{{ sprintf('%02d', $stats['open_tickets'] ?? 1) }}</span>
+            <span class="bms-kpi-number" style="color:#e11d48;">{{ sprintf('%02d', $stats['open_tickets'] ?? 0) }}</span>
             <span style="font-size:13.5px;font-weight:600;color:#64748b;">phiếu sự cố</span>
             <span class="bms-kpi-pill" style="background:#fee2e2;color:#b91c1c;">Xử lý trong ngày</span>
           </div>
         </div>
-        <div class="bms-kpi-foot">
+        <div class="bms-kpi-foot" style="font-size:12px;">
           <span>Mặt bằng cần chú ý:</span>
           <strong>{{ $expU }} sàn ({{ number_format($expArea, 0, ',', '.') }} m²)</strong>
         </div>
       </div>
     </div>
-  </div>
   </div>
 
   <!-- PHÂN HỆ VẬN HÀNH DÀNH RIÊNG CHO BAN QUẢN LÝ (PM WORKFLOW THEO FEATURE/FRONTEND) -->

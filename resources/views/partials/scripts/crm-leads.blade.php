@@ -58,16 +58,12 @@
           return '<span class="badge-filament warning" style="background:#fef3c7;color:#b45309;border:1px solid #fde68a;font-weight:700;"><i class="fa-solid fa-clock"></i> Chờ phân bổ</span>';
         case 'NEW':
           return '<span class="badge-filament info"><i class="fa-solid fa-sparkles"></i> Mới tiếp nhận</span>';
-        case 'CONTACTED':
-          return '<span class="badge-filament primary"><i class="fa-solid fa-phone"></i> Đã liên hệ</span>';
-        case 'SITE_VISIT':
-          return '<span class="badge-filament warning"><i class="fa-solid fa-building-circle-check"></i> Đã đi xem sàn</span>';
         case 'NEGOTIATING':
           return '<span class="badge-filament purple" style="background:#f3e8ff;color:#7e22ce;"><i class="fa-solid fa-handshake"></i> Đang đàm phán</span>';
         case 'WON':
-          return '<span class="badge-filament success"><i class="fa-solid fa-trophy"></i> Thành công (Won)</span>';
+          return '<span class="badge-filament success"><i class="fa-solid fa-trophy"></i> Thành công (Chốt thuê)</span>';
         case 'LOST':
-          return '<span class="badge-filament danger"><i class="fa-solid fa-ban"></i> Thất bại (Lost)</span>';
+          return '<span class="badge-filament danger"><i class="fa-solid fa-ban"></i> Thất bại (Từ chối)</span>';
         default:
           return `<span class="badge-filament">${escapeHtml(status)}</span>`;
       }
@@ -103,7 +99,21 @@
         const areaNeeded = lead.expected_area ? `${lead.expected_area} m²` : '---';
         const contactName = lead.contact_name || lead.contact_full_name || 'Khách hàng';
 
-        const isAdmin = window.location.pathname.startsWith('/admin') || (window.currentUiRole === 'admin') || (localStorage.getItem('auth_role') === 'admin');
+        const isSales = (function() {
+          if (typeof window.isSalesUser !== 'undefined') return Boolean(window.isSalesUser);
+          const role = (window.currentUiRole || localStorage.getItem('auth_role') || '').toLowerCase();
+          if (role === 'sales' || role === 'sale') return true;
+          const sidebar = document.getElementById('bms-main-sidebar');
+          if (sidebar) {
+            const roleBadge = sidebar.querySelector('.filament-badge-role')?.textContent || '';
+            if (/sales/i.test(roleBadge)) return true;
+          }
+          const topBadge = document.getElementById('admin-dropdown-role-badge')?.textContent || '';
+          if (/sales/i.test(topBadge)) return true;
+          return false;
+        })();
+
+        const isAdmin = !isSales && (window.location.pathname.startsWith('/admin') || (window.currentUiRole === 'admin') || (localStorage.getItem('auth_role') === 'admin'));
 
         let assignBtn = '';
         if (isAdmin) {
@@ -162,7 +172,7 @@
 
     // 3. Render bảng Kanban Pipeline (Kanban View)
     function renderCrmKanbanBoard() {
-      const statuses = ['NEW', 'CONTACTED', 'SITE_VISIT', 'NEGOTIATING', 'WON', 'LOST'];
+      const statuses = ['NEW', 'NEGOTIATING', 'WON', 'LOST'];
       statuses.forEach(st => {
         const colEl = document.getElementById(`kanban-col-${st.toLowerCase()}`);
         const countBadge = document.getElementById(`kanban-count-${st.toLowerCase()}`);
@@ -181,7 +191,22 @@
           return;
         }
 
-        colEl.innerHTML = filtered.map(lead => `
+        colEl.innerHTML = filtered.map(lead => {
+          let kanbanAction = '';
+          if (lead.pipeline_status === 'WON') {
+            kanbanAction = '<span class="badge-filament success" style="font-size:10.5px;font-weight:700;"><i class="fa-solid fa-check"></i> Đã chốt thuê</span>';
+          } else {
+            kanbanAction = `
+              <select onchange="updateLeadStatus('${lead.id}', this.value)" style="font-size:11px;padding:2px 4px;border-radius:4px;border:1px solid #cbd5e1;background:#f8fafc;cursor:pointer;">
+                <option value="NEW" ${lead.pipeline_status === 'NEW' ? 'selected' : ''}>Mới tiếp nhận</option>
+                <option value="NEGOTIATING" ${lead.pipeline_status === 'NEGOTIATING' ? 'selected' : ''}>Đang đàm phán</option>
+                <option value="WON" ${lead.pipeline_status === 'WON' ? 'selected' : ''}>Thành công (Chốt cọc)</option>
+                <option value="LOST" ${lead.pipeline_status === 'LOST' ? 'selected' : ''}>Thất bại</option>
+              </select>
+            `;
+          }
+
+          return `
           <div class="kanban-lead-card" onclick="openLeadDetailModal('${lead.id}')" style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.05);cursor:pointer;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
               <span style="font-size:11px;font-weight:700;color:var(--mo-primary);font-family:monospace;">${escapeHtml(lead.lead_code || lead.id.substring(0,8))}</span>
@@ -198,18 +223,12 @@
                 <i class="fa-solid fa-user-tie" style="font-size:10px;color:#6366f1;"></i> ${escapeHtml(lead.assigned_sales?.full_name || lead.assignedSales?.full_name || 'Chưa gán')}
               </span>
               <div onclick="event.stopPropagation();">
-                <select onchange="updateLeadStatus('${lead.id}', this.value)" style="font-size:11px;padding:2px 4px;border-radius:4px;border:1px solid #cbd5e1;background:#f8fafc;">
-                  <option value="NEW" ${lead.pipeline_status === 'NEW' ? 'selected' : ''}>Mới</option>
-                  <option value="CONTACTED" ${lead.pipeline_status === 'CONTACTED' ? 'selected' : ''}>Đã gọi</option>
-                  <option value="SITE_VISIT" ${lead.pipeline_status === 'SITE_VISIT' ? 'selected' : ''}>Xem sàn</option>
-                  <option value="NEGOTIATING" ${lead.pipeline_status === 'NEGOTIATING' ? 'selected' : ''}>Đàm phán</option>
-                  <option value="WON" ${lead.pipeline_status === 'WON' ? 'selected' : ''}>Thành công</option>
-                  <option value="LOST" ${lead.pipeline_status === 'LOST' ? 'selected' : ''}>Thất bại</option>
-                </select>
+                ${kanbanAction}
               </div>
             </div>
           </div>
-        `).join('');
+        `;
+        }).join('');
       });
     }
 
@@ -301,16 +320,25 @@
 
       if (hasError) return;
 
+      const validLeadSource = (leadSource === 'DIRECT_CALL' ? 'HOTLINE' : (leadSource === 'WALK_IN' ? 'DIRECT_WALK_IN' : leadSource)) || 'HOTLINE';
+      const cleanEmail = contactEmail || `${contactPhone}@crmlead.local`;
+
       const payload = {
         contact_name: contactName,
+        contact_full_name: contactName,
         contact_phone: contactPhone,
-        contact_email: contactEmail || null,
+        phone: contactPhone,
+        contact_email: cleanEmail,
+        email: cleanEmail,
         company_name: companyName || null,
         building_id: buildingId,
         expected_area: expectedArea,
+        desired_area_sqm: expectedArea,
         expected_budget: expectedBudget,
+        budget_max: expectedBudget,
         notes: notes,
-        lead_source: leadSource
+        customer_note: notes,
+        lead_source: validLeadSource
       };
 
       const btn = document.getElementById('btn-submit-create-lead');
@@ -337,11 +365,16 @@
           if (json.errors) {
             moMapServerErrors(json.errors, {
               contact_name: ['lead-contact-name', 'err-lead-contact-name'],
+              contact_full_name: ['lead-contact-name', 'err-lead-contact-name'],
               contact_phone: ['lead-contact-phone', 'err-lead-contact-phone'],
+              phone: ['lead-contact-phone', 'err-lead-contact-phone'],
               contact_email: ['lead-contact-email', 'err-lead-contact-email'],
+              email: ['lead-contact-email', 'err-lead-contact-email'],
               company_name: ['lead-company-name', 'err-lead-company-name'],
               expected_area: ['lead-expected-area', 'err-lead-expected-area'],
-              expected_budget: ['lead-expected-budget', 'err-lead-expected-budget']
+              desired_area_sqm: ['lead-expected-area', 'err-lead-expected-area'],
+              expected_budget: ['lead-expected-budget', 'err-lead-expected-budget'],
+              budget_max: ['lead-expected-budget', 'err-lead-expected-budget']
             });
           }
           moToast(json.message || 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.', 'error');
@@ -391,6 +424,10 @@
     function closeLeadDetailModal() {
       const modal = document.getElementById('modal-lead-detail');
       if (modal) modal.style.display = 'none';
+      if (window.leadStatusChanged && window.location.pathname.includes('/sales/dashboard')) {
+        window.leadStatusChanged = false;
+        window.location.reload();
+      }
       currentViewingLeadId = null;
     }
 
@@ -424,18 +461,33 @@
             </div>
 
             <div style="margin-top:16px;padding-top:14px;border-top:1px solid #e2e8f0;display:flex;gap:8px;">
-              <select id="detail-change-status" style="font-size:12px;padding:6px;border-radius:4px;border:1px solid #cbd5e1;flex:1;">
-                <option value="NEW" ${lead.pipeline_status === 'NEW' ? 'selected' : ''}>Mới (NEW)</option>
-                <option value="CONTACTED" ${lead.pipeline_status === 'CONTACTED' ? 'selected' : ''}>Đã liên hệ (CONTACTED)</option>
-                <option value="SITE_VISIT" ${lead.pipeline_status === 'SITE_VISIT' ? 'selected' : ''}>Đã xem sàn (SITE_VISIT)</option>
-                <option value="NEGOTIATING" ${lead.pipeline_status === 'NEGOTIATING' ? 'selected' : ''}>Đang đàm phán (NEGOTIATING)</option>
-                <option value="WON" ${lead.pipeline_status === 'WON' ? 'selected' : ''}>Thành công (WON)</option>
-                <option value="LOST" ${lead.pipeline_status === 'LOST' ? 'selected' : ''}>Thất bại (LOST)</option>
-              </select>
-              <button class="btn-mo-primary" style="padding:6px 12px;font-size:12px;" onclick="applyLeadStatusChange('${lead.id}')">
-                Cập Nhật
-              </button>
+              ${lead.pipeline_status === 'WON' ? `
+                <div style="flex:1;background:#dcfce7;color:#15803d;padding:8px 12px;border-radius:6px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px;border:1px solid #bbf7d0;">
+                  <i class="fa-solid fa-circle-check"></i> Đã Chốt Hợp Đồng Thành Công (WON)
+                </div>
+              ` : `
+                <select id="detail-change-status" style="font-size:12.5px;padding:6px 10px;border-radius:6px;border:1.5px solid #cbd5e1;flex:1;color:#0f172a;background:#ffffff;font-weight:600;outline:none;">
+                  <option value="NEW" ${lead.pipeline_status === 'NEW' ? 'selected' : ''}>Mới tiếp nhận (NEW)</option>
+                  <option value="NEGOTIATING" ${lead.pipeline_status === 'NEGOTIATING' ? 'selected' : ''}>Đang đàm phán (NEGOTIATING)</option>
+                  <option value="WON" ${lead.pipeline_status === 'WON' ? 'selected' : ''}>Thành công (Chốt cọc / WON)</option>
+                  <option value="LOST" ${lead.pipeline_status === 'LOST' ? 'selected' : ''}>Thất bại (LOST)</option>
+                </select>
+                <button class="btn-mo-primary" style="padding:6px 14px;font-size:12.5px;font-weight:600;" onclick="applyLeadStatusChange('${lead.id}')">
+                  Cập Nhật
+                </button>
+                <button class="btn-mo-secondary" style="background:#10b981;color:#fff;border:none;padding:6px 12px;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:5px;border-radius:6px;cursor:pointer;" onclick="closeLeadDetailModal(); openConvertToTenantModal('${lead.id}', '${escapeHtml(lead.contact_name || '')}', '${escapeHtml(lead.company_name || '')}')">
+                  <i class="fa-solid fa-trophy"></i> Chốt cọc
+                </button>
+              `}
             </div>
+
+            ${lead.pipeline_status === 'WON' ? `
+              <div style="margin-top:12px;">
+                <button type="button" class="btn-mo-primary" style="width:100%;background:#16a34a;border:none;padding:9px 12px;font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:6px;cursor:pointer;" onclick="window.location.href='/admin/contracts?open_create=1&tenant_id=${lead.converted_tenant_id || ''}&building_id=${lead.building_id || ''}&unit_id=${lead.unit_id || ''}'">
+                  <i class="fa-solid fa-file-signature"></i> Lập Hợp Đồng Thuê (Bản Nháp)
+                </button>
+              </div>
+            ` : ''}
           </div>
 
           <!-- Cột phải: Timeline tương tác (Activities) -->
@@ -456,12 +508,14 @@
                   <option value="CALL">Cuộc gọi điện</option>
                   <option value="EMAIL">Gửi Email</option>
                   <option value="MEETING">Gặp trực tiếp</option>
-                  <option value="SITE_VISIT">Khảo sát sàn</option>
+                  <option value="SITE_TOUR">Khảo sát sàn thực tế (Site tour)</option>
                   <option value="NOTE">Ghi chú nội bộ</option>
+                  <option value="QUOTATION_SENT">Gửi Báo giá / LOI</option>
                 </select>
                 <input type="text" id="new-act-summary" placeholder="Tiêu đề (VD: Hẹn xem tầng 12)" style="font-size:12px;padding:4px;border:1px solid #cbd5e1;border-radius:4px;">
               </div>
-              <textarea id="new-act-content" placeholder="Nội dung chi tiết cuộc trao đổi..." rows="2" style="width:100%;font-size:12px;padding:6px;border:1px solid #cbd5e1;border-radius:4px;margin-bottom:8px;"></textarea>
+              <textarea id="new-act-content" placeholder="Nội dung chi tiết cuộc trao đổi..." rows="2" style="width:100%;font-size:12px;padding:6px;border:1px solid #cbd5e1;border-radius:4px;margin-bottom:4px;" oninput="moClearFieldError('new-act-content', 'err-new-act-content')"></textarea>
+              <div class="field-error-slot" id="err-new-act-content" style="margin-bottom:8px;"></div>
               <div style="text-align:right;">
                 <button class="btn-mo-outline" style="padding:4px 8px;font-size:11px;" onclick="toggleAddActivityForm()">Hủy</button>
                 <button class="btn-mo-primary" style="padding:4px 10px;font-size:11px;margin-left:4px;" onclick="submitNewLeadActivity('${lead.id}')">Lưu Nhật Ký</button>
@@ -503,22 +557,28 @@
         container.innerHTML = activities.map(act => {
           let icon = 'fa-comment';
           let color = '#64748b';
-          if (act.activity_type === 'CALL') { icon = 'fa-phone'; color = '#0284c7'; }
-          else if (act.activity_type === 'EMAIL') { icon = 'fa-envelope'; color = '#ea580c'; }
-          else if (act.activity_type === 'SITE_VISIT') { icon = 'fa-building-circle-check'; color = '#16a34a'; }
-          else if (act.activity_type === 'MEETING') { icon = 'fa-handshake'; color = '#7c3aed'; }
+          const actType = act.activity_type;
+          if (actType === 'CALL') { icon = 'fa-phone'; color = '#0284c7'; }
+          else if (actType === 'EMAIL') { icon = 'fa-envelope'; color = '#ea580c'; }
+          else if (actType === 'SITE_TOUR' || actType === 'SITE_VISIT') { icon = 'fa-building-circle-check'; color = '#16a34a'; }
+          else if (actType === 'MEETING') { icon = 'fa-handshake'; color = '#7c3aed'; }
+          else if (actType === 'QUOTATION_SENT') { icon = 'fa-file-invoice-dollar'; color = '#d97706'; }
+
+          const actTitle = act.title || act.summary || act.activity_type;
+          const actTime = act.event_at || act.interaction_at || act.created_at;
+          const salesName = act.sales?.full_name || act.actor?.full_name || act.user?.full_name || 'Chuyên viên Sales';
 
           return `
-            <div style="display:flex;gap:10px;margin-bottom:12px;border-left:2px solid ${color};padding-left:10px;">
+            <div style="display:flex;gap:10px;margin-bottom:12px;border-left:3px solid ${color};padding-left:10px;">
               <div>
                 <div style="display:flex;justify-content:space-between;align-items:center;">
-                  <strong style="font-size:12px;color:#1e293b;">
-                    <i class="fa-solid ${icon}" style="color:${color};margin-right:4px;"></i> ${escapeHtml(act.summary || act.activity_type)}
+                  <strong style="font-size:12.5px;color:#1e293b;">
+                    <i class="fa-solid ${icon}" style="color:${color};margin-right:4px;"></i> ${escapeHtml(actTitle)}
                   </strong>
-                  <span style="font-size:11px;color:#94a3b8;">${escapeHtml(new Date(act.interaction_at || act.created_at).toLocaleString('vi-VN'))}</span>
+                  <span style="font-size:11px;color:#94a3b8;">${escapeHtml(new Date(actTime).toLocaleString('vi-VN'))}</span>
                 </div>
-                <div style="font-size:12px;color:#475569;margin-top:2px;">${escapeHtml(act.content || 'Không có mô tả')}</div>
-                <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Ghi nhận bởi: <strong>${escapeHtml(act.actor?.full_name || act.user?.full_name || 'Hệ thống')}</strong></div>
+                <div style="font-size:12px;color:#475569;margin-top:3px;">${escapeHtml(act.content || 'Không có mô tả')}</div>
+                <div style="font-size:11px;color:#94a3b8;margin-top:3px;">Ghi nhận bởi: <strong style="color:#475569;">${escapeHtml(salesName)}</strong></div>
               </div>
             </div>
           `;
@@ -539,10 +599,20 @@
       const summary = document.getElementById('new-act-summary').value.trim();
       const content = document.getElementById('new-act-content').value.trim();
 
-      if (!content) {
-        alert('Vui lòng nhập nội dung chi tiết tương tác.');
+      moClearFieldError('new-act-content', 'err-new-act-content');
+
+      const vContent = moValidateRequired(content, 'Nội dung chi tiết cuộc trao đổi');
+      if (!vContent.valid) {
+        moSetFieldError('new-act-content', 'err-new-act-content', vContent.message);
+        document.getElementById('new-act-content')?.focus();
         return;
       }
+
+      const defaultTitle = summary || (
+        type === 'CALL' ? 'Cuộc gọi điện tư vấn nhu cầu' :
+        (type === 'SITE_TOUR' ? 'Khảo sát thực tế sàn văn phòng' :
+        (type === 'EMAIL' ? 'Gửi email báo giá và thông tin sàn' : 'Ghi nhận chăm sóc khách hàng'))
+      );
 
       try {
         const res = await fetch(`/api/v1/crm/leads/${leadId}/activities`, {
@@ -550,55 +620,89 @@
           headers: getAuthHeaders(),
           body: JSON.stringify({
             activity_type: type,
-            summary: summary || null,
+            title: defaultTitle,
+            summary: defaultTitle,
             content: content,
+            event_at: new Date().toISOString(),
             interaction_at: new Date().toISOString()
           })
         });
 
         const json = await res.json();
         if (res.ok) {
+          moToast('Ghi nhận nhật ký chăm sóc thành công!', 'success');
           toggleAddActivityForm();
           loadLeadActivities(leadId);
+          loadCrmLeads();
         } else {
-          alert('Lỗi lưu nhật ký: ' + (json.message || 'Dữ liệu không hợp lệ.'));
+          moToast(json.message || 'Dữ liệu nhật ký không hợp lệ.', 'error');
         }
       } catch (e) {
-        alert('Lỗi kết nối khi lưu nhật ký tương tác.');
+        moToast('Lỗi kết nối khi lưu nhật ký tương tác: ' + (e.message || 'Lỗi mạng'), 'error');
       }
     }
 
     // 6. Cập nhật trạng thái Pipeline: PATCH /api/v1/crm/leads/{id}/status
     async function updateLeadStatus(leadId, newStatus) {
-      let reason = null;
+      if (newStatus === 'WON') {
+        const leadObj = (crmLeadsList || []).find(l => String(l.id) === String(leadId));
+        const contactName = leadObj?.contact_name || leadObj?.contact_full_name || 'Khách hàng';
+        const compName = leadObj?.company_name || '';
+        moToast('Quy chuẩn CRM: Trạng thái Thành công (WON) chỉ được xác lập khi chuyển đổi sang Khách Thuê Doanh Nghiệp.', 'info');
+        openConvertToTenantModal(leadId, contactName, compName);
+        return;
+      }
+
+      let reasonCategory = 'KHAC';
+      let reasonDetail = 'Khách hàng từ chối tiếp tục nhu cầu thuê.';
+
       if (newStatus === 'LOST') {
-        reason = prompt('Vui lòng nhập lý do khách từ chối / Thất bại:');
-        if (reason === null) {
-          loadCrmLeads();
+        const userInput = prompt('Vui lòng nhập lý do khách từ chối / Thất bại (hoặc để trống để dùng lý do mặc định):');
+        if (userInput === null) {
           return;
+        }
+        if (userInput.trim()) {
+          reasonDetail = userInput.trim();
         }
       }
 
       try {
+        const payload = {
+          status: newStatus,
+          pipeline_status: newStatus,
+          lost_reason_category: reasonCategory,
+          lost_reason_detail: reasonDetail,
+          lost_reason: reasonDetail
+        };
+
         const res = await fetch(`/api/v1/crm/leads/${leadId}/status`, {
           method: 'PATCH',
           headers: getAuthHeaders(),
-          body: JSON.stringify({
-            pipeline_status: newStatus,
-            lost_reason: reason
-          })
+          body: JSON.stringify(payload)
         });
 
         const json = await res.json();
         if (res.ok) {
-          loadCrmLeads();
+          window.leadStatusChanged = true;
+          moToast(`Cập nhật trạng thái Lead thành công!`, 'success');
+          const detailModal = document.getElementById('modal-lead-detail');
+          if (detailModal && detailModal.style.display !== 'none' && currentViewingLeadId === leadId) {
+            openLeadDetailModal(leadId);
+          }
+          if (typeof loadCrmLeads === 'function') {
+            loadCrmLeads();
+          }
         } else {
-          alert('Lỗi cập nhật trạng thái Lead: ' + (json.message || ''));
-          loadCrmLeads();
+          moToast(json.message || 'Lỗi cập nhật trạng thái Lead.', 'error');
+          if (typeof loadCrmLeads === 'function') {
+            loadCrmLeads();
+          }
         }
       } catch (e) {
-        alert('Lỗi kết nối khi cập nhật trạng thái.');
-        loadCrmLeads();
+        moToast('Lỗi kết nối khi cập nhật trạng thái.', 'error');
+        if (typeof loadCrmLeads === 'function') {
+          loadCrmLeads();
+        }
       }
     }
 
@@ -666,7 +770,7 @@
       if (!currentAssignLeadId) return;
       const salesId = document.getElementById('assign-sales-select').value;
       if (!salesId) {
-        alert('Vui lòng chọn nhân viên Sales.');
+        moToast('Vui lòng chọn nhân viên Sales phụ trách.', 'warning');
         return;
       }
 
@@ -679,17 +783,17 @@
 
         const json = await res.json();
         if (res.ok) {
-          alert('Phân công Sales thành công!');
+          moToast('Phân công Sales thành công!', 'success');
           closeAssignSalesModal();
           loadCrmLeads();
           if (currentViewingLeadId === currentAssignLeadId) {
             openLeadDetailModal(currentAssignLeadId);
           }
         } else {
-          alert('Lỗi phân công: ' + (json.message || ''));
+          moToast('Lỗi phân công: ' + (json.message || 'Không thể phân công'), 'error');
         }
       } catch (e) {
-        alert('Lỗi kết nối khi phân công Sales.');
+        moToast('Lỗi kết nối khi phân công Sales: ' + (e.message || 'Lỗi mạng'), 'error');
       }
     }
 
@@ -699,6 +803,9 @@
       currentConvertLeadId = leadId;
       const modal = document.getElementById('modal-convert-lead');
       if (!modal) return;
+
+      moClearFieldError('convert-company-name', 'err-convert-company-name');
+      moClearFieldError('convert-tax-code', 'err-convert-tax-code');
 
       const leadNameEl = document.getElementById('convert-lead-name');
       if (leadNameEl) leadNameEl.innerText = contactName;
@@ -710,18 +817,40 @@
     function closeConvertToTenantModal() {
       const modal = document.getElementById('modal-convert-lead');
       if (modal) modal.style.display = 'none';
+      moClearFieldError('convert-company-name', 'err-convert-company-name');
+      moClearFieldError('convert-tax-code', 'err-convert-tax-code');
       currentConvertLeadId = null;
+      if (typeof renderCrmKanbanBoard === 'function') {
+        renderCrmKanbanBoard();
+      }
     }
 
     async function submitConvertToTenant() {
       if (!currentConvertLeadId) return;
-      const compName = document.getElementById('convert-company-name').value.trim();
-      const taxCode = document.getElementById('convert-tax-code').value.trim();
+      const compName = document.getElementById('convert-company-name')?.value?.trim() || '';
+      const taxCode = document.getElementById('convert-tax-code')?.value?.trim() || '';
 
-      if (!compName) {
-        alert('Vui lòng nhập Tên doanh nghiệp/Công ty.');
-        return;
+      moClearFieldError('convert-company-name', 'err-convert-company-name');
+      moClearFieldError('convert-tax-code', 'err-convert-tax-code');
+
+      let hasErr = false;
+      const vComp = moValidateRequired(compName, 'Tên doanh nghiệp / Công ty');
+      if (!vComp.valid) {
+        moSetFieldError('convert-company-name', 'err-convert-company-name', vComp.message);
+        document.getElementById('convert-company-name')?.focus();
+        hasErr = true;
       }
+
+      const vTax = moValidateRequired(taxCode, 'Mã số thuế (MST)');
+      if (!vTax.valid) {
+        moSetFieldError('convert-tax-code', 'err-convert-tax-code', vTax.message);
+        if (!hasErr) {
+          document.getElementById('convert-tax-code')?.focus();
+          hasErr = true;
+        }
+      }
+
+      if (hasErr) return;
 
       try {
         const res = await fetch(`/api/v1/crm/leads/${currentConvertLeadId}/convert-to-tenant`, {
@@ -729,20 +858,79 @@
           headers: getAuthHeaders(),
           body: JSON.stringify({
             company_name: compName,
-            tax_code: taxCode || null
+            tax_code: taxCode
           })
         });
 
         const json = await res.json();
         if (res.ok) {
-          alert('Chúc mừng! Đã chốt Deal và chuyển đổi Lead thành Khách Thuê thành công!');
+          moToast('Chuyển đổi sang Khách Thuê Doanh Nghiệp thành công!', 'success');
+          const tenant = json.data;
+          const leadObj = (crmLeadsList || []).find(l => String(l.id) === String(currentConvertLeadId));
           closeConvertToTenantModal();
           loadCrmLeads();
+
+          showLeadConvertedCredentialModal(tenant, leadObj);
         } else {
-          alert('Lỗi chuyển đổi: ' + (json.message || ''));
+          if (json.errors) {
+            moMapServerErrors(json.errors, {
+              company_name: { inputId: 'convert-company-name', slotId: 'err-convert-company-name' },
+              tax_code: { inputId: 'convert-tax-code', slotId: 'err-convert-tax-code' }
+            });
+          }
+          moToast(json.message || 'Dữ liệu chuyển đổi không hợp lệ. Vui lòng kiểm tra lại.', 'error');
         }
       } catch (e) {
-        alert('Lỗi kết nối máy chủ khi chuyển đổi Lead.');
+        moToast('Lỗi kết nối máy chủ khi chuyển đổi Lead: ' + (e.message || 'Lỗi mạng'), 'error');
+      }
+    }
+
+    // Modal hiển thị thông tin tài khoản Khách Thuê sau khi chuyển đổi thành công
+    let currentConvertedTenantData = null;
+    function showLeadConvertedCredentialModal(tenant, leadObj) {
+      currentConvertedTenantData = tenant;
+      const modal = document.getElementById('modal-lead-converted-credential');
+      if (!modal) return;
+
+      document.getElementById('cred-lead-code').innerText = tenant.tenant_code || '---';
+      document.getElementById('cred-lead-company').innerText = tenant.company_name || '---';
+      document.getElementById('cred-lead-email').innerText = tenant.login_email || '---';
+      document.getElementById('cred-lead-phone').innerText = tenant.contact_phone || '---';
+      document.getElementById('cred-lead-password').innerText = tenant.initial_plain_password || '******';
+
+      const gotoBtn = document.getElementById('btn-lead-goto-contract');
+      if (gotoBtn) {
+        gotoBtn.onclick = function() {
+          const bldId = leadObj?.building_id || '';
+          const untId = leadObj?.unit_id || '';
+          window.location.href = `/admin/contracts?open_create=1&tenant_id=${tenant.id}&building_id=${bldId}&unit_id=${untId}`;
+        };
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function closeLeadCredentialModal() {
+      const modal = document.getElementById('modal-lead-converted-credential');
+      if (modal) modal.style.display = 'none';
+      currentConvertedTenantData = null;
+    }
+
+    function copyLeadCredential() {
+      if (!currentConvertedTenantData) return;
+      const text = `THÔNG TIN TÀI KHOẢN CỔNG KHÁCH THUÊ (TENANT PORTAL)\n` +
+        `- Doanh nghiệp: ${currentConvertedTenantData.company_name}\n` +
+        `- Mã khách thuê: ${currentConvertedTenantData.tenant_code}\n` +
+        `- Email đăng nhập: ${currentConvertedTenantData.login_email}\n` +
+        `- Mật khẩu khởi tạo: ${currentConvertedTenantData.initial_plain_password || 'Đã cấp mật khẩu an toàn'}\n` +
+        `- Đường link đăng nhập: ${window.location.origin}/portal/login`;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          moToast('Đã sao chép thông tin tài khoản vào bộ nhớ tạm!', 'success');
+        });
+      } else {
+        prompt('Sao chép thông tin tài khoản bên dưới:', text);
       }
     }
 
@@ -758,13 +946,13 @@
 
         const json = await res.json();
         if (res.ok) {
-          alert('Đã xóa Lead thành công.');
+          moToast('Đã xóa Lead thành công.', 'success');
           loadCrmLeads();
         } else {
-          alert('Lỗi xóa Lead: ' + (json.message || ''));
+          moToast('Lỗi xóa Lead: ' + (json.message || ''), 'error');
         }
       } catch (e) {
-        alert('Lỗi kết nối khi xóa Lead.');
+        moToast('Lỗi kết nối khi xóa Lead: ' + (e.message || 'Lỗi mạng'), 'error');
       }
     }
 
@@ -808,4 +996,9 @@
 
     window.handleCrmStatusFilter = handleCrmStatusFilter;
     window.resetCrmFilters = resetCrmFilters;
+    window.openLeadDetailModal = openLeadDetailModal;
+    window.openCrmDetailModal = openLeadDetailModal;
+    window.closeLeadDetailModal = closeLeadDetailModal;
+    window.closeLeadCredentialModal = closeLeadCredentialModal;
+    window.copyLeadCredential = copyLeadCredential;
 </script>

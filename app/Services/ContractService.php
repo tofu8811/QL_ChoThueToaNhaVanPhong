@@ -65,11 +65,8 @@ class ContractService
             $assignedBuildingIds = $user->buildings()->pluck('buildings.id')->toArray();
             $query->whereIn('building_id', $assignedBuildingIds);
         } elseif ($user instanceof \App\Models\Sale) {
-            $assignedBuildingIds = $user->buildings()->pluck('buildings.id')->toArray();
-            $query->where(function ($q) use ($user, $assignedBuildingIds) {
-                $q->where('created_by_sales_id', $user->id)
-                  ->orWhereIn('building_id', $assignedBuildingIds);
-            });
+            $query->where('created_by_sales_id', $user->id)
+                  ->where('status', ContractStatus::DRAFT);
         }
 
         return $query->orderByDesc('created_at')->paginate($perPage);
@@ -329,13 +326,17 @@ class ContractService
         DB::transaction(function () use ($contract, $unitId) {
             $unit = Unit::where('id', $unitId)->lockForUpdate()->firstOrFail();
 
+            if ($contract->status !== ContractStatus::DRAFT && $contract->contractUnits()->count() <= 1) {
+                throw new BusinessException('Không thể gỡ bỏ mặt bằng duy nhất trên hợp đồng đã ký kết.', 422);
+            }
+
             $contract->contractUnits()->where('unit_id', $unit->id)->delete();
 
             if ($contract->status === ContractStatus::RESERVED && $unit->status === UnitStatus::RESERVED) {
                 $unit->update(['status' => UnitStatus::AVAILABLE]);
             }
 
-            $totalArea = $contract->contractUnits()->sum('leased_area_sqm');
+            $totalArea = (float) $contract->contractUnits()->sum('leased_area_sqm');
             $contract->update(['total_leased_area_sqm' => $totalArea]);
         });
     }
@@ -724,9 +725,9 @@ class ContractService
     protected function ensureSaleAssignedToContract(\App\Models\Sale $sale, Contract $contract): void
     {
         $isCreator = $contract->created_by_sales_id === $sale->id;
-        $isBuildingAssigned = $sale->buildings()->where('buildings.id', $contract->building_id)->exists();
-        if (!$isCreator && !$isBuildingAssigned) {
-            throw new BusinessException('Bạn không có quyền truy cập hồ sơ hợp đồng này.', 403);
+        $isDraft = $contract->status === ContractStatus::DRAFT;
+        if (!$isCreator || !$isDraft) {
+            throw new BusinessException('Bạn không có quyền truy cập hồ sơ hợp đồng này. Chuyên viên Sales chỉ có thẩm quyền xem và thao tác trên hợp đồng bản nháp do chính mình tạo lập.', 403);
         }
     }
 

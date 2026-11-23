@@ -573,6 +573,26 @@
         }
       }
 
+      // Helper điều hướng thông minh giữ nguyên trang con chuyên biệt nếu đang đứng ở đó
+      function switchRoleDefaultTab(targetDefaultTab, targetNavEl) {
+        if (!updateRoute) return;
+        if (window.location.pathname.includes('contracts')) {
+          const cLink = document.querySelector('.filament-link[href*="contracts"]') || document.querySelector('.filament-link[onclick*="tab-admin-contracts"]');
+          switchFilamentTab('tab-admin-contracts', cLink, true);
+        } else if (window.location.pathname.includes('leads')) {
+          const lLink = document.querySelector('.filament-link[href*="leads"]') || document.querySelector('.filament-link[onclick*="tab-sales-leads"]');
+          switchFilamentTab('tab-sales-leads', lLink, true);
+        } else if (window.location.pathname.includes('quotes')) {
+          const qLink = document.querySelector('.filament-link[href*="quotes"]') || document.querySelector('.filament-link[onclick*="tab-sales-quotes"]');
+          switchFilamentTab('tab-sales-quotes', qLink, true);
+        } else if (window.location.pathname.includes('buildings')) {
+          const bLink = document.querySelector('.filament-link[href*="buildings"]') || document.querySelector('.filament-link[onclick*="tab-admin-buildings"]');
+          switchFilamentTab('tab-admin-buildings', bLink, true);
+        } else {
+          switchFilamentTab(targetDefaultTab, targetNavEl, true);
+        }
+      }
+
       if (role === 'admin') {
         const authedUser = realUser || (function() { try { return JSON.parse(localStorage.getItem('auth_user') || 'null'); } catch(e) { return null; } })();
         window.currentStaffUser = authedUser || ((typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.admins) ? SERVER_STAFF.admins[0] : null);
@@ -613,7 +633,7 @@
         if (btnSubtabAdmins) btnSubtabAdmins.style.display = isSuper ? 'inline-flex' : 'none';
         if (panelSubtabAdmins && !isSuper) panelSubtabAdmins.style.display = 'none';
 
-        if (updateRoute) switchFilamentTab('tab-admin-dashboard', navDashboard, true);
+        switchRoleDefaultTab('tab-admin-dashboard', navDashboard);
       } else if (role === 'pm') {
         const authedUser = realUser || (function() { try { return JSON.parse(localStorage.getItem('auth_user') || 'null'); } catch(e) { return null; } })();
         window.currentStaffUser = authedUser || ((typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.pm) ? SERVER_STAFF.pm[0] : null);
@@ -637,7 +657,7 @@
         if (groupSystem) groupSystem.style.display = 'none';
         if (navMailSettings) navMailSettings.style.display = 'none';
         if (groupTenant) groupTenant.style.display = 'none';
-        if (updateRoute) switchFilamentTab('tab-admin-dashboard', navDashboard, true);
+        switchRoleDefaultTab('tab-admin-dashboard', navDashboard);
       } else if (role === 'sales') {
         const authedUser = realUser || (function() { try { return JSON.parse(localStorage.getItem('auth_user') || 'null'); } catch(e) { return null; } })();
         window.currentStaffUser = authedUser || ((typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.sales) ? SERVER_STAFF.sales[0] : null);
@@ -663,7 +683,7 @@
         if (navMailSettings) navMailSettings.style.display = 'none';
         if (groupTenant) groupTenant.style.display = 'none';
         const navSalesPerfTarget = navSalesPerf || navLeads;
-        if (updateRoute) switchFilamentTab('tab-sales-performance', navSalesPerfTarget, true);
+        switchRoleDefaultTab('tab-sales-performance', navSalesPerfTarget);
       } else if (role === 'accountant') {
         const authedUser = realUser || (function() { try { return JSON.parse(localStorage.getItem('auth_user') || 'null'); } catch(e) { return null; } })();
         window.currentStaffUser = authedUser || ((typeof SERVER_STAFF !== 'undefined' && SERVER_STAFF.accountants) ? SERVER_STAFF.accountants[0] : null);
@@ -686,7 +706,7 @@
         if (groupSystem) groupSystem.style.display = 'none';
         if (navMailSettings) navMailSettings.style.display = 'none';
         if (groupTenant) groupTenant.style.display = 'none';
-        if (updateRoute) switchFilamentTab('tab-admin-billing', navBilling, true);
+        switchRoleDefaultTab('tab-admin-billing', navBilling);
       } else if (role === 'tenant') {
         window.currentStaffUser = realUser || ((typeof SAMPLE_TENANT !== 'undefined') ? SAMPLE_TENANT : null);
         if (roleSwitcherContainer) roleSwitcherContainer.style.display = (realRole === 'ADMIN' || realRole === 'SUPER_ADMIN') ? 'inline-flex' : 'none';

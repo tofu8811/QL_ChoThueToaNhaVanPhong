@@ -10,7 +10,10 @@
         <span>Office</span>
       </div>
     </a>
-    <span class="filament-badge-role" style="background:rgba(56,189,248,0.18);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);">Ban Quản Lý</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="filament-badge-role" style="background:rgba(56,189,248,0.18);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);">Ban Quản Lý</span>
+      <button type="button" class="bms-sidebar-close-btn" onclick="closeBmsMobileSidebar()" title="Đóng menu">&times;</button>
+    </div>
   </div>
 
   <!-- Section: BAN QUẢN LÝ TÒA NHÀ & VẬN HÀNH KỸ THUẬT -->

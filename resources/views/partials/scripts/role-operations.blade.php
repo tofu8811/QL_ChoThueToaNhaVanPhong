@@ -804,7 +804,7 @@ function openCreateAppointmentModal() {
 }
 
 function openFeedbackAppointmentModal(id, title) {
-  const feedback = prompt(`Nhập phản hồi của khách sau buổi khảo sát [${title || 'Khảo sát mặt bằng'}]:`, 'Khách ưng ý diện tích và view, yêu cầu xin thêm 15 ngày miễn phí thi công Fit-out.');
+  const feedback = prompt(`Nhập phản hồi của khách sau buổi khảo sát [${title || 'Khảo sát mặt bằng'}]:`, 'Khách ưng ý diện tích và view, yêu cầu xin thêm 15 ngày miễn phí thi công ban đầu.');
   if (feedback !== null) {
     alert('Đã lưu phản hồi khảo sát vào nhật ký chăm sóc Lead thành công!');
   }
@@ -813,7 +813,7 @@ function openFeedbackAppointmentModal(id, title) {
 function generateFitoutQuote(days) {
   const inputEl = document.getElementById('quote-fitout-days');
   if (inputEl) inputEl.value = days;
-  alert(`Đã cập nhật thời gian miễn phí thi công Fit-out là ${days} ngày vào dự toán báo giá!`);
+  alert(`Đã cập nhật thời gian miễn phí thi công ban đầu là ${days} ngày vào dự toán báo giá!`);
 }
 
 function exportSalesLoiModal(code) {

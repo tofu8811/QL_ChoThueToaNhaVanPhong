@@ -18,9 +18,24 @@ class TenantService
     /**
      * Lấy danh sách khách thuê doanh nghiệp có phân trang và bộ lọc.
      */
-    public function getTenants(array $filters, int $perPage = 15): LengthAwarePaginator
+    public function getTenants(array $filters, int $perPage = 15, $user = null): LengthAwarePaginator
     {
         $query = Tenant::query()->with(['createdBySales'])->withCount('contracts');
+
+        // Phân quyền dữ liệu (RBAC Data Isolation)
+        if ($user instanceof \App\Models\Sale) {
+            $query->where(function ($q) use ($user) {
+                $q->where('created_by_sales_id', $user->id)
+                  ->orWhereHas('convertedFromLead', function ($lq) use ($user) {
+                      $lq->where('assigned_sales_id', $user->id);
+                  });
+            });
+        } elseif ($user instanceof \App\Models\PropertyManager) {
+            $assignedBldIds = $user->buildings()->pluck('buildings.id')->toArray();
+            $query->whereHas('contracts', function ($cq) use ($assignedBldIds) {
+                $cq->whereIn('building_id', $assignedBldIds);
+            });
+        }
 
         if (!empty($filters['search'])) {
             $keyword = '%' . trim($filters['search']) . '%';

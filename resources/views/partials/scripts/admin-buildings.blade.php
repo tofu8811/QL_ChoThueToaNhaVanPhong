@@ -78,7 +78,7 @@
       const isPm = (effectiveRole === 'pm' || effectiveRole === 'property_manager');
       const isSales = (effectiveRole === 'sales' || effectiveRole === 'sale');
 
-      if (isPm) {
+      if (isPm && !window.location.pathname.startsWith('/pm')) {
         const totalBldsEl = document.getElementById('dashboard-total-blds');
         if (totalBldsEl) totalBldsEl.innerText = totalCount;
         const totalBldsSub = document.getElementById('dashboard-total-blds-sub');

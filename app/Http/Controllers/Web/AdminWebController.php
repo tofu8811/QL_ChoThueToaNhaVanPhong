@@ -115,12 +115,60 @@ class AdminWebController extends Controller
 
         $isSuper = ($user instanceof Admin && $user->is_super_admin);
 
-        $viewData['currentUserName'] = $user?->name ?? ($isSuper ? 'Nguyễn Quản Trị Hệ Thống' : 'Phạm Quản Trị');
-        $viewData['currentUserEmail'] = $user?->email ?? 'admin.demo@officeleasing.vn';
-        $viewData['currentUserSub'] = $isSuper ? 'Super Admin • Toàn hệ thống' : 'Quản trị viên • Vận hành';
-        $viewData['currentUserRoleLabel'] = $isSuper ? 'SUPER ADMIN' : 'ADMIN';
-        $viewData['avatarInitial'] = $isSuper ? 'SA' : 'AD';
-        $viewData['roleBadge'] = $isSuper ? 'Super Admin' : 'Admin';
+        if ($user instanceof \App\Models\Sale) {
+            $viewData['currentUserName'] = $user->name ?: 'Phạm Kinh Doanh (Sales)';
+            $viewData['currentUserEmail'] = $user->email;
+            $viewData['currentUserSub'] = 'Chuyên viên Sales • Phụ trách tòa nhà';
+            $viewData['currentUserRoleLabel'] = 'SALES';
+            $viewData['avatarInitial'] = 'SL';
+            $viewData['roleBadge'] = 'Chuyên Viên Sales';
+
+            $assignedBuildingIds = $user->buildings()->pluck('buildings.id')->toArray();
+            if (!empty($assignedBuildingIds)) {
+                $viewData['serverBuildings'] = collect($viewData['serverBuildings'] ?? [])->filter(function ($b) use ($assignedBuildingIds) {
+                    $bId = is_array($b) ? ($b['id'] ?? '') : ($b->id ?? '');
+                    return in_array($bId, $assignedBuildingIds);
+                })->values();
+            }
+
+            if (!empty($viewData['recentContracts'])) {
+                $viewData['recentContracts'] = collect($viewData['recentContracts'])->filter(function ($c) use ($user) {
+                    $creatorId = is_array($c) ? ($c['created_by_sales_id'] ?? null) : ($c->created_by_sales_id ?? null);
+                    $status = is_array($c) ? ($c['status'] ?? '') : ($c->status ?? '');
+                    $statusVal = $status instanceof \App\Enums\ContractStatus ? $status->value : (string) $status;
+                    return $creatorId === $user->id && $statusVal === 'DRAFT';
+                })->values();
+            }
+        } elseif ($user instanceof \App\Models\PropertyManager) {
+            $viewData['currentUserName'] = $user->name ?: 'Đỗ Minh Quang (PM)';
+            $viewData['currentUserEmail'] = $user->email;
+            $viewData['currentUserSub'] = 'Ban Quản Lý • Phụ trách cao ốc';
+            $viewData['currentUserRoleLabel'] = 'PM';
+            $viewData['avatarInitial'] = 'PM';
+            $viewData['roleBadge'] = 'Ban Quản Lý';
+
+            $assignedBuildingIds = $user->buildings()->pluck('buildings.id')->toArray();
+            if (!empty($assignedBuildingIds)) {
+                $viewData['serverBuildings'] = collect($viewData['serverBuildings'] ?? [])->filter(function ($b) use ($assignedBuildingIds) {
+                    $bId = is_array($b) ? ($b['id'] ?? '') : ($b->id ?? '');
+                    return in_array($bId, $assignedBuildingIds);
+                })->values();
+
+                if (!empty($viewData['recentContracts'])) {
+                    $viewData['recentContracts'] = collect($viewData['recentContracts'])->filter(function ($c) use ($assignedBuildingIds) {
+                        $bId = is_array($c) ? ($c['building_id'] ?? '') : ($c->building_id ?? '');
+                        return in_array($bId, $assignedBuildingIds);
+                    })->values();
+                }
+            }
+        } else {
+            $viewData['currentUserName'] = $user?->name ?? ($isSuper ? 'Nguyễn Quản Trị Hệ Thống' : 'Phạm Quản Trị');
+            $viewData['currentUserEmail'] = $user?->email ?? 'admin.demo@officeleasing.vn';
+            $viewData['currentUserSub'] = $isSuper ? 'Super Admin • Toàn hệ thống' : 'Quản trị viên • Vận hành';
+            $viewData['currentUserRoleLabel'] = $isSuper ? 'SUPER ADMIN' : 'ADMIN';
+            $viewData['avatarInitial'] = $isSuper ? 'SA' : 'AD';
+            $viewData['roleBadge'] = $isSuper ? 'Super Admin' : 'Admin';
+        }
         $viewData['activeTab'] = $activeTab;
         $viewData['breadcrumb'] = $breadcrumb;
 

@@ -94,7 +94,6 @@ class LeadService
                 'customer_note' => $data['customer_note'] ?? null,
                 'assigned_sales_id' => $isAssigned ? $optimalSales->id : null,
                 'assigned_at' => $isAssigned ? now() : null,
-                'sla_deadline_at' => $isAssigned ? now()->addHours(24) : null,
                 'first_contacted_at' => null,
                 'status' => $isAssigned ? LeadStatus::NEW : LeadStatus::PENDING_ASSIGN,
             ]);
@@ -251,6 +250,45 @@ class LeadService
      */
     public function storeCrmLead(array $data, mixed $user = null): Lead
     {
+        $buildingId = $data['building_id'] ?? null;
+        $phone = trim((string) ($data['phone'] ?? ''));
+        $email = trim((string) ($data['email'] ?? ''));
+
+        // Kiểm tra chống trùng lặp 30 ngày trên kênh CRM (Anti-duplicate 30 days)
+        if ($phone || $email) {
+            $existingLead = Lead::query()
+                ->when($buildingId, fn($q) => $q->where('building_id', $buildingId))
+                ->where('created_at', '>=', now()->subDays(30))
+                ->where(function ($q) use ($phone, $email) {
+                    if ($phone) $q->where('phone', $phone);
+                    if ($email) $q->orWhere('email', $email);
+                })
+                ->with('assignedSales')
+                ->first();
+
+            if ($existingLead) {
+                $assignedName = $existingLead->assignedSales?->full_name ?? 'Chưa phân bổ';
+
+                // Nếu khách hàng đang được Sales khác chăm sóc, chặn tạo mới để bảo vệ quyền lợi Sales
+                if ($user instanceof Sale && $existingLead->assigned_sales_id && (string) $existingLead->assigned_sales_id !== (string) $user->id) {
+                    throw new BusinessException("Khách hàng này (SĐT: {$phone}) đã tồn tại trong hệ thống và đang được chuyên viên [{$assignedName}] chăm sóc trong vòng 30 ngày qua.", 422);
+                }
+
+                // Ghi nhận hoạt động liên hệ mới vào Lead đã tồn tại thay vì nhân bản Lead rác
+                LeadActivity::create([
+                    'lead_id' => $existingLead->id,
+                    'sales_id' => $existingLead->assigned_sales_id ?? ($user instanceof Sale ? $user->id : null),
+                    'activity_type' => 'NOTE',
+                    'title' => 'Khách liên hệ lại qua Hotline/Trực tiếp',
+                    'content' => $data['customer_note'] ?? 'Khách hàng liên hệ lại qua kênh tiếp nhận trực tiếp tại văn phòng.',
+                    'event_at' => now(),
+                ]);
+
+                $existingLead->touch();
+                return $existingLead;
+            }
+        }
+
         $salesId = $data['assigned_sales_id'] ?? ($user instanceof Sale ? $user->id : null);
 
         // Nếu chưa gán sales, tự động tìm sales theo tòa nhà hoặc toàn hệ thống
@@ -277,7 +315,6 @@ class LeadService
                 'customer_note' => $data['customer_note'] ?? null,
                 'assigned_sales_id' => $salesId,
                 'assigned_at' => $isAssigned ? now() : null,
-                'sla_deadline_at' => $isAssigned ? now()->addHours(24) : null,
                 'first_contacted_at' => null,
                 'status' => $isAssigned ? LeadStatus::NEW : LeadStatus::PENDING_ASSIGN,
             ]);
@@ -362,6 +399,16 @@ class LeadService
     ): Lead {
         $newStatus = is_string($status) ? LeadStatus::from($status) : $status;
 
+        // Ràng buộc bảo toàn: Không cho phép đổi trạng thái của Lead đã chốt thuê thành công (WON)
+        if ($lead->status === LeadStatus::WON && $newStatus !== LeadStatus::WON) {
+            throw new BusinessException('Không thể thay đổi trạng thái của hồ sơ Lead đã chốt hợp đồng thành công (WON).', 422);
+        }
+
+        // Ràng buộc quy trình: Trạng thái WON chỉ được xác lập khi đã chuyển đổi sang Khách thuê chính thức
+        if ($newStatus === LeadStatus::WON && empty($lead->converted_tenant_id)) {
+            throw new BusinessException('Không thể chuyển trực tiếp sang trạng thái WON. Vui lòng sử dụng tính năng "Chốt Khách Thuê" để hoàn tất tạo hồ sơ doanh nghiệp.', 422);
+        }
+
         // Ràng buộc cấm đóng trạng thái LOST mà thiếu lý do
         if ($newStatus === LeadStatus::LOST) {
             if (empty($lostCategory) || empty($lostDetail)) {
@@ -414,7 +461,6 @@ class LeadService
 
             $lead->assigned_sales_id = $sale->id;
             $lead->assigned_at = now();
-            $lead->sla_deadline_at = now()->addHours(24);
 
             if ($lead->status === LeadStatus::PENDING_ASSIGN) {
                 $lead->status = LeadStatus::NEW;
@@ -453,7 +499,7 @@ class LeadService
         }
 
         return DB::transaction(function () use ($lead, $tenantData) {
-            $tenantCode = $tenantData['tenant_code'] ?? 'TN-' . date('Y') . '-' . str_pad((string)(Tenant::withTrashed()->count() + 1), 4, '0', STR_PAD_LEFT);
+            $tenantCode = $tenantData['tenant_code'] ?? 'TNT-' . date('Y') . '-' . str_pad((string)(Tenant::withTrashed()->count() + 1), 4, '0', STR_PAD_LEFT);
 
             $rawPassword = $tenantData['password'] ?? \App\Helpers\PasswordHelper::generateSecurePassword(10);
 

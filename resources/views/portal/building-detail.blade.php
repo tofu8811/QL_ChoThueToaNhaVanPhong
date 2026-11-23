@@ -149,29 +149,44 @@
             <table class="detail-specs-table">
               <tr>
                 <td><i class="fa-solid fa-layer-group"></i> Kết cấu tòa nhà</td>
-                <td>{{ ($building->total_floors ?: 25) }} Tầng nổi - {{ ($building->total_basements ?: 3) }} Tầng hầm</td>
+                <td>{{ $building->total_floors }} Tầng nổi - {{ $building->total_basements > 0 ? $building->total_basements . ' Tầng hầm' : 'Không có hầm' }}</td>
               </tr>
               <tr>
-                <td><i class="fa-solid fa-expand"></i> Diện tích sàn điển hình</td>
-                <td>{{ number_format($building->total_leasable_area_sqm ? $building->total_leasable_area_sqm / ($building->total_floors ?: 25) : 1000) }} m² / sàn</td>
+                <td><i class="fa-solid fa-expand"></i> Diện tích sàn khả dụng</td>
+                <td>{{ number_format($building->total_leasable_area_sqm ?: 0, 0, ',', '.') }} m²</td>
               </tr>
               <tr>
-                <td><i class="fa-solid fa-ruler-vertical"></i> Chiều cao trần</td>
-                <td>2.75 mét (tiêu chuẩn quốc tế)</td>
+                <td><i class="fa-solid fa-compass"></i> Hướng chính diện</td>
+                <td>{{ $building->direction ?: 'Đang cập nhật' }}</td>
+              </tr>
+              <tr>
+                <td><i class="fa-solid fa-ruler-vertical"></i> Chiều cao trần tiêu chuẩn</td>
+                <td>{{ $building->ceiling_height_meters ? $building->ceiling_height_meters . ' m' : 'Đang cập nhật' }}</td>
               </tr>
               <tr>
                 <td><i class="fa-solid fa-elevator"></i> Hệ thống thang máy</td>
-                <td>Tốc độ cao có phân tầng thông minh</td>
+                <td>{{ $building->elevators_count > 0 ? $building->elevators_count . ' Thang máy' : 'Thang bộ' }}</td>
               </tr>
               <tr>
                 <td><i class="fa-solid fa-snowflake"></i> Hệ thống điều hòa</td>
-                <td>Máy lạnh trung tâm Chiller Carrier thông minh</td>
+                <td>{{ $building->air_conditioner_spec ?: 'Đang cập nhật' }}</td>
               </tr>
               <tr>
-                <td><i class="fa-solid fa-shield-virus"></i> Máy phát điện dự phòng</td>
-                <td>100% Công suất tự động chuyển mạch</td>
+                <td><i class="fa-solid fa-bolt"></i> Máy phát điện dự phòng</td>
+                <td>{{ $building->backup_generator_spec ?: 'Đang cập nhật' }}</td>
+              </tr>
+              <tr>
+                <td><i class="fa-solid fa-clock"></i> Giờ làm việc tiêu chuẩn</td>
+                <td>{{ $building->working_hours_desc ?: 'Đang cập nhật' }}</td>
               </tr>
             </table>
+
+            @if(!empty($building->description))
+              <div style="margin-top: 14px; padding: 12px 14px; background: #f8fafc; border-left: 3px solid var(--mo-blue-accent); border-radius: 4px; font-size: 13.5px; line-height: 1.6; color: #334155;">
+                <div style="font-weight: 700; color: var(--mo-primary); margin-bottom: 4px;"><i class="fa-solid fa-circle-info"></i> Giới thiệu tòa nhà:</div>
+                <div style="white-space: pre-line;">{{ $building->description }}</div>
+              </div>
+            @endif
 
             <div style="margin-top: 20px;">
               <a href="{{ route('quote.page', ['building_id' => $building->id]) }}" class="btn-mo-orange" style="width: 100%; justify-content: center; text-decoration: none; padding: 12px 20px; font-size: 15px; font-weight: 700; border-radius: 8px; box-sizing: border-box;">

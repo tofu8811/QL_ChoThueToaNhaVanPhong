@@ -52,7 +52,8 @@ Route::prefix('v1')->group(function () {
     Route::middleware(['auth:sanctum', 'role:admin,pm,sales,accountant'])->prefix('admin')->group(function () {
         // Quản lý Tòa nhà & Thư viện hình ảnh
         Route::get('buildings', [BuildingApiController::class, 'adminIndex'])->name('v1.admin.buildings.index');
-        Route::post('buildings', [BuildingApiController::class, 'store'])->middleware('role:admin,pm')->name('v1.admin.buildings.store');
+        Route::get('buildings/next-code', [BuildingApiController::class, 'nextBuildingCode'])->middleware('role:admin,pm')->name('v1.admin.buildings.next-code');
+        Route::post('buildings', [BuildingApiController::class, 'store'])->middleware('role:admin')->name('v1.admin.buildings.store');
         Route::get('buildings/{id}', [BuildingApiController::class, 'show'])->name('v1.admin.buildings.show');
         Route::put('buildings/{id}', [BuildingApiController::class, 'update'])->middleware('role:admin,pm')->name('v1.admin.buildings.update');
         Route::delete('buildings/{id}', [BuildingApiController::class, 'destroy'])->middleware('role:admin')->name('v1.admin.buildings.destroy');

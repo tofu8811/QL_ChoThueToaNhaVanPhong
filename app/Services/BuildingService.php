@@ -7,6 +7,7 @@ use App\Models\Building;
 use App\Models\BuildingImage;
 use App\Models\Contract;
 use App\Models\ContractStatus;
+use App\Models\Unit;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -250,6 +251,41 @@ class BuildingService
     }
 
     /**
+     * Tự động sinh mã tòa nhà văn phòng theo cấu trúc: BLD-{YYYY}-{SEQ_4_DIGITS}.
+     * Quét toàn bộ CSDL kể cả các bản ghi đã xóa mềm (withTrashed) để triệt tiêu nguy cơ trùng lặp.
+     *
+     * @return string
+     */
+    public function generateBuildingCode(): string
+    {
+        $year = date('Y');
+        $prefix = "BLD-{$year}-";
+
+        // Quét toàn bộ mã tòa nhà trong CSDL (bao gồm cả các bản ghi đã xóa mềm) khớp tiền tố của năm
+        $existingCodes = Building::withTrashed()
+            ->where('building_code', 'like', "{$prefix}%")
+            ->pluck('building_code');
+
+        $maxSeq = 0;
+        foreach ($existingCodes as $code) {
+            if (preg_match('/^BLD-\d{4}-(\d+)$/', (string) $code, $matches)) {
+                $seq = (int) $matches[1];
+                if ($seq > $maxSeq) {
+                    $maxSeq = $seq;
+                }
+            }
+        }
+
+        // Đảm bảo mã sinh ra là duy nhất tuyệt đối trong CSDL (kể cả bản ghi đã xóa mềm)
+        do {
+            $maxSeq++;
+            $candidateCode = sprintf('BLD-%s-%04d', $year, $maxSeq);
+        } while (Building::withTrashed()->where('building_code', $candidateCode)->exists());
+
+        return $candidateCode;
+    }
+
+    /**
      * Khởi tạo mới tòa nhà văn phòng.
      *
      * @param array<string, mixed> $data
@@ -259,6 +295,18 @@ class BuildingService
     public function storeBuilding(array $data, ?string $adminId = null): Building
     {
         return DB::transaction(function () use ($data, $adminId) {
+            // 1. Tự động sinh mã tòa nhà nếu người dùng để trống, hoặc kiểm tra trùng lặp (kể cả đã xóa mềm) nếu tự nhập
+            $rawCode = isset($data['building_code']) ? trim((string) $data['building_code']) : '';
+            if ($rawCode === '') {
+                $data['building_code'] = $this->generateBuildingCode();
+            } else {
+                $data['building_code'] = strtoupper($rawCode);
+                if (Building::withTrashed()->where('building_code', $data['building_code'])->exists()) {
+                    throw new BusinessException("Mã tòa nhà [{$data['building_code']}] đã tồn tại trong hệ thống (kể cả bản ghi đã xóa mềm).", 422);
+                }
+            }
+
+            // 2. Tự động sinh slug thân thiện SEO và bảo đảm tính duy nhất
             $slugBase = Str::slug($data['name']);
             $slug = $slugBase;
             $counter = 1;
@@ -276,6 +324,13 @@ class BuildingService
                 $data['is_published'] = true;
             }
 
+            if (!isset($data['min_rent_price_per_sqm']) || $data['min_rent_price_per_sqm'] === null) {
+                $data['min_rent_price_per_sqm'] = 0.00;
+            }
+            if (!isset($data['max_rent_price_per_sqm']) || $data['max_rent_price_per_sqm'] === null) {
+                $data['max_rent_price_per_sqm'] = 0.00;
+            }
+
             return Building::create($data);
         });
     }
@@ -290,6 +345,16 @@ class BuildingService
     public function updateBuilding(Building $building, array $data): Building
     {
         return DB::transaction(function () use ($building, $data) {
+            if (!empty($data['building_code'])) {
+                $newCode = strtoupper(trim((string) $data['building_code']));
+                if ($newCode !== $building->building_code) {
+                    if (Building::withTrashed()->where('building_code', $newCode)->where('id', '!=', $building->id)->exists()) {
+                        throw new BusinessException("Mã tòa nhà [{$newCode}] đã tồn tại trong hệ thống (kể cả bản ghi đã xóa mềm).", 422);
+                    }
+                    $data['building_code'] = $newCode;
+                }
+            }
+
             if (!empty($data['name']) && $data['name'] !== $building->name) {
                 $slugBase = Str::slug($data['name']);
                 $slug = $slugBase;
@@ -304,6 +369,33 @@ class BuildingService
             $building->update($data);
             return $building->fresh(['provinceRelation', 'images', 'primaryImage']);
         });
+    }
+
+    /**
+     * Tự động tính toán và đồng bộ lại khoảng giá thuê (min_rent_price_per_sqm & max_rent_price_per_sqm)
+     * của tòa nhà dựa trên danh sách các mặt bằng (units) đang hoạt động.
+     *
+     * @param string $buildingId
+     * @return void
+     */
+    public function syncRentPriceRange(string $buildingId): void
+    {
+        $prices = Unit::where('building_id', $buildingId)
+            ->where('base_rental_price', '>', 0)
+            ->pluck('base_rental_price');
+
+        if ($prices->isEmpty()) {
+            Building::where('id', $buildingId)->update([
+                'min_rent_price_per_sqm' => 0.00,
+                'max_rent_price_per_sqm' => 0.00,
+            ]);
+            return;
+        }
+
+        Building::where('id', $buildingId)->update([
+            'min_rent_price_per_sqm' => (float) $prices->min(),
+            'max_rent_price_per_sqm' => (float) $prices->max(),
+        ]);
     }
 
     /**
@@ -339,9 +431,10 @@ class BuildingService
      * @param string|null $caption
      * @return array<BuildingImage>
      */
-    public function uploadImages(Building $building, array $files, ?string $caption = null): array
+    public function uploadImages(Building $building, array $files, ?string $caption = null, ?int $primaryIndex = 0): array
     {
         $uploaded = [];
+        $targetPrimary = $primaryIndex ?? 0;
 
         foreach ($files as $index => $file) {
             $filename = Str::uuid()->toString() . '.' . $file->getClientOriginalExtension();
@@ -367,7 +460,7 @@ class BuildingService
             }
 
             $hasPrimary = $building->images()->where('is_primary', true)->exists();
-            $isPrimary = (!$hasPrimary && $index === 0);
+            $isPrimary = (!$hasPrimary && $index === $targetPrimary);
 
             $image = BuildingImage::create([
                 'building_id' => $building->id,

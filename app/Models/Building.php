@@ -71,6 +71,7 @@ class Building extends Model
         'payment_term_months', // Kỳ hạn thanh toán chuẩn (tháng/lần)
         'grade', // Phân hạng văn phòng: A | B | C
         'direction', // Hướng chính diện tòa nhà theo phong thủy
+        'description', // Mô tả / Giới thiệu tổng quan tòa nhà
         'is_published', // Trạng thái hiển thị công khai trên Portal
         'created_by_admin_id', // Quản trị viên khởi tạo
     ];

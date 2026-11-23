@@ -45,11 +45,25 @@ class BuildingApiController extends BaseApiController
         return $this->paginateResponse($buildings, 'Lấy danh sách quản trị tòa nhà thành công.');
     }
 
+    // Lấy mã tòa nhà tự sinh kế tiếp phục vụ điền trước trên form
+    public function nextBuildingCode(): JsonResponse
+    {
+        $code = $this->buildingService->generateBuildingCode();
+
+        return $this->successResponse(['next_code' => $code], 'Lấy mã tòa nhà tự sinh thành công.');
+    }
+
     // Tạo mới một tòa nhà văn phòng
     public function store(StoreBuildingRequest $request): JsonResponse
     {
         $adminId = $request->user() instanceof \App\Models\Admin ? $request->user()->id : null;
         $building = $this->buildingService->storeBuilding($request->validated(), $adminId);
+
+        if ($request->hasFile('images')) {
+            $primaryIndex = $request->has('primary_image_index') ? (int) $request->input('primary_image_index') : 0;
+            $this->buildingService->uploadImages($building, $request->file('images'), null, $primaryIndex);
+            $building->load(['images', 'primaryImage']);
+        }
 
         return $this->createdResponse($building, 'Khởi tạo tòa nhà văn phòng thành công.');
     }
@@ -110,6 +124,11 @@ class BuildingApiController extends BaseApiController
     {
         $building = Building::findOrFail($id);
         $this->authorizePmBuildingAccess(request()->user(), $building);
+
+        if ($building->images()->count() <= 1) {
+            throw new \App\Exceptions\BusinessException('Tòa nhà phải có ít nhất 1 hình ảnh đại diện, không thể xóa hình ảnh cuối cùng.', 422);
+        }
+
         $this->buildingService->deleteImage($building, $imageId);
 
         return $this->successResponse(null, 'Đã xóa hình ảnh tòa nhà thành công.');

@@ -88,9 +88,6 @@
         if (tr && !this.validateTour(tr)) valid = false;
 
         if (!valid) {
-            if (typeof moToast === 'function') {
-                moToast('Vui lòng kiểm tra và điền chính xác các trường thông tin bắt buộc.', 'error', 'Thông tin chưa hợp lệ');
-            }
             return;
         }
 
@@ -130,9 +127,7 @@
                  wire:model.defer="contact_full_name" 
                  placeholder="Nguyễn Văn A" 
                  @input="serverErrors.fullname = false; if (clientErrors.fullname) validateFullname($event.target.value)"
-                 @blur="serverErrors.fullname = false; validateFullname($event.target.value)"
-                 :class="(clientErrors.fullname || serverErrors.fullname) ? 'input-error' : ''"
-                 class="@error('contact_full_name') input-error @enderror">
+                 @blur="serverErrors.fullname = false; validateFullname($event.target.value)">
           <div class="field-error-slot">
             <span x-show="clientErrors.fullname" x-text="clientErrors.fullname" x-cloak></span>
             @error('contact_full_name')
@@ -153,9 +148,7 @@
                  placeholder="0901234567" 
                  oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                  @input="serverErrors.phone = false; let clean = $event.target.value.replace(/[^0-9]/g, ''); $event.target.value = clean; if (clientErrors.phone) validatePhone(clean);"
-                 @blur="serverErrors.phone = false; validatePhone($event.target.value)"
-                 :class="(clientErrors.phone || serverErrors.phone) ? 'input-error' : ''"
-                 class="@error('phone') input-error @enderror">
+                 @blur="serverErrors.phone = false; validatePhone($event.target.value)">
           <div class="field-error-slot">
             <span x-show="clientErrors.phone" x-text="clientErrors.phone" x-cloak></span>
             @error('phone')
@@ -173,9 +166,7 @@
                  autocomplete="email"
                  placeholder="contact@company.com" 
                  @input="serverErrors.email = false; if (clientErrors.email) validateEmail($event.target.value)"
-                 @blur="serverErrors.email = false; validateEmail($event.target.value)"
-                 :class="(clientErrors.email || serverErrors.email) ? 'input-error' : ''"
-                 class="@error('email') input-error @enderror">
+                 @blur="serverErrors.email = false; validateEmail($event.target.value)">
           <div class="field-error-slot">
             <span x-show="clientErrors.email" x-text="clientErrors.email" x-cloak></span>
             @error('email')
@@ -221,7 +212,7 @@
             
             <!-- Trigger button hiển thị giống 100% thẻ select -->
             <div class="custom-select-trigger"
-                 :class="{ 'is-open': open, 'input-error': {{ $errors->has('province_code') ? 'true' : 'false' }} }"
+                 :class="{ 'is-open': open }"
                  tabindex="0"
                  @click="toggle()">
               <span class="trigger-text" x-text="currentLabel">{{ $pInitialLabel }}</span>
@@ -309,7 +300,7 @@
             
             <!-- Trigger button hiển thị giống 100% thẻ select -->
             <div class="custom-select-trigger"
-                 :class="{ 'is-open': open, 'input-error': {{ $errors->has('building_id') ? 'true' : 'false' }} }"
+                 :class="{ 'is-open': open }"
                  tabindex="0"
                  @click="toggle()">
               <span class="trigger-text" x-text="currentLabel">{{ $bInitialLabel }}</span>
@@ -401,9 +392,7 @@
                  min="{{ now()->addDays(3)->format('Y-m-d\TH:i') }}"
                  @input="serverErrors.tour = false; if (clientErrors.tour) validateTour($event.target.value)"
                  @change="serverErrors.tour = false; validateTour($event.target.value)"
-                 @blur="serverErrors.tour = false; validateTour($event.target.value)"
-                 :class="(clientErrors.tour || serverErrors.tour) ? 'input-error' : ''"
-                 class="@error('preferred_site_tour_at') input-error @enderror">
+                 @blur="serverErrors.tour = false; validateTour($event.target.value)">
           <div class="field-error-slot">
             <span x-show="clientErrors.tour" x-text="clientErrors.tour" x-cloak></span>
             @error('preferred_site_tour_at')
@@ -438,6 +427,25 @@
   @endif
 
   <style>
+    .lead-form-grid {
+      row-gap: 6px !important;
+      margin-top: 16px !important;
+    }
+    .lead-form-grid .form-field {
+      gap: 3px !important;
+    }
+    .lead-form-grid .form-field label {
+      height: 20px !important;
+      min-height: 20px !important;
+      max-height: 20px !important;
+      line-height: 20px !important;
+      margin-bottom: 0 !important;
+    }
+    .lead-form-grid .field-error-slot {
+      min-height: 16px !important;
+      margin-top: 1px !important;
+      line-height: 1.35 !important;
+    }
     .custom-search-select {
       position: relative;
       width: 100%;
@@ -473,8 +481,23 @@
       box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
       outline: none;
     }
-    .custom-select-trigger.input-error {
-      border-color: #ef4444 !important;
+    .lead-form-grid .input-error,
+    .lead-form-grid input.input-error,
+    .lead-form-grid select.input-error,
+    .lead-form-grid textarea.input-error,
+    .lead-form-grid .custom-select-trigger.input-error {
+      border-color: #cbd5e1 !important;
+      background-color: #fff !important;
+      box-shadow: none !important;
+    }
+    .lead-form-grid input:focus,
+    .lead-form-grid select:focus,
+    .lead-form-grid textarea:focus,
+    .lead-form-grid .custom-select-trigger:focus,
+    .lead-form-grid .custom-select-trigger.is-open {
+      border-color: var(--mo-orange, #ea580c) !important;
+      box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15) !important;
+      outline: none !important;
     }
     .custom-select-trigger .trigger-text {
       flex: 1 1 0%;

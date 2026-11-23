@@ -37,6 +37,7 @@ class ProvinceApiController extends BaseApiController
         return $this->successResponse([
             'province' => $province,
             'geo_details' => $geoData,
+            'districts' => $geoData['areas'] ?? [],
         ], 'Lấy thông tin tỉnh thành thành công.');
     }
 }

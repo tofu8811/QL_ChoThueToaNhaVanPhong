@@ -1,166 +1,532 @@
-<!-- MODAL 1: TẠO TÒA NHÀ MỚI (POST /api/v1/admin/buildings) -->
+@php
+  $modalProvinces = $provinces ?? \App\Models\Province::orderBy('name')->get();
+@endphp
+
+<!-- MODAL 1: TẠO TÒA NHÀ MỚI (POST /api/v1/admin/buildings) - BỐ CỤC PHÂN TAB GỌN ĐẸP -->
 <div id="modal-create-building" class="mo-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.6);backdrop-filter:blur(3px);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:#ffffff;border-radius:12px;width:100%;max-width:640px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);overflow:hidden;border:1px solid #e2e8f0;max-height:92vh;display:flex;flex-direction:column;">
-    <div style="background:var(--mo-primary);color:#ffffff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
-      <h3 style="margin:0;font-size:16px;font-weight:700;"><i class="fa-solid fa-building"></i> Thêm Tòa Nhà Văn Phòng Mới Vào Hệ Thống</h3>
-      <button type="button" onclick="closeCreateBuildingModal()" style="background:none;border:none;color:#ffffff;font-size:18px;cursor:pointer;">&times;</button>
+  <div style="background:#ffffff;border-radius:12px;width:920px;max-width:95vw;height:750px;max-height:96vh;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);overflow:hidden;border:1px solid #cbd5e1;display:flex;flex-direction:column;">
+    <div style="background:var(--mo-primary);color:#ffffff;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+      <h3 style="margin:0;font-size:15px;font-weight:700;"><i class="fa-solid fa-building"></i> Thêm Tòa Nhà Văn Phòng Mới Vào Hệ Thống</h3>
+      <button type="button" onclick="closeCreateBuildingModal()" style="background:none;border:none;color:#ffffff;font-size:20px;cursor:pointer;line-height:1;">&times;</button>
     </div>
-    <form id="form-create-building" onsubmit="submitCreateBuilding(event)" style="padding:20px;overflow-y:auto;flex:1;">
-      <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:12px;margin-bottom:12px;">
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Tên Tòa Nhà <span style="color:#ef4444;">*</span></label>
-          <input type="text" id="build-name" class="filament-input-sm" required placeholder="VD: Landmark 81 Office Tower">
-        </div>
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Mã Tòa Nhà (Tự sinh nếu trống)</label>
-          <input type="text" id="build-code" class="filament-input-sm" placeholder="VD: BLD-LM81">
+    <form id="form-create-building" novalidate onsubmit="submitCreateBuilding(event)" style="padding:10px 18px;overflow-y:auto;flex:1;display:flex;flex-direction:column;box-sizing:border-box;">
+      <!-- TAB NAVIGATION STRIP -->
+      <div style="display:flex;gap:6px;border-bottom:2px solid #e2e8f0;margin-bottom:8px;background:#f8fafc;padding:5px 6px 0;border-radius:8px 8px 0 0;flex-shrink:0;">
+        <button type="button" id="tab-btn-create-bld-1" onclick="switchBuildingModalTab('create', 1)" style="flex:1;padding:9px 12px;font-size:13px;font-weight:700;border:none;background:#ffffff;cursor:pointer;border-radius:6px 6px 0 0;border-bottom:3px solid var(--mo-primary);color:var(--mo-primary);display:flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;transition:all 0.15s;">
+          <i class="fa-solid fa-map-location-dot" style="color:#0284c7;"></i> Thông Tin & Địa Giới
+        </button>
+        <button type="button" id="tab-btn-create-bld-2" onclick="switchBuildingModalTab('create', 2)" style="flex:1;padding:9px 12px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-radius:6px 6px 0 0;border-bottom:3px solid transparent;color:#64748b;display:flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;transition:all 0.15s;">
+          <i class="fa-solid fa-sliders" style="color:#eab308;"></i> Thông Số Kỹ Thuật
+        </button>
+        <button type="button" id="tab-btn-create-bld-3" onclick="switchBuildingModalTab('create', 3)" style="flex:1;padding:9px 12px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-radius:6px 6px 0 0;border-bottom:3px solid transparent;color:#64748b;display:flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;transition:all 0.15s;">
+          <i class="fa-solid fa-file-invoice-dollar" style="color:#10b981;"></i> Chính Sách & Biểu Phí
+        </button>
+        <button type="button" id="tab-btn-create-bld-4" onclick="switchBuildingModalTab('create', 4)" style="flex:1;padding:9px 12px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-radius:6px 6px 0 0;border-bottom:3px solid transparent;color:#64748b;display:flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;transition:all 0.15s;">
+          <i class="fa-solid fa-images" style="color:#ec4899;"></i> Hình Ảnh <span style="color:#ef4444;font-weight:700;">*</span>
+        </button>
+      </div>
+
+      <!-- TAB PANE 1: THÔNG TIN TÒA NHÀ & ĐỊA GIỚI HÀNH CHÍNH -->
+      <div id="tab-pane-create-bld-1" style="display:flex;flex-direction:column;flex:1;">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 16px;display:flex;flex-direction:column;gap:2px;flex:1;box-sizing:border-box;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+            <div class="form-field" style="grid-column: span 2;">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Tên Tòa Nhà <span style="color:#ef4444;">*</span></label>
+              <input type="text" id="build-name" required class="filament-input-sm" placeholder="VD: Landmark 81 Tower, Bitexco Financial..." style="height:36px;width:100%;" oninput="moClearFieldError('build-name', 'err-build-name')" onblur="validateBuildingField('create', 'name')">
+              <div class="field-error-slot" id="err-build-name"></div>
+            </div>
+            <div class="form-field" style="grid-column: span 1;">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Mã Tòa Nhà (Tự sinh)</label>
+              <input type="text" id="build-code" class="filament-input-sm" placeholder="VD: BLD-001" style="height:36px;width:100%;" oninput="moClearFieldError('build-code', 'err-build-code')" onblur="validateBuildingField('create', 'code')">
+              <div class="field-error-slot" id="err-build-code"></div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Phân Hạng Tòa Nhà <span style="color:#ef4444;">*</span></label>
+              <select id="build-grade" required class="filament-input-sm" style="height:36px;width:100%;" onchange="moClearFieldError('build-grade', 'err-build-grade'); validateBuildingField('create', 'grade');">
+                <option value="" selected>-- Chọn phân hạng * --</option>
+                <option value="A">Hạng A (Cao cấp)</option>
+                <option value="B">Hạng B (Tiêu chuẩn)</option>
+                <option value="C">Hạng C (Giá rẻ)</option>
+              </select>
+              <div class="field-error-slot" id="err-build-grade"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Hướng Chính Diện Tòa Nhà</label>
+              <select id="build-direction" class="filament-input-sm" style="height:36px;width:100%;">
+                <option value="" selected>-- Chọn hướng tòa nhà (tùy chọn) --</option>
+                <option value="Đông">Đông (East)</option>
+                <option value="Tây">Tây (West)</option>
+                <option value="Nam">Nam (South)</option>
+                <option value="Bắc">Bắc (North)</option>
+                <option value="Đông Nam">Đông Nam (Southeast)</option>
+                <option value="Đông Bắc">Đông Bắc (Northeast)</option>
+                <option value="Tây Nam">Tây Nam (Southwest)</option>
+                <option value="Tây Bắc">Tây Bắc (Northwest)</option>
+              </select>
+              <div class="field-error-slot"></div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Tỉnh / Thành Phố <span style="color:#ef4444;">*</span></label>
+              <select id="build-province" required class="filament-input-sm" onchange="onBuildingProvinceChange(this, 'build-district'); moClearFieldError('build-province', 'err-build-province'); validateBuildingField('create', 'province');" style="height:36px;width:100%;">
+                <option value="" selected>-- Chọn Tỉnh / Thành Phố * --</option>
+                @foreach($modalProvinces as $p)
+                  <option value="{{ $p->code }}" data-name="{{ $p->name }}">{{ $p->name }}</option>
+                @endforeach
+              </select>
+              <div class="field-error-slot" id="err-build-province"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Quận / Huyện <span style="color:#ef4444;">*</span></label>
+              <select id="build-district" required class="filament-input-sm" style="height:36px;width:100%;" onchange="moClearFieldError('build-district', 'err-build-district'); validateBuildingField('create', 'district');">
+                <option value="">-- Vui lòng chọn Tỉnh / TP trước --</option>
+              </select>
+              <div class="field-error-slot" id="err-build-district"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Phường / Xã</label>
+              <input type="text" id="build-ward" class="filament-input-sm" placeholder="VD: Phường 22, Phường Bến Nghé..." style="height:36px;width:100%;" oninput="moClearFieldError('build-ward', 'err-build-ward')">
+              <div class="field-error-slot" id="err-build-ward"></div>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Địa Chỉ Chi Tiết (Số nhà, tên đường) <span style="color:#ef4444;">*</span></label>
+            <input type="text" id="build-address" required class="filament-input-sm" placeholder="VD: Số 720A Điện Biên Phủ, Phường 22" style="height:36px;width:100%;" oninput="moClearFieldError('build-address', 'err-build-address')" onblur="validateBuildingField('create', 'address')">
+            <div class="field-error-slot" id="err-build-address"></div>
+          </div>
+
+          <div class="form-field">
+            <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Mô Tả & Giới Thiệu Tòa Nhà</label>
+            <textarea id="build-description" class="filament-input-sm" rows="2" placeholder="VD: Tòa nhà văn phòng cao cấp chuẩn Hạng A tọa lạc tại vị trí đắc địa trung tâm tài chính, view sông thoáng đãng..." style="width:100%;height:50px;min-height:50px;resize:vertical;padding:6px 10px;font-family:inherit;font-size:12.5px;box-sizing:border-box;line-height:1.4;" oninput="moClearFieldError('build-description', 'err-build-description')"></textarea>
+            <div class="field-error-slot" id="err-build-description"></div>
+          </div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:12px;margin-bottom:12px;">
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Địa Chỉ <span style="color:#ef4444;">*</span></label>
-          <input type="text" id="build-address" class="filament-input-sm" required placeholder="Số 720A Điện Biên Phủ">
-        </div>
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Quận / Huyện</label>
-          <input type="text" id="build-district" class="filament-input-sm" value="Bình Thạnh">
-        </div>
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Phân Hạng</label>
-          <select id="build-grade" class="filament-input-sm">
-            <option value="A">Hạng A</option>
-            <option value="B" selected>Hạng B</option>
-            <option value="C">Hạng C</option>
-          </select>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Số Tầng Nổi</label>
-          <input type="number" id="build-floors" value="15" min="1" class="filament-input-sm">
-        </div>
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Số Hầm</label>
-          <input type="number" id="build-basements" value="2" min="0" class="filament-input-sm">
-        </div>
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Tổng Diện Tích Sử Dụng (m²)</label>
-          <input type="number" step="0.1" id="build-net-area" class="filament-input-sm" placeholder="VD: 12000">
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Đơn Giá Thuê Niêm Yết (VNĐ/m²/tháng)</label>
-          <input type="number" step="1000" id="build-base-price" class="filament-input-sm" placeholder="VD: 650000">
-        </div>
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Phí Dịch Vụ Quản Lý (VNĐ/m²/tháng)</label>
-          <input type="number" step="1000" id="build-service-fee" class="filament-input-sm" placeholder="VD: 120000">
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Tiền Điện</label>
-          <input type="text" id="build-electric-fee" class="filament-input-sm" placeholder="Theo đồng hồ riêng / giá nhà nước">
-        </div>
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Tiền Nước</label>
-          <input type="text" id="build-water-fee" class="filament-input-sm" placeholder="Miễn phí / theo chỉ số">
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Phí Gửi Xe Máy (VNĐ/tháng)</label>
-          <input type="text" id="build-motor-fee" class="filament-input-sm" placeholder="150.000 đ/chiếc">
-        </div>
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Phí Gửi Ô Tô (VNĐ/tháng)</label>
-          <input type="text" id="build-car-fee" class="filament-input-sm" placeholder="2.000.000 đ/chiếc">
+
+      <!-- TAB PANE 2: THÔNG SỐ KỸ THUẬT & GIỜ VẬN HÀNH -->
+      <div id="tab-pane-create-bld-2" style="display:none;flex-direction:column;flex:1;">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 18px;display:flex;flex-direction:column;gap:4px;flex:1;box-sizing:border-box;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:12px;">
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Số Tầng Nổi <span style="color:#ef4444;">*</span></label>
+              <input type="number" id="build-floors" required min="1" class="filament-input-sm" placeholder="VD: 15 (Số tầng nổi)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('build-floors', 'err-build-floors');" onblur="validateBuildingField('create', 'floors')">
+              <div class="field-error-slot" id="err-build-floors"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Số Tầng Hầm</label>
+              <input type="number" id="build-basements" min="0" class="filament-input-sm" placeholder="VD: 2 (Nhập 0 nếu không có)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('build-basements', 'err-build-basements');" onblur="validateBuildingField('create', 'basements')">
+              <div class="field-error-slot" id="err-build-basements"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Tổng DT Sàn Khả Dụng (m²) <span style="color:#ef4444;">*</span></label>
+              <input type="number" step="0.1" min="0" id="build-net-area" required class="filament-input-sm" placeholder="VD: 12000 (Tổng DT sàn khả dụng m²)" style="height:36px;width:100%;" oninput="moSanitizeDecimal(this); moClearFieldError('build-net-area', 'err-build-net-area');" onblur="validateBuildingField('create', 'net-area')">
+              <div class="field-error-slot" id="err-build-net-area"></div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Chiều Cao Trần Tiêu Chuẩn (m)</label>
+              <input type="number" step="0.05" min="1" id="build-ceiling-height" class="filament-input-sm" placeholder="VD: 2.70 (Chiều cao trần chuẩn m)" style="height:36px;width:100%;" oninput="moSanitizeDecimal(this); moClearFieldError('build-ceiling-height', 'err-build-ceiling-height');" onblur="validateBuildingField('create', 'ceiling-height')">
+              <div class="field-error-slot" id="err-build-ceiling-height"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Số Lượng Thang Máy</label>
+              <input type="number" id="build-elevators" min="0" class="filament-input-sm" placeholder="VD: 4 (Nhập 0 nếu không có)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('build-elevators', 'err-build-elevators');" onblur="validateBuildingField('create', 'elevators')">
+              <div class="field-error-slot" id="err-build-elevators"></div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Hệ Thống Điều Hòa Không Khí</label>
+              <input type="text" id="build-air-conditioner" class="filament-input-sm" placeholder="VD: Hệ thống điều hòa trung tâm VRV Daikin, Chiller..." style="height:36px;width:100%;">
+              <div class="field-error-slot"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Máy Phát Điện Dự Phòng</label>
+              <input type="text" id="build-backup-generator" class="filament-input-sm" placeholder="VD: Máy phát điện Cummins 100% công suất 24/7..." style="height:36px;width:100%;">
+              <div class="field-error-slot"></div>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Giờ Làm Việc Tiêu Chuẩn</label>
+            <input type="text" id="build-working-hours" class="filament-input-sm" placeholder="VD: Thứ 2 - 6: 08:00 - 18:00, Thứ 7: 08:00 - 12:00" style="height:36px;width:100%;">
+            <div class="field-error-slot"></div>
+          </div>
         </div>
       </div>
-      <div style="margin-bottom:16px;">
-        <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#1e293b;cursor:pointer;">
-          <input type="checkbox" id="build-published" checked style="width:16px;height:16px;">
-          <span>Phát hành công khai lên Cổng Portal chào thuê khách hàng</span>
-        </label>
+
+      <!-- TAB PANE 3: CHÍNH SÁCH THUÊ & BIỂU PHÍ DỊCH VỤ -->
+      <div id="tab-pane-create-bld-3" style="display:none;flex-direction:column;flex:1;">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 18px;display:flex;flex-direction:column;gap:4px;flex:1;box-sizing:border-box;">
+          <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px;">
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Phí Ngoài Giờ (VNĐ/h)</label>
+              <input type="number" step="1000" id="build-overtime-fee" min="0" class="filament-input-sm" placeholder="VD: 50000 (0 = Miễn phí)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('build-overtime-fee', 'err-build-overtime-fee');">
+              <div class="field-error-slot" id="err-build-overtime-fee"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Đặt Cọc (tháng)</label>
+              <input type="number" id="build-deposit-term" min="1" class="filament-input-sm" placeholder="VD: 3 (Số tháng đặt cọc)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('build-deposit-term', 'err-build-deposit-term');" onblur="validateBuildingField('create', 'deposit-term')">
+              <div class="field-error-slot" id="err-build-deposit-term"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Kỳ TT (tháng/lần)</label>
+              <input type="number" id="build-payment-term" min="1" class="filament-input-sm" placeholder="VD: 3 (Số tháng kỳ thanh toán)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('build-payment-term', 'err-build-payment-term');" onblur="validateBuildingField('create', 'payment-term')">
+              <div class="field-error-slot" id="err-build-payment-term"></div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:12px;">
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Khoảng Giá Thuê (Min - Max)</label>
+              <input type="text" disabled class="filament-input-sm" placeholder="Tự động cập nhật theo mặt bằng" style="background:#f1f5f9;color:#64748b;cursor:not-allowed;font-style:italic;height:36px;width:100%;" title="Tự động cập nhật theo mặt bằng">
+              <div class="field-error-slot"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Phí Quản Lý Dịch Vụ (VNĐ/m²) <span style="color:#ef4444;">*</span></label>
+              <input type="number" step="1000" min="0" id="build-service-fee" required class="filament-input-sm" placeholder="VD: 60000 (Nhập 0 nếu miễn phí)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('build-service-fee', 'err-build-service-fee');" onblur="validateBuildingField('create', 'service-fee')">
+              <div class="field-error-slot" id="err-build-service-fee"></div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;">
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Điện (đ/kWh) <span style="color:#ef4444;">*</span></label>
+              <input type="number" step="100" min="0" id="build-electric-fee" required class="filament-input-sm" placeholder="VD: 4500 (Nhập 0 nếu theo giá NN)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('build-electric-fee', 'err-build-electric-fee');" onblur="validateBuildingField('create', 'electric-fee')">
+              <div class="field-error-slot" id="err-build-electric-fee"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Nước (đ/m³) <span style="color:#ef4444;">*</span></label>
+              <input type="number" step="500" min="0" id="build-water-fee" required class="filament-input-sm" placeholder="VD: 25000 (Nhập 0 nếu miễn phí)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('build-water-fee', 'err-build-water-fee');" onblur="validateBuildingField('create', 'water-fee')">
+              <div class="field-error-slot" id="err-build-water-fee"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Xe Máy (đ/tháng)</label>
+              <input type="number" step="5000" min="0" id="build-motor-fee" class="filament-input-sm" placeholder="VD: 150000 (Nhập 0 nếu miễn phí)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('build-motor-fee', 'err-build-motor-fee');">
+              <div class="field-error-slot" id="err-build-motor-fee"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Ô Tô (đ/tháng)</label>
+              <input type="number" step="50000" min="0" id="build-car-fee" class="filament-input-sm" placeholder="VD: 2000000 (Nhập 0 nếu miễn phí)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('build-car-fee', 'err-build-car-fee');">
+              <div class="field-error-slot" id="err-build-car-fee"></div>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Trạng Thái Hiển Thị</label>
+            <label style="display:flex !important;align-items:center !important;justify-content:flex-start !important;gap:8px;font-size:13px;font-weight:600;color:#1e293b;cursor:pointer;background:#fff;padding:0 14px;height:36px !important;min-height:36px !important;max-height:36px !important;line-height:normal !important;border-radius:6px;border:1px solid #cbd5e1;box-sizing:border-box !important;margin:0 !important;overflow:visible !important;">
+              <input type="checkbox" id="build-published" checked style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">
+              <span><i class="fa-solid fa-globe" style="color:#0284c7;"></i> Hiển thị công khai trên Cổng Portal chào thuê khách hàng</span>
+            </label>
+            <div class="field-error-slot"></div>
+          </div>
+        </div>
       </div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #f1f5f9;padding-top:14px;">
-        <button type="button" class="btn-mo-outline" onclick="closeCreateBuildingModal()">Hủy</button>
-        <button type="submit" class="btn-mo-orange"><i class="fa-solid fa-plus"></i> Lưu Tòa Nhà Mới</button>
+
+      <!-- TAB PANE 4: HÌNH ẢNH TÒA NHÀ (BẮT BUỘC) -->
+      <div id="tab-pane-create-bld-4" style="display:none;flex-direction:column;flex:1;">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;flex:1;box-sizing:border-box;">
+          <!-- Dropzone button -->
+          <div onclick="document.getElementById('create-build-images-input').click()" style="border:2px dashed #cbd5e1;border-radius:8px;background:#ffffff;padding:10px;text-align:center;cursor:pointer;transition:border-color 0.2s;" ondragover="event.preventDefault();this.style.borderColor='var(--mo-primary)';" ondragleave="this.style.borderColor='#cbd5e1';" ondrop="handleCreateBuildingDrop(event)">
+            <input type="file" id="create-build-images-input" accept="image/png,image/jpeg,image/webp,image/jpg" multiple style="display:none;" onchange="handleCreateBuildingImagesSelect(this); moClearFieldError('create-build-images-input', 'err-build-images');">
+            <i class="fa-solid fa-cloud-arrow-up" style="font-size:22px;color:#0284c7;margin-bottom:2px;display:block;"></i>
+            <span style="font-size:12.5px;font-weight:600;color:#1e293b;display:block;">Nhấn vào đây hoặc kéo thả ảnh để tải lên (PNG, JPG, WEBP)</span>
+            <span style="font-size:11px;color:#ef4444;font-weight:600;"><i class="fa-solid fa-circle-exclamation"></i> Bắt buộc tải lên ít nhất 1 ảnh đại diện cho tòa nhà (Tối đa 5MB/ảnh)</span>
+          </div>
+          <div class="field-error-slot" id="err-build-images" style="justify-content:center;"></div>
+
+          <!-- Preview Grid -->
+          <div style="flex:1;margin-top:6px;overflow-y:auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:6px;padding:8px;box-sizing:border-box;">
+            <div id="create-build-images-preview" style="display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;">
+              <div id="create-build-images-empty" style="grid-column:1/-1;text-align:center;padding:36px 10px;color:#94a3b8;font-size:12.5px;">
+                <i class="fa-regular fa-images" style="font-size:32px;margin-bottom:8px;display:block;color:#cbd5e1;"></i>
+                Chưa có ảnh nào được chọn. Nhấn nút phía trên để tải lên hình ảnh tòa nhà.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- THANH NÚT ĐIỀU KHIỂN DƯỚI CÙNG -->
+      <div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #e2e8f0;padding-top:12px;margin-top:auto;flex-shrink:0;">
+        <button type="button" class="btn-mo-outline" onclick="closeCreateBuildingModal()" style="padding:7px 16px;font-size:13px;">Hủy</button>
+        <button type="submit" class="btn-mo-orange" style="padding:7px 24px;font-size:13px;font-weight:600;"><i class="fa-solid fa-save"></i> Lưu</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- MODAL 2: SỬA TÒA NHÀ (PUT /api/v1/admin/buildings/{id}) -->
+<!-- MODAL 2: SỬA TÒA NHÀ (PUT /api/v1/admin/buildings/{id}) - BỐ CỤC PHÂN TAB GỌN ĐẸP -->
 <div id="modal-edit-building" class="mo-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.6);backdrop-filter:blur(3px);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:#ffffff;border-radius:12px;width:100%;max-width:640px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);overflow:hidden;border:1px solid #e2e8f0;max-height:92vh;display:flex;flex-direction:column;">
-    <div style="background:var(--mo-primary);color:#ffffff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
-      <h3 style="margin:0;font-size:16px;font-weight:700;"><i class="fa-solid fa-pen-to-square"></i> Cập Nhật Thông Số Quản Trị Tòa Nhà</h3>
-      <button type="button" onclick="closeEditBuildingModal()" style="background:none;border:none;color:#ffffff;font-size:18px;cursor:pointer;">&times;</button>
+  <div style="background:#ffffff;border-radius:12px;width:920px;max-width:95vw;height:750px;max-height:96vh;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);overflow:hidden;border:1px solid #cbd5e1;display:flex;flex-direction:column;">
+    <div style="background:var(--mo-primary);color:#ffffff;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+      <h3 style="margin:0;font-size:15px;font-weight:700;"><i class="fa-solid fa-pen-to-square"></i> Cập Nhật Thông Số Quản Trị Tòa Nhà</h3>
+      <button type="button" onclick="closeEditBuildingModal()" style="background:none;border:none;color:#ffffff;font-size:20px;cursor:pointer;line-height:1;">&times;</button>
     </div>
-    <form id="form-edit-building" onsubmit="submitEditBuilding(event)" style="padding:20px;overflow-y:auto;flex:1;">
-      <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:12px;margin-bottom:12px;">
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Tên Tòa Nhà <span style="color:#ef4444;">*</span></label>
-          <input type="text" id="edit-build-name" class="filament-input-sm" required>
-        </div>
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Mã Tòa Nhà</label>
-          <input type="text" id="edit-build-code" class="filament-input-sm">
+    <form id="form-edit-building" novalidate onsubmit="submitEditBuilding(event)" style="padding:10px 18px;overflow-y:auto;flex:1;display:flex;flex-direction:column;box-sizing:border-box;">
+      <!-- TAB NAVIGATION STRIP -->
+      <div style="display:flex;gap:6px;border-bottom:2px solid #e2e8f0;margin-bottom:8px;background:#f8fafc;padding:5px 6px 0;border-radius:8px 8px 0 0;flex-shrink:0;">
+        <button type="button" id="tab-btn-edit-bld-1" onclick="switchBuildingModalTab('edit', 1)" style="flex:1;padding:9px 12px;font-size:13px;font-weight:700;border:none;background:#ffffff;cursor:pointer;border-radius:6px 6px 0 0;border-bottom:3px solid var(--mo-primary);color:var(--mo-primary);display:flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;transition:all 0.15s;">
+          <i class="fa-solid fa-map-location-dot" style="color:#0284c7;"></i> Thông Tin & Địa Giới
+        </button>
+        <button type="button" id="tab-btn-edit-bld-2" onclick="switchBuildingModalTab('edit', 2)" style="flex:1;padding:9px 12px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-radius:6px 6px 0 0;border-bottom:3px solid transparent;color:#64748b;display:flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;transition:all 0.15s;">
+          <i class="fa-solid fa-sliders" style="color:#eab308;"></i> Thông Số Kỹ Thuật
+        </button>
+        <button type="button" id="tab-btn-edit-bld-3" onclick="switchBuildingModalTab('edit', 3)" style="flex:1;padding:9px 12px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-radius:6px 6px 0 0;border-bottom:3px solid transparent;color:#64748b;display:flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;transition:all 0.15s;">
+          <i class="fa-solid fa-file-invoice-dollar" style="color:#10b981;"></i> Chính Sách & Biểu Phí
+        </button>
+        <button type="button" id="tab-btn-edit-bld-4" onclick="switchBuildingModalTab('edit', 4)" style="flex:1;padding:9px 12px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-radius:6px 6px 0 0;border-bottom:3px solid transparent;color:#64748b;display:flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;transition:all 0.15s;">
+          <i class="fa-solid fa-images" style="color:#ec4899;"></i> Hình Ảnh <span style="color:#ef4444;font-weight:700;">*</span>
+        </button>
+      </div>
+
+      <!-- TAB PANE 1: THÔNG TIN TÒA NHÀ & ĐỊA GIỚI HÀNH CHÍNH -->
+      <div id="tab-pane-edit-bld-1" style="display:flex;flex-direction:column;flex:1;">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 16px;display:flex;flex-direction:column;gap:2px;flex:1;box-sizing:border-box;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+            <div class="form-field" style="grid-column: span 2;">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Tên Tòa Nhà <span style="color:#ef4444;">*</span></label>
+              <input type="text" id="edit-build-name" required class="filament-input-sm" placeholder="VD: Landmark 81 Tower..." style="height:36px;width:100%;" oninput="moClearFieldError('edit-build-name', 'err-edit-build-name')" onblur="validateBuildingField('edit', 'name')">
+              <div class="field-error-slot" id="err-edit-build-name"></div>
+            </div>
+            <div class="form-field" style="grid-column: span 1;">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Mã Tòa Nhà</label>
+              <input type="text" id="edit-build-code" class="filament-input-sm" placeholder="VD: BLD-001" style="height:36px;width:100%;" oninput="moClearFieldError('edit-build-code', 'err-edit-build-code')" onblur="validateBuildingField('edit', 'code')">
+              <div class="field-error-slot" id="err-edit-build-code"></div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Phân Hạng Tòa Nhà <span style="color:#ef4444;">*</span></label>
+              <select id="edit-build-grade" required class="filament-input-sm" style="height:36px;width:100%;" onchange="moClearFieldError('edit-build-grade', 'err-edit-build-grade'); validateBuildingField('edit', 'grade');">
+                <option value="">-- Chọn phân hạng * --</option>
+                <option value="A">Hạng A (Cao cấp)</option>
+                <option value="B">Hạng B (Tiêu chuẩn)</option>
+                <option value="C">Hạng C (Giá rẻ)</option>
+              </select>
+              <div class="field-error-slot" id="err-edit-build-grade"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Hướng Chính Diện Tòa Nhà</label>
+              <select id="edit-build-direction" class="filament-input-sm" style="height:36px;width:100%;">
+                <option value="">-- Chọn hướng tòa nhà --</option>
+                <option value="Đông">Đông (East)</option>
+                <option value="Tây">Tây (West)</option>
+                <option value="Nam">Nam (South)</option>
+                <option value="Bắc">Bắc (North)</option>
+                <option value="Đông Nam">Đông Nam (Southeast)</option>
+                <option value="Đông Bắc">Đông Bắc (Northeast)</option>
+                <option value="Tây Nam">Tây Nam (Southwest)</option>
+                <option value="Tây Bắc">Tây Bắc (Northwest)</option>
+              </select>
+              <div class="field-error-slot"></div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Tỉnh / Thành Phố <span style="color:#ef4444;">*</span></label>
+              <select id="edit-build-province" required class="filament-input-sm" onchange="onBuildingProvinceChange(this, 'edit-build-district'); moClearFieldError('edit-build-province', 'err-edit-build-province'); validateBuildingField('edit', 'province');" style="height:36px;width:100%;">
+                @foreach($modalProvinces as $p)
+                  <option value="{{ $p->code }}" data-name="{{ $p->name }}">{{ $p->name }}</option>
+                @endforeach
+              </select>
+              <div class="field-error-slot" id="err-edit-build-province"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Quận / Huyện <span style="color:#ef4444;">*</span></label>
+              <select id="edit-build-district" required class="filament-input-sm" style="height:36px;width:100%;" onchange="moClearFieldError('edit-build-district', 'err-edit-build-district'); validateBuildingField('edit', 'district');">
+                <option value="">-- Đang nạp danh sách... --</option>
+              </select>
+              <div class="field-error-slot" id="err-edit-build-district"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Phường / Xã</label>
+              <input type="text" id="edit-build-ward" class="filament-input-sm" placeholder="VD: Phường 22" style="height:36px;width:100%;" oninput="moClearFieldError('edit-build-ward', 'err-edit-build-ward')">
+              <div class="field-error-slot" id="err-edit-build-ward"></div>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Địa Chỉ Chi Tiết (Số nhà, tên đường) <span style="color:#ef4444;">*</span></label>
+            <input type="text" id="edit-build-address" required class="filament-input-sm" placeholder="VD: Số 720A Điện Biên Phủ, Phường 22" style="height:36px;width:100%;" oninput="moClearFieldError('edit-build-address', 'err-edit-build-address')" onblur="validateBuildingField('edit', 'address')">
+            <div class="field-error-slot" id="err-edit-build-address"></div>
+          </div>
+
+          <div class="form-field">
+            <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Mô Tả & Giới Thiệu Tòa Nhà</label>
+            <textarea id="edit-build-description" class="filament-input-sm" rows="2" placeholder="VD: Tòa nhà văn phòng cao cấp chuẩn Hạng A với vị trí đắc địa ngay trung tâm tài chính..." style="width:100%;height:50px;min-height:50px;resize:vertical;padding:6px 10px;font-family:inherit;font-size:12.5px;box-sizing:border-box;line-height:1.4;" oninput="moClearFieldError('edit-build-description', 'err-edit-build-description')"></textarea>
+            <div class="field-error-slot" id="err-edit-build-description"></div>
+          </div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:12px;margin-bottom:12px;">
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Địa Chỉ <span style="color:#ef4444;">*</span></label>
-          <input type="text" id="edit-build-address" class="filament-input-sm" required>
-        </div>
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Quận / Huyện</label>
-          <input type="text" id="edit-build-district" class="filament-input-sm">
-        </div>
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Phân Hạng</label>
-          <select id="edit-build-grade" class="filament-input-sm">
-            <option value="A">Hạng A</option>
-            <option value="B">Hạng B</option>
-            <option value="C">Hạng C</option>
-          </select>
+
+      <!-- TAB PANE 2: THÔNG SỐ KỸ THUẬT & GIỜ VẬN HÀNH -->
+      <div id="tab-pane-edit-bld-2" style="display:none;flex-direction:column;flex:1;">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 18px;display:flex;flex-direction:column;gap:4px;flex:1;box-sizing:border-box;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:12px;">
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Số Tầng Nổi <span style="color:#ef4444;">*</span></label>
+              <input type="number" id="edit-build-floors" required min="1" class="filament-input-sm" placeholder="VD: 15 (Số tầng nổi)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('edit-build-floors', 'err-edit-build-floors');" onblur="validateBuildingField('edit', 'floors')">
+              <div class="field-error-slot" id="err-edit-build-floors"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Số Tầng Hầm</label>
+              <input type="number" id="edit-build-basements" min="0" class="filament-input-sm" placeholder="VD: 2 (Nhập 0 nếu không có)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('edit-build-basements', 'err-build-basements');" onblur="validateBuildingField('edit', 'basements')">
+              <div class="field-error-slot" id="err-edit-build-basements"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Tổng DT Sàn (m²) <span style="color:#ef4444;">*</span></label>
+              <input type="number" step="0.1" min="0" id="edit-build-net-area" required class="filament-input-sm" placeholder="VD: 12000 (Tổng DT sàn khả dụng m²)" style="height:36px;width:100%;" oninput="moSanitizeDecimal(this); moClearFieldError('edit-build-net-area', 'err-edit-build-net-area');" onblur="validateBuildingField('edit', 'net-area')">
+              <div class="field-error-slot" id="err-edit-build-net-area"></div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Chiều Cao Trần (m)</label>
+              <input type="number" step="0.05" min="1" id="edit-build-ceiling-height" class="filament-input-sm" placeholder="VD: 2.70 (Chiều cao trần chuẩn m)" style="height:36px;width:100%;" oninput="moSanitizeDecimal(this); moClearFieldError('edit-build-ceiling-height', 'err-edit-build-ceiling-height');" onblur="validateBuildingField('edit', 'ceiling-height')">
+              <div class="field-error-slot" id="err-edit-build-ceiling-height"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Số Lượng Thang Máy</label>
+              <input type="number" id="edit-build-elevators" min="0" class="filament-input-sm" placeholder="VD: 4 (Nhập 0 nếu không có)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('edit-build-elevators', 'err-edit-build-elevators');" onblur="validateBuildingField('edit', 'elevators')">
+              <div class="field-error-slot" id="err-edit-build-elevators"></div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Hệ Thống Điều Hòa</label>
+              <input type="text" id="edit-build-air-conditioner" class="filament-input-sm" placeholder="VD: Hệ thống điều hòa trung tâm VRV Daikin, Chiller..." style="height:36px;width:100%;">
+              <div class="field-error-slot"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Máy Phát Điện Dự Phòng</label>
+              <input type="text" id="edit-build-backup-generator" class="filament-input-sm" placeholder="VD: Máy phát điện Cummins 100% công suất 24/7..." style="height:36px;width:100%;">
+              <div class="field-error-slot"></div>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Giờ Làm Việc Tiêu Chuẩn</label>
+            <input type="text" id="edit-build-working-hours" class="filament-input-sm" placeholder="VD: Thứ 2 - 6: 08:00 - 18:00, Thứ 7: 08:00 - 12:00" style="height:36px;width:100%;">
+            <div class="field-error-slot"></div>
+          </div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Số Tầng Nổi</label>
-          <input type="number" id="edit-build-floors" class="filament-input-sm">
-        </div>
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Số Hầm</label>
-          <input type="number" id="edit-build-basements" class="filament-input-sm">
-        </div>
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Tổng DT Sử Dụng (m²)</label>
-          <input type="number" step="0.1" id="edit-build-net-area" class="filament-input-sm">
+
+      <!-- TAB PANE 3: CHÍNH SÁCH THUÊ & BIỂU PHÍ DỊCH VỤ -->
+      <div id="tab-pane-edit-bld-3" style="display:none;flex-direction:column;flex:1;">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 18px;display:flex;flex-direction:column;gap:4px;flex:1;box-sizing:border-box;">
+          <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px;">
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Ngoài Giờ (đ/h)</label>
+              <input type="number" step="1000" id="edit-build-overtime-fee" min="0" class="filament-input-sm" placeholder="VD: 50000 (0 = Free)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('edit-build-overtime-fee', 'err-edit-build-overtime-fee');">
+              <div class="field-error-slot" id="err-edit-build-overtime-fee"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Cọc (tháng)</label>
+              <input type="number" id="edit-build-deposit-term" min="1" class="filament-input-sm" placeholder="VD: 3 (Số tháng đặt cọc)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('edit-build-deposit-term', 'err-edit-build-deposit-term');" onblur="validateBuildingField('edit', 'deposit-term')">
+              <div class="field-error-slot" id="err-edit-build-deposit-term"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Kỳ TT (tháng)</label>
+              <input type="number" id="edit-build-payment-term" min="1" class="filament-input-sm" placeholder="VD: 3 (Số tháng kỳ thanh toán)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('edit-build-payment-term', 'err-edit-build-payment-term');" onblur="validateBuildingField('edit', 'payment-term')">
+              <div class="field-error-slot" id="err-edit-build-payment-term"></div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:12px;">
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Khoảng Giá Thuê (Min - Max)</label>
+              <input type="text" id="edit-build-price-range" class="filament-input-sm" disabled placeholder="Tự động cập nhật theo mặt bằng" style="background:#f1f5f9;color:#0284c7;font-weight:600;cursor:not-allowed;height:36px;width:100%;" title="Khoảng giá được tính tự động từ danh sách mặt bằng">
+              <div class="field-error-slot"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Phí QL (đ/m²) <span style="color:#ef4444;">*</span></label>
+              <input type="number" step="1000" min="0" id="edit-build-service-fee" required class="filament-input-sm" placeholder="VD: 60000 (Nhập 0 nếu miễn phí)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('edit-build-service-fee', 'err-edit-build-service-fee');" onblur="validateBuildingField('edit', 'service-fee')">
+              <div class="field-error-slot" id="err-edit-build-service-fee"></div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;">
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Điện (đ/kWh) <span style="color:#ef4444;">*</span></label>
+              <input type="number" step="100" min="0" id="edit-build-electric-fee" required class="filament-input-sm" placeholder="VD: 4500 (Nhập 0 nếu theo giá NN)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('edit-build-electric-fee', 'err-edit-build-electric-fee');" onblur="validateBuildingField('edit', 'electric-fee')">
+              <div class="field-error-slot" id="err-edit-build-electric-fee"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Nước (đ/m³) <span style="color:#ef4444;">*</span></label>
+              <input type="number" step="500" min="0" id="edit-build-water-fee" required class="filament-input-sm" placeholder="VD: 25000 (Nhập 0 nếu miễn phí)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('edit-build-water-fee', 'err-edit-build-water-fee');" onblur="validateBuildingField('edit', 'water-fee')">
+              <div class="field-error-slot" id="err-edit-build-water-fee"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Xe Máy (đ/tháng)</label>
+              <input type="number" step="5000" min="0" id="edit-build-motor-fee" class="filament-input-sm" placeholder="VD: 150000 (Nhập 0 nếu miễn phí)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('edit-build-motor-fee', 'err-edit-build-motor-fee');">
+              <div class="field-error-slot" id="err-edit-build-motor-fee"></div>
+            </div>
+            <div class="form-field">
+              <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Ô Tô (đ/tháng)</label>
+              <input type="number" step="50000" min="0" id="edit-build-car-fee" class="filament-input-sm" placeholder="VD: 2000000 (Nhập 0 nếu miễn phí)" style="height:36px;width:100%;" oninput="moSanitizeNumeric(this); moClearFieldError('edit-build-car-fee', 'err-edit-build-car-fee');">
+              <div class="field-error-slot" id="err-edit-build-car-fee"></div>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label style="font-size:12px;font-weight:600;color:#334155;margin-bottom:0;display:block;">Trạng Thái Hiển Thị</label>
+            <label style="display:flex !important;align-items:center !important;justify-content:flex-start !important;gap:8px;font-size:13px;font-weight:600;color:#1e293b;cursor:pointer;background:#fff;padding:0 14px;height:36px !important;min-height:36px !important;max-height:36px !important;line-height:normal !important;border-radius:6px;border:1px solid #cbd5e1;box-sizing:border-box !important;margin:0 !important;overflow:visible !important;">
+              <input type="checkbox" id="edit-build-published" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">
+              <span>Hiển thị công khai trên Cổng Portal chào thuê khách hàng</span>
+            </label>
+            <div class="field-error-slot"></div>
+          </div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Đơn Giá Thuê Niêm Yết (VNĐ/m²)</label>
-          <input type="number" step="1000" id="edit-build-base-price" class="filament-input-sm">
-        </div>
-        <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;">Phí Quản Lý (VNĐ/m²)</label>
-          <input type="number" step="1000" id="edit-build-service-fee" class="filament-input-sm">
+
+      <!-- TAB PANE 4: HÌNH ẢNH TÒA NHÀ (QUẢN LÝ ALBUM & TẢI ẢNH) -->
+      <div id="tab-pane-edit-bld-4" style="display:none;flex-direction:column;flex:1;">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;flex:1;box-sizing:border-box;">
+          <!-- Top bar with quick upload -->
+          <div style="display:flex;justify-content:space-between;align-items:center;background:#fff;padding:8px 12px;border:1px solid #e2e8f0;border-radius:6px;">
+            <div style="font-size:12.5px;font-weight:600;color:#334155;">
+              <i class="fa-solid fa-photo-film" style="color:#0284c7;"></i> Thư viện ảnh (<span id="edit-bld-images-count">0</span> ảnh) - <span style="color:#ef4444;font-size:11.5px;">Bắt buộc tối thiểu 1 ảnh</span>
+            </div>
+            <div>
+              <input type="file" id="edit-build-images-input" accept="image/png,image/jpeg,image/webp,image/jpg" multiple style="display:none;" onchange="handleEditUploadBuildingImages(this)">
+              <button type="button" class="btn-mo-orange" onclick="document.getElementById('edit-build-images-input').click()" style="padding:5px 12px;font-size:12px;font-weight:600;">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Tải Thêm Ảnh
+              </button>
+            </div>
+          </div>
+          <div class="field-error-slot" id="err-edit-build-images" style="justify-content:center;"></div>
+
+          <!-- Existing Images Grid -->
+          <div style="flex:1;margin-top:6px;overflow-y:auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:6px;padding:8px;box-sizing:border-box;">
+            <div id="edit-build-images-grid" style="display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;">
+              <div style="grid-column:1/-1;text-align:center;padding:36px 10px;color:#94a3b8;font-size:12.5px;">
+                <i class="fa-solid fa-spinner fa-spin" style="font-size:24px;margin-bottom:8px;display:block;"></i>
+                Đang tải thư viện ảnh...
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div style="margin-bottom:16px;">
-        <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#1e293b;cursor:pointer;">
-          <input type="checkbox" id="edit-build-published" style="width:16px;height:16px;">
-          <span>Hiển thị công khai trên Portal Bất động sản</span>
-        </label>
-      </div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #f1f5f9;padding-top:14px;">
-        <button type="button" class="btn-mo-outline" onclick="closeEditBuildingModal()">Đóng</button>
-        <button type="submit" class="btn-mo-primary"><i class="fa-solid fa-save"></i> Cập Nhật Tòa Nhà</button>
+
+      <!-- THANH NÚT ĐIỀU KHIỂN DƯỚI CÙNG -->
+      <div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #e2e8f0;padding-top:12px;margin-top:auto;flex-shrink:0;">
+        <button type="button" class="btn-mo-outline" onclick="closeEditBuildingModal()" style="padding:7px 16px;font-size:13px;">Hủy</button>
+        <button type="submit" class="btn-mo-primary" style="padding:7px 24px;font-size:13px;font-weight:600;"><i class="fa-solid fa-save"></i> Lưu</button>
       </div>
     </form>
   </div>
@@ -241,6 +607,11 @@
           <!-- Rendered via JS -->
         </tbody>
       </table>
+
+      <!-- Phân trang danh sách sàn mặt bằng trong modal -->
+      <div id="building-units-pagination" style="margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <!-- Dynamic pagination rendered by renderBuildingUnitsPagination() -->
+      </div>
     </div>
   </div>
 </div>

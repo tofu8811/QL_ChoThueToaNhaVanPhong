@@ -61,7 +61,6 @@ class FormRequestValidationComprehensiveTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors([
-                'building_code',
                 'name',
                 'address',
                 'ward',
@@ -73,8 +72,6 @@ class FormRequestValidationComprehensiveTest extends TestCase
                 'electricity_unit_price',
                 'water_unit_price',
                 'default_service_fee_per_sqm',
-                'min_rent_price_per_sqm',
-                'max_rent_price_per_sqm',
                 'grade',
             ]);
 

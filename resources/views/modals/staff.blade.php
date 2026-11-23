@@ -464,8 +464,8 @@
           </div>
 
           <div style="display:flex; justify-content:flex-end;">
-            <button type="button" class="btn-mo-primary" style="padding:8px 20px; font-size:13px; border-radius:6px;" onclick="closeModal('staff-credential-success-modal')">
-              <i class="fa-solid fa-check"></i> Đã Hiểu & Đóng
+            <button type="button" class="btn-mo-primary" style="padding:8px 20px; font-size:13px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; gap:6px; text-align:center;" onclick="closeModal('staff-credential-success-modal')">
+              <i class="fa-solid fa-check"></i> Đóng
             </button>
           </div>
         </div>

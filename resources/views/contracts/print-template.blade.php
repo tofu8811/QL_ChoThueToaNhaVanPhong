@@ -279,8 +279,22 @@
             <div class="motto">Độc lập - Tự do - Hạnh phúc</div>
             <div class="header-line"></div>
 
-            <div class="contract-title">HỢP ĐỒNG THUÊ VĂN PHÒNG</div>
-            <div class="contract-number">Số: <strong>{{ $contract->contract_number }}</strong></div>
+            <div class="contract-title">
+                @if($is_booking ?? false)
+                    THỎA THUẬN ĐẶT CỌC GIỮ CHỖ MẶT BẰNG VĂN PHÒNG
+                @elseif(($contract->status?->value ?? $contract->status) === 'DRAFT')
+                    HỢP ĐỒNG THUÊ VĂN PHÒNG (BẢN DỰ THẢO)
+                @else
+                    HỢP ĐỒNG THUÊ VĂN PHÒNG
+                @endif
+            </div>
+            <div class="contract-number">Số: <strong>{{ $contract->contract_number }}</strong>
+                @if($is_booking ?? false)
+                    <span style="font-size:10pt;font-weight:normal;color:#b45309;margin-left:8px;">[ĐẶT CỌC GIỮ CHỖ]</span>
+                @elseif(($contract->status?->value ?? $contract->status) === 'DRAFT')
+                    <span style="font-size:10pt;font-weight:normal;color:#0284c7;margin-left:8px;">[DỰ THẢO TRÌNH DUYỆT]</span>
+                @endif
+            </div>
         </div>
 
         <div class="contract-intro">
@@ -401,12 +415,30 @@
         </div>
 
         <!-- ĐIỀU 4 -->
-        <div class="section-title">ĐIỀU 4: TIỀN ĐẶT CỌC BẢO ĐẢM HỢP ĐỒNG</div>
+        <div class="section-title">ĐIỀU 4: TIỀN ĐẶT CỌC & GIỮ CHỖ MẶT BẰNG</div>
+        @if(($is_booking ?? false) && ($booking_deposit_amount ?? 0) > 0)
+        <div class="clause-p" style="background:#fffbeb;border:1px solid #fef3c7;padding:10px 14px;border-radius:4px;margin-bottom:10px;">
+            <strong>4.1. Tiền đặt cọc giữ chỗ tạm thời (Booking Deposit):</strong> 
+            Bên B đã nộp số tiền đặt cọc giữ chỗ là: <strong>{{ number_format($booking_deposit_amount, 0, ',', '.') }} VNĐ</strong> 
+            <br>
+            <em>(Bằng chữ: <strong>{{ $booking_deposit_words ?? $booking_deposit_amount_words ?? '' }}</strong>)</em>.
+            <br>
+            - Hạn chót giữ chỗ độc quyền đến ngày: <strong>{{ $reservation_expires_at ?? 'Theo thỏa thuận' }}</strong>.
+            <br>
+            - Khi hợp đồng thuê chính thức được ký kết, toàn bộ số tiền cọc giữ chỗ này sẽ được tự động cấn trừ vào Tiền đặt cọc bảo đảm thực hiện hợp đồng nêu tại khoản 4.2 dưới đây.
+        </div>
+        <div class="clause-p">
+            4.2. Tiền đặt cọc bảo đảm thực hiện hợp đồng chính thức là: <strong>{{ number_format($deposit_amount, 0, ',', '.') }} VNĐ</strong> <em>(Bằng chữ: {{ $deposit_amount_words }})</em>.
+            <br>
+            Phần tiền cọc bổ sung Bên B cần thanh toán khi ký hợp đồng chính thức: <strong>{{ number_format(max(0, $deposit_amount - $booking_deposit_amount), 0, ',', '.') }} VNĐ</strong>.
+        </div>
+        @else
         <div class="clause-p">
             4.1. Bên B có trách nhiệm đặt cọc cho Bên A số tiền bảo đảm thực hiện hợp đồng là: <strong>{{ number_format($deposit_amount, 0, ',', '.') }} VNĐ</strong>.
             <br>
             <em>(Bằng chữ: <strong>{{ $deposit_amount_words }}</strong>).</em>
         </div>
+        @endif
         <div class="clause-p">
             4.2. Số tiền đặt cọc này không được tính lãi suất và sẽ được Bên A hoàn trả lại 100% cho Bên B trong vòng 15 (mười lăm) ngày làm việc kể từ ngày hai bên hoàn tất thủ tục thanh lý hợp đồng, bàn giao lại mặt bằng và Bên B đã thanh toán đầy đủ toàn bộ các khoản công nợ cước phí phát sinh.
         </div>

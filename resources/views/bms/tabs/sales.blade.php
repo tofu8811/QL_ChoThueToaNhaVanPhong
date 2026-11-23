@@ -14,7 +14,7 @@
       <button class="btn-mo-outline" style="background:#fff;" onclick="window.location.reload()">
         <i class="fa-solid fa-arrows-rotate"></i> Làm mới
       </button>
-      <button class="btn-mo-primary" style="background:#2563eb;" onclick="switchFilamentTab('tab-sales-leads', document.getElementById('nav-item-leads'))">
+      <button class="btn-mo-primary" style="background:#2563eb;" onclick="window.location.href='{{ route('sales.leads') }}'">
         <i class="fa-solid fa-filter-circle-dollar"></i> Mở phễu CRM Leads
       </button>
     </div>

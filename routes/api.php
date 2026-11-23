@@ -105,7 +105,7 @@ Route::prefix('v1')->group(function () {
         Route::post('contracts/{id}/renew', [ContractApiController::class, 'renew'])->middleware('role:admin,pm')->name('v1.admin.contracts.renew');
         Route::post('contracts/{id}/terminate', [ContractApiController::class, 'terminate'])->middleware('role:admin,pm')->name('v1.admin.contracts.terminate');
 
-        Route::post('contracts/{id}/upload-files', [ContractApiController::class, 'uploadFiles'])->middleware('role:admin,pm')->name('v1.admin.contracts.uploadFiles');
+        Route::post('contracts/{id}/upload-files', [ContractApiController::class, 'uploadFiles'])->middleware('role:admin,pm,sales')->name('v1.admin.contracts.uploadFiles');
         Route::get('contracts/{id}/files/{fileId}/download', [ContractApiController::class, 'downloadFile'])->name('v1.admin.contracts.downloadFile');
 
     });

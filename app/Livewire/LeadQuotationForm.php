@@ -68,6 +68,19 @@ class LeadQuotationForm extends Component
     }
 
     /**
+     * Khi chọn mặt bằng, tự động điền diện tích thực tế của mặt bằng vào ô diện tích cần tìm.
+     */
+    public function updatedUnitId(?string $unitId): void
+    {
+        if ($unitId) {
+            $unit = Unit::find($unitId);
+            if ($unit && $unit->area_sqm) {
+                $this->desired_area_sqm = (float) $unit->area_sqm;
+            }
+        }
+    }
+
+    /**
      * Tự động loại bỏ mọi ký tự không phải số khi thuộc tính phone thay đổi.
      */
     public function updatedPhone($value): void

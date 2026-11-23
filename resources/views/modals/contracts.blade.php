@@ -1,27 +1,28 @@
 <!-- MODAL 1: LẬP & SỬA HỢP ĐỒNG THUÊ (POST / PUT /api/v1/admin/contracts) -->
 <div id="modal-create-contract" class="mo-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.6);backdrop-filter:blur(3px);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:#ffffff;border-radius:12px;width:100%;max-width:780px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);overflow:hidden;border:1px solid #e2e8f0;max-height:94vh;display:flex;flex-direction:column;">
-    <div style="background:var(--mo-primary);color:#ffffff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;">
+  <div style="background:#ffffff;border-radius:12px;width:95%;max-width:1060px;box-shadow:0 25px 35px -5px rgba(0,0,0,0.15);overflow:hidden;border:1px solid #cbd5e1;max-height:94vh;display:flex;flex-direction:column;">
+    <div style="background:var(--mo-primary);color:#ffffff;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;">
       <div>
-        <h3 id="modal-contract-title" style="margin:0;font-size:16px;font-weight:700;"><i class="fa-solid fa-file-signature"></i> Khởi Tạo Hợp Đồng Thuê Văn Phòng (Bản Nháp)</h3>
-        <p id="modal-contract-subtitle" style="margin:2px 0 0;font-size:12px;opacity:0.85;">Dành cho Chuyên viên Sales & Ban Quản Lý (PM) — Tạo dự thảo hợp đồng để trình duyệt</p>
+        <h3 id="modal-contract-title" style="margin:0;font-size:16.5px;font-weight:700;"><i class="fa-solid fa-file-signature"></i> Khởi Tạo Hợp Đồng Thuê Văn Phòng (Bản Nháp)</h3>
+        <p id="modal-contract-subtitle" style="margin:2px 0 0;font-size:12.5px;opacity:0.85;">Dành cho Chuyên viên Sales & Ban Quản Lý (PM) — Tạo dự thảo hợp đồng để trình duyệt</p>
       </div>
-      <button type="button" onclick="closeCreateContractModal()" style="background:none;border:none;color:#ffffff;font-size:20px;cursor:pointer;">&times;</button>
+      <button type="button" onclick="closeCreateContractModal()" style="background:none;border:none;color:#ffffff;font-size:22px;cursor:pointer;line-height:1;">&times;</button>
     </div>
-    <form id="form-create-contract" onsubmit="submitCreateContract(event)" novalidate style="padding:18px 20px;overflow-y:auto;flex:1;">
+    <form id="form-create-contract" onsubmit="submitCreateContract(event)" novalidate style="padding:20px 24px;overflow-y:auto;flex:1;">
       <input type="hidden" id="contract-edit-id" value="">
       
       <!-- PHẦN 1: THÔNG TIN PHÁP LÝ & VỊ TRÍ THUÊ -->
       <div style="font-size:12px;font-weight:700;color:var(--mo-primary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
         <i class="fa-solid fa-building-circle-check"></i> 1. Chủ thể & Vị trí mặt bằng
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div style="display:grid;grid-template-columns:1fr 1.3fr 1.3fr;gap:14px;margin-bottom:12px;">
         <div class="form-field">
           <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Loại Hợp Đồng <span style="color:#ef4444;">*</span></label>
-          <select id="contract-type-select" class="filament-input-sm">
+          <select id="contract-type-select" class="filament-input-sm" onchange="handleContractTypeChange(this.value)">
             <option value="DRAFT" selected>Dự thảo hợp đồng thuê (DRAFT)</option>
             <option value="BOOKING">Hợp đồng đặt cọc giữ chỗ (BOOKING)</option>
           </select>
+          <div class="field-error-slot" id="err-contract-type"></div>
         </div>
         <div class="form-field">
           <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Khách Thuê Doanh Nghiệp <span style="color:#ef4444;">*</span></label>
@@ -30,14 +31,31 @@
           </select>
           <div class="field-error-slot" id="err-contract-tenant"></div>
         </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px;">
         <div class="form-field">
           <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Tòa Nhà Văn Phòng <span style="color:#ef4444;">*</span></label>
           <select id="contract-building-select" class="filament-input-sm" style="min-height:38px;height:auto;padding-top:6px;padding-bottom:6px;" onchange="handleContractBuildingChange(this.value)">
             <!-- Rendered via JS -->
           </select>
           <div class="field-error-slot" id="err-contract-building"></div>
+        </div>
+      </div>
+
+      <!-- KHỐI DÀNH RIÊNG CHO HỢP ĐỒNG ĐẶT CỌC GIỮ CHỖ (BOOKING) -->
+      <div id="booking-fields-row" style="display:none;background:#fffbeb;border:1px solid #fef3c7;border-radius:8px;padding:12px;margin-bottom:14px;">
+        <div style="font-size:12px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+          <i class="fa-solid fa-hourglass-half"></i> Thông số đặt cọc giữ chỗ (Booking)
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-field">
+            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Tiền Cọc Giữ Chỗ Tạm Thời (VNĐ) <span style="color:#ef4444;">*</span></label>
+            <input type="number" step="1000" id="contract-booking-deposit" class="filament-input-sm" placeholder="VD: 50000000" oninput="moClearFieldError('contract-booking-deposit', 'err-contract-booking-deposit')">
+            <div class="field-error-slot" id="err-contract-booking-deposit"></div>
+          </div>
+          <div class="form-field">
+            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Hạn Chót Giữ Chỗ Đến Ngày <span style="color:#ef4444;">*</span></label>
+            <input type="date" id="contract-reservation-expires-at" class="filament-input-sm" onchange="moClearFieldError('contract-reservation-expires-at', 'err-contract-reservation-expires-at')">
+            <div class="field-error-slot" id="err-contract-reservation-expires-at"></div>
+          </div>
         </div>
       </div>
 
@@ -51,7 +69,7 @@
             Đã chọn: 0 mặt bằng (0 m²)
           </span>
         </div>
-        <div id="contract-units-container" style="max-height:190px;overflow-y:auto;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc;padding:8px;">
+        <div id="contract-units-container" style="max-height:230px;overflow-y:auto;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc;padding:10px;">
           <div style="text-align:center;color:#94a3b8;font-size:12px;padding:16px;">
             <i class="fa-solid fa-arrow-up"></i> Vui lòng chọn Tòa nhà văn phòng trước để tải danh sách mặt bằng trống.
           </div>
@@ -60,72 +78,61 @@
         <div class="field-error-slot" id="err-contract-units" style="color:#ef4444;font-size:11.5px;margin-top:4px;"></div>
       </div>
 
-      <!-- PHẦN 2: THÔNG SỐ DIỆN TÍCH & ĐƠN GIÁ ĐÀM PHÁN (NGHIỆP VỤ LEASING) -->
+      <!-- PHẦN 2: TỔNG HỢP TÀI CHÍNH HỢP ĐỒNG (THUÊ SÀN, PHÍ DV & TIỀN CỌC) -->
       <div style="font-size:12px;font-weight:700;color:var(--mo-primary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
-        <i class="fa-solid fa-ruler-combined"></i> 2. Thông số sàn & Đơn giá đàm phán (m² / tháng)
+        <i class="fa-solid fa-calculator"></i> 2. Tổng hợp tài chính hợp đồng (Cộng dồn từ từng sàn chọn)
       </div>
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:14px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:10px;">
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px;margin-bottom:14px;">
+        <input type="hidden" id="contract-unit-rent-price">
+        <input type="hidden" id="contract-unit-service-fee">
+
+        <div style="display:grid;grid-template-columns:1fr 1.3fr 1.2fr 1.3fr;gap:14px;margin-bottom:12px;">
           <div class="form-field">
             <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Tổng Diện Tích NLA (m²) <span style="color:#ef4444;">*</span></label>
-            <input type="number" step="0.1" id="contract-unit-area" class="filament-input-sm" placeholder="Tổng diện tích các mặt bằng" readonly style="background:#f1f5f9;cursor:not-allowed;" oninput="recalculateContractFinancials()">
-            <div style="font-size:11px;color:#64748b;margin-top:2px;"><i class="fa-solid fa-lock"></i> Cố định theo diện tích thực tế sàn</div>
+            <input type="number" step="0.1" id="contract-unit-area" class="filament-input-sm" placeholder="0 m²" readonly style="background:#f1f5f9;cursor:not-allowed;font-weight:700;color:#0f172a;" oninput="recalculateContractFinancials()">
+            <div style="font-size:11px;color:#64748b;margin-top:2px;"><i class="fa-solid fa-layer-group"></i> Cộng dồn diện tích các sàn</div>
             <div class="field-error-slot" id="err-contract-unit-area"></div>
           </div>
           <div class="form-field">
-            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Đơn Giá Thuê TB (VNĐ/m²/tháng) <span style="color:#ef4444;">*</span></label>
-            <input type="number" step="1000" id="contract-unit-rent-price" class="filament-input-sm" placeholder="VD: 1400000" oninput="recalculateContractFinancials()">
-            <div class="field-error-slot" id="err-contract-unit-rent-price"></div>
-          </div>
-          <div class="form-field">
-            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Phí Dịch Vụ TB (VNĐ/m²/tháng)</label>
-            <input type="number" step="1000" id="contract-unit-service-fee" class="filament-input-sm" placeholder="VD: 150000" oninput="recalculateContractFinancials()">
-            <div class="field-error-slot" id="err-contract-unit-service-fee"></div>
-          </div>
-        </div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:10px;">
-          <div class="form-field">
-            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Tổng Tiền Thuê Sàn (VNĐ/tháng)</label>
-            <input type="number" step="1000" id="contract-rent" class="filament-input-sm" style="font-weight:600;color:#0f172a;" placeholder="Tự động tính (m² × giá)" oninput="calculateCustomDeposit()">
+            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Tổng Tiền Thuê Sàn (VNĐ/tháng) <span style="color:#ef4444;">*</span></label>
+            <input type="number" step="1000" id="contract-rent" class="filament-input-sm" style="font-weight:700;color:#ea580c;" placeholder="Tự động tính từ các sàn" oninput="calculateCustomDeposit()">
             <div class="field-error-slot" id="err-contract-rent"></div>
           </div>
           <div class="form-field">
             <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Tổng Phí Dịch Vụ (VNĐ/tháng)</label>
-            <input type="number" step="1000" id="contract-service-fee" class="filament-input-sm" style="font-weight:600;color:#0f172a;" placeholder="Tự động tính (m² × phí DV)" oninput="calculateCustomDeposit()">
+            <input type="number" step="1000" id="contract-service-fee" class="filament-input-sm" style="font-weight:700;color:#0284c7;" placeholder="Tự động tính từ các sàn" oninput="calculateCustomDeposit()">
             <div class="field-error-slot" id="err-contract-service-fee"></div>
           </div>
           <div class="form-field">
-            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Tiền Cọc Bảo Đảm (3 Tháng) <span style="color:#ef4444;">*</span></label>
-            <input type="number" step="1000" id="contract-deposit" class="filament-input-sm" style="font-weight:700;color:#047857;" placeholder="Quy chuẩn cọc 3 tháng" oninput="moClearFieldError('contract-deposit', 'err-contract-deposit')">
+            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Tiền Cọc Bảo Đảm ({{ config('leasing.deposit_months', 3) }} Tháng) <span style="color:#ef4444;">*</span></label>
+            <input type="number" step="1000" id="contract-deposit" class="filament-input-sm" style="font-weight:700;color:#047857;" placeholder="Quy chuẩn cọc {{ config('leasing.deposit_months', 3) }} tháng" oninput="moClearFieldError('contract-deposit', 'err-contract-deposit')">
             <div class="field-error-slot" id="err-contract-deposit"></div>
           </div>
         </div>
 
-        <!-- THUẾ VAT 10% VÀ TỔNG PHẢI THU HÀNG THÁNG -->
-        <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px;padding-top:10px;border-top:1px dashed #cbd5e1;">
+        <!-- THUẾ VAT VÀ TỔNG PHẢI THU HÀNG THÁNG -->
+        <div style="display:grid;grid-template-columns:1.3fr 1fr 1.3fr;gap:14px;padding-top:12px;border-top:1px dashed #cbd5e1;">
           <div class="form-field">
-            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Chính Sách Thuế VAT (10%) <span style="color:#ef4444;">*</span></label>
+            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Chính Sách Thuế VAT ({{ (int)(config('leasing.vat_rate', 0.10) * 100) }}%) <span style="color:#ef4444;">*</span></label>
             <select id="contract-vat-policy" class="filament-input-sm" onchange="recalculateContractFinancials()">
-              <option value="EXCLUSIVE" selected>Chưa gồm VAT (Cộng thêm 10% VAT)</option>
-              <option value="INCLUSIVE">Đã bao gồm thuế VAT (10%)</option>
+              <option value="EXCLUSIVE" selected>Chưa gồm VAT (Cộng thêm {{ (int)(config('leasing.vat_rate', 0.10) * 100) }}% VAT)</option>
+              <option value="INCLUSIVE">Đã bao gồm thuế VAT ({{ (int)(config('leasing.vat_rate', 0.10) * 100) }}%)</option>
             </select>
           </div>
           <div class="form-field">
-            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Tiền Thuế VAT 10% (VNĐ/tháng)</label>
+            <label style="font-size:11.5px;font-weight:600;color:#475569;display:block;margin-bottom:3px;">Tiền Thuế VAT {{ (int)(config('leasing.vat_rate', 0.10) * 100) }}% (VNĐ/tháng)</label>
             <input type="text" id="contract-vat-amount" class="filament-input-sm" readonly style="background:#f1f5f9;cursor:not-allowed;font-weight:600;color:#0284c7;" placeholder="Tự động tính VAT">
           </div>
           <div class="form-field">
             <label style="font-size:11.5px;font-weight:700;color:#0f172a;display:block;margin-bottom:3px;">Tổng Phải Thu / Tháng (Gồm VAT)</label>
-            <input type="text" id="contract-total-with-vat" class="filament-input-sm" readonly style="background:#eff6ff;border-color:#bfdbfe;font-weight:800;color:#1d4ed8;font-size:13px;" placeholder="Tổng cộng hàng tháng">
+            <input type="text" id="contract-total-with-vat" class="filament-input-sm" readonly style="background:#eff6ff;border-color:#bfdbfe;font-weight:800;color:#1d4ed8;font-size:13.5px;" placeholder="Tổng cộng hàng tháng">
           </div>
         </div>
       </div>
 
       <!-- CARD TÓM TẮT TÀI CHÍNH -->
-      <div id="contract-financial-card" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <span style="font-size:12px;font-weight:700;color:#166534;"><i class="fa-solid fa-calculator"></i> BÓC TÁCH TÀI CHÍNH HỢP ĐỒNG</span>
+      <div id="contract-financial-card" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px 16px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:8px;">
           <span style="font-size:11px;background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:12px;font-weight:600;border:1px solid #86efac;">
             <i class="fa-solid fa-shield-check"></i> Đảm bảo giữ chỗ độc quyền
           </span>
@@ -139,7 +146,7 @@
       <div style="font-size:12px;font-weight:700;color:var(--mo-primary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
         <i class="fa-solid fa-calendar-days"></i> 3. Thời hạn hợp đồng & Kỳ thanh toán
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:12px;">
         <div class="form-field">
           <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Mã Hợp Đồng</label>
           <input type="text" id="contract-code-input" readonly class="filament-input-sm" placeholder="Hệ thống tự động cấp..." style="background:#f1f5f9;cursor:not-allowed;font-weight:700;color:#334155;font-family:monospace;">
@@ -157,7 +164,7 @@
           <div class="field-error-slot" id="err-contract-end-date"></div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:12px;">
         <div class="form-field">
           <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Ngày Bàn Giao Mặt Bằng</label>
           <input type="date" id="contract-handover-date" class="filament-input-sm" onchange="moClearFieldError('contract-handover-date', 'err-contract-handover-date')">
@@ -165,12 +172,12 @@
         </div>
         <div class="form-field">
           <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Kỳ Thanh Toán (Tháng)</label>
-          <input type="number" id="contract-billing-cycle" value="1" min="1" class="filament-input-sm" oninput="moClearFieldError('contract-billing-cycle', 'err-contract-billing-cycle')">
+          <input type="number" id="contract-billing-cycle" value="{{ config('leasing.default_payment_cycle', 1) }}" min="1" class="filament-input-sm" oninput="moClearFieldError('contract-billing-cycle', 'err-contract-billing-cycle')">
           <div class="field-error-slot" id="err-contract-billing-cycle"></div>
         </div>
         <div class="form-field">
           <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Hạn Đóng Tiền Hàng Tháng</label>
-          <input type="number" id="contract-payment-day" value="5" min="1" max="28" class="filament-input-sm" oninput="moClearFieldError('contract-payment-day', 'err-contract-payment-day')">
+          <input type="number" id="contract-payment-day" value="{{ config('leasing.default_payment_due_day', 5) }}" min="1" max="28" class="filament-input-sm" oninput="moClearFieldError('contract-payment-day', 'err-contract-payment-day')">
           <div class="field-error-slot" id="err-contract-payment-day"></div>
         </div>
       </div>
@@ -178,14 +185,28 @@
         <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Điều Khoản Bổ Sung / Ghi Chú Hợp Đồng</label>
         <textarea id="contract-notes" rows="2" class="filament-input-sm" placeholder="Quy định thời gian miễn phí thi công ban đầu, tiêu chuẩn bàn giao trần sàn hoàn thiện..."></textarea>
       </div>
+
+      <!-- PHẦN 4: HỒ SƠ ĐÍNH KÈM & CHỨNG TỪ CỌC (UPLOAD PRIVATE STORAGE) -->
+      <div style="font-size:12px;font-weight:700;color:var(--mo-primary);text-transform:uppercase;letter-spacing:0.5px;margin:12px 0 8px;display:flex;align-items:center;gap:6px;">
+        <i class="fa-solid fa-paperclip"></i> 4. Hồ Sơ Đính Kèm & Chứng Từ Cọc (Tùy chọn)
+      </div>
+      <div class="form-field" style="margin-bottom:8px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:12px;">
+        <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">
+          <i class="fa-solid fa-cloud-arrow-up text-blue-600"></i> Tải lên Ủy nhiệm chi cọc / Giấy thỏa thuận / Hồ sơ scan (.PDF, .PNG, .JPG)
+        </label>
+        <input type="file" id="contract-create-attachments" multiple accept=".pdf,.png,.jpg,.jpeg" style="font-size:12px;padding:6px 0;width:100%;">
+        <small style="color:#64748b;font-size:11px;display:block;margin-top:2px;">
+          <i class="fa-solid fa-shield-halved text-emerald-600"></i> Tệp sẽ được tự động mã hóa và lưu trữ an toàn trên Supabase Private Bucket. Tối đa 20MB/file.
+        </small>
+      </div>
     </form>
-    <div style="padding:12px 20px;border-top:1px solid #e2e8f0;background:#f8fafc;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;flex-wrap:wrap;gap:8px;">
-      <span style="font-size:11.5px;color:#64748b;">
+    <div style="padding:14px 24px;border-top:1px solid #e2e8f0;background:#f8fafc;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;flex-wrap:wrap;gap:8px;">
+      <span style="font-size:12px;color:#64748b;">
         <i class="fa-solid fa-shield-halved text-emerald-600"></i> Hệ thống tự động giữ chỗ mặt bằng và kiểm tra trùng lịch thuê khi lưu.
       </span>
-      <div style="display:flex;gap:8px;">
-        <button type="button" class="btn-mo-outline" onclick="closeCreateContractModal()">Hủy</button>
-        <button type="button" id="btn-submit-create-contract" class="btn-mo-orange" onclick="document.getElementById('form-create-contract').requestSubmit()"><i class="fa-solid fa-file-circle-plus"></i> Khởi Tạo Bản Nháp</button>
+      <div style="display:flex;gap:10px;">
+        <button type="button" class="btn-mo-outline" style="padding:7px 16px;font-size:13px;" onclick="closeCreateContractModal()">Hủy</button>
+        <button type="button" id="btn-submit-create-contract" class="btn-mo-orange" style="padding:7px 18px;font-size:13px;font-weight:700;" onclick="document.getElementById('form-create-contract').requestSubmit()"><i class="fa-solid fa-file-circle-plus"></i> Khởi Tạo Bản Nháp</button>
       </div>
     </div>
   </div>
@@ -234,7 +255,12 @@
   <div style="background:#ffffff;border-radius:12px;width:100%;max-width:920px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);overflow:hidden;border:1px solid #e2e8f0;max-height:92vh;display:flex;flex-direction:column;">
     <div style="background:var(--mo-primary);color:#ffffff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
       <h3 style="margin:0;font-size:16px;font-weight:700;"><i class="fa-solid fa-file-contract"></i> Hồ Sơ Hợp Đồng Thuê & Tài Liệu Ký Kết</h3>
-      <button type="button" onclick="closeContractDetailModal()" style="background:none;border:none;color:#ffffff;font-size:18px;cursor:pointer;">&times;</button>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <a id="btn-detail-print-contract" href="#" target="_blank" class="btn-mo-outline" style="background:#ffffff;color:#dc2626;border-color:#fca5a5;padding:5px 12px;font-size:12.5px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-weight:700;border-radius:6px;" title="Mở trang in và xuất PDF">
+          <i class="fa-solid fa-file-pdf"></i> Xuất PDF
+        </a>
+        <button type="button" onclick="closeContractDetailModal()" style="background:none;border:none;color:#ffffff;font-size:20px;cursor:pointer;line-height:1;">&times;</button>
+      </div>
     </div>
     <div id="contract-detail-content" style="padding:20px;overflow-y:auto;flex:1;"></div>
   </div>

@@ -95,7 +95,7 @@
         const assignedSalesName = hasSales
           ? `<i class="fa-solid fa-user-tie" style="color:#6366f1;font-size:12px;"></i> ${escapeHtml(lead.assigned_sales?.full_name || lead.assignedSales?.full_name)}`
           : `<span class="badge-filament danger" style="background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Chưa phân bổ</span>`;
-        const buildingName = lead.building?.name || '<em style="color:#94a3b8;">Chưa chỉ định</em>';
+        const buildingName = lead.building?.name ? escapeHtml(lead.building.name) : '<em style="color:#94a3b8;">Chưa chỉ định</em>';
         const areaNeeded = lead.expected_area ? `${lead.expected_area} m²` : '---';
         const contactName = lead.contact_name || lead.contact_full_name || 'Khách hàng';
 
@@ -141,7 +141,7 @@
               ${lead.company_name ? `<div style="font-size:12px;color:#0284c7;"><i class="fa-solid fa-building"></i> ${escapeHtml(lead.company_name)}</div>` : ''}
             </td>
             <td>
-              <div style="font-weight:500;">${escapeHtml(buildingName)}</div>
+              <div style="font-weight:500;">${buildingName}</div>
               <div style="font-size:12px;color:#64748b;">Nhu cầu: ${escapeHtml(areaNeeded)}</div>
             </td>
             <td>${getPipelineStatusBadge(lead.pipeline_status)}</td>

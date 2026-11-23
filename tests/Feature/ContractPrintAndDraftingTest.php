@@ -158,11 +158,11 @@ class ContractPrintAndDraftingTest extends TestCase
     }
 
     /**
-     * Test Route xuất PDF / In hợp đồng chuẩn A4: GET /quan-ly-hop-dong/{id}/in-hop-dong.
+     * Test Route xuất PDF / In hợp đồng chuẩn A4: GET /admin/contracts/{id}/print.
      */
     public function test_print_contract_page_renders_successfully(): void
     {
-        $response = $this->actingAs($this->admin, 'admin')->get("/quan-ly-hop-dong/{$this->contract->id}/in-hop-dong");
+        $response = $this->actingAs($this->admin, 'admin')->get("/admin/contracts/{$this->contract->id}/print");
 
         $response->assertStatus(200);
         $response->assertSee('HỢP ĐỒNG THUÊ VĂN PHÒNG');
@@ -180,8 +180,8 @@ class ContractPrintAndDraftingTest extends TestCase
      */
     public function test_print_contract_page_redirects_unauthenticated_user(): void
     {
-        $response = $this->get("/quan-ly-hop-dong/{$this->contract->id}/in-hop-dong");
-        $response->assertRedirect('/admin/login');
+        $response = $this->get("/admin/contracts/{$this->contract->id}/print");
+        $response->assertRedirect('/?auth=required');
     }
 
     /**
@@ -191,7 +191,7 @@ class ContractPrintAndDraftingTest extends TestCase
     {
         Livewire::test(ContractManager::class)
             ->assertSee('Xuất PDF')
-            ->assertSee("/quan-ly-hop-dong/{$this->contract->id}/in-hop-dong")
+            ->assertSee("/admin/contracts/{$this->contract->id}/print")
             ->call('openDetailModal', $this->contract->id)
             ->assertSee('Xuất PDF')
             ->assertSee($this->contract->contract_number);

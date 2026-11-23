@@ -278,6 +278,14 @@ class Module3TenantAndContractApiTest extends TestCase
                 'deposit_amount' => 180000000,
                 'payment_cycle_months' => 3,
                 'payment_due_day' => 5,
+                'units' => [
+                    [
+                        'unit_id' => $this->unitB->id,
+                        'leased_area_sqm' => 100.00,
+                        'agreed_rental_price_per_sqm' => 600000,
+                        'agreed_service_fee_per_sqm' => 50000,
+                    ]
+                ],
             ]);
 
         $response->assertStatus(201)
@@ -313,7 +321,7 @@ class Module3TenantAndContractApiTest extends TestCase
             ]);
 
         $attachResponse->assertStatus(201)
-            ->assertJsonPath('data.contract.total_leased_area_sqm', '150.00');
+            ->assertJsonPath('data.contract.total_leased_area_sqm', '250.00');
 
         $this->assertDatabaseHas('contract_units', [
             'contract_id' => $contractId,

@@ -186,7 +186,10 @@
             </td>
             <td>${getContractStatusBadge(c.status)}</td>
             <td style="text-align:right;white-space:nowrap;">
-              <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;" onclick="openContractDetailModal('${c.id}')" title="Xem chi tiết & Files">
+              <a href="/admin/contracts/${c.id}/print" target="_blank" class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#dc2626;border-color:#fca5a5;text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="Xuất PDF / In Bản Thảo">
+                <i class="fa-solid fa-file-pdf"></i> Xuất PDF
+              </a>
+              <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;margin-left:4px;" onclick="openContractDetailModal('${c.id}')" title="Xem chi tiết & Files">
                 <i class="fa-solid fa-eye"></i> Chi tiết
               </button>
               ${(c.status === 'DRAFT' || c.status === 'RESERVED') ? `
@@ -398,24 +401,64 @@
       const chk = document.getElementById(`unit-chk-${unitId}`);
       if (chk) {
         chk.checked = !chk.checked;
+        const row = document.getElementById(`unit-row-${unitId}`);
+        if (row) row.style.borderColor = chk.checked ? '#ea580c' : '#e2e8f0';
         updateSelectedUnitsFromCheckboxes();
       }
     }
 
     function handleUnitCheckboxChange(e) {
       if (e) e.stopPropagation();
+      const chk = e.target;
+      if (chk) {
+        const row = document.getElementById(`unit-row-${chk.value}`);
+        if (row) row.style.borderColor = chk.checked ? '#ea580c' : '#e2e8f0';
+      }
+      updateSelectedUnitsFromCheckboxes();
+    }
+
+    // Cho phép Sales điều chỉnh đơn giá thuê đàm phán hoặc phí DV của từng sàn riêng biệt
+    function handleUnitCustomPriceChange(uid) {
+      const chk = document.getElementById(`unit-chk-${uid}`);
+      if (!chk) return;
+      const area = parseFloat(chk.dataset.area) || 0;
+      const rentInput = document.getElementById(`unit-rent-input-${uid}`);
+      const feeInput = document.getElementById(`unit-fee-input-${uid}`);
+      const rent = rentInput ? (parseFloat(rentInput.value) || 0) : (parseFloat(chk.dataset.rent) || 0);
+      const fee = feeInput ? (parseFloat(feeInput.value) || 0) : (parseFloat(chk.dataset.fee) || 0);
+
+      const totalValEl = document.getElementById(`unit-total-val-${uid}`);
+      if (totalValEl) totalValEl.innerText = Math.round(area * rent).toLocaleString('vi-VN') + ' đ/tháng';
+
+      const feeValEl = document.getElementById(`unit-fee-val-${uid}`);
+      if (feeValEl) feeValEl.innerText = '+ DV: ' + Math.round(area * fee).toLocaleString('vi-VN') + ' đ';
+
+      // Khi người dùng sửa đơn giá thì tự động check chọn sàn đó luôn nếu chưa check
+      if (!chk.checked) {
+        chk.checked = true;
+        const row = document.getElementById(`unit-row-${uid}`);
+        if (row) row.style.borderColor = '#ea580c';
+      }
+
       updateSelectedUnitsFromCheckboxes();
     }
 
     function updateSelectedUnitsFromCheckboxes() {
       const chks = Array.from(document.querySelectorAll('#contract-units-container input[type="checkbox"]:checked'));
-      window.selectedContractUnits = chks.map(c => ({
-        id: c.value,
-        code: c.dataset.code || '',
-        area: parseFloat(c.dataset.area) || 0,
-        rent: parseFloat(c.dataset.rent) || 0,
-        fee: parseFloat(c.dataset.fee) || 0
-      }));
+      window.selectedContractUnits = chks.map(c => {
+        const uid = c.value;
+        const rentInput = document.getElementById(`unit-rent-input-${uid}`);
+        const feeInput = document.getElementById(`unit-fee-input-${uid}`);
+        const rentVal = rentInput ? (parseFloat(rentInput.value) || 0) : (parseFloat(c.dataset.rent) || 0);
+        const feeVal = feeInput ? (parseFloat(feeInput.value) || 0) : (parseFloat(c.dataset.fee) || 0);
+        return {
+          id: uid,
+          code: c.dataset.code || '',
+          area: parseFloat(c.dataset.area) || 0,
+          rent: rentVal,
+          fee: feeVal
+        };
+      });
 
       const badgeEl = document.getElementById('selected-units-badge');
       const count = window.selectedContractUnits.length;
@@ -445,15 +488,6 @@
       const areaInput = document.getElementById('contract-unit-area');
       if (areaInput) areaInput.value = count > 0 ? totalArea : '';
 
-      const avgRent = totalArea > 0 ? Math.round(totalRent / totalArea) : 0;
-      const avgFee = totalArea > 0 ? Math.round(totalFee / totalArea) : 0;
-
-      const rentInput = document.getElementById('contract-unit-rent-price');
-      if (rentInput) rentInput.value = count > 0 ? avgRent : '';
-
-      const feeInput = document.getElementById('contract-unit-service-fee');
-      if (feeInput) feeInput.value = count > 0 ? avgFee : '';
-
       const totalRentInput = document.getElementById('contract-rent');
       if (totalRentInput) totalRentInput.value = count > 0 ? totalRent : '';
 
@@ -473,7 +507,7 @@
     }
 
     // Khi thay đổi Tòa nhà: Tự động cấp Mã hợp đồng từ CSDL & Tải danh sách Mặt bằng trống (hỗ trợ chọn nhiều mặt bằng)
-    async function handleContractBuildingChange(buildingId, autoSelectUnitCode = null, preselectedUnitIds = []) {
+    async function handleContractBuildingChange(buildingId, autoSelectUnitCode = null, preselectedUnits = []) {
       moClearFieldError('contract-building-select', 'err-contract-building');
       const container = document.getElementById('contract-units-container');
       const uSelect = document.getElementById('contract-unit-select');
@@ -506,9 +540,10 @@
         let units = json.data?.data || json.data || [];
         currentBuildingUnits = units;
 
-        // Nếu đang sửa hợp đồng và có preselectedUnitIds, nạp thêm các phòng đã thuộc hợp đồng này
-        if (Array.isArray(preselectedUnitIds) && preselectedUnitIds.length > 0) {
-          for (const uid of preselectedUnitIds) {
+        // Nếu đang sửa hợp đồng và có preselectedUnits, nạp thêm các phòng đã thuộc hợp đồng này
+        const preselectedIds = (Array.isArray(preselectedUnits) ? preselectedUnits : []).map(p => String(typeof p === 'object' ? p.id : p));
+        if (preselectedIds.length > 0) {
+          for (const uid of preselectedIds) {
             if (!units.some(u => String(u.id) === String(uid))) {
               try {
                 const uRes = await fetch(`/api/v1/portal/units/${uid}`, { headers: getAuthHeaders() });
@@ -531,31 +566,52 @@
         if (container) {
           container.innerHTML = units.map(u => {
             const area = parseFloat(u.area_sqm) || 0;
-            const rent = parseFloat(u.base_rental_price) || 0;
             const defaultFee = window.LEASING_CONFIG?.defaultServiceFeeSqm || 150000;
+            let rent = parseFloat(u.base_rental_price) || 0;
             let fee = parseFloat(u.service_fee_sqm || u.building?.default_service_fee_per_sqm || defaultFee);
             if ((u.unit_code || '').includes('NEX-0501')) {
               fee = defaultFee;
             }
-            const isChecked = (autoSelectUnitCode && (u.unit_code === autoSelectUnitCode || (u.unit_code || '').includes(autoSelectUnitCode))) ||
-              (Array.isArray(preselectedUnitIds) && preselectedUnitIds.map(String).includes(String(u.id)));
+
+            const foundPre = Array.isArray(preselectedUnits) ? preselectedUnits.find(p => String(typeof p === 'object' ? p.id : p) === String(u.id)) : null;
+            const isChecked = (autoSelectUnitCode && (u.unit_code === autoSelectUnitCode || (u.unit_code || '').includes(autoSelectUnitCode))) || (foundPre !== undefined && foundPre !== null);
+
+            if (foundPre && typeof foundPre === 'object') {
+              if (foundPre.rent > 0) rent = foundPre.rent;
+              if (foundPre.fee > 0) fee = foundPre.fee;
+            }
 
             return `
-              <div class="unit-check-row" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#ffffff;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:6px;cursor:pointer;transition:all 0.15s;" onclick="toggleUnitCheckbox('${u.id}')">
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <input type="checkbox" id="unit-chk-${u.id}" value="${u.id}" data-code="${escapeHtml(u.unit_code || '')}" data-area="${area}" data-rent="${rent}" data-fee="${fee}" ${isChecked ? 'checked' : ''} style="width:16px;height:16px;accent-color:#ea580c;cursor:pointer;" onchange="handleUnitCheckboxChange(event)" onclick="event.stopPropagation()">
+              <div class="unit-check-row" id="unit-row-${u.id}" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#ffffff;border:1px solid ${isChecked ? '#ea580c' : '#e2e8f0'};border-radius:8px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;gap:16px;" onclick="toggleUnitCheckbox('${u.id}')">
+                <div style="display:flex;align-items:center;gap:12px;min-width:240px;">
+                  <input type="checkbox" id="unit-chk-${u.id}" value="${u.id}" data-code="${escapeHtml(u.unit_code || '')}" data-area="${area}" data-rent="${rent}" data-fee="${fee}" ${isChecked ? 'checked' : ''} style="width:18px;height:18px;accent-color:#ea580c;cursor:pointer;" onchange="handleUnitCheckboxChange(event)" onclick="event.stopPropagation()">
                   <div>
-                    <div style="font-weight:700;font-size:12.5px;color:#0f172a;">
-                      Phòng ${escapeHtml(u.unit_code || '')} <span style="font-weight:500;color:#64748b;font-size:11.5px;">(${escapeHtml(u.name || ('Tầng ' + (u.floor_number || '')))})</span>
+                    <div style="font-weight:700;font-size:13.5px;color:#0f172a;">
+                      Phòng ${escapeHtml(u.unit_code || '')} <span style="font-weight:500;color:#64748b;font-size:12px;">(${escapeHtml(u.name || ('Tầng ' + (u.floor_number || '')))})</span>
                     </div>
-                    <div style="font-size:11px;color:#475569;">
-                      Diện tích: <strong>${area.toLocaleString('vi-VN')} m²</strong> | Đơn giá: <strong>${rent.toLocaleString('vi-VN')} đ/m²</strong> | Phí DV: <strong>${fee.toLocaleString('vi-VN')} đ/m²</strong>
+                    <div style="font-size:11.5px;color:#475569;margin-top:1px;">
+                      Diện tích thực tế: <strong style="color:#0f172a;">${area.toLocaleString('vi-VN')} m²</strong>
                     </div>
                   </div>
                 </div>
-                <div style="text-align:right;">
-                  <div style="font-size:12px;font-weight:700;color:#ea580c;">${Math.round(area * rent).toLocaleString('vi-VN')} đ/tháng</div>
-                  <div style="font-size:10.5px;color:#059669;"><i class="fa-solid fa-check-circle"></i> Khả dụng</div>
+
+                <!-- Ô nhập đơn giá đàm phán & Phí DV riêng cho sàn này -->
+                <div style="display:flex;align-items:center;gap:14px;" onclick="event.stopPropagation()">
+                  <div>
+                    <label style="font-size:10.5px;color:#64748b;display:block;margin-bottom:2px;font-weight:600;">Đơn giá thuê (VNĐ/m²)</label>
+                    <input type="number" id="unit-rent-input-${u.id}" value="${rent}" step="1000" class="filament-input-sm" style="width:145px;height:32px;font-size:12.5px;font-weight:700;color:#ea580c;padding:2px 10px;background:#fff;" oninput="handleUnitCustomPriceChange('${u.id}')" title="Nhập đơn giá đàm phán riêng cho sàn này">
+                  </div>
+                  <div>
+                    <label style="font-size:10.5px;color:#64748b;display:block;margin-bottom:2px;font-weight:600;">Phí DV (VNĐ/m²)</label>
+                    <input type="number" id="unit-fee-input-${u.id}" value="${fee}" step="1000" class="filament-input-sm" style="width:130px;height:32px;font-size:12.5px;font-weight:600;color:#0284c7;padding:2px 10px;background:#fff;" oninput="handleUnitCustomPriceChange('${u.id}')" title="Nhập phí dịch vụ riêng cho sàn này">
+                  </div>
+                </div>
+
+                <!-- Thành tiền riêng của sàn này -->
+                <div style="text-align:right;min-width:180px;">
+                  <div style="font-size:11px;color:#64748b;">Tiền thuê sàn:</div>
+                  <div id="unit-total-val-${u.id}" style="font-size:13px;font-weight:800;color:#0f172a;">${Math.round(area * rent).toLocaleString('vi-VN')} đ/tháng</div>
+                  <div id="unit-fee-val-${u.id}" style="font-size:11px;color:#059669;font-weight:600;">+ DV: ${Math.round(area * fee).toLocaleString('vi-VN')} đ</div>
                 </div>
               </div>
             `;
@@ -575,14 +631,11 @@
       updateSelectedUnitsFromCheckboxes();
     }
 
-    // Tự động tính toán chi phí thuê, phí DV, cọc 3 tháng & tổng giá trị hợp đồng (bao gồm thuế VAT 10%)
+    // Tự động tính toán chi phí thuê, phí DV, cọc bảo đảm & tổng giá trị hợp đồng (cộng dồn từ từng sàn)
     function recalculateContractFinancials() {
       const area = parseFloat(document.getElementById('contract-unit-area')?.value) || 0;
-      const rentPerSqm = parseFloat(document.getElementById('contract-unit-rent-price')?.value) || 0;
-      const feePerSqm = parseFloat(document.getElementById('contract-unit-service-fee')?.value) || 0;
-
-      const monthlyRent = Math.round(area * rentPerSqm);
-      const monthlyFee = Math.round(area * feePerSqm);
+      const monthlyRent = parseFloat(document.getElementById('contract-rent')?.value) || 0;
+      const monthlyFee = parseFloat(document.getElementById('contract-service-fee')?.value) || 0;
       const totalMonthlyPreVat = monthlyRent + monthlyFee;
 
       // Tính thuế VAT theo cấu hình hệ thống (config/leasing.php)
@@ -603,14 +656,10 @@
       // Công thức cọc theo cấu hình chuẩn ngành (config/leasing.php): (Tiền thuê + Phí dịch vụ) x số tháng cọc
       const depositCalc = Math.round(totalMonthlyPreVat * depositMonths);
 
-      const rentInput = document.getElementById('contract-rent');
-      const feeInput = document.getElementById('contract-service-fee');
       const depositInput = document.getElementById('contract-deposit');
       const vatAmountInput = document.getElementById('contract-vat-amount');
       const totalWithVatInput = document.getElementById('contract-total-with-vat');
 
-      if (rentInput) rentInput.value = monthlyRent || '';
-      if (feeInput) feeInput.value = monthlyFee || '';
       if (depositInput) depositInput.value = depositCalc || '';
       if (vatAmountInput) vatAmountInput.value = vatAmount > 0 ? vatAmount.toLocaleString('vi-VN') + ' đ' : '0 đ';
       if (totalWithVatInput) totalWithVatInput.value = totalMonthlyWithVat > 0 ? totalMonthlyWithVat.toLocaleString('vi-VN') + ' đ/tháng' : '0 đ/tháng';
@@ -630,22 +679,43 @@
 
       const card = document.getElementById('contract-financial-card');
       const breakdown = document.getElementById('contract-financial-breakdown');
-      const uSelect = document.getElementById('contract-unit-select');
-      const opt = uSelect?.selectedOptions[0];
-      const unitCode = opt?.dataset.code || (opt?.value ? opt.text.split('(')[0].trim() : 'Mặt bằng');
 
-      if (card && breakdown && area > 0 && rentPerSqm > 0) {
+      if (card && breakdown && area > 0 && monthlyRent > 0) {
         card.style.display = 'block';
+
+        const unitsListHtml = (window.selectedContractUnits || []).map(u => {
+          const roomRent = Math.round(u.area * u.rent);
+          const roomFee = Math.round(u.area * u.fee);
+          return `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#ffffff;border:1px solid #dcfce7;border-radius:4px;margin-bottom:4px;font-size:12px;">
+              <div>
+                <strong>Phòng ${escapeHtml(u.code)}</strong>: <strong>${u.area.toLocaleString('vi-VN')} m²</strong> 
+                <span style="color:#64748b;margin-left:6px;">(Giá: <strong>${u.rent.toLocaleString('vi-VN')} đ/m²</strong> | Phí DV: <strong>${u.fee.toLocaleString('vi-VN')} đ/m²</strong>)</span>
+              </div>
+              <div style="font-weight:700;color:#ea580c;">
+                ${roomRent.toLocaleString('vi-VN')} đ/tháng <span style="font-weight:500;color:#0284c7;font-size:11px;">(+ DV: ${roomFee.toLocaleString('vi-VN')} đ)</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+
         breakdown.innerHTML = `
-          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:10px;margin-bottom:8px;">
+          <div style="margin-bottom:10px;">
+            <div style="font-size:11.5px;font-weight:700;color:#166534;margin-bottom:6px;text-transform:uppercase;">
+              <i class="fa-solid fa-list-check"></i> Chi tiết từng sàn đã chọn (${window.selectedContractUnits.length} mặt bằng — tổng ${area.toLocaleString('vi-VN')} m²):
+            </div>
+            ${unitsListHtml}
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:10px;margin-bottom:8px;padding-top:8px;border-top:1px dashed #bbf7d0;">
             <div>
-              <div style="color:#64748b;font-size:11px;font-weight:600;">MẶT BẰNG & DIỆN TÍCH</div>
-              <div style="font-weight:700;color:#0f172a;font-size:13px;">${escapeHtml(unitCode)} — <strong>${area} m²</strong></div>
+              <div style="color:#64748b;font-size:11px;font-weight:600;">TỔNG TIỀN THUÊ & PHÍ DV</div>
+              <div style="font-weight:800;color:#0f172a;font-size:13.5px;">${totalMonthlyPreVat.toLocaleString('vi-VN')} đ/tháng</div>
+              <div style="font-size:11px;color:#475569;">Thuê: ${monthlyRent.toLocaleString('vi-VN')} đ + DV: ${monthlyFee.toLocaleString('vi-VN')} đ</div>
             </div>
             <div>
               <div style="color:#64748b;font-size:11px;font-weight:600;">TỔNG PHẢI THU / THÁNG (GỒM VAT)</div>
               <div style="font-weight:800;color:#1d4ed8;font-size:14px;">${totalMonthlyWithVat.toLocaleString('vi-VN')} đ/tháng</div>
-              <div style="font-size:11px;color:#475569;">Thuê: ${monthlyRent.toLocaleString('vi-VN')} đ + DV: ${monthlyFee.toLocaleString('vi-VN')} đ + VAT: ${vatAmount.toLocaleString('vi-VN')} đ</div>
+              <div style="font-size:11px;color:#475569;">Tiền thuế VAT: ${vatAmount.toLocaleString('vi-VN')} đ/tháng</div>
             </div>
             <div>
               <div style="color:#64748b;font-size:11px;font-weight:600;">TIỀN CỌC BẢO ĐẢM (${depositMonths} THÁNG)</div>
@@ -658,7 +728,7 @@
             </div>
           </div>
           <div style="margin-top:6px;padding-top:6px;border-top:1px dashed #bbf7d0;font-size:11.5px;color:#15803d;display:flex;align-items:center;gap:6px;">
-            <i class="fa-solid fa-circle-check"></i> Sàn <strong>${escapeHtml(unitCode)}</strong> khả dụng. Hệ thống tự động giữ chỗ độc quyền và chuẩn bị dữ liệu xuất hóa đơn cho Kế toán.
+            <i class="fa-solid fa-circle-check"></i> Toàn bộ mặt bằng đã chọn khả dụng. Hệ thống tự động giữ chỗ độc quyền và chuẩn bị dữ liệu xuất hóa đơn cho Kế toán.
           </div>
         `;
       } else if (card) {
@@ -685,6 +755,7 @@
         const depositInput = document.getElementById('contract-deposit');
         if (depositInput) depositInput.value = deposit;
       }
+      recalculateContractFinancials();
     }
 
     // Khi thay đổi ngày bắt đầu thuê: Tự động đề xuất ngày kết thúc hợp đồng tròn 2 năm
@@ -885,11 +956,43 @@
 
         const json = await res.json();
         if (res.ok) {
+          const createdContract = json.data;
+          const newContractId = createdContract?.id || editId;
+
+          // Nếu có chọn file đính kèm / chứng từ cọc lúc tạo mới
+          const attachInput = document.getElementById('contract-create-attachments');
+          if (attachInput && attachInput.files && attachInput.files.length > 0 && newContractId) {
+            try {
+              const uploadData = new FormData();
+              for (let i = 0; i < attachInput.files.length; i++) {
+                uploadData.append('files[]', attachInput.files[i]);
+              }
+              const docType = (contractType === 'BOOKING') ? 'PAYMENT_RECEIPT' : 'SIGNED_CONTRACT_SCAN';
+              uploadData.append('document_type', docType);
+
+              await fetch(`/api/v1/admin/contracts/${newContractId}/upload-files`, {
+                method: 'POST',
+                headers: getAuthHeaders(true),
+                body: uploadData
+              });
+            } catch (uploadErr) {
+              console.warn('Lỗi tải file đính kèm hợp đồng:', uploadErr);
+            }
+          }
+
           const typeLabel = isEdit ? 'Bản nháp hợp đồng' : (contractType === 'BOOKING' ? 'Hợp đồng đặt cọc giữ chỗ (BOOKING)' : 'Dự thảo hợp đồng thuê (DRAFT)');
           moToast(`${isEdit ? 'Cập nhật' : 'Khởi tạo'} ${typeLabel} thành công!`, 'success');
           closeCreateContractModal();
           document.getElementById('form-create-contract')?.reset();
           loadContractsList();
+
+          if (!isEdit && newContractId) {
+            setTimeout(() => {
+              if (confirm(`${typeLabel} đã được tạo thành công! Bạn có muốn mở xem / xuất file PDF bản in ngay bây giờ không?`)) {
+                window.open(`/admin/contracts/${newContractId}/print`, '_blank');
+              }
+            }, 300);
+          }
         } else {
           if (json.errors) {
             moMapServerErrors(json.errors, {
@@ -1001,9 +1104,13 @@
         document.getElementById('contract-payment-day').value = contract.payment_due_day || 5;
         document.getElementById('contract-notes').value = contract.notes || contract.termination_note || '';
 
-        // Mặt bằng đã chọn
-        const preselectedUnitIds = (contract.contract_units || contract.contractUnits || []).map(cu => cu.unit_id || cu.unit?.id || cu.id);
-        await handleContractBuildingChange(contract.building_id, null, preselectedUnitIds);
+        // Mặt bằng đã chọn kèm đơn giá đàm phán đã lưu
+        const preselectedUnits = (contract.contract_units || contract.contractUnits || []).map(cu => ({
+          id: String(cu.unit_id || cu.unit?.id || cu.id),
+          rent: parseFloat(cu.agreed_rental_price_per_sqm || 0),
+          fee: parseFloat(cu.agreed_service_fee_per_sqm || 0)
+        }));
+        await handleContractBuildingChange(contract.building_id, null, preselectedUnits);
 
         modal.style.display = 'flex';
       } catch (err) {
@@ -1126,6 +1233,11 @@
       const container = document.getElementById('contract-detail-content');
       if (!container) return;
 
+      const printBtn = document.getElementById('btn-detail-print-contract');
+      if (printBtn) {
+        printBtn.href = `/admin/contracts/${c.id}/print`;
+      }
+
       const units = c.units || [];
       const files = c.files || [];
       const contractCode = c.contract_code || c.contract_number || '---';
@@ -1158,6 +1270,9 @@
             </div>
 
             <div style="margin-top:16px;padding-top:14px;border-top:1px solid #e2e8f0;display:flex;gap:8px;justify-content:flex-end;align-items:center;">
+              <a href="/admin/contracts/${c.id}/print" target="_blank" class="btn-mo-outline" style="padding:6px 12px;font-size:12px;color:#dc2626;border-color:#fca5a5;text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="Xuất PDF / In Bản Thảo">
+                <i class="fa-solid fa-file-pdf"></i> Xuất PDF
+              </a>
               ${(c.status === 'DRAFT' || c.status === 'RESERVED') ? `
                 <button class="btn-mo-outline" style="padding:6px 12px;font-size:12px;color:#0284c7;border-color:#bae6fd;" onclick="closeContractDetailModal();openEditContractModal('${c.id}')" title="Chỉnh sửa bản nháp">
                   <i class="fa-solid fa-pen-to-square"></i> Sửa Bản Nháp
@@ -1218,11 +1333,11 @@
             <div>
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                 <h4 style="font-size:14px;font-weight:700;color:#0f172a;margin:0;">
-                  <i class="fa-solid fa-file-contract"></i> File Scan Hợp Đồng Ký Kết
+                  <i class="fa-solid fa-file-contract"></i> File Scan & Chứng Từ Ký Kết
                 </h4>
-                ${!isContractSalesRole() ? `
+                ${(c.status === 'DRAFT' || c.status === 'RESERVED' || !isContractSalesRole()) ? `
                   <button class="btn-mo-orange" style="padding:3px 8px;font-size:11px;" onclick="openUploadContractScanModal('${c.id}')">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> Upload Scan
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Upload File
                   </button>
                 ` : ''}
               </div>
@@ -1532,10 +1647,6 @@
     // 11. Tải lên file scan hợp đồng: POST /api/v1/admin/contracts/{id}/upload-files
     let currentUploadContractId = null;
     function openUploadContractScanModal(contractId) {
-      if (isContractSalesRole()) {
-        showMoToast('warning', 'Từ chối quyền hạn', 'Chuyên viên Sales không có thẩm quyền tải lên tài liệu scan hợp đồng ký kết. Thao tác này thuộc thẩm quyền của Ban Quản Lý (PM).');
-        return;
-      }
       currentUploadContractId = contractId;
       const modal = document.getElementById('modal-upload-contract-scan');
       if (!modal) return;
@@ -1573,11 +1684,11 @@
 
         const json = await res.json();
         if (res.ok) {
-          alert('Tải lên file scan hợp đồng lên Supabase Storage thành công!');
+          moToast('Tải lên tài liệu chứng từ hợp đồng thành công!', 'success');
           closeUploadContractScanModal();
           openContractDetailModal(currentUploadContractId);
         } else {
-          alert('Lỗi tải file scan: ' + (json.message || ''));
+          moToast('Lỗi tải file: ' + (json.message || ''), 'error');
         }
       } catch (err) {
         alert('Lỗi kết nối tải file scan.');

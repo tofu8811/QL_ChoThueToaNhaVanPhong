@@ -941,8 +941,16 @@ class ContractService
             'email' => $tenant?->billing_email ?? $tenant?->login_email ?? 'Đang cập nhật',
         ];
 
+        $bookingDeposit = (float) ($contract->booking_deposit_amount ?? 0);
+        $isBooking = ($contract->status === \App\Enums\ContractStatus::RESERVED || $contract->status?->value === 'RESERVED' || $bookingDeposit > 0);
+
         return [
             'contract' => $contract,
+            'is_booking' => $isBooking,
+            'booking_deposit_amount' => $bookingDeposit,
+            'booking_deposit_amount_words' => NumberToWordsHelper::toVietnameseWords($bookingDeposit),
+            'booking_deposit_words' => NumberToWordsHelper::toVietnameseWords($bookingDeposit),
+            'reservation_expires_at' => $contract->reservation_expires_at ? Carbon::parse($contract->reservation_expires_at)->format('d/m/Y') : null,
             'party_a' => $partyA,
             'party_b' => $partyB,
             'monthly_rent' => $monthlyRent,

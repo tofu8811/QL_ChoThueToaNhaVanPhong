@@ -221,11 +221,23 @@ class ContractApiController extends BaseApiController
     }
 
     /**
-     * Tải lên các file scan hợp đồng, phụ lục, biên bản bàn giao.
+     * Tải lên các file scan hợp đồng, phụ lục, biên bản bàn giao hoặc chứng từ cọc.
      */
     public function uploadFiles(UploadContractFilesRequest $request, string $id): JsonResponse
     {
         $contract = Contract::findOrFail($id);
+        $user = $request->user();
+
+        // Kiểm tra quyền đối với tài khoản Sales: chỉ tải lên file cho hợp đồng do chính mình tạo
+        if ($user instanceof \App\Models\Sale) {
+            if ($contract->created_by_sales_id !== $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bạn không có quyền tải lên tài liệu cho hợp đồng do nhân sự khác phụ trách.',
+                ], 403);
+            }
+        }
+
         $docType = $request->input('document_type', 'SIGNED_CONTRACT_SCAN');
         $uploaded = $this->contractService->uploadContractFiles($contract, $request->file('files'), $docType);
 

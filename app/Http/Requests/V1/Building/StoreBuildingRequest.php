@@ -117,6 +117,7 @@ class StoreBuildingRequest extends BaseApiRequest
             'payment_term_months' => ['nullable', 'integer', 'min:1'],
             'grade' => ['required', 'string', 'in:A,B,C,a,b,c'],
             'direction' => ['nullable', 'string', 'max:50'],
+            'description' => ['nullable', 'string', 'max:5000'],
             'is_published' => ['nullable', 'boolean'],
             'primary_image_index' => ['nullable', 'integer', 'min:0'],
             'images' => ['nullable', 'array'],

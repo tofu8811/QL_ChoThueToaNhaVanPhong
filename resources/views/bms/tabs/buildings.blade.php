@@ -71,5 +71,10 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Thanh phân trang danh sách tài nguyên mặt bằng tòa nhà -->
+    <div id="admin-buildings-pagination" style="padding:14px 18px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;background:#ffffff;border-radius:0 0 8px 8px;">
+      <!-- Dynamic Pagination Controls rendered by renderAdminBuildingPagination() -->
+    </div>
   </div>
 </div>

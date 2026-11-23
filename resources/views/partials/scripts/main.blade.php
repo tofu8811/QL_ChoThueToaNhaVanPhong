@@ -498,4 +498,219 @@
       window.addEventListener('resize', onResize, { passive: true });
       onScroll();
     })();
+
+    /* ==========================================================================
+       STATEFUL ACTION CONFIRMATION MODAL CONTROLLER (Tái sử dụng toàn hệ thống)
+       ========================================================================== */
+    const _moConfirmState = {
+      options: null,
+      autoDismissTimer: null
+    };
+
+    function _moSwitchConfirmState(state) {
+      const p = document.getElementById('confirm-state-prompt');
+      const pr = document.getElementById('confirm-state-processing');
+      const s = document.getElementById('confirm-state-success');
+      const f = document.getElementById('confirm-state-failed');
+      const x = document.getElementById('confirm-modal-close-x');
+
+      if (p) p.style.display = state === 'prompt' ? 'flex' : 'none';
+      if (pr) pr.style.display = state === 'processing' ? 'flex' : 'none';
+      if (s) s.style.display = state === 'success' ? 'flex' : 'none';
+      if (f) f.style.display = state === 'failed' ? 'flex' : 'none';
+      if (x) x.style.display = state === 'processing' ? 'none' : 'block';
+    }
+
+    window.moConfirmAction = function(options) {
+      _moConfirmState.options = Object.assign({
+        title: 'Xác Nhận Thao Tác',
+        message: 'Bạn có chắc chắn muốn thực hiện hành động này?',
+        targetName: '',
+        note: '',
+        confirmText: 'Xóa',
+        cancelText: 'Hủy bỏ',
+        type: 'danger', // 'danger' | 'warning' | 'primary' | 'info'
+        action: async () => {},
+        onSuccess: () => {}
+      }, options || {});
+
+      if (_moConfirmState.autoDismissTimer) {
+        clearTimeout(_moConfirmState.autoDismissTimer);
+        _moConfirmState.autoDismissTimer = null;
+      }
+
+      const modal = document.getElementById('modal-confirm-action');
+      if (!modal) return;
+
+      const type = _moConfirmState.options.type;
+      const badge = document.getElementById('confirm-modal-icon-badge');
+      const icon = document.getElementById('confirm-modal-icon');
+      const btnAction = document.getElementById('confirm-modal-btn-action');
+      const btnIcon = document.getElementById('confirm-modal-btn-icon');
+      const btnText = document.getElementById('confirm-modal-btn-action-text');
+
+      if (badge && icon && btnAction && btnIcon && btnText) {
+        if (type === 'danger') {
+          badge.style.background = '#fee2e2';
+          badge.style.color = '#dc2626';
+          badge.style.boxShadow = '0 0 0 6px #fef2f2';
+          icon.className = 'fa-solid fa-trash-can';
+          btnAction.style.background = '#dc2626';
+          btnAction.style.boxShadow = '0 2px 4px rgba(220,38,38,0.25)';
+          btnIcon.className = 'fa-solid fa-trash-can';
+        } else if (type === 'warning') {
+          badge.style.background = '#fef3c7';
+          badge.style.color = '#d97706';
+          badge.style.boxShadow = '0 0 0 6px #fffbeb';
+          icon.className = 'fa-solid fa-triangle-exclamation';
+          btnAction.style.background = '#d97706';
+          btnAction.style.boxShadow = '0 2px 4px rgba(217,119,6,0.25)';
+          btnIcon.className = 'fa-solid fa-triangle-exclamation';
+        } else {
+          badge.style.background = '#dbeafe';
+          badge.style.color = '#2563eb';
+          badge.style.boxShadow = '0 0 0 6px #eff6ff';
+          icon.className = 'fa-solid fa-circle-question';
+          btnAction.style.background = '#2563eb';
+          btnAction.style.boxShadow = '0 2px 4px rgba(37,99,235,0.25)';
+          btnIcon.className = 'fa-solid fa-check';
+        }
+      }
+
+      const elTitle = document.getElementById('confirm-modal-title');
+      const elMsg = document.getElementById('confirm-modal-message');
+      const elCancel = document.getElementById('confirm-modal-btn-cancel');
+
+      if (elTitle) elTitle.innerText = _moConfirmState.options.title;
+      if (elMsg) {
+        if (_moConfirmState.options.message) {
+          elMsg.innerText = _moConfirmState.options.message;
+          elMsg.style.display = 'block';
+        } else {
+          elMsg.innerText = '';
+          elMsg.style.display = 'none';
+        }
+      }
+      if (btnText) btnText.innerText = _moConfirmState.options.confirmText;
+      if (elCancel) elCancel.innerText = _moConfirmState.options.cancelText;
+
+      const targetWrap = document.getElementById('confirm-modal-target-wrap');
+      const targetText = document.getElementById('confirm-modal-target-text');
+      if (targetWrap && targetText) {
+        if (_moConfirmState.options.targetName) {
+          targetText.innerText = _moConfirmState.options.targetName;
+          targetWrap.style.display = 'block';
+        } else {
+          targetWrap.style.display = 'none';
+        }
+      }
+
+      const noteWrap = document.getElementById('confirm-modal-note-wrap');
+      const noteText = document.getElementById('confirm-modal-note-text');
+      if (noteWrap && noteText) {
+        if (_moConfirmState.options.note) {
+          noteText.innerText = _moConfirmState.options.note;
+          noteWrap.style.display = 'flex';
+        } else {
+          noteWrap.style.display = 'none';
+        }
+      }
+
+      _moSwitchConfirmState('prompt');
+      modal.style.display = 'flex';
+    };
+
+    window.moCloseConfirmAction = function() {
+      if (_moConfirmState.autoDismissTimer) {
+        clearTimeout(_moConfirmState.autoDismissTimer);
+        _moConfirmState.autoDismissTimer = null;
+      }
+      const modal = document.getElementById('modal-confirm-action');
+      if (modal) modal.style.display = 'none';
+    };
+
+    window.moDismissSuccessConfirmAction = function() {
+      if (_moConfirmState.autoDismissTimer) {
+        clearTimeout(_moConfirmState.autoDismissTimer);
+        _moConfirmState.autoDismissTimer = null;
+      }
+      const modal = document.getElementById('modal-confirm-action');
+      if (modal) modal.style.display = 'none';
+      if (_moConfirmState.options && typeof _moConfirmState.options.onSuccess === 'function') {
+        try {
+          _moConfirmState.options.onSuccess();
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    };
+
+    window.moRetryConfirmAction = function() {
+      _moSwitchConfirmState('prompt');
+    };
+
+    window.moExecuteConfirmAction = async function() {
+      if (!_moConfirmState.options || typeof _moConfirmState.options.action !== 'function') return;
+
+      _moSwitchConfirmState('processing');
+
+      try {
+        const result = await _moConfirmState.options.action();
+        const successMsg = (typeof result === 'string' && result) ? result :
+                           (result && result.message) ? result.message :
+                           'Dữ liệu đã được cập nhật thành công.';
+
+        const elSuccessMsg = document.getElementById('confirm-modal-success-message');
+        if (elSuccessMsg) elSuccessMsg.innerText = successMsg;
+
+        const bar = document.getElementById('confirm-modal-success-progress');
+        if (bar) {
+          bar.style.transition = 'none';
+          bar.style.width = '100%';
+          setTimeout(() => {
+            bar.style.transition = 'width 1.5s linear';
+            bar.style.width = '0%';
+          }, 30);
+        }
+
+        _moSwitchConfirmState('success');
+
+        _moConfirmState.autoDismissTimer = setTimeout(() => {
+          moDismissSuccessConfirmAction();
+        }, 1500);
+
+      } catch (err) {
+        const errorMsg = (err && err.message) ? err.message : 'Có lỗi không xác định xảy ra khi thực hiện thao tác.';
+        const elFailedMsg = document.getElementById('confirm-modal-failed-message');
+        if (elFailedMsg) elFailedMsg.innerText = errorMsg;
+        _moSwitchConfirmState('failed');
+      }
+    };
+
+    // Close on click backdrop or escape
+    document.addEventListener('DOMContentLoaded', function() {
+      const modal = document.getElementById('modal-confirm-action');
+      if (modal) {
+        modal.addEventListener('click', function(e) {
+          if (e.target === modal) {
+            const pr = document.getElementById('confirm-state-processing');
+            if (!pr || pr.style.display !== 'flex') {
+              moCloseConfirmAction();
+            }
+          }
+        });
+      }
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        const modal = document.getElementById('modal-confirm-action');
+        if (modal && modal.style.display === 'flex') {
+          const pr = document.getElementById('confirm-state-processing');
+          if (!pr || pr.style.display !== 'flex') {
+            moCloseConfirmAction();
+          }
+        }
+      }
+    });
   </script>

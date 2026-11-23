@@ -7,16 +7,26 @@
     let currentAdminBuildingGrade = 'ALL';
     let currentActiveBuildingId = null;
     let currentActiveUnitBuildingId = null;
+    let currentAdminBuildingPage = 1;
+    let adminBuildingPageSize = 10;
+    let adminBuildingPaginationMeta = {};
+
+    let currentUnitPage = 1;
+    let unitPageSize = 5;
+    let unitPaginationMeta = {};
 
     // 1. Nạp danh sách tòa nhà quản trị: GET /api/v1/admin/buildings
-    async function loadAdminBuildingsList() {
+    async function loadAdminBuildingsList(page = null) {
+      if (page !== null && page !== undefined) {
+        currentAdminBuildingPage = page;
+      }
       const tbody = document.getElementById('admin-buildings-tbody');
       if (tbody) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang nạp danh sách cao ốc văn phòng từ API...</td></tr>';
       }
 
       try {
-        let url = '/api/v1/admin/buildings?per_page=100';
+        let url = `/api/v1/admin/buildings?page=${currentAdminBuildingPage}&per_page=${adminBuildingPageSize}`;
         if (currentAdminBuildingSearch) {
           url += `&search=${encodeURIComponent(currentAdminBuildingSearch)}`;
         }
@@ -36,7 +46,14 @@
 
         const json = await res.json();
         if (res.ok) {
-          adminBuildingsList = json.data?.data || json.data || [];
+          adminBuildingsList = Array.isArray(json.data) ? json.data : (json.data?.data || []);
+          adminBuildingPaginationMeta = json.meta || json.data?.meta || {
+            current_page: currentAdminBuildingPage,
+            last_page: 1,
+            per_page: adminBuildingPageSize,
+            total: adminBuildingsList.length
+          };
+          window.BUILDINGS_DATA = adminBuildingsList;
           renderAdminBuildingsTable();
         } else {
           if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:20px;">Lỗi: ${escapeHtml(json.message || 'Không thể tải danh sách tòa nhà')}</td></tr>`;
@@ -49,11 +66,12 @@
     // 2. Render bảng danh sách tòa nhà
     function renderAdminBuildingsTable() {
       const tbody = document.getElementById('admin-buildings-tbody');
+      const totalCount = (adminBuildingPaginationMeta.total !== undefined) ? adminBuildingPaginationMeta.total : adminBuildingsList.length;
       const countEl = document.getElementById('admin-buildings-total-count');
-      if (countEl) countEl.innerText = adminBuildingsList.length;
+      if (countEl) countEl.innerText = totalCount;
 
       const navBadge = document.getElementById('nav-badge-buildings');
-      if (navBadge) navBadge.innerText = adminBuildingsList.length;
+      if (navBadge) navBadge.innerText = totalCount;
 
       const effectiveRole = window.currentUiRole || String(localStorage.getItem('auth_role') || 'admin').toLowerCase();
       const isAdmin = (effectiveRole === 'admin' || effectiveRole === 'super_admin');
@@ -62,11 +80,11 @@
 
       if (isPm) {
         const totalBldsEl = document.getElementById('dashboard-total-blds');
-        if (totalBldsEl) totalBldsEl.innerText = adminBuildingsList.length;
+        if (totalBldsEl) totalBldsEl.innerText = totalCount;
         const totalBldsSub = document.getElementById('dashboard-total-blds-sub');
         if (totalBldsSub) totalBldsSub.innerText = 'tòa phụ trách';
         const card1FootVal = document.getElementById('dashboard-card1-foot-val');
-        if (card1FootVal) card1FootVal.innerText = `${adminBuildingsList.length}/${adminBuildingsList.length} cao ốc`;
+        if (card1FootVal) card1FootVal.innerText = `${totalCount}/${totalCount} cao ốc`;
 
         const totalUnitsCount = adminBuildingsList.reduce((acc, b) => acc + (parseInt(b.units_count) || 0), 0) || (adminBuildingsList.length * 3);
         const totalUnitsSub = document.getElementById('dashboard-total-units-sub');
@@ -82,7 +100,7 @@
           if (pmCard3Foot) pmCard3Foot.innerText = Math.round(totalAreaSum * (1 - 0.846)).toLocaleString('vi-VN') + ' m²';
         }
         const chartSub = document.getElementById('dashboard-pm-chart-sub');
-        if (chartSub) chartSub.innerText = `Thống kê tiến độ phủ đầy mặt bằng tại ${adminBuildingsList.length} cao ốc Ban Quản Lý phụ trách`;
+        if (chartSub) chartSub.innerText = `Thống kê tiến độ phủ đầy mặt bằng tại ${totalCount} cao ốc Ban Quản Lý phụ trách`;
       }
 
       // Ẩn/Hiện nút Thêm tòa nhà mới và Phân công nhân sự (Chỉ Admin mới có quyền)
@@ -94,6 +112,7 @@
       if (!tbody) return;
       if (adminBuildingsList.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:#94a3b8;">Không tìm thấy tòa nhà nào trong hệ thống.</td></tr>';
+        renderAdminBuildingPagination(adminBuildingPaginationMeta);
         return;
       }
 
@@ -147,13 +166,78 @@
                 <i class="fa-solid fa-pen"></i>
               </button>` : ''}
               ${isAdmin ? `
-              <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#ef4444;border-color:#fecaca;margin-left:4px;" onclick="deleteBuilding('${b.id}')" title="Xóa tòa nhà">
+              <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#ef4444;border-color:#fecaca;margin-left:4px;" onclick="deleteBuilding('${b.id}', '${escapeHtml(b.name)}')" title="Xóa tòa nhà">
                 <i class="fa-solid fa-trash"></i>
               </button>` : ''}
             </td>
           </tr>
         `;
       }).join('');
+      renderAdminBuildingPagination(adminBuildingPaginationMeta);
+    }
+
+    // 2.1. Render thanh điều hướng phân trang danh sách tài nguyên tòa nhà & mặt bằng
+    function renderAdminBuildingPagination(meta) {
+      const container = document.getElementById('admin-buildings-pagination');
+      if (!container) return;
+
+      const cur = parseInt(meta.current_page) || 1;
+      const last = parseInt(meta.last_page) || 1;
+      const total = parseInt(meta.total) || 0;
+      const perPage = parseInt(meta.per_page) || adminBuildingPageSize;
+
+      if (total === 0) {
+        container.innerHTML = '<span style="font-size:12.5px;color:#94a3b8;">Không có dữ liệu tòa nhà.</span>';
+        return;
+      }
+
+      const from = Math.min((cur - 1) * perPage + 1, total);
+      const to = Math.min(cur * perPage, total);
+
+      let pageButtonsHtml = '';
+      let startPage = Math.max(1, cur - 2);
+      let endPage = Math.min(last, cur + 2);
+      if (cur <= 2) endPage = Math.min(last, 5);
+      if (cur >= last - 1) startPage = Math.max(1, last - 4);
+
+      if (startPage > 1) {
+        pageButtonsHtml += `<button type="button" class="btn-mo-outline" style="padding:4px 9px;font-size:12px;min-width:32px;background:#fff;border-radius:6px;" onclick="loadAdminBuildingsList(1)">1</button>`;
+        if (startPage > 2) {
+          pageButtonsHtml += `<span style="color:#94a3b8;font-size:12px;padding:0 2px;">...</span>`;
+        }
+      }
+
+      for (let p = startPage; p <= endPage; p++) {
+        if (p === cur) {
+          pageButtonsHtml += `<button type="button" class="btn-mo-primary" style="background:#2563eb;color:#fff;padding:4px 10px;font-size:12px;font-weight:700;min-width:32px;border:none;border-radius:6px;cursor:default;">${p}</button>`;
+        } else {
+          pageButtonsHtml += `<button type="button" class="btn-mo-outline" style="background:#fff;padding:4px 9px;font-size:12px;min-width:32px;border-radius:6px;" onclick="loadAdminBuildingsList(${p})">${p}</button>`;
+        }
+      }
+
+      if (endPage < last) {
+        if (endPage < last - 1) {
+          pageButtonsHtml += `<span style="color:#94a3b8;font-size:12px;padding:0 2px;">...</span>`;
+        }
+        pageButtonsHtml += `<button type="button" class="btn-mo-outline" style="padding:4px 9px;font-size:12px;min-width:32px;background:#fff;border-radius:6px;" onclick="loadAdminBuildingsList(${last})">${last}</button>`;
+      }
+
+      container.innerHTML = `
+        <div style="font-size:13px;color:#64748b;">
+          Trang <strong>${cur}</strong> / <strong>${last}</strong> &nbsp;•&nbsp; Hiển thị <strong>${from} - ${to}</strong> trong tổng số <strong>${total}</strong> tòa nhà
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button type="button" class="btn-mo-outline" style="padding:4px 10px;font-size:12px;background:#fff;border-radius:6px;display:inline-flex;align-items:center;gap:4px;" ${cur <= 1 ? 'disabled style="opacity:0.5;cursor:not-allowed;padding:4px 10px;font-size:12px;border-radius:6px;background:#f8fafc;"' : `onclick="loadAdminBuildingsList(${cur - 1})"`}>
+            <i class="fa-solid fa-chevron-left"></i> Trước
+          </button>
+          <div style="display:flex;align-items:center;gap:4px;">
+            ${pageButtonsHtml}
+          </div>
+          <button type="button" class="btn-mo-outline" style="padding:4px 10px;font-size:12px;background:#fff;border-radius:6px;display:inline-flex;align-items:center;gap:4px;" ${cur >= last ? 'disabled style="opacity:0.5;cursor:not-allowed;padding:4px 10px;font-size:12px;border-radius:6px;background:#f8fafc;"' : `onclick="loadAdminBuildingsList(${cur + 1})"`}>
+            Sau <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+      `;
     }
 
     // 3. Mở Modal tạo mới Tòa nhà: POST /api/v1/admin/buildings
@@ -363,15 +447,24 @@
       switchBuildingModalTab('create', 1);
       modal.style.display = 'flex';
 
-      // Nạp danh sách Quận/Huyện cho Tỉnh/TP mặc định
-      const provSelect = document.getElementById('build-province');
-      const defaultProvinceCode = provSelect?.value || '79';
-      await loadDistrictsForProvince(defaultProvinceCode, 'build-district');
+      // Xóa toàn bộ trạng thái lỗi trước đó nếu có
+      BUILDING_VALIDATION_SCHEMA.forEach(rule => {
+        const { inputId, slotId } = getBuildingFieldIds('create', rule.field);
+        moClearFieldError(inputId, slotId);
+      });
+      moClearFieldError('create-build-images-input', 'err-build-images');
 
-      // Tự động tải mã tòa nhà kế tiếp từ CSDL và điền sẵn lên form
+      // Tỉnh / Thành phố: ban đầu chưa chọn tỉnh nào
+      const provSelect = document.getElementById('build-province');
+      if (provSelect) provSelect.value = '';
+      const districtSelect = document.getElementById('build-district');
+      if (districtSelect) districtSelect.innerHTML = '<option value="">-- Vui lòng chọn Tỉnh / TP trước --</option>';
+
+      // Tự động tải mã tòa nhà kế tiếp từ CSDL và điền sẵn vào ô Mã Tòa Nhà
       const codeInput = document.getElementById('build-code');
       if (codeInput) {
-        codeInput.value = 'Đang tải mã...';
+        codeInput.value = '';
+        codeInput.placeholder = 'Đang tải mã...';
         try {
           const res = await fetch('/api/v1/admin/buildings/next-code', {
             headers: getAuthHeaders()
@@ -379,12 +472,12 @@
           const json = await res.json();
           if (res.ok && json.data && json.data.next_code) {
             codeInput.value = json.data.next_code;
+            codeInput.placeholder = json.data.next_code;
           } else {
-            codeInput.value = '';
+            codeInput.placeholder = 'VD: BLD-001 (tự sinh)';
           }
         } catch (e) {
-          console.error('Fetch next building code error:', e);
-          codeInput.value = '';
+          codeInput.placeholder = 'VD: BLD-001 (tự sinh)';
         }
       }
     }
@@ -485,7 +578,12 @@
         field: 'floors',
         tab: 2,
         label: 'Số tầng nổi',
-        validate: (val) => moValidateMinMax(val, 1, 200, 'Số tầng nổi')
+        validate: (val) => {
+          if (val === '' || val === null || val === undefined) {
+            return { valid: false, message: 'Vui lòng nhập Số tầng nổi (tối thiểu 1).' };
+          }
+          return moValidateMinMax(val, 1, 200, 'Số tầng nổi');
+        }
       },
       {
         field: 'basements',
@@ -501,8 +599,9 @@
         tab: 2,
         label: 'Tổng diện tích sàn',
         validate: (val) => {
-          const req = moValidateRequired(val, 'Tổng diện tích sàn khả dụng');
-          if (!req.valid) return req;
+          if (val === '' || val === null || val === undefined) {
+            return { valid: false, message: 'Vui lòng nhập Tổng diện tích sàn khả dụng (m²).' };
+          }
           return moValidateMinMax(val, 1, null, 'Tổng diện tích sàn khả dụng');
         }
       },
@@ -582,6 +681,7 @@
     const SERVER_TO_CLIENT_FIELD_MAP_CREATE = {
       name: { inputId: 'build-name', slotId: 'err-build-name', tab: 1 },
       building_code: { inputId: 'build-code', slotId: 'err-build-code', tab: 1 },
+      description: { inputId: 'build-description', slotId: 'err-build-description', tab: 1 },
       province_code: { inputId: 'build-province', slotId: 'err-build-province', tab: 1 },
       province: { inputId: 'build-province', slotId: 'err-build-province', tab: 1 },
       district: { inputId: 'build-district', slotId: 'err-build-district', tab: 1 },
@@ -606,6 +706,7 @@
     const SERVER_TO_CLIENT_FIELD_MAP_EDIT = {
       name: { inputId: 'edit-build-name', slotId: 'err-edit-build-name', tab: 1 },
       building_code: { inputId: 'edit-build-code', slotId: 'err-edit-build-code', tab: 1 },
+      description: { inputId: 'edit-build-description', slotId: 'err-edit-build-description', tab: 1 },
       province_code: { inputId: 'edit-build-province', slotId: 'err-edit-build-province', tab: 1 },
       province: { inputId: 'edit-build-province', slotId: 'err-edit-build-province', tab: 1 },
       district: { inputId: 'edit-build-district', slotId: 'err-edit-build-district', tab: 1 },
@@ -734,9 +835,9 @@
 
       const provSelect = document.getElementById('build-province');
       const selectedProvOpt = provSelect?.options[provSelect.selectedIndex];
-      const provinceCode = parseInt(provSelect?.value) || 79;
-      const provinceName = selectedProvOpt?.getAttribute('data-name') || selectedProvOpt?.textContent || 'TP Hồ Chí Minh';
-      const district = document.getElementById('build-district').value.trim() || 'Quận 1';
+      const provinceCode = parseInt(provSelect?.value);
+      const provinceName = selectedProvOpt?.getAttribute('data-name') || selectedProvOpt?.textContent;
+      const district = document.getElementById('build-district').value.trim();
       const ward = document.getElementById('build-ward').value.trim();
 
       const payload = {
@@ -747,25 +848,26 @@
         district: district,
         ward: ward || undefined,
         address: document.getElementById('build-address').value.trim(),
-        grade: document.getElementById('build-grade').value || 'A',
+        grade: document.getElementById('build-grade').value,
         direction: document.getElementById('build-direction').value || null,
-        total_floors: parseInt(document.getElementById('build-floors').value) || 1,
+        description: document.getElementById('build-description') ? document.getElementById('build-description').value.trim() || null : null,
+        total_floors: parseInt(document.getElementById('build-floors').value),
         total_basements: document.getElementById('build-basements').value !== '' ? parseInt(document.getElementById('build-basements').value) : 0,
-        total_leasable_area_sqm: parseFloat(document.getElementById('build-net-area').value) || null,
-        total_net_area: parseFloat(document.getElementById('build-net-area').value) || null,
-        ceiling_height_meters: parseFloat(document.getElementById('build-ceiling-height').value) || 1,
-        elevators_count: document.getElementById('build-elevators').value !== '' ? parseInt(document.getElementById('build-elevators').value) : 0,
+        total_leasable_area_sqm: parseFloat(document.getElementById('build-net-area').value),
+        total_net_area: parseFloat(document.getElementById('build-net-area').value),
+        ceiling_height_meters: document.getElementById('build-ceiling-height').value !== '' ? parseFloat(document.getElementById('build-ceiling-height').value) : null,
+        elevators_count: document.getElementById('build-elevators').value !== '' ? parseInt(document.getElementById('build-elevators').value) : null,
         air_conditioner_spec: document.getElementById('build-air-conditioner').value.trim() || null,
         backup_generator_spec: document.getElementById('build-backup-generator').value.trim() || null,
         working_hours_desc: document.getElementById('build-working-hours').value.trim() || null,
-        overtime_fee_per_hour: parseFloat(document.getElementById('build-overtime-fee').value) || 0,
-        deposit_term_months: parseInt(document.getElementById('build-deposit-term').value) || 1,
-        payment_term_months: parseInt(document.getElementById('build-payment-term').value) || 1,
-        default_service_fee_per_sqm: parseFloat(document.getElementById('build-service-fee').value) || 0,
-        electricity_unit_price: document.getElementById('build-electric-fee').value !== '' ? parseFloat(document.getElementById('build-electric-fee').value) : 0,
-        water_unit_price: document.getElementById('build-water-fee').value !== '' ? parseFloat(document.getElementById('build-water-fee').value) : 0,
-        motorbike_parking_fee: parseFloat(document.getElementById('build-motor-fee').value) || 0,
-        car_parking_fee: parseFloat(document.getElementById('build-car-fee').value) || 0,
+        overtime_fee_per_hour: document.getElementById('build-overtime-fee').value !== '' ? parseFloat(document.getElementById('build-overtime-fee').value) : 0,
+        deposit_term_months: document.getElementById('build-deposit-term').value !== '' ? parseInt(document.getElementById('build-deposit-term').value) : null,
+        payment_term_months: document.getElementById('build-payment-term').value !== '' ? parseInt(document.getElementById('build-payment-term').value) : null,
+        default_service_fee_per_sqm: parseFloat(document.getElementById('build-service-fee').value),
+        electricity_unit_price: parseFloat(document.getElementById('build-electric-fee').value),
+        water_unit_price: parseFloat(document.getElementById('build-water-fee').value),
+        motorbike_parking_fee: document.getElementById('build-motor-fee').value !== '' ? parseFloat(document.getElementById('build-motor-fee').value) : 0,
+        car_parking_fee: document.getElementById('build-car-fee').value !== '' ? parseFloat(document.getElementById('build-car-fee').value) : 0,
         is_published: document.getElementById('build-published').checked
       };
 
@@ -930,7 +1032,6 @@
         moToast('Tòa nhà phải có ít nhất 1 hình ảnh đại diện, không thể xóa hình ảnh cuối cùng.', 'warning', 'Không thể xóa');
         return;
       }
-      if (!confirm('Xác nhận xóa hình ảnh này khỏi thư viện tòa nhà?')) return;
       try {
         const res = await fetch(`/api/v1/admin/buildings/${currentEditBuildingId}/images/${imageId}`, {
           method: 'DELETE',
@@ -956,6 +1057,13 @@
       switchBuildingModalTab('edit', 1);
       modal.style.display = 'flex';
 
+      // Xóa sạch trạng thái lỗi trước đó nếu có
+      BUILDING_VALIDATION_SCHEMA.forEach(rule => {
+        const { inputId, slotId } = getBuildingFieldIds('edit', rule.field);
+        moClearFieldError(inputId, slotId);
+      });
+      moClearFieldError('edit-build-images-input', 'err-edit-build-images');
+
       try {
         const res = await fetch(`/api/v1/admin/buildings/${buildingId}`, {
           method: 'GET',
@@ -975,6 +1083,9 @@
         document.getElementById('edit-build-direction').value = b.direction || '';
         document.getElementById('edit-build-ward').value = b.ward || '';
         document.getElementById('edit-build-address').value = b.address || '';
+        if (document.getElementById('edit-build-description')) {
+          document.getElementById('edit-build-description').value = b.description || '';
+        }
         document.getElementById('edit-build-floors').value = b.total_floors || 1;
         document.getElementById('edit-build-basements').value = (b.total_basements !== undefined && b.total_basements !== null) ? b.total_basements : (b.basements || 0);
         document.getElementById('edit-build-net-area').value = b.total_leasable_area_sqm || b.total_net_area || '';
@@ -1042,9 +1153,9 @@
 
       const editProvSelect = document.getElementById('edit-build-province');
       const editProvOpt = editProvSelect?.options[editProvSelect.selectedIndex];
-      const editProvinceCode = parseInt(editProvSelect?.value) || 79;
-      const editProvinceName = editProvOpt?.getAttribute('data-name') || editProvOpt?.textContent || 'TP Hồ Chí Minh';
-      const editDistrict = document.getElementById('edit-build-district').value.trim() || 'Quận 1';
+      const editProvinceCode = parseInt(editProvSelect?.value);
+      const editProvinceName = editProvOpt?.getAttribute('data-name') || editProvOpt?.textContent;
+      const editDistrict = document.getElementById('edit-build-district').value.trim();
       const editWard = document.getElementById('edit-build-ward').value.trim();
 
       const payload = {
@@ -1055,25 +1166,26 @@
         district: editDistrict,
         ward: editWard || undefined,
         address: document.getElementById('edit-build-address').value.trim(),
-        grade: document.getElementById('edit-build-grade').value || 'A',
+        grade: document.getElementById('edit-build-grade').value,
         direction: document.getElementById('edit-build-direction').value || null,
-        total_floors: parseInt(document.getElementById('edit-build-floors').value) || 1,
+        description: document.getElementById('edit-build-description') ? document.getElementById('edit-build-description').value.trim() || null : null,
+        total_floors: parseInt(document.getElementById('edit-build-floors').value),
         total_basements: document.getElementById('edit-build-basements').value !== '' ? parseInt(document.getElementById('edit-build-basements').value) : 0,
-        total_leasable_area_sqm: parseFloat(document.getElementById('edit-build-net-area').value) || null,
-        total_net_area: parseFloat(document.getElementById('edit-build-net-area').value) || null,
-        ceiling_height_meters: parseFloat(document.getElementById('edit-build-ceiling-height').value) || 1,
-        elevators_count: document.getElementById('edit-build-elevators').value !== '' ? parseInt(document.getElementById('edit-build-elevators').value) : 0,
+        total_leasable_area_sqm: parseFloat(document.getElementById('edit-build-net-area').value),
+        total_net_area: parseFloat(document.getElementById('edit-build-net-area').value),
+        ceiling_height_meters: document.getElementById('edit-build-ceiling-height').value !== '' ? parseFloat(document.getElementById('edit-build-ceiling-height').value) : null,
+        elevators_count: document.getElementById('edit-build-elevators').value !== '' ? parseInt(document.getElementById('edit-build-elevators').value) : null,
         air_conditioner_spec: document.getElementById('edit-build-air-conditioner').value.trim() || null,
         backup_generator_spec: document.getElementById('edit-build-backup-generator').value.trim() || null,
         working_hours_desc: document.getElementById('edit-build-working-hours').value.trim() || null,
-        overtime_fee_per_hour: parseFloat(document.getElementById('edit-build-overtime-fee').value) || 0,
-        deposit_term_months: parseInt(document.getElementById('edit-build-deposit-term').value) || 1,
-        payment_term_months: parseInt(document.getElementById('edit-build-payment-term').value) || 1,
-        default_service_fee_per_sqm: parseFloat(document.getElementById('edit-build-service-fee').value) || 0,
-        electricity_unit_price: document.getElementById('edit-build-electric-fee').value !== '' ? parseFloat(document.getElementById('edit-build-electric-fee').value) : 0,
-        water_unit_price: document.getElementById('edit-build-water-fee').value !== '' ? parseFloat(document.getElementById('edit-build-water-fee').value) : 0,
-        motorbike_parking_fee: parseFloat(document.getElementById('edit-build-motor-fee').value) || 0,
-        car_parking_fee: parseFloat(document.getElementById('edit-build-car-fee').value) || 0,
+        overtime_fee_per_hour: document.getElementById('edit-build-overtime-fee').value !== '' ? parseFloat(document.getElementById('edit-build-overtime-fee').value) : 0,
+        deposit_term_months: document.getElementById('edit-build-deposit-term').value !== '' ? parseInt(document.getElementById('edit-build-deposit-term').value) : null,
+        payment_term_months: document.getElementById('edit-build-payment-term').value !== '' ? parseInt(document.getElementById('edit-build-payment-term').value) : null,
+        default_service_fee_per_sqm: parseFloat(document.getElementById('edit-build-service-fee').value),
+        electricity_unit_price: parseFloat(document.getElementById('edit-build-electric-fee').value),
+        water_unit_price: parseFloat(document.getElementById('edit-build-water-fee').value),
+        motorbike_parking_fee: document.getElementById('edit-build-motor-fee').value !== '' ? parseFloat(document.getElementById('edit-build-motor-fee').value) : 0,
+        car_parking_fee: document.getElementById('edit-build-car-fee').value !== '' ? parseFloat(document.getElementById('edit-build-car-fee').value) : 0,
         is_published: document.getElementById('edit-build-published').checked
       };
 
@@ -1110,25 +1222,33 @@
     }
 
     // 5. Xóa mềm tòa nhà: DELETE /api/v1/admin/buildings/{id}
-    async function deleteBuilding(buildingId) {
-      if (!confirm('Bạn có chắc chắn muốn xóa tòa nhà này? Bắt buộc toàn bộ các sàn không còn hợp đồng hiệu lực.')) return;
+    async function deleteBuilding(buildingId, buildingName) {
+      const bld = (adminBuildingsList || []).find(b => String(b.id) === String(buildingId))
+        || ((typeof BUILDINGS_DATA !== 'undefined' && Array.isArray(BUILDINGS_DATA)) ? BUILDINGS_DATA.find(b => String(b.id) === String(buildingId)) : null);
+      const bldName = (bld && bld.name) ? bld.name : (buildingName || 'Tòa nhà');
 
-      try {
-        const res = await fetch(`/api/v1/admin/buildings/${buildingId}`, {
-          method: 'DELETE',
-          headers: getAuthHeaders()
-        });
-
-        const json = await res.json();
-        if (res.ok) {
-          moToast('Đã xóa mềm tòa nhà thành công.', 'success', 'Thành công');
+      moConfirmAction({
+        title: 'Xác Nhận Xóa Tòa Nhà',
+        targetName: bldName,
+        message: '',
+        note: 'Bắt buộc toàn bộ các sàn mặt bằng không còn hợp đồng hiệu lực. Hành động này sẽ chuyển trạng thái tòa nhà sang đã xóa mềm.',
+        confirmText: 'Xóa',
+        type: 'danger',
+        action: async () => {
+          const res = await fetch(`/api/v1/admin/buildings/${buildingId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+          });
+          const json = await res.json();
+          if (!res.ok) {
+            throw new Error(json.message || 'Không thể xóa tòa nhà.');
+          }
+          return json.message || `Đã xóa tòa nhà [${bldName}] thành công.`;
+        },
+        onSuccess: () => {
           loadAdminBuildingsList();
-        } else {
-          moToast('Không thể xóa: ' + (json.message || ''), 'error', 'Xóa thất bại');
         }
-      } catch (e) {
-        moToast('Lỗi kết nối khi xóa tòa nhà.', 'error', 'Lỗi kết nối');
-      }
+      });
     }
 
     // 6. Quản lý Album ảnh Tòa nhà (Supabase Storage): POST/DELETE /images & PATCH /set-primary
@@ -1219,7 +1339,6 @@
     }
 
     async function deleteBuildingImage(buildingId, imageId) {
-      if (!confirm('Xóa ảnh này khỏi thư viện?')) return;
       try {
         const res = await fetch(`/api/v1/admin/buildings/${buildingId}/images/${imageId}`, {
           method: 'DELETE',
@@ -1229,6 +1348,7 @@
         if (res.ok) {
           moToast('Xóa ảnh tòa nhà thành công.', 'success', 'Thành công');
           loadBuildingMedia(buildingId);
+          loadAdminBuildingsList();
         } else {
           moToast('Lỗi xóa ảnh: ' + (json.message || ''), 'error', 'Xóa ảnh thất bại');
         }
@@ -1257,34 +1377,50 @@
     // 7. Quản lý Mặt Bằng / Diện Tích Cắt Thuê (Units): GET/POST/PUT/DELETE /admin/units
     async function openManageBuildingUnitsModal(buildingId, buildingName) {
       currentActiveUnitBuildingId = buildingId;
+      currentUnitPage = 1;
       const modal = document.getElementById('modal-manage-units');
       if (!modal) return;
       const unitsBldName = document.getElementById('units-modal-building-name');
       if (unitsBldName) unitsBldName.innerText = buildingName;
       modal.style.display = 'flex';
-      loadBuildingUnits(buildingId);
+      loadBuildingUnits(buildingId, 1);
     }
 
     function closeManageBuildingUnitsModal() {
       const modal = document.getElementById('modal-manage-units');
       if (modal) modal.style.display = 'none';
       currentActiveUnitBuildingId = null;
+      currentUnitPage = 1;
+      const paginationEl = document.getElementById('building-units-pagination');
+      if (paginationEl) paginationEl.innerHTML = '';
     }
 
-    async function loadBuildingUnits(buildingId) {
+    async function loadBuildingUnits(buildingId, page = null) {
+      if (page !== null && page !== undefined) {
+        currentUnitPage = page;
+      }
       const tbody = document.getElementById('building-units-tbody');
+      const paginationEl = document.getElementById('building-units-pagination');
       if (!tbody) return;
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang nạp danh sách mặt bằng...</td></tr>';
 
       try {
-        const res = await fetch(`/api/v1/admin/units?building_id=${buildingId}&per_page=100`, {
+        const res = await fetch(`/api/v1/admin/units?building_id=${buildingId}&page=${currentUnitPage}&per_page=${unitPageSize}`, {
           method: 'GET',
           headers: getAuthHeaders()
         });
         const json = await res.json();
-        const units = json.data?.data || json.data || [];
+        const units = Array.isArray(json.data) ? json.data : (json.data?.data || []);
+        unitPaginationMeta = json.meta || json.data?.meta || {
+          current_page: currentUnitPage,
+          last_page: 1,
+          per_page: unitPageSize,
+          total: units.length
+        };
+
         if (units.length === 0) {
           tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#94a3b8;">Tòa nhà chưa có mặt bằng sàn nào được tạo.</td></tr>';
+          if (paginationEl) paginationEl.innerHTML = '';
           return;
         }
 
@@ -1317,16 +1453,64 @@
                 <button class="btn-mo-outline" style="padding:2px 8px;font-size:11px;color:#0284c7;border-color:#bae6fd;margin-left:4px;" onclick="openUnitMediaModal('${u.id}', '${escapeHtml(u.unit_code)}')" title="Album ảnh & Layout sàn">
                   <i class="fa-solid fa-camera"></i> Ảnh (${u.images ? u.images.length : (u.images_count || '0')})
                 </button>
-                <button class="btn-mo-outline" style="padding:2px 6px;font-size:11px;color:#ef4444;margin-left:4px;" onclick="deleteUnit('${u.id}')" title="Xóa sàn">
+                <button class="btn-mo-outline" style="padding:2px 6px;font-size:11px;color:#ef4444;margin-left:4px;" onclick="deleteUnit('${u.id}', '${escapeHtml(u.unit_code || u.name || '')}')" title="Xóa sàn">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               </td>
             </tr>
           `;
         }).join('');
+
+        renderBuildingUnitsPagination(unitPaginationMeta);
       } catch (e) {
         tbody.innerHTML = '<tr><td colspan="6" style="color:#ef4444;text-align:center;">Lỗi kết nối tải mặt bằng.</td></tr>';
+        if (paginationEl) paginationEl.innerHTML = '';
       }
+    }
+
+    // 7.1. Render phân trang danh sách các sàn trong modal
+    function renderBuildingUnitsPagination(meta) {
+      const container = document.getElementById('building-units-pagination');
+      if (!container) return;
+
+      const cur = parseInt(meta.current_page) || 1;
+      const last = parseInt(meta.last_page) || 1;
+      const total = parseInt(meta.total) || 0;
+      const perPage = parseInt(meta.per_page) || unitPageSize;
+
+      if (total === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      const from = Math.min((cur - 1) * perPage + 1, total);
+      const to = Math.min(cur * perPage, total);
+
+      let pageButtonsHtml = '';
+      for (let p = 1; p <= last; p++) {
+        if (p === cur) {
+          pageButtonsHtml += `<button type="button" class="btn-mo-primary" style="background:#2563eb;color:#fff;padding:2px 8px;font-size:11px;font-weight:700;border:none;border-radius:4px;cursor:default;">${p}</button>`;
+        } else {
+          pageButtonsHtml += `<button type="button" class="btn-mo-outline" style="background:#fff;padding:2px 7px;font-size:11px;border-radius:4px;" onclick="loadBuildingUnits('${currentActiveUnitBuildingId}', ${p})">${p}</button>`;
+        }
+      }
+
+      container.innerHTML = `
+        <span style="font-size:12px;color:#64748b;">
+          Trang <strong>${cur}</strong> / <strong>${last}</strong> &nbsp;•&nbsp; Hiển thị <strong>${from} - ${to}</strong> / ${total} sàn
+        </span>
+        <div style="display:flex;align-items:center;gap:5px;">
+          <button type="button" class="btn-mo-outline" style="padding:2px 8px;font-size:11px;background:#fff;border-radius:4px;display:inline-flex;align-items:center;gap:3px;" ${cur <= 1 ? 'disabled style="opacity:0.5;cursor:not-allowed;padding:2px 8px;font-size:11px;border-radius:4px;background:#f8fafc;"' : `onclick="loadBuildingUnits('${currentActiveUnitBuildingId}', ${cur - 1})"`}>
+            <i class="fa-solid fa-chevron-left"></i> Trước
+          </button>
+          <div style="display:flex;align-items:center;gap:3px;">
+            ${pageButtonsHtml}
+          </div>
+          <button type="button" class="btn-mo-outline" style="padding:2px 8px;font-size:11px;background:#fff;border-radius:4px;display:inline-flex;align-items:center;gap:3px;" ${cur >= last ? 'disabled style="opacity:0.5;cursor:not-allowed;padding:2px 8px;font-size:11px;border-radius:4px;background:#f8fafc;"' : `onclick="loadBuildingUnits('${currentActiveUnitBuildingId}', ${cur + 1})"`}>
+            Sau <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+      `;
     }
 
     async function submitCreateUnit(e) {
@@ -1336,11 +1520,13 @@
       const payload = {
         building_id: currentActiveUnitBuildingId,
         unit_code: document.getElementById('new-unit-code').value.trim(),
-        floor_number: document.getElementById('new-unit-floor').value.trim(),
+        floor_number: parseInt(document.getElementById('new-unit-floor').value.trim()) || 1,
+        area_sqm: parseFloat(document.getElementById('new-unit-area').value) || 0,
+        base_rental_price: parseFloat(document.getElementById('new-unit-price').value) || 0,
         area: parseFloat(document.getElementById('new-unit-area').value) || 0,
         rent_price_per_sqm: parseFloat(document.getElementById('new-unit-price').value) || 0,
         service_fee_per_sqm: parseFloat(document.getElementById('new-unit-service-fee').value) || 0,
-        handover_condition: document.getElementById('new-unit-handover').value.trim() || null
+        handover_condition: document.getElementById('new-unit-handover')?.value?.trim() || null
       };
 
       if (!payload.unit_code || !payload.area || !payload.rent_price_per_sqm) {
@@ -1359,8 +1545,8 @@
         if (res.ok) {
           moToast('Tạo mặt bằng sàn mới thành công!', 'success', 'Thành công');
           document.getElementById('form-create-unit')?.reset();
-          loadBuildingUnits(currentActiveUnitBuildingId);
-          loadAdminBuildingsList();
+          loadBuildingUnits(currentActiveUnitBuildingId, 1);
+          loadAdminBuildingsList(currentAdminBuildingPage);
         } else {
           moToast('Lỗi tạo mặt bằng: ' + (json.message || ''), 'error', 'Tạo mặt bằng thất bại');
         }
@@ -1379,7 +1565,7 @@
         const json = await res.json();
         if (res.ok) {
           moToast('Cập nhật trạng thái mặt bằng thành công!', 'success', 'Thành công');
-          if (currentActiveUnitBuildingId) loadBuildingUnits(currentActiveUnitBuildingId);
+          if (currentActiveUnitBuildingId) loadBuildingUnits(currentActiveUnitBuildingId, currentUnitPage);
         } else {
           moToast('Lỗi cập nhật trạng thái: ' + (json.message || ''), 'error', 'Cập nhật thất bại');
         }
@@ -1388,24 +1574,35 @@
       }
     }
 
-    async function deleteUnit(unitId) {
-      if (!confirm('Xóa mặt bằng này? Chỉ cho phép xóa khi sàn chưa có hợp đồng thuê hiệu lực.')) return;
-      try {
-        const res = await fetch(`/api/v1/admin/units/${unitId}`, {
-          method: 'DELETE',
-          headers: getAuthHeaders()
-        });
-        const json = await res.json();
-        if (res.ok) {
-          moToast('Xóa mặt bằng thành công.', 'success', 'Thành công');
-          if (currentActiveUnitBuildingId) loadBuildingUnits(currentActiveUnitBuildingId);
-          loadAdminBuildingsList();
-        } else {
-          moToast('Không thể xóa mặt bằng: ' + (json.message || ''), 'error', 'Xóa thất bại');
+    async function deleteUnit(unitId, unitCode = '') {
+      moConfirmAction({
+        title: 'Xác Nhận Xóa Mặt Bằng',
+        targetName: unitCode ? `Mặt bằng ${unitCode}` : '',
+        message: '',
+        note: 'Chỉ cho phép xóa khi sàn chưa có hợp đồng thuê hoặc hợp đồng đã thanh lý hoàn tất.',
+        confirmText: 'Xóa',
+        type: 'danger',
+        action: async () => {
+          const res = await fetch(`/api/v1/admin/units/${unitId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+          });
+          const json = await res.json();
+          if (!res.ok) {
+            throw new Error(json.message || 'Không thể xóa mặt bằng.');
+          }
+          return json.message || 'Xóa mặt bằng thành công.';
+        },
+        onSuccess: () => {
+          if (currentActiveUnitBuildingId) {
+            if (unitPaginationMeta.total && (unitPaginationMeta.total - 1) <= (currentUnitPage - 1) * unitPageSize && currentUnitPage > 1) {
+              currentUnitPage--;
+            }
+            loadBuildingUnits(currentActiveUnitBuildingId, currentUnitPage);
+          }
+          loadAdminBuildingsList(currentAdminBuildingPage);
         }
-      } catch (e) {
-        moToast('Lỗi kết nối xóa mặt bằng.', 'error', 'Lỗi kết nối');
-      }
+      });
     }
 
     // 8. Quản lý Album ảnh Mặt Bằng (Unit Images): GET /admin/units/{id}, POST /images, DELETE /images/{imgId}
@@ -1497,7 +1694,6 @@
     }
 
     async function deleteUnitImageAction(unitId, imageId) {
-      if (!confirm('Xóa ảnh sơ đồ mặt bằng này?')) return;
       try {
         const res = await fetch(`/api/v1/admin/units/${unitId}/images/${imageId}`, {
           method: 'DELETE',
@@ -1523,14 +1719,16 @@
 
     function handleAdminBuildingSearch(val) {
       currentAdminBuildingSearch = val.trim();
-      loadAdminBuildingsList();
+      currentAdminBuildingPage = 1;
+      loadAdminBuildingsList(1);
     }
 
     function handleAdminBuildingGrade(grade) {
       currentAdminBuildingGrade = grade;
       const sel = document.getElementById('admin-building-grade-select');
       if (sel && sel.value !== grade) sel.value = grade;
-      loadAdminBuildingsList();
+      currentAdminBuildingPage = 1;
+      loadAdminBuildingsList(1);
     }
 
     function resetBuildingFilters() {
@@ -1542,10 +1740,13 @@
       if (sel) sel.value = 'ALL';
       currentAdminBuildingSearch = '';
       currentAdminBuildingGrade = 'ALL';
-      loadAdminBuildingsList();
+      currentAdminBuildingPage = 1;
+      loadAdminBuildingsList(1);
     }
 
     window.doBuildingSearch = doBuildingSearch;
     window.handleAdminBuildingGrade = handleAdminBuildingGrade;
     window.resetBuildingFilters = resetBuildingFilters;
+    window.loadAdminBuildingsList = loadAdminBuildingsList;
+    window.loadBuildingUnits = loadBuildingUnits;
 </script>

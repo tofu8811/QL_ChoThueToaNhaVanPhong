@@ -114,6 +114,8 @@
       border-radius: var(--radius-sm);
       display: inline-flex;
       align-items: center;
+      justify-content: center;
+      text-align: center;
       gap: 8px;
     }
     .btn-mo-primary:hover {
@@ -130,6 +132,8 @@
       border-radius: var(--radius-sm);
       display: inline-flex;
       align-items: center;
+      justify-content: center;
+      text-align: center;
       gap: 8px;
     }
     .btn-mo-outline:hover {

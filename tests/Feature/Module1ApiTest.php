@@ -316,4 +316,66 @@ class Module1ApiTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonPath('status', 'error');
     }
+
+    /**
+     * Test xóa tòa nhà bị từ chối với mã 422 khi đang có hợp đồng thuê còn hiệu lực.
+     */
+    public function test_cannot_delete_building_with_active_contract(): void
+    {
+        $building = Building::create([
+            'name' => 'Tòa Nhà Ràng Buộc HĐ',
+            'slug' => 'toa-nha-rang-buoc-hd',
+            'building_code' => 'BLD-ACT-001',
+            'address' => '123 Điện Biên Phủ',
+            'ward' => 'Bến Nghé',
+            'district' => 'Quận 1',
+            'province' => 'TP Hồ Chí Minh',
+            'province_code' => $this->province->code,
+            'total_floors' => 10,
+            'total_leasable_area_sqm' => 5000,
+            'electricity_unit_price' => 4500,
+            'water_unit_price' => 25000,
+            'default_service_fee_per_sqm' => 150000,
+            'min_rent_price_per_sqm' => 850000,
+            'max_rent_price_per_sqm' => 1200000,
+            'grade' => 'A',
+            'is_published' => true,
+        ]);
+
+        $tenant = \App\Models\Tenant::create([
+            'tenant_code' => 'TNT-M1-ACT',
+            'company_name' => 'Công Ty Khách Thuê Active',
+            'tax_code' => '0319999999',
+            'business_license_private_path' => 'licenses/test.pdf',
+            'headquarter_address' => 'Tầng 1, Tòa nhà Test',
+            'representative_name' => 'Nguyễn Văn Giám Đốc',
+            'representative_position' => 'Giám đốc',
+            'login_email' => 'ceo@alphafreeze.vn',
+            'billing_email' => 'ketoan@alphafreeze.vn',
+            'contact_phone' => '0901234567',
+            'password' => 'secret123',
+            'status' => 'ACTIVE',
+        ]);
+
+        \App\Models\Contract::create([
+            'contract_number' => 'HD-ACTIVE-001',
+            'building_id' => $building->id,
+            'tenant_id' => $tenant->id,
+            'created_by_sales_id' => $this->sale->id,
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addYear()->toDateString(),
+            'total_leased_area_sqm' => 100,
+            'deposit_amount' => 50000000,
+            'status' => \App\Enums\ContractStatus::ACTIVE,
+        ]);
+
+        $response = $this->withHeader('Authorization', "Bearer {$this->adminToken}")
+            ->deleteJson("/api/v1/admin/buildings/{$building->id}");
+
+        $response->assertStatus(422)
+            ->assertJsonPath('status', 'error')
+            ->assertJsonFragment([
+                'message' => "Không thể xóa tòa nhà [{$building->name}] vì vẫn còn hợp đồng thuê đang có hiệu lực. Vui lòng thanh lý toàn bộ hợp đồng trước khi thực hiện xóa.",
+            ]);
+    }
 }

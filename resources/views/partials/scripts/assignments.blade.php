@@ -611,23 +611,54 @@
     // Gỡ Sales khỏi Tòa nhà
     // =========================================================================
     async function removeSalesAssignment(saleId, saleName) {
-      if (!confirm(`Bạn có chắc muốn gỡ nhân viên Sales [${saleName}] khỏi danh sách phụ trách tòa nhà này?`)) return;
+      const curRole = String(localStorage.getItem('auth_role') || '').toLowerCase();
+      if (curRole !== 'admin' && curRole !== 'super_admin') {
+        if (typeof moToast === 'function') moToast('Chức năng gỡ phân công Sales thuộc thẩm quyền của Admin.', 'warning');
+        else alert('Chức năng gỡ phân công Sales thuộc thẩm quyền của Admin.');
+        return;
+      }
 
-      const token = getSanctumToken();
-      try {
+      const executeDelete = async () => {
+        const token = getSanctumToken();
         const res = await fetch(`/api/v1/admin/buildings/${currentAssignmentBuildingId}/assignments/sales/${saleId}`, {
           method: 'DELETE',
           headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token }
         });
         const json = await res.json();
-        if (res.ok) {
-          alert(json.message || 'Đã gỡ Sales khỏi tòa nhà thành công.');
-          loadBuildingAssignments(currentAssignmentBuildingId);
-        } else {
-          alert('Lỗi: ' + (json.message || 'Không thể gỡ Sales.'));
+        if (!res.ok) {
+          throw new Error(json.message || 'Không thể gỡ Sales khỏi tòa nhà.');
         }
-      } catch (err) {
-        console.error('Remove sales error:', err);
+        return json.message || `Đã gỡ nhân viên Sales [${saleName}] khỏi tòa nhà thành công.`;
+      };
+
+      if (typeof moConfirmAction === 'function') {
+        moConfirmAction({
+          title: 'Xác Nhận Gỡ Nhân Viên Sales',
+          message: 'Bạn có chắc chắn muốn gỡ nhân sự này khỏi danh sách phụ trách tòa nhà?',
+          targetName: `Chuyên viên: ${saleName}`,
+          note: 'Nhân viên sau khi gỡ sẽ không còn quyền phụ trách và nhận lead tự động của tòa nhà này.',
+          confirmText: 'Gỡ Khỏi Tòa Nhà',
+          cancelText: 'Hủy bỏ',
+          type: 'danger',
+          action: executeDelete,
+          onSuccess: () => {
+            if (typeof moToast === 'function') {
+              moToast(`Đã gỡ nhân viên Sales [${saleName}] khỏi tòa nhà thành công.`, 'success', 'Thành công');
+            }
+            loadBuildingAssignments(currentAssignmentBuildingId);
+          }
+        });
+      } else {
+        if (!confirm(`Bạn có chắc muốn gỡ nhân viên Sales [${saleName}] khỏi danh sách phụ trách tòa nhà này?`)) return;
+        try {
+          const msg = await executeDelete();
+          if (typeof moToast === 'function') moToast(msg, 'success');
+          else alert(msg);
+          loadBuildingAssignments(currentAssignmentBuildingId);
+        } catch (err) {
+          if (typeof moToast === 'function') moToast(err.message, 'error');
+          else alert('Lỗi: ' + err.message);
+        }
       }
     }
 
@@ -736,11 +767,14 @@
         });
         const json = await res.json();
         if (res.ok) {
-          alert(json.message || 'Gán Ban Quản Lý vào tòa nhà thành công!');
+          if (typeof moToast === 'function') moToast(json.message || 'Gán Ban Quản Lý vào tòa nhà thành công!', 'success');
+          else alert(json.message || 'Gán Ban Quản Lý vào tòa nhà thành công!');
           closeModal('modal-assign-pm');
           loadBuildingAssignments(buildingId);
         } else {
-          alert('Lỗi: ' + (json.message || JSON.stringify(json.errors || 'Thất bại')));
+          const errMsg = json.message || JSON.stringify(json.errors || 'Thất bại');
+          if (typeof moToast === 'function') moToast(errMsg, 'error');
+          else alert('Lỗi: ' + errMsg);
         }
       } catch (err) {
         console.error('Assign PM error:', err);
@@ -757,26 +791,52 @@
     async function removePmAssignment(pmId, pmName) {
       const curRole = String(localStorage.getItem('auth_role') || '').toLowerCase();
       if (curRole !== 'admin' && curRole !== 'super_admin') {
-        alert('Chức năng gỡ phân công Ban Quản Lý thuộc thẩm quyền riêng của Super Admin.');
+        if (typeof moToast === 'function') moToast('Chức năng gỡ phân công Ban Quản Lý thuộc thẩm quyền của Super Admin.', 'warning');
+        else alert('Chức năng gỡ phân công Ban Quản Lý thuộc thẩm quyền riêng của Super Admin.');
         return;
       }
-      if (!confirm(`Bạn có chắc muốn gỡ Ban Quản Lý [${pmName}] khỏi danh sách phụ trách tòa nhà này?`)) return;
 
-      const token = getSanctumToken();
-      try {
+      const executeDelete = async () => {
+        const token = getSanctumToken();
         const res = await fetch(`/api/v1/admin/buildings/${currentAssignmentBuildingId}/assignments/property-managers/${pmId}`, {
           method: 'DELETE',
           headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token }
         });
         const json = await res.json();
-        if (res.ok) {
-          alert(json.message || 'Đã gỡ Ban Quản Lý khỏi tòa nhà thành công.');
-          loadBuildingAssignments(currentAssignmentBuildingId);
-        } else {
-          alert('Lỗi: ' + (json.message || 'Không thể gỡ BQL.'));
+        if (!res.ok) {
+          throw new Error(json.message || 'Không thể gỡ Ban Quản Lý khỏi tòa nhà.');
         }
-      } catch (err) {
-        console.error('Remove PM error:', err);
+        return json.message || `Đã gỡ Ban Quản Lý [${pmName}] khỏi tòa nhà thành công.`;
+      };
+
+      if (typeof moConfirmAction === 'function') {
+        moConfirmAction({
+          title: 'Xác Nhận Gỡ Ban Quản Lý',
+          message: 'Bạn có chắc muốn gỡ Ban Quản Lý này khỏi danh sách phụ trách tòa nhà?',
+          targetName: `Quản lý: ${pmName}`,
+          note: 'Nhân sự sau khi gỡ sẽ không còn quyền phê duyệt hợp đồng hoặc quản lý sự cố của tòa nhà này.',
+          confirmText: 'Gỡ Khỏi Tòa Nhà',
+          cancelText: 'Hủy bỏ',
+          type: 'danger',
+          action: executeDelete,
+          onSuccess: () => {
+            if (typeof moToast === 'function') {
+              moToast(`Đã gỡ Ban Quản Lý [${pmName}] khỏi tòa nhà thành công.`, 'success', 'Thành công');
+            }
+            loadBuildingAssignments(currentAssignmentBuildingId);
+          }
+        });
+      } else {
+        if (!confirm(`Bạn có chắc muốn gỡ Ban Quản Lý [${pmName}] khỏi danh sách phụ trách tòa nhà này?`)) return;
+        try {
+          const msg = await executeDelete();
+          if (typeof moToast === 'function') moToast(msg, 'success');
+          else alert(msg);
+          loadBuildingAssignments(currentAssignmentBuildingId);
+        } catch (err) {
+          if (typeof moToast === 'function') moToast(err.message, 'error');
+          else alert('Lỗi: ' + err.message);
+        }
       }
     }
 
@@ -887,11 +947,14 @@
         });
         const json = await res.json();
         if (res.ok) {
-          alert(json.message || 'Gán Kế toán vào tòa nhà thành công!');
+          if (typeof moToast === 'function') moToast(json.message || 'Gán Kế toán vào tòa nhà thành công!', 'success');
+          else alert(json.message || 'Gán Kế toán vào tòa nhà thành công!');
           closeModal('modal-assign-accountant');
           loadBuildingAssignments(buildingId);
         } else {
-          alert('Lỗi: ' + (json.message || JSON.stringify(json.errors || 'Thất bại')));
+          const errMsg = json.message || JSON.stringify(json.errors || 'Thất bại');
+          if (typeof moToast === 'function') moToast(errMsg, 'error');
+          else alert('Lỗi: ' + errMsg);
         }
       } catch (err) {
         console.error('Assign Accountant error:', err);
@@ -908,26 +971,52 @@
     async function removeAccountantAssignment(accountantId, accountantName) {
       const curRole = String(localStorage.getItem('auth_role') || '').toLowerCase();
       if (curRole !== 'admin' && curRole !== 'super_admin') {
-        alert('Chức năng gỡ phân công Kế toán thuộc thẩm quyền riêng của Super Admin.');
+        if (typeof moToast === 'function') moToast('Chức năng gỡ phân công Kế toán thuộc thẩm quyền của Super Admin.', 'warning');
+        else alert('Chức năng gỡ phân công Kế toán thuộc thẩm quyền riêng của Super Admin.');
         return;
       }
-      if (!confirm(`Bạn có chắc muốn gỡ Kế toán [${accountantName}] khỏi danh sách theo dõi tòa nhà này?`)) return;
 
-      const token = getSanctumToken();
-      try {
+      const executeDelete = async () => {
+        const token = getSanctumToken();
         const res = await fetch(`/api/v1/admin/buildings/${currentAssignmentBuildingId}/assignments/accountants/${accountantId}`, {
           method: 'DELETE',
           headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + token }
         });
         const json = await res.json();
-        if (res.ok) {
-          alert(json.message || 'Đã gỡ Kế toán khỏi tòa nhà thành công.');
-          loadBuildingAssignments(currentAssignmentBuildingId);
-        } else {
-          alert('Lỗi: ' + (json.message || 'Không thể gỡ Kế toán.'));
+        if (!res.ok) {
+          throw new Error(json.message || 'Không thể gỡ Kế toán khỏi tòa nhà.');
         }
-      } catch (err) {
-        console.error('Remove Accountant error:', err);
+        return json.message || `Đã gỡ Kế toán [${accountantName}] khỏi tòa nhà thành công.`;
+      };
+
+      if (typeof moConfirmAction === 'function') {
+        moConfirmAction({
+          title: 'Xác Nhận Gỡ Kế Toán',
+          message: 'Bạn có chắc muốn gỡ Kế toán này khỏi danh sách theo dõi tòa nhà?',
+          targetName: `Kế toán: ${accountantName}`,
+          note: 'Nhân sự sau khi gỡ sẽ không còn quyền theo dõi công nợ và xuất hóa đơn cước cho tòa nhà này.',
+          confirmText: 'Gỡ Khỏi Tòa Nhà',
+          cancelText: 'Hủy bỏ',
+          type: 'danger',
+          action: executeDelete,
+          onSuccess: () => {
+            if (typeof moToast === 'function') {
+              moToast(`Đã gỡ Kế toán [${accountantName}] khỏi tòa nhà thành công.`, 'success', 'Thành công');
+            }
+            loadBuildingAssignments(currentAssignmentBuildingId);
+          }
+        });
+      } else {
+        if (!confirm(`Bạn có chắc muốn gỡ Kế toán [${accountantName}] khỏi danh sách theo dõi tòa nhà này?`)) return;
+        try {
+          const msg = await executeDelete();
+          if (typeof moToast === 'function') moToast(msg, 'success');
+          else alert(msg);
+          loadBuildingAssignments(currentAssignmentBuildingId);
+        } catch (err) {
+          if (typeof moToast === 'function') moToast(err.message, 'error');
+          else alert('Lỗi: ' + err.message);
+        }
       }
     }
   </script>

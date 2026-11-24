@@ -153,7 +153,7 @@
      ========================================================================== -->
 
     <!-- MODAL GÁN SALES VÀO TÒA NHÀ (API 93) -->
-    <div id="modal-assign-sales" class="mo-modal">
+    <div id="modal-assign-sales" class="mo-modal" style="z-index: 10050 !important;">
       <div class="mo-modal-content" style="max-width: 540px; border-radius: 12px; overflow: hidden;">
         <div class="mo-modal-header" style="background: linear-gradient(135deg, #1e3a8a, #2563eb); color: #fff; padding: 18px 24px;">
           <div>
@@ -196,7 +196,7 @@
     </div>
 
     <!-- MODAL GÁN BAN QUẢN LÝ (PM) VÀO TÒA NHÀ (API 95) -->
-    <div id="modal-assign-pm" class="mo-modal">
+    <div id="modal-assign-pm" class="mo-modal" style="z-index: 10050 !important;">
       <div class="mo-modal-content" style="max-width: 500px; border-radius: 12px; overflow: hidden;">
         <div class="mo-modal-header" style="background: linear-gradient(135deg, #b45309, #d97706); color: #fff; padding: 18px 24px;">
           <div>
@@ -239,7 +239,7 @@
     </div>
 
     <!-- MODAL GÁN KẾ TOÁN VÀO TÒA NHÀ (API 97) -->
-    <div id="modal-assign-accountant" class="mo-modal">
+    <div id="modal-assign-accountant" class="mo-modal" style="z-index: 10050 !important;">
       <div class="mo-modal-content" style="max-width: 540px; border-radius: 12px; overflow: hidden;">
         <div class="mo-modal-header" style="background: linear-gradient(135deg, #065f46, #059669); color: #fff; padding: 18px 24px;">
           <div>

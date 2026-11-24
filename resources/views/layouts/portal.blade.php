@@ -21,6 +21,7 @@
   @include('partials.styles')
   @livewireStyles
   @stack('styles')
+  @vite('resources/js/app.js')
   <script>
     (function() {
       try {

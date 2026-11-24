@@ -145,7 +145,7 @@ class ContractApiController extends BaseApiController
             ], 403);
         }
 
-        $this->contractService->deleteDraftContract($contract);
+        $this->contractService->deleteDraftContract($contract, $user);
 
         return $this->successResponse(null, 'Xóa hợp đồng nháp thành công.');
     }

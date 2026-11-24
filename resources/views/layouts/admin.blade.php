@@ -21,6 +21,7 @@
   @include('partials.styles')
   @livewireStyles
   @stack('styles')
+  @vite('resources/js/app.js')
 
   <!-- Auth Guard Client-Side Sync -->
   <script>
@@ -65,6 +66,7 @@
   @include('partials.scripts.contracts')
   @include('partials.scripts.mail-settings')
   @include('partials.scripts.role-operations')
+  @include('partials.scripts.realtime-notifications')
   @include('partials.scripts.init')
 
   @livewireScripts

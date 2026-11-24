@@ -240,18 +240,40 @@ class SaleUserService
     {
         $sale = Sale::findOrFail($id);
 
-        $activeLeadsCount = $sale->leads()->whereNotIn('status', ['WON', 'LOST'])->count();
+        $activeLeads = $sale->leads()->whereNotIn('status', ['WON', 'LOST'])->get();
+        $activeLeadsCount = $activeLeads->count();
 
         if ($activeLeadsCount > 0) {
-            if (empty($reAssignToSalesId)) {
-                throw new BusinessException("Nhân viên Sales này đang phụ trách {$activeLeadsCount} Lead chưa hoàn tất. Vui lòng chuyển giao (re-assign) Lead trước khi xóa.", 422);
+            if ($reAssignToSalesId === 'unassign' || $reAssignToSalesId === 'pending') {
+                foreach ($activeLeads as $lead) {
+                    $lead->update([
+                        'assigned_sales_id' => null,
+                        'assigned_at' => null,
+                        'status' => \App\Enums\LeadStatus::PENDING_ASSIGN,
+                    ]);
+                    try {
+                        \App\Events\LeadPendingAssignmentEvent::dispatch($lead);
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning('Broadcast realtime LeadPendingAssignmentEvent failed: ' . $e->getMessage());
+                    }
+                }
+            } elseif (empty($reAssignToSalesId)) {
+                throw new BusinessException("Nhân viên Sales này đang phụ trách {$activeLeadsCount} Lead chưa hoàn tất. Vui lòng chuyển giao (re-assign) Lead hoặc đưa về hàng đợi trước khi xóa.", 422);
+            } else {
+                $targetSale = Sale::where('status', 'ACTIVE')->findOrFail($reAssignToSalesId);
+
+                foreach ($activeLeads as $lead) {
+                    $lead->update([
+                        'assigned_sales_id' => $targetSale->id,
+                        'assigned_at' => now(),
+                    ]);
+                    try {
+                        \App\Events\LeadAssignedToSalesEvent::dispatch($lead);
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning('Broadcast realtime LeadAssignedToSalesEvent failed: ' . $e->getMessage());
+                    }
+                }
             }
-
-            $targetSale = Sale::where('status', 'ACTIVE')->findOrFail($reAssignToSalesId);
-
-            $sale->leads()->whereNotIn('status', ['WON', 'LOST'])->update([
-                'assigned_sales_id' => $targetSale->id,
-            ]);
         }
 
         return (bool) $sale->delete();

@@ -301,11 +301,14 @@ class ContractService
     /**
      * Hủy bỏ / Xóa hợp đồng bản nháp hoặc giữ chỗ.
      */
-    public function deleteDraftContract(Contract $contract): void
+    public function deleteDraftContract(Contract $contract, mixed $user = null): void
     {
         if (!in_array($contract->status, [ContractStatus::DRAFT, ContractStatus::RESERVED])) {
             throw new BusinessException('Tuyệt đối cấm xóa hợp đồng đã được phê duyệt hoặc có hiệu lực pháp lý.', 403);
         }
+
+        $oldStatus = $contract->status instanceof \BackedEnum ? $contract->status->value : (string) $contract->status;
+        $contractClone = clone $contract;
 
         DB::transaction(function () use ($contract) {
             $unitIds = $contract->contractUnits()->pluck('unit_id')->toArray();
@@ -320,6 +323,18 @@ class ContractService
             $contract->contractUnits()->delete();
             $contract->delete();
         });
+
+        try {
+            \App\Events\ContractStatusChangedEvent::dispatch(
+                $contractClone,
+                'REJECTED',
+                $oldStatus,
+                'CANCELLED',
+                $user
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Broadcast realtime ContractStatusChangedEvent (reject/delete) failed: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -428,7 +443,7 @@ class ContractService
             $this->ensureSaleAssignedToContract($user, $contract);
         }
 
-        return DB::transaction(function () use ($contract, $user) {
+        $signedContract = DB::transaction(function () use ($contract, $user) {
             $updateData = [
                 'status' => ContractStatus::ACTIVE,
                 'signed_date' => now()->toDateString(),
@@ -487,6 +502,20 @@ class ContractService
 
             return $freshContract;
         });
+
+        try {
+            \App\Events\ContractStatusChangedEvent::dispatch(
+                $signedContract,
+                'SIGNED',
+                \App\Enums\ContractStatus::DRAFT->value,
+                \App\Enums\ContractStatus::ACTIVE->value,
+                $user
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Broadcast realtime ContractStatusChangedEvent (sign) failed: ' . $e->getMessage());
+        }
+
+        return $signedContract;
     }
 
     /**
@@ -509,7 +538,7 @@ class ContractService
 
         $cycleStartDate = Carbon::parse($oldContract->end_date)->addDay()->toDateString();
 
-        return DB::transaction(function () use ($oldContract, $data, $user, $cycleStartDate, $newEndDate) {
+        $newContract = DB::transaction(function () use ($oldContract, $data, $user, $cycleStartDate, $newEndDate) {
             // 1. Kiểm tra giao thoa thời gian chu kỳ mới cho toàn bộ các mặt bằng
             $units = $oldContract->contractUnits;
             foreach ($units as $cu) {
@@ -567,6 +596,20 @@ class ContractService
 
             return $newContract->fresh(['contractUnits.unit', 'parentContract']);
         });
+
+        try {
+            \App\Events\ContractStatusChangedEvent::dispatch(
+                $newContract,
+                'RENEWED',
+                $oldContract->status instanceof \BackedEnum ? $oldContract->status->value : (string) $oldContract->status,
+                \App\Enums\ContractStatus::ACTIVE->value,
+                $user
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Broadcast realtime ContractStatusChangedEvent (renew) failed: ' . $e->getMessage());
+        }
+
+        return $newContract;
     }
 
     /**
@@ -595,7 +638,9 @@ class ContractService
             throw new BusinessException(sprintf('Tổng tiền cọc hoàn lại (%s) và tiền phạt vi phạm (%s) không được vượt quá số tiền cọc ban đầu (%s).', number_format($refund), number_format($penalty), number_format($deposit)), 422);
         }
 
-        return DB::transaction(function () use ($contract, $data, $user, $refund, $penalty) {
+        $oldStatus = $contract->status instanceof \BackedEnum ? $contract->status->value : (string) $contract->status;
+
+        $terminatedContract = DB::transaction(function () use ($contract, $data, $user, $refund, $penalty) {
             $updateData = [
                 'status' => ContractStatus::TERMINATED,
                 'terminated_at' => $data['terminated_at'] ?? now()->toDateString(),
@@ -623,6 +668,20 @@ class ContractService
 
             return $contract->fresh(['contractUnits.unit', 'building', 'tenant']);
         });
+
+        try {
+            \App\Events\ContractStatusChangedEvent::dispatch(
+                $terminatedContract,
+                'TERMINATED',
+                $oldStatus,
+                \App\Enums\ContractStatus::TERMINATED->value,
+                $user
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Broadcast realtime ContractStatusChangedEvent (terminate) failed: ' . $e->getMessage());
+        }
+
+        return $terminatedContract;
     }
 
     /**

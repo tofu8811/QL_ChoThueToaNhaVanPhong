@@ -637,6 +637,36 @@
       if (modal) modal.style.display = 'none';
     };
 
+    window.moShowLoading = function(title = 'Đang xử lý yêu cầu...', message = 'Hệ thống đang kiểm tra ràng buộc và thực thi thao tác.<br>Vui lòng đợi trong giây lát.') {
+      if (_moConfirmState.autoDismissTimer) {
+        clearTimeout(_moConfirmState.autoDismissTimer);
+        _moConfirmState.autoDismissTimer = null;
+      }
+      const modal = document.getElementById('modal-confirm-action');
+      if (!modal) return;
+
+      _moSwitchConfirmState('processing');
+
+      const prTitle = document.getElementById('confirm-modal-processing-title') || document.querySelector('#confirm-state-processing h4');
+      const prMsg = document.getElementById('confirm-modal-processing-message') || document.querySelector('#confirm-state-processing p');
+
+      if (prTitle) prTitle.innerText = title;
+      if (prMsg) prMsg.innerHTML = message;
+
+      modal.style.display = 'flex';
+    };
+
+    window.moHideLoading = function() {
+      const modal = document.getElementById('modal-confirm-action');
+      if (modal) modal.style.display = 'none';
+
+      const prTitle = document.getElementById('confirm-modal-processing-title') || document.querySelector('#confirm-state-processing h4');
+      const prMsg = document.getElementById('confirm-modal-processing-message') || document.querySelector('#confirm-state-processing p');
+
+      if (prTitle) prTitle.innerText = 'Đang xử lý yêu cầu...';
+      if (prMsg) prMsg.innerHTML = 'Hệ thống đang kiểm tra ràng buộc và thực thi thao tác.<br>Vui lòng đợi trong giây lát.';
+    };
+
     window.moDismissSuccessConfirmAction = function() {
       if (_moConfirmState.autoDismissTimer) {
         clearTimeout(_moConfirmState.autoDismissTimer);

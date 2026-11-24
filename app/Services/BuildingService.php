@@ -435,19 +435,25 @@ class BuildingService
     {
         $uploaded = [];
         $targetPrimary = $primaryIndex ?? 0;
+        $hasPrimary = $building->images()->where('is_primary', true)->exists();
+        $currentOrder = (int) ($building->images()->max('display_order') ?? 0);
 
         foreach ($files as $index => $file) {
             $filename = Str::uuid()->toString() . '.' . $file->getClientOriginalExtension();
             $path = "buildings/{$building->id}/{$filename}";
 
-            // Fallback lưu local nếu Supabase disk chưa cấu hình
+            // Fallback lưu local nếu Supabase disk chưa cấu hình hoặc lỗi kết nối
             try {
                 if (config('filesystems.disks.supabase.key')) {
-                    $mime = method_exists($file, 'getClientMimeType') ? $file->getClientMimeType() : null;
-                    Storage::disk('supabase')->put($path, file_get_contents($file), [
+                    $mime = method_exists($file, 'getClientMimeType') ? $file->getClientMimeType() : 'image/jpeg';
+                    $stream = fopen($file->getRealPath(), 'r');
+                    Storage::disk('supabase')->put($path, $stream, [
                         'mimetype' => $mime ?: 'image/jpeg',
                         'visibility' => 'public',
                     ]);
+                    if (is_resource($stream)) {
+                        fclose($stream);
+                    }
                     $url = Storage::disk('supabase')->url($path);
                 } else {
                     $localPath = $file->storeAs("public/buildings/{$building->id}", $filename);
@@ -459,15 +465,18 @@ class BuildingService
                 $url = Storage::url($localPath);
             }
 
-            $hasPrimary = $building->images()->where('is_primary', true)->exists();
             $isPrimary = (!$hasPrimary && $index === $targetPrimary);
+            if ($isPrimary) {
+                $hasPrimary = true;
+            }
 
+            $currentOrder++;
             $image = BuildingImage::create([
                 'building_id' => $building->id,
                 'image_url' => $url,
                 'caption' => $caption ?? $file->getClientOriginalName(),
                 'is_primary' => $isPrimary,
-                'display_order' => $building->images()->count() + 1,
+                'display_order' => $currentOrder,
             ]);
 
             $uploaded[] = $image;

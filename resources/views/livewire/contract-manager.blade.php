@@ -176,8 +176,15 @@
                                     @if(in_array($stVal, ['DRAFT', 'RESERVED']))
                                         <button wire:click="signContract('{{ $c->id }}')" 
                                             wire:confirm="Bạn có chắc chắn muốn KÝ DUYỆT và KÍCH HOẠT hợp đồng này? Mặt bằng sẽ chuyển sang trạng thái ĐÃ THUÊ."
+                                            wire:loading.attr="disabled"
+                                            wire:target="signContract('{{ $c->id }}')"
                                             class="btn-mo-primary" style="padding:5px 8px;font-size:12px;background:#10b981;border-color:#10b981;" title="Ký duyệt Hợp đồng">
-                                            <i class="fa-solid fa-signature"></i> Ký
+                                            <span wire:loading.remove wire:target="signContract('{{ $c->id }}')">
+                                                <i class="fa-solid fa-signature"></i> Ký
+                                            </span>
+                                            <span wire:loading wire:target="signContract('{{ $c->id }}')">
+                                                <i class="fa-solid fa-spinner fa-spin"></i> Đang ký...
+                                            </span>
                                         </button>
                                     @endif
 

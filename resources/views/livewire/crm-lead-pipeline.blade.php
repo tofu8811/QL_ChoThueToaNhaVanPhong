@@ -527,7 +527,8 @@
         </div>
         <div class="mo-modal-body">
           <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:10px 14px; border-radius:6px; font-size:13px; margin-bottom:16px;">
-            Hệ thống sẽ tự động cấp mã định danh khách thuê <strong>TN-{{ date('Y') }}-XXXX</strong> và bảo vệ tính bất biến của hồ sơ đối soát hợp đồng.
+            <div>Hệ thống sẽ tự động cấp mã định danh khách thuê <strong>TN-{{ date('Y') }}-XXXX</strong> và bảo vệ tính bất biến của hồ sơ đối soát hợp đồng.</div>
+            <div style="margin-top:5px; font-size:12px; color:#15803d;"><i class="fa-solid fa-circle-info"></i> Lưu ý: Tài khoản Cổng Khách Thuê (Tenant Portal) sẽ được tự động kích hoạt và cấp phát khi Hợp đồng thuê chính thức được ký duyệt.</div>
           </div>
 
           <form wire:submit.prevent="submitConvert">

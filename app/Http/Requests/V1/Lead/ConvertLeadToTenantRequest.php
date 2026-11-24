@@ -4,6 +4,7 @@ namespace App\Http\Requests\V1\Lead;
 
 use App\Http\Requests\V1\BaseApiRequest;
 use App\Rules\VietnamesePhoneNumber;
+use Illuminate\Validation\Rule;
 
 class ConvertLeadToTenantRequest extends BaseApiRequest
 {
@@ -15,7 +16,12 @@ class ConvertLeadToTenantRequest extends BaseApiRequest
     public function rules(): array
     {
         return [
-            'tax_code' => ['required', 'string', 'max:30'],
+            'tax_code' => [
+                'required',
+                'string',
+                'max:30',
+                Rule::unique('tenants', 'tax_code')->whereNull('deleted_at'),
+            ],
             'company_name' => ['nullable', 'string', 'max:200'],
             'representative_name' => ['nullable', 'string', 'max:120'],
             'representative_position' => ['nullable', 'string', 'max:100'],
@@ -36,6 +42,7 @@ class ConvertLeadToTenantRequest extends BaseApiRequest
     {
         return [
             'tax_code.required' => 'Mã số thuế doanh nghiệp là bắt buộc khi chuyển đổi thành khách thuê chính thức.',
+            'tax_code.unique' => 'Mã số thuế này đã tồn tại trên hồ sơ khách thuê khác trong hệ thống.',
         ];
     }
 }

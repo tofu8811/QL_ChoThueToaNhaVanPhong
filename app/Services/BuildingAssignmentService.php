@@ -167,6 +167,14 @@ class BuildingAssignmentService
             }
         });
 
+        try {
+            foreach ($salesIds as $saleId) {
+                \App\Events\BuildingAssignedToStaffEvent::dispatch($building, $saleId, \App\Enums\UserRole::SALES, $admin);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Broadcast realtime BuildingAssignedToStaffEvent (Sales) failed: ' . $e->getMessage());
+        }
+
         return [
             'building_id' => $building->id,
             'assigned_count' => $assignedCount,
@@ -190,6 +198,14 @@ class BuildingAssignmentService
             ->where('building_id', $building->id)
             ->where('sales_id', $salesId)
             ->delete();
+
+        if ($deleted > 0) {
+            try {
+                \App\Events\BuildingStaffRemovedEvent::dispatch($building, $salesId, \App\Enums\UserRole::SALES);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Broadcast realtime BuildingStaffRemovedEvent (Sales) failed: ' . $e->getMessage());
+            }
+        }
 
         return $deleted > 0;
     }
@@ -243,6 +259,12 @@ class BuildingAssignmentService
             }
         });
 
+        try {
+            \App\Events\BuildingAssignedToStaffEvent::dispatch($building, $pmId, \App\Enums\UserRole::PROPERTY_MANAGER, $admin);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Broadcast realtime BuildingAssignedToStaffEvent (PM) failed: ' . $e->getMessage());
+        }
+
         return [
             'building_id' => $building->id,
             'pm_id' => $pm->id,
@@ -267,6 +289,14 @@ class BuildingAssignmentService
             ->where('building_id', $building->id)
             ->where('pm_id', $pmId)
             ->delete();
+
+        if ($deleted > 0) {
+            try {
+                \App\Events\BuildingStaffRemovedEvent::dispatch($building, $pmId, \App\Enums\UserRole::PROPERTY_MANAGER);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Broadcast realtime BuildingStaffRemovedEvent (PM) failed: ' . $e->getMessage());
+            }
+        }
 
         return $deleted > 0;
     }
@@ -314,6 +344,14 @@ class BuildingAssignmentService
             }
         });
 
+        try {
+            foreach ($accountantIds as $accountantId) {
+                \App\Events\BuildingAssignedToStaffEvent::dispatch($building, $accountantId, \App\Enums\UserRole::ACCOUNTANT, $admin);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Broadcast realtime BuildingAssignedToStaffEvent (Accountant) failed: ' . $e->getMessage());
+        }
+
         return [
             'building_id' => $building->id,
             'assigned_count' => $assignedCount,
@@ -337,6 +375,14 @@ class BuildingAssignmentService
             ->where('building_id', $building->id)
             ->where('accountant_id', $accountantId)
             ->delete();
+
+        if ($deleted > 0) {
+            try {
+                \App\Events\BuildingStaffRemovedEvent::dispatch($building, $accountantId, \App\Enums\UserRole::ACCOUNTANT);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Broadcast realtime BuildingStaffRemovedEvent (Accountant) failed: ' . $e->getMessage());
+            }
+        }
 
         return $deleted > 0;
     }

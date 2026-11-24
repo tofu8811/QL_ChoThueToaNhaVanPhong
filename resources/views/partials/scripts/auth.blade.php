@@ -304,6 +304,9 @@
 
           closeLoginModal();
           updateAuthUI(authData.user, authData.role);
+          if (typeof initRealtimeNotifications === 'function') {
+            initRealtimeNotifications();
+          }
           if (typeof moToast === 'function') {
             moToast('Đăng nhập không gian làm việc thành công!', 'success');
           }
@@ -406,6 +409,9 @@
       document.cookie = 'auth_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       document.cookie = 'tenant_id=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 
+      if (typeof teardownRealtimeNotifications === 'function') {
+        teardownRealtimeNotifications();
+      }
       updateAuthUI(null, null);
       if (typeof switchView === 'function') {
         switchView('portal-view');
@@ -525,10 +531,16 @@
         } catch (e) {
           console.error('Lỗi nạp phiên người dùng:', e);
           localStorage.removeItem('auth_user');
-          updateAuthUI(null, null);
+          if (typeof teardownRealtimeNotifications === 'function') {
+        teardownRealtimeNotifications();
+      }
+      updateAuthUI(null, null);
         }
       } else {
-        updateAuthUI(null, null);
+        if (typeof teardownRealtimeNotifications === 'function') {
+        teardownRealtimeNotifications();
+      }
+      updateAuthUI(null, null);
       }
     }
 

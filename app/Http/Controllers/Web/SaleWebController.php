@@ -105,6 +105,39 @@ class SaleWebController extends Controller
                 ->latest()
                 ->get();
             $viewData['recentContracts'] = $userContracts;
+
+            // Xây dựng danh sách thông báo riêng cho Sales (Tòa nhà được phân công & Lead cá nhân)
+            $salesNotifications = [];
+            $assignedBuildings = $user->buildings()->latest('sale_buildings.assigned_at')->get();
+            foreach ($assignedBuildings as $b) {
+                $salesNotifications[] = [
+                    'type' => 'building_assignment',
+                    'icon' => 'fa-solid fa-building-circle-check',
+                    'icon_bg' => '#eff6ff',
+                    'icon_color' => '#2563eb',
+                    'badge_text' => 'Tòa nhà phụ trách',
+                    'badge_style' => 'background:#eff6ff;color:#1d4ed8;',
+                    'title' => "Bạn được phân công phụ trách: {$b->name}",
+                    'subtitle' => "Mã: {$b->building_code} • {$b->address}",
+                    'target_tab' => 'tab-sales-buildings',
+                    'nav_id' => 'nav-sales-buildings',
+                ];
+            }
+            foreach ($userLeads->take(3) as $l) {
+                $salesNotifications[] = [
+                    'type' => 'lead',
+                    'icon' => 'fa-solid fa-filter-circle-dollar',
+                    'icon_bg' => '#f0fdf4',
+                    'icon_color' => '#16a34a',
+                    'badge_text' => 'Lead cá nhân',
+                    'badge_style' => 'background:#f0fdf4;color:#15803d;',
+                    'title' => ($l->company_name ?: $l->contact_full_name),
+                    'subtitle' => "Quan tâm: " . ($l->building?->name ?? 'Mặt bằng') . " • SĐT: " . ($l->phone ?? '---'),
+                    'target_tab' => 'tab-sales-leads',
+                    'nav_id' => 'nav-item-leads',
+                ];
+            }
+            $viewData['notifications'] = $salesNotifications;
         } elseif ($user instanceof Admin && $user->is_super_admin) {
             // Case 1: Super Admin kiểm tra phân hệ Sales (Xem tổng hợp toàn công ty)
             $activeLeadsCount = count($viewData['leads'] ?? []);

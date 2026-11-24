@@ -196,7 +196,7 @@
                 <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#0284c7;border-color:#bae6fd;margin-left:4px;" onclick="openEditContractModal('${c.id}')" title="Chỉnh sửa bản nháp">
                   <i class="fa-solid fa-pen-to-square"></i> Sửa
                 </button>
-                <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#ef4444;border-color:#fecaca;margin-left:4px;" onclick="deleteContract('${c.id}')" title="Xóa bản nháp">
+                <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#ef4444;border-color:#fecaca;margin-left:4px;" onclick="deleteContract('${c.id}', '${escapeHtml(contractCode)}', '${escapeHtml(tenantName)}')" title="Xóa bản nháp">
                   <i class="fa-solid fa-trash"></i> Xóa
                 </button>
                 ${isContractSalesRole() ? `
@@ -204,7 +204,7 @@
                     <i class="fa-solid fa-clock"></i> Chờ PM duyệt
                   </span>
                 ` : `
-                  <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#16a34a;border-color:#bbf7d0;margin-left:4px;" onclick="signContract('${c.id}')" title="Ký duyệt & Kích hoạt">
+                  <button class="btn-mo-outline" style="padding:4px 8px;font-size:12px;color:#16a34a;border-color:#bbf7d0;margin-left:4px;" onclick="signContract('${c.id}', '${escapeHtml(contractCode)}', '${escapeHtml(tenantName)}')" title="Ký duyệt & Kích hoạt">
                     <i class="fa-solid fa-file-signature"></i> Ký Duyệt
                   </button>
                 `}
@@ -262,8 +262,8 @@
           </option>`;
         }).join('');
 
-      let formBuildings = Array.isArray(BUILDINGS_DATA) ? [...BUILDINGS_DATA] : [];
-      if (isContractSalesRole()) {
+      let formBuildings = (typeof BUILDINGS_DATA !== 'undefined' && Array.isArray(BUILDINGS_DATA)) ? [...BUILDINGS_DATA] : [];
+      if (isContractSalesRole() || formBuildings.length === 0) {
         try {
           const res = await fetch('/api/v1/admin/buildings?per_page=100', {
             method: 'GET',
@@ -274,6 +274,7 @@
             const apiBuildings = json.data?.data || json.data || [];
             if (apiBuildings.length > 0) {
               formBuildings = apiBuildings;
+              window.BUILDINGS_DATA = formBuildings;
             }
           }
         } catch (e) {}
@@ -897,7 +898,17 @@
         }
       }
 
-      if (hasError) return;
+      if (hasError) {
+        moToast('Vui lòng kiểm tra lại các trường thông tin bắt buộc còn thiếu hoặc chưa hợp lệ.', 'warning', 'Chưa hoàn tất thông tin');
+        const firstErr = document.querySelector('#modal-create-contract .input-error, #modal-create-contract .is-invalid')
+          || document.getElementById('contract-tenant-select')
+          || document.getElementById('contract-units-container');
+        if (firstErr) {
+          firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if (typeof firstErr.focus === 'function') firstErr.focus();
+        }
+        return;
+      }
 
       const vatPolicy = document.getElementById('contract-vat-policy')?.value || 'EXCLUSIVE';
       const vatPolicyLabel = vatPolicy === 'EXCLUSIVE' ? 'Chưa gồm VAT (Cộng 10%)' : 'Đã gồm VAT 10%';
@@ -985,14 +996,6 @@
           closeCreateContractModal();
           document.getElementById('form-create-contract')?.reset();
           loadContractsList();
-
-          if (!isEdit && newContractId) {
-            setTimeout(() => {
-              if (confirm(`${typeLabel} đã được tạo thành công! Bạn có muốn mở xem / xuất file PDF bản in ngay bây giờ không?`)) {
-                window.open(`/admin/contracts/${newContractId}/print`, '_blank');
-              }
-            }, 300);
-          }
         } else {
           if (json.errors) {
             moMapServerErrors(json.errors, {
@@ -1020,6 +1023,7 @@
         }
       }
     }
+    window.submitCreateContract = submitCreateContract;
 
     // Mở Modal chỉnh sửa hợp đồng nháp (DRAFT/RESERVED)
     async function openEditContractModal(contractId) {
@@ -1063,14 +1067,17 @@
 
         // 2. Tải danh sách tòa nhà
         const bSelect = document.getElementById('contract-building-select');
-        let formBuildings = Array.isArray(BUILDINGS_DATA) ? [...BUILDINGS_DATA] : [];
-        if (isContractSalesRole()) {
+        let formBuildings = (typeof BUILDINGS_DATA !== 'undefined' && Array.isArray(BUILDINGS_DATA)) ? [...BUILDINGS_DATA] : [];
+        if (isContractSalesRole() || formBuildings.length === 0) {
           try {
             const bRes = await fetch('/api/v1/admin/buildings?per_page=100', { headers: getAuthHeaders() });
             if (bRes.ok) {
               const bJson = await bRes.json();
               const apiBuildings = bJson.data?.data || bJson.data || [];
-              if (apiBuildings.length > 0) formBuildings = apiBuildings;
+              if (apiBuildings.length > 0) {
+                formBuildings = apiBuildings;
+                window.BUILDINGS_DATA = formBuildings;
+              }
             }
           } catch(e) {}
         }
@@ -1132,8 +1139,8 @@
       tSelect.innerHTML = '<option value="">-- Chọn Khách Thuê Đặt Cọc Giữ Chỗ --</option>' +
         (list || []).map(t => `<option value="${t.id}">${escapeHtml(t.company_name)}</option>`).join('');
 
-      let reserveBuildings = Array.isArray(BUILDINGS_DATA) ? [...BUILDINGS_DATA] : [];
-      if (isContractSalesRole()) {
+      let reserveBuildings = (typeof BUILDINGS_DATA !== 'undefined' && Array.isArray(BUILDINGS_DATA)) ? [...BUILDINGS_DATA] : [];
+      if (isContractSalesRole() || reserveBuildings.length === 0) {
         try {
           const res = await fetch('/api/v1/admin/buildings?per_page=100', {
             method: 'GET',
@@ -1144,6 +1151,7 @@
             const apiBuildings = json.data?.data || json.data || [];
             if (apiBuildings.length > 0) {
               reserveBuildings = apiBuildings;
+              window.BUILDINGS_DATA = reserveBuildings;
             }
           }
         } catch (e) {}
@@ -1284,7 +1292,7 @@
                     <i class="fa-solid fa-clock"></i> Chờ Ban Quản Lý (PM) duyệt ký
                   </div>
                 ` : `
-                  <button class="btn-mo-primary" style="background:#16a34a;border-color:#16a34a;padding:6px 14px;font-size:12px;" onclick="signContract('${c.id}')">
+                  <button class="btn-mo-primary" style="background:#16a34a;border-color:#16a34a;padding:6px 14px;font-size:12px;" onclick="signContract('${c.id}', '${escapeHtml(c.contract_code || c.contract_number || '')}', '${escapeHtml(c.tenant?.company_name || '')}')">
                     <i class="fa-solid fa-file-signature"></i> Ký Duyệt Kích Hoạt
                   </button>
                 `
@@ -1316,7 +1324,7 @@
                           <td>${(u.area_sqm ?? u.area) ? `${Number(u.area_sqm ?? u.area).toLocaleString('vi-VN')} m²` : '---'}</td>
                           <td>
                             ${(c.status === 'DRAFT' && !isContractSalesRole()) ? `
-                              <button class="btn-mo-outline" style="padding:2px 6px;font-size:11px;color:#ef4444;" onclick="detachUnitFromContract('${c.id}', '${u.id}')" title="Gỡ sàn">
+                              <button class="btn-mo-outline" style="padding:2px 6px;font-size:11px;color:#ef4444;" onclick="detachUnitFromContract('${c.id}', '${u.id}', '${escapeHtml(u.unit_code)}')" title="Gỡ sàn">
                                 <i class="fa-solid fa-xmark"></i>
                               </button>
                             ` : (c.status === 'DRAFT' ? '<span style="color:#64748b;font-size:11px;">Đã gán</span>' : '<span style="color:#94a3b8;font-size:11px;">Đã khóa</span>')}
@@ -1365,11 +1373,57 @@
     }
 
     // 6. Ký duyệt & Kích hoạt hợp đồng: POST /api/v1/admin/contracts/{id}/sign
-    async function signContract(contractId) {
+    async function signContract(contractId, contractCode = '', tenantCompanyName = '') {
       if (isContractSalesRole()) {
         showMoToast('warning', 'Từ chối quyền hạn', 'Chuyên viên Sales không có thẩm quyền ký duyệt hợp đồng. Ký duyệt thuộc thẩm quyền của Ban Quản Lý (PM) hoặc Quản trị viên.');
         return;
       }
+
+      const contract = (typeof CONTRACTS_DATA !== 'undefined' && Array.isArray(CONTRACTS_DATA))
+        ? CONTRACTS_DATA.find(c => String(c.id) === String(contractId))
+        : (currentViewingContract && String(currentViewingContract.id) === String(contractId) ? currentViewingContract : null);
+      const code = contractCode || (contract ? (contract.contract_code || contract.contract_number) : '') || `ID: ${contractId}`;
+      const tenant = tenantCompanyName || contract?.tenant?.company_name || '';
+      const targetLabel = tenant ? `${code} — ${tenant}` : code;
+
+      if (typeof moConfirmAction === 'function') {
+        let issuedCreds = null;
+        moConfirmAction({
+          title: 'Xác Nhận Ký Duyệt Hợp Đồng',
+          targetName: targetLabel,
+          message: 'Xác nhận KÝ DUYỆT hợp đồng này? Hệ thống sẽ tự động kích hoạt trạng thái ACTIVE, chuyển trạng thái sàn sang LEASED và cấp tài khoản Portal cho khách thuê.',
+          note: 'Lưu ý: Sau khi ký duyệt, hợp đồng sẽ chính thức có hiệu lực pháp lý và không thể chỉnh sửa thông tin căn bản.',
+          confirmText: 'Ký Duyệt & Kích Hoạt',
+          cancelText: 'Hủy bỏ',
+          type: 'success',
+          icon: 'fa-solid fa-file-signature',
+          btnIcon: 'fa-solid fa-file-signature',
+          action: async () => {
+            const res = await fetch(`/api/v1/admin/contracts/${contractId}/sign`, {
+              method: 'POST',
+              headers: getAuthHeaders()
+            });
+
+            const json = await res.json();
+            if (!res.ok) {
+              throw new Error(json.message || 'Không thể ký hợp đồng.');
+            }
+            issuedCreds = json.data?.tenant_credential_issued || null;
+            return json.message || 'Ký duyệt và kích hoạt hợp đồng thành công!';
+          },
+          onSuccess: () => {
+            loadContractsList();
+            if (currentViewingContract && String(currentViewingContract.id) === String(contractId)) {
+              openContractDetailModal(contractId);
+            }
+            if (issuedCreds && issuedCreds.password) {
+              showTenantCredentialModal(issuedCreds);
+            }
+          }
+        });
+        return;
+      }
+
       if (!confirm('Xác nhận KÝ DUYỆT hợp đồng này? Hệ thống sẽ tự động kích hoạt trạng thái ACTIVE, chuyển trạng thái sàn sang LEASED và cấp tài khoản Portal cho khách thuê.')) return;
 
       try {
@@ -1502,11 +1556,41 @@
     }
 
     // 8. Gỡ mặt bằng khỏi hợp đồng: DELETE /api/v1/admin/contracts/{id}/units/{unitId}
-    async function detachUnitFromContract(contractId, unitId) {
+    async function detachUnitFromContract(contractId, unitId, unitCode = '') {
       if (isContractSalesRole()) {
         showMoToast('warning', 'Từ chối quyền hạn', 'Chuyên viên Sales không có quyền gỡ mặt bằng khỏi hợp đồng.');
         return;
       }
+
+      if (typeof moConfirmAction === 'function') {
+        moConfirmAction({
+          title: 'Xác Nhận Gỡ Mặt Bằng',
+          targetName: unitCode ? `Mặt bằng: ${unitCode}` : `Sàn ID: ${unitId}`,
+          message: 'Bạn có chắc chắn muốn gỡ mặt bằng này khỏi hợp đồng?',
+          note: 'Mặt bằng sau khi gỡ sẽ được trả về danh sách mặt bằng khả dụng của tòa nhà.',
+          confirmText: 'Gỡ Mặt Bằng',
+          cancelText: 'Hủy bỏ',
+          type: 'danger',
+          action: async () => {
+            const res = await fetch(`/api/v1/admin/contracts/${contractId}/units/${unitId}`, {
+              method: 'DELETE',
+              headers: getAuthHeaders()
+            });
+
+            const json = await res.json();
+            if (!res.ok) {
+              throw new Error(json.message || 'Không thể gỡ mặt bằng.');
+            }
+            return json.message || 'Đã gỡ mặt bằng khỏi hợp đồng thành công.';
+          },
+          onSuccess: () => {
+            openContractDetailModal(contractId);
+            loadContractsList();
+          }
+        });
+        return;
+      }
+
       if (!confirm('Gỡ mặt bằng này khỏi hợp đồng?')) return;
 
       try {
@@ -1520,10 +1604,10 @@
           openContractDetailModal(contractId);
           loadContractsList();
         } else {
-          alert('Không thể gỡ mặt bằng: ' + (json.message || ''));
+          moToast('Không thể gỡ mặt bằng: ' + (json.message || ''), 'error');
         }
       } catch (e) {
-        alert('Lỗi kết nối khi gỡ mặt bằng.');
+        moToast('Lỗi kết nối khi gỡ mặt bằng.', 'error');
       }
     }
 
@@ -1715,7 +1799,42 @@
     }
 
     // 13. Xóa hợp đồng nháp: DELETE /api/v1/admin/contracts/{id}
-    async function deleteContract(contractId) {
+    async function deleteContract(contractId, contractCode = '', tenantCompanyName = '') {
+      const contract = (typeof CONTRACTS_DATA !== 'undefined' && Array.isArray(CONTRACTS_DATA))
+        ? CONTRACTS_DATA.find(c => String(c.id) === String(contractId))
+        : (currentViewingContract && String(currentViewingContract.id) === String(contractId) ? currentViewingContract : null);
+      const code = contractCode || (contract ? (contract.contract_code || contract.contract_number) : '') || `ID: ${contractId}`;
+      const tenant = tenantCompanyName || contract?.tenant?.company_name || '';
+      const targetLabel = tenant ? `${code} — ${tenant}` : code;
+
+      if (typeof moConfirmAction === 'function') {
+        moConfirmAction({
+          title: 'Xác Nhận Xóa Bản Hợp Đồng',
+          targetName: targetLabel,
+          message: 'Bạn có chắc chắn muốn xóa bản hợp đồng nháp này khỏi hệ thống? Thao tác này không thể hoàn tác.',
+          note: 'Chỉ các hợp đồng ở trạng thái DRAFT hoặc RESERVED mới có thể bị xóa hoàn toàn khỏi hệ thống.',
+          confirmText: 'Xóa Hợp Đồng',
+          cancelText: 'Hủy bỏ',
+          type: 'danger',
+          action: async () => {
+            const res = await fetch(`/api/v1/admin/contracts/${contractId}`, {
+              method: 'DELETE',
+              headers: getAuthHeaders()
+            });
+
+            const json = await res.json();
+            if (!res.ok) {
+              throw new Error(json.message || 'Lỗi khi xóa hợp đồng.');
+            }
+            return json.message || 'Đã xóa bản nháp hợp đồng thành công.';
+          },
+          onSuccess: () => {
+            loadContractsList();
+          }
+        });
+        return;
+      }
+
       if (!confirm('Bạn có chắc chắn muốn xóa bản hợp đồng nháp này khỏi hệ thống? Thao tác này không thể hoàn tác.')) return;
 
       try {

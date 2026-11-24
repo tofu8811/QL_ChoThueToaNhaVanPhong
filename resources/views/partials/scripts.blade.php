@@ -3,4 +3,5 @@
 @include('partials.scripts.auth')
 @include('partials.scripts.public-portal')
 @include('partials.scripts.shell')
+@include('partials.scripts.realtime-notifications')
 @include('partials.scripts.init')

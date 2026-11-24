@@ -541,9 +541,17 @@
     </div>
     <div style="padding:18px;overflow-y:auto;flex:1;">
       <!-- Form Upload ảnh mới -->
-      <form onsubmit="submitUploadBuildingImages(event)" style="background:#f8fafc;padding:12px;border:1px dashed #cbd5e1;border-radius:8px;margin-bottom:16px;display:flex;gap:10px;align-items:center;">
-        <input type="file" id="building-images-input" accept="image/*" multiple required style="font-size:12px;flex:1;">
-        <button type="submit" class="btn-mo-orange" style="padding:6px 14px;font-size:12px;white-space:nowrap;">
+      <form id="form-upload-building-images" onsubmit="submitUploadBuildingImages(event)" style="background:#f8fafc;padding:12px 16px;border:2px dashed #cbd5e1;border-radius:8px;margin-bottom:16px;display:flex;gap:12px;align-items:center;justify-content:space-between;transition:all 0.2s;">
+        <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
+          <label for="building-images-input" class="btn-mo-outline" style="cursor:pointer;margin:0;display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:6px 14px;background:#ffffff;border-color:#0284c7;color:#0284c7;border-radius:6px;font-weight:600;white-space:nowrap;">
+            <i class="fa-solid fa-images"></i> Chọn Ảnh Tòa Nhà
+            <input type="file" id="building-images-input" accept="image/*" multiple style="display:none;" onchange="handleBuildingImagesFileChange(this)">
+          </label>
+          <span id="building-images-file-status" style="font-size:11.5px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            Hỗ trợ PNG, JPG, WebP (Tự động xem trước & tải lên ngay khi chọn)
+          </span>
+        </div>
+        <button type="submit" id="btn-submit-building-images" class="btn-mo-orange" style="padding:6px 16px;font-size:12px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;">
           <i class="fa-solid fa-cloud-arrow-up"></i> Upload Supabase
         </button>
       </form>
@@ -555,7 +563,7 @@
 
 <!-- MODAL 4: QUẢN LÝ CÁC SÀN MẶT BẰNG (UNITS) -->
 <div id="modal-manage-units" class="mo-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.6);backdrop-filter:blur(3px);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:#ffffff;border-radius:12px;width:100%;max-width:880px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);overflow:hidden;border:1px solid #e2e8f0;max-height:92vh;display:flex;flex-direction:column;">
+  <div style="background:#ffffff;border-radius:12px;width:100%;max-width:960px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);overflow:hidden;border:1px solid #e2e8f0;max-height:92vh;display:flex;flex-direction:column;">
     <div style="background:var(--mo-primary);color:#ffffff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
       <h3 style="margin:0;font-size:16px;font-weight:700;"><i class="fa-solid fa-layer-group"></i> Quản Lý Mặt Bằng & Diện Tích Cắt Thuê: <span id="units-modal-building-name"></span></h3>
       <button type="button" onclick="closeManageBuildingUnitsModal()" style="background:none;border:none;color:#ffffff;font-size:18px;cursor:pointer;">&times;</button>
@@ -563,31 +571,53 @@
     <div style="padding:18px;overflow-y:auto;flex:1;">
       <!-- Form thêm sàn mới nhanh -->
       <form id="form-create-unit" onsubmit="submitCreateUnit(event)" style="background:#f8fafc;padding:14px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:16px;">
-        <div style="font-size:13px;font-weight:700;color:var(--mo-primary);margin-bottom:10px;"><i class="fa-solid fa-plus-circle"></i> Tạo Thêm Sàn Mặt Bằng Mới</div>
-        <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1.5fr auto;gap:10px;align-items:flex-end;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:700;color:var(--mo-primary);"><i class="fa-solid fa-plus-circle"></i> Tạo Thêm Sàn Mặt Bằng Mới</div>
+          <div id="units-modal-building-stats" style="font-size:11px;color:#64748b;font-weight:500;"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1.1fr 0.9fr 0.9fr 1fr 1fr 1.1fr auto;gap:8px;align-items:flex-start;">
           <div class="form-field">
-            <label style="font-size:11px;font-weight:600;color:#475569;">Mã Sàn <span style="color:#ef4444;">*</span></label>
-            <input type="text" id="new-unit-code" placeholder="VD: L12-01" class="filament-input-sm" required>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;height:18px;white-space:nowrap;">
+              <label style="font-size:11px;font-weight:600;color:#475569;">Mã Sàn <span style="color:#ef4444;">*</span></label>
+              <button type="button" onclick="autoGenerateUnitCode()" style="background:none;border:none;color:#0284c7;cursor:pointer;font-size:10px;padding:0;font-weight:600;" title="Bấm để tự động sinh mã sàn mới theo tầng">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Tự sinh
+              </button>
+            </div>
+            <input type="text" id="new-unit-code" placeholder="VD: L12-01" class="filament-input-sm" required style="height:32px;">
           </div>
           <div class="form-field">
-            <label style="font-size:11px;font-weight:600;color:#475569;">Tầng</label>
-            <input type="text" id="new-unit-floor" placeholder="VD: 12" class="filament-input-sm">
+            <div style="margin-bottom:3px;height:18px;display:flex;align-items:center;white-space:nowrap;">
+              <label style="font-size:11px;font-weight:600;color:#475569;">Tầng</label>
+              <span id="new-unit-floor-hint" style="font-size:10px;color:#0284c7;font-weight:600;margin-left:3px;margin-right:2px;"></span>
+              <span style="color:#ef4444;font-size:11px;font-weight:600;">*</span>
+            </div>
+            <input type="number" id="new-unit-floor" placeholder="VD: 1" class="filament-input-sm" required style="height:32px;" onkeydown="handleFloorKeyDown(event)" oninput="handleUnitFloorChange(this)" onblur="handleFloorBlur(this)">
           </div>
           <div class="form-field">
-            <label style="font-size:11px;font-weight:600;color:#475569;">Diện Tích (m²) <span style="color:#ef4444;">*</span></label>
-            <input type="number" step="0.1" id="new-unit-area" placeholder="VD: 250" class="filament-input-sm" required>
+            <label style="font-size:11px;font-weight:600;color:#475569;margin-bottom:3px;height:18px;display:flex;align-items:center;">Diện Tích (m²) <span style="color:#ef4444;margin-left:2px;">*</span></label>
+            <input type="number" step="0.1" id="new-unit-area" placeholder="VD: 250" class="filament-input-sm" required style="height:32px;">
           </div>
           <div class="form-field">
-            <label style="font-size:11px;font-weight:600;color:#475569;">Giá Thuê (VNĐ/m²) <span style="color:#ef4444;">*</span></label>
-            <input type="number" step="1000" id="new-unit-price" placeholder="VD: 650000" class="filament-input-sm" required>
+            <label style="font-size:11px;font-weight:600;color:#475569;margin-bottom:3px;height:18px;display:flex;align-items:center;">Giá Thuê (VNĐ/m²) <span style="color:#ef4444;margin-left:2px;">*</span></label>
+            <input type="number" step="1000" id="new-unit-price" placeholder="VD: 650000" class="filament-input-sm" required style="height:32px;">
           </div>
           <div class="form-field">
-            <label style="font-size:11px;font-weight:600;color:#475569;">Phí DV (VNĐ/m²)</label>
-            <input type="number" step="1000" id="new-unit-service-fee" placeholder="VD: 120000" class="filament-input-sm">
+            <label style="font-size:11px;font-weight:600;color:#475569;margin-bottom:3px;height:18px;display:flex;align-items:center;">Phí DV (VNĐ/m²)</label>
+            <input type="number" step="1000" id="new-unit-service-fee" placeholder="VD: 120000" class="filament-input-sm" style="height:32px;">
           </div>
-          <button type="submit" class="btn-mo-orange" style="padding:6px 14px;font-size:12px;height:32px;">
-            <i class="fa-solid fa-plus"></i> Thêm Sàn
-          </button>
+          <div class="form-field">
+            <label style="font-size:11px;font-weight:600;color:#475569;margin-bottom:3px;height:18px;display:flex;align-items:center;white-space:nowrap;">Hiện Trạng</label>
+            <select id="new-unit-handover" class="filament-input-sm" style="height:32px;font-size:11px;">
+              <option value="BASIC" selected>Cơ bản (BASIC)</option>
+              <option value="RAW">Thô (RAW)</option>
+              <option value="FULL_FURNISHED">Full nội thất</option>
+            </select>
+          </div>
+          <div style="padding-top:21px;">
+            <button type="submit" id="btn-submit-create-unit" class="btn-mo-orange" style="padding:6px 14px;font-size:12px;height:32px;white-space:nowrap;">
+              <i class="fa-solid fa-plus"></i> Thêm Sàn
+            </button>
+          </div>
         </div>
       </form>
 
@@ -599,6 +629,7 @@
             <th>Vị Trí Tầng</th>
             <th>Diện Tích</th>
             <th>Đơn Giá Thuê</th>
+            <th>Hiện Trạng</th>
             <th>Trạng Thái</th>
             <th style="text-align:right;">Thao Tác</th>
           </tr>
@@ -625,9 +656,17 @@
     </div>
     <div style="padding:18px;overflow-y:auto;flex:1;">
       <!-- Form Upload ảnh mới cho sàn -->
-      <form onsubmit="submitUploadUnitImages(event)" style="background:#f8fafc;padding:12px;border:1px dashed #cbd5e1;border-radius:8px;margin-bottom:16px;display:flex;gap:10px;align-items:center;">
-        <input type="file" id="unit-images-input" accept="image/*" multiple required style="font-size:12px;flex:1;">
-        <button type="submit" class="btn-mo-orange" style="padding:6px 14px;font-size:12px;white-space:nowrap;">
+      <form id="form-upload-unit-images" onsubmit="submitUploadUnitImages(event)" style="background:#f8fafc;padding:12px 16px;border:2px dashed #cbd5e1;border-radius:8px;margin-bottom:16px;display:flex;gap:12px;align-items:center;justify-content:space-between;transition:all 0.2s;">
+        <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
+          <label for="unit-images-input" class="btn-mo-outline" style="cursor:pointer;margin:0;display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:6px 14px;background:#ffffff;border-color:#0284c7;color:#0284c7;border-radius:6px;font-weight:600;white-space:nowrap;">
+            <i class="fa-solid fa-images"></i> Chọn Ảnh Sàn
+            <input type="file" id="unit-images-input" accept="image/*" multiple style="display:none;" onchange="handleUnitImagesFileChange(this)">
+          </label>
+          <span id="unit-images-file-status" style="font-size:11.5px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            Hỗ trợ JPG, PNG, WebP (Tự động xem trước & tải lên ngay khi chọn)
+          </span>
+        </div>
+        <button type="submit" id="btn-submit-unit-images" class="btn-mo-orange" style="padding:6px 16px;font-size:12px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;">
           <i class="fa-solid fa-cloud-arrow-up"></i> Upload Ảnh Sàn
         </button>
       </form>

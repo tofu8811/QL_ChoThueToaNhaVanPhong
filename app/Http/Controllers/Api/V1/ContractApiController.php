@@ -58,7 +58,7 @@ class ContractApiController extends BaseApiController
             $tenant = \App\Models\Tenant::find($request->input('tenant_id'));
             $salesId = $tenant?->created_by_sales_id;
         }
-        $contract = $this->contractService->createDraftContract($request->validated(), $salesId);
+        $contract = $this->contractService->createDraftContract($request->validated(), $salesId, $user);
 
         return $this->createdResponse($contract, 'Khởi tạo hợp đồng thuê bản nháp thành công.');
     }
@@ -74,7 +74,7 @@ class ContractApiController extends BaseApiController
             $tenant = \App\Models\Tenant::find($request->input('tenant_id'));
             $salesId = $tenant?->created_by_sales_id;
         }
-        $contract = $this->contractService->createBookingContract($request->validated(), $salesId);
+        $contract = $this->contractService->createBookingContract($request->validated(), $salesId, $user);
 
         return $this->createdResponse($contract, 'Lập hợp đồng giữ chỗ thành công.');
     }
@@ -145,7 +145,7 @@ class ContractApiController extends BaseApiController
             ], 403);
         }
 
-        $this->contractService->deleteDraftContract($contract);
+        $this->contractService->deleteDraftContract($contract, $user);
 
         return $this->successResponse(null, 'Xóa hợp đồng nháp thành công.');
     }

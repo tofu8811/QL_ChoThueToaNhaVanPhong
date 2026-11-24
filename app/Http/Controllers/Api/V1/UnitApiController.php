@@ -45,6 +45,31 @@ class UnitApiController extends BaseApiController
         return $this->paginateResponse($units, 'Lấy danh sách quản trị mặt bằng thành công.');
     }
 
+    // Gợi ý hoặc tự động sinh mã sàn mới theo vị trí tầng và tòa nhà
+    public function suggestCode(Request $request): JsonResponse
+    {
+        $request->validate([
+            'building_id' => ['required', 'string', 'exists:buildings,id'],
+            'floor_number' => ['required', 'integer'],
+        ], [
+            'building_id.required' => 'Mã tòa nhà là bắt buộc.',
+            'building_id.exists' => 'Tòa nhà không tồn tại.',
+            'floor_number.required' => 'Vị trí tầng là bắt buộc.',
+            'floor_number.integer' => 'Vị trí tầng phải là số nguyên.',
+        ]);
+
+        $code = $this->unitService->generateUnitCode(
+            $request->input('building_id'),
+            (int) $request->input('floor_number')
+        );
+
+        return $this->successResponse([
+            'unit_code' => $code,
+            'building_id' => $request->input('building_id'),
+            'floor_number' => (int) $request->input('floor_number'),
+        ], 'Gợi ý mã sàn thành công.');
+    }
+
     // Tạo mới một mặt bằng văn phòng
     public function store(StoreUnitRequest $request): JsonResponse
     {

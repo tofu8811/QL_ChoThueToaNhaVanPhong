@@ -28,6 +28,7 @@ class LeadAssignedToSalesEvent implements ShouldBroadcast
     {
         return [
             new Channel("sales.{$this->lead->assigned_sales_id}"),
+            new Channel("staff.{$this->lead->assigned_sales_id}"),
         ];
     }
 

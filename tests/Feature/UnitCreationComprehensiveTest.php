@@ -109,6 +109,7 @@ class UnitCreationComprehensiveTest extends TestCase
             'address' => '100 Nguyễn Huệ',
             'grade' => 'A',
             'total_floors' => 25,
+            'total_basements' => 3,
             'total_leasable_area_sqm' => 20000,
             'electricity_unit_price' => 4500,
             'water_unit_price' => 25000,
@@ -691,5 +692,229 @@ class UnitCreationComprehensiveTest extends TestCase
             'unit_code' => 'ALP-PM-01',
             'updated_by_pm_id' => $this->pm->id,
         ]);
+    }
+
+    // =========================================================================
+    // NHÓM 6: TỰ ĐỘNG SINH MÃ SÀN & KIỂM TRA TẦNG PHÙ HỢP VỚI TÒA NHÀ
+    // =========================================================================
+
+    /**
+     * TC21: Tự động sinh mã sàn (unit_code) khi người dùng không truyền unit_code:
+     * - Tầng 7: Tự sinh mã dạng L07-01 hoặc ALP-0701
+     * - Tiếp tục tạo phòng thứ 2 trên tầng 7: Tự sinh mã tiếp theo (sequence 02)
+     */
+    public function test_tc21_auto_generates_unit_code_when_omitted(): void
+    {
+        // 1. Tạo phòng đầu tiên trên tầng 7 không truyền unit_code
+        $response1 = $this->withHeader('Authorization', 'Bearer ' . $this->adminToken)
+            ->postJson('/api/v1/admin/units', [
+                'building_id' => $this->building->id,
+                'floor_number' => 7,
+                'area_sqm' => 180,
+                'base_rental_price' => 500000,
+            ]);
+
+        $response1->assertStatus(201);
+        $code1 = $response1->json('data.unit_code');
+        $this->assertNotEmpty($code1);
+        $this->assertTrue(str_contains($code1, '0701') || str_contains($code1, 'L07-01'));
+
+        // 2. Tạo phòng thứ hai trên tầng 7 không truyền unit_code -> kỳ vọng sequence tăng lên 02
+        $response2 = $this->withHeader('Authorization', 'Bearer ' . $this->adminToken)
+            ->postJson('/api/v1/admin/units', [
+                'building_id' => $this->building->id,
+                'floor_number' => 7,
+                'area_sqm' => 220,
+                'base_rental_price' => 520000,
+            ]);
+
+        $response2->assertStatus(201);
+        $code2 = $response2->json('data.unit_code');
+        $this->assertNotEmpty($code2);
+        $this->assertNotEquals($code1, $code2);
+        $this->assertTrue(str_contains($code2, '0702') || str_contains($code2, 'L07-02'));
+    }
+
+    /**
+     * TC22: Chặn tạo mặt bằng khi vị trí tầng vượt quá số tầng của tòa nhà:
+     * Tòa nhà Alpha có total_floors = 25. Thử tạo tầng 26 -> 422 lỗi.
+     */
+    public function test_tc22_fails_when_floor_exceeds_building_total_floors(): void
+    {
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->adminToken)
+            ->postJson('/api/v1/admin/units', [
+                'building_id' => $this->building->id,
+                'floor_number' => 26, // Vượt quá 25
+                'area_sqm' => 150,
+                'base_rental_price' => 450000,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['floor_number']);
+
+        $errorMsg = $response->json('errors.floor_number.0');
+        $this->assertStringContainsString('vượt quá số tầng của tòa nhà', $errorMsg);
+    }
+
+    /**
+     * TC23: Chặn tạo mặt bằng tại tầng 0 (không tồn tại trong kiến trúc tòa nhà).
+     */
+    public function test_tc23_fails_when_floor_number_is_zero(): void
+    {
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->adminToken)
+            ->postJson('/api/v1/admin/units', [
+                'building_id' => $this->building->id,
+                'floor_number' => 0,
+                'area_sqm' => 150,
+                'base_rental_price' => 450000,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['floor_number']);
+
+        $errorMsg = $response->json('errors.floor_number.0');
+        $this->assertStringContainsString('không có tầng 0', $errorMsg);
+    }
+
+    /**
+     * TC24: Chặn tạo mặt bằng tại tầng hầm vượt quá số lượng tầng hầm của tòa nhà:
+     * Tòa nhà Alpha có total_basements = 3. Thử tạo tầng hầm -4 -> 422 lỗi.
+     */
+    public function test_tc24_fails_when_basement_floor_exceeds_building_total_basements(): void
+    {
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->adminToken)
+            ->postJson('/api/v1/admin/units', [
+                'building_id' => $this->building->id,
+                'floor_number' => -4, // Vượt quá 3 hầm
+                'area_sqm' => 100,
+                'base_rental_price' => 200000,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['floor_number']);
+
+        $errorMsg = $response->json('errors.floor_number.0');
+        $this->assertStringContainsString('vượt quá số tầng hầm', $errorMsg);
+    }
+
+    /**
+     * TC25: Chặn tạo mặt bằng tầng hầm khi tòa nhà không có tầng hầm (total_basements = 0).
+     */
+    public function test_tc25_fails_when_basement_floor_requested_on_building_without_basements(): void
+    {
+        $noBasementBuilding = Building::create([
+            'building_code' => 'BLD-NO-BASEMENT',
+            'name' => 'Tòa Nhà Không Hầm',
+            'slug' => 'toa-nha-khong-ham',
+            'province_code' => 79,
+            'province' => 'Thành phố Hồ Chí Minh',
+            'district' => 'Quận 3',
+            'ward' => 'Phường 6',
+            'address' => '50 Võ Văn Tần',
+            'grade' => 'C',
+            'total_floors' => 5,
+            'total_basements' => 0,
+            'total_leasable_area_sqm' => 2000,
+            'electricity_unit_price' => 4000,
+            'water_unit_price' => 20000,
+            'default_service_fee_per_sqm' => 50000,
+            'min_rent_price_per_sqm' => 0.00,
+            'max_rent_price_per_sqm' => 0.00,
+            'is_published' => true,
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->adminToken)
+            ->postJson('/api/v1/admin/units', [
+                'building_id' => $noBasementBuilding->id,
+                'floor_number' => -1,
+                'area_sqm' => 80,
+                'base_rental_price' => 150000,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['floor_number']);
+
+        $errorMsg = $response->json('errors.floor_number.0');
+        $this->assertStringContainsString('không có tầng hầm', $errorMsg);
+    }
+
+    /**
+     * TC26: API gợi ý mã sàn (GET /api/v1/admin/units/suggest-code) trả về mã duy nhất hợp lệ.
+     */
+    public function test_tc26_suggest_code_api_endpoint_success(): void
+    {
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->adminToken)
+            ->getJson("/api/v1/admin/units/suggest-code?building_id={$this->building->id}&floor_number=18");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('data.floor_number', 18);
+
+        $suggestedCode = $response->json('data.unit_code');
+        $this->assertNotEmpty($suggestedCode);
+    }
+
+    /**
+     * TC27: API gợi ý mã sàn trả về 422 khi tầng không hợp lệ (vượt quá số tầng tòa nhà).
+     */
+    public function test_tc27_suggest_code_api_endpoint_fails_when_floor_invalid(): void
+    {
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->adminToken)
+            ->getJson("/api/v1/admin/units/suggest-code?building_id={$this->building->id}&floor_number=50");
+
+        $response->assertStatus(422);
+    }
+
+    /**
+     * TC28: Tạo mặt bằng khi gửi handover_condition = null (từ form modal không chọn hiện trạng bàn giao).
+     * Hệ thống tự động gán mặc định 'BASIC' để không vi phạm ràng buộc NOT NULL của CSDL.
+     */
+    public function test_tc28_create_unit_with_explicit_null_handover_condition_defaults_to_basic(): void
+    {
+        $payload = [
+            'building_id' => $this->building->id,
+            'unit_code' => 'ALP-NULL-HAND',
+            'floor_number' => 10,
+            'area_sqm' => 120.0,
+            'base_rental_price' => 400000,
+            'handover_condition' => null,
+        ];
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->adminToken)
+            ->postJson('/api/v1/admin/units', $payload);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('data.handover_condition', 'BASIC');
+
+        $createdUnit = Unit::where('unit_code', 'ALP-NULL-HAND')->first();
+        $this->assertNotNull($createdUnit);
+        $this->assertEquals('BASIC', $createdUnit->handover_condition);
+    }
+
+    /**
+     * TC29: Tạo mặt bằng với handover_condition = 'FULL_FURNISHED' được chọn từ modal.
+     */
+    public function test_tc29_create_unit_with_custom_handover_condition_persists_correctly(): void
+    {
+        $payload = [
+            'building_id' => $this->building->id,
+            'unit_code' => 'ALP-FULL-FURN',
+            'floor_number' => 12,
+            'area_sqm' => 150.0,
+            'base_rental_price' => 550000,
+            'handover_condition' => 'FULL_FURNISHED',
+        ];
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->adminToken)
+            ->postJson('/api/v1/admin/units', $payload);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('data.handover_condition', 'FULL_FURNISHED');
+
+        $createdUnit = Unit::where('unit_code', 'ALP-FULL-FURN')->first();
+        $this->assertNotNull($createdUnit);
+        $this->assertEquals('FULL_FURNISHED', $createdUnit->handover_condition);
     }
 }

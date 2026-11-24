@@ -227,12 +227,21 @@ function moMapServerErrors(errors, fieldMapping = {}) {
 
   Object.keys(errors).forEach(key => {
     const msg = Array.isArray(errors[key]) ? errors[key][0] : errors[key];
-    const mapping = fieldMapping[key];
-    if (mapping && mapping.inputId && mapping.slotId) {
-      moSetFieldError(mapping.inputId, mapping.slotId, msg);
+    const mapping = fieldMapping[key] || (key.startsWith('units.') ? fieldMapping['units'] : null);
+    if (!mapping) return;
+
+    const inputId = Array.isArray(mapping) ? mapping[0] : mapping.inputId;
+    const slotId = Array.isArray(mapping) ? mapping[1] : mapping.slotId;
+
+    if (inputId && slotId) {
+      moSetFieldError(inputId, slotId, msg);
       if (!firstFocused) {
-        const el = document.getElementById(mapping.inputId);
-        if (el) { el.focus(); firstFocused = true; }
+        const el = document.getElementById(inputId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if (typeof el.focus === 'function') el.focus();
+          firstFocused = true;
+        }
       }
     }
   });

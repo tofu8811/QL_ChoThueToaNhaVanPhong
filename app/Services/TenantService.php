@@ -32,8 +32,12 @@ class TenantService
             });
         } elseif ($user instanceof \App\Models\PropertyManager) {
             $assignedBldIds = $user->buildings()->pluck('buildings.id')->toArray();
-            $query->whereHas('contracts', function ($cq) use ($assignedBldIds) {
-                $cq->whereIn('building_id', $assignedBldIds);
+            $query->where(function ($q) use ($assignedBldIds) {
+                $q->whereHas('contracts', function ($cq) use ($assignedBldIds) {
+                    $cq->whereIn('building_id', $assignedBldIds);
+                })->orWhereHas('convertedFromLead', function ($lq) use ($assignedBldIds) {
+                    $lq->whereIn('building_id', $assignedBldIds);
+                })->orWhereDoesntHave('contracts');
             });
         }
 

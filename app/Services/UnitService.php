@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\UnitStatus;
 use App\Exceptions\BusinessException;
+use App\Models\Building;
 use App\Models\ContractUnit;
 use App\Models\Unit;
 use App\Models\UnitImage;
@@ -175,6 +176,117 @@ class UnitService
     }
 
     /**
+     * Kiểm tra vị trí tầng có phù hợp với quy mô số tầng và tầng hầm của tòa nhà hay không.
+     *
+     * @param Building $building
+     * @param int $floorNumber
+     * @return void
+     * @throws BusinessException
+     */
+    public function validateFloorNumber(Building $building, int $floorNumber): void
+    {
+        if ($floorNumber === 0) {
+            $rangeText = "từ tầng 1 đến tầng {$building->total_floors}";
+            if ($building->total_basements > 0) {
+                $rangeText .= " hoặc tầng hầm từ B1 đến B{$building->total_basements} (nhập -1 đến -{$building->total_basements})";
+            }
+            throw new BusinessException("Vị trí tầng không hợp lệ (tòa nhà không có tầng 0). Vui lòng chọn {$rangeText}.", 422);
+        }
+
+        if ($floorNumber > 0 && $floorNumber > (int) $building->total_floors) {
+            throw new BusinessException(
+                "Vị trí tầng [{$floorNumber}] vượt quá số tầng của tòa nhà [{$building->name}] (quy mô tối đa {$building->total_floors} tầng nổi).",
+                422
+            );
+        }
+
+        if ($floorNumber < 0) {
+            $basements = (int) ($building->total_basements ?? 0);
+            if ($basements <= 0) {
+                throw new BusinessException(
+                    "Tòa nhà [{$building->name}] không có tầng hầm. Vị trí tầng phải từ 1 đến {$building->total_floors}.",
+                    422
+                );
+            }
+
+            if (abs($floorNumber) > $basements) {
+                throw new BusinessException(
+                    "Vị trí tầng hầm [{$floorNumber}] vượt quá số tầng hầm của tòa nhà [{$building->name}] (tối đa {$basements} tầng hầm: B1 đến B{$basements}).",
+                    422
+                );
+            }
+        }
+    }
+
+    /**
+     * Tự động sinh mã sàn (unit_code) duy nhất theo vị trí tầng và tòa nhà.
+     * Quét cả bản ghi đã xóa mềm (withTrashed) để triệt tiêu nguy cơ trùng lặp.
+     *
+     * @param string $buildingId
+     * @param int $floorNumber
+     * @return string
+     * @throws BusinessException
+     */
+    public function generateUnitCode(string $buildingId, int $floorNumber): string
+    {
+        $building = Building::withTrashed()->findOrFail($buildingId);
+        $this->validateFloorNumber($building, $floorNumber);
+
+        // Lấy danh sách các mã sàn hiện có trong tòa nhà (kể cả xóa mềm)
+        $existingCodes = Unit::withTrashed()
+            ->where('building_id', $buildingId)
+            ->pluck('unit_code');
+
+        // Xác định định dạng tiền tố tùy chỉnh nếu tòa nhà đã có các sàn theo mã riêng (VD: NEX-0501)
+        $customPrefix = null;
+        foreach ($existingCodes as $c) {
+            if (preg_match('/^([A-Za-z0-9]+)-(\d{4})$/', (string) $c, $m)) {
+                $customPrefix = strtoupper($m[1]);
+                break;
+            }
+        }
+
+        // Tìm số thứ tự lớn nhất hiện có trên tầng này
+        $maxSeq = 0;
+        foreach ($existingCodes as $c) {
+            if ($floorNumber > 0) {
+                if ($customPrefix && preg_match('/^' . preg_quote($customPrefix, '/') . '-' . sprintf('%02d', $floorNumber) . '(\d{2})$/', (string) $c, $m)) {
+                    $s = (int) $m[1];
+                    if ($s > $maxSeq) $maxSeq = $s;
+                } elseif (preg_match('/^L' . sprintf('%02d', $floorNumber) . '-(\d+)$/i', (string) $c, $m)) {
+                    $s = (int) $m[1];
+                    if ($s > $maxSeq) $maxSeq = $s;
+                }
+            } else {
+                $absFloor = abs($floorNumber);
+                if ($customPrefix && preg_match('/^' . preg_quote($customPrefix, '/') . '-B' . $absFloor . '(\d{2})$/', (string) $c, $m)) {
+                    $s = (int) $m[1];
+                    if ($s > $maxSeq) $maxSeq = $s;
+                } elseif (preg_match('/^B' . sprintf('%02d', $absFloor) . '-(\d+)$/i', (string) $c, $m)) {
+                    $s = (int) $m[1];
+                    if ($s > $maxSeq) $maxSeq = $s;
+                }
+            }
+        }
+
+        $seq = $maxSeq;
+        do {
+            $seq++;
+            if ($floorNumber > 0) {
+                $candidate = $customPrefix 
+                    ? sprintf('%s-%02d%02d', $customPrefix, $floorNumber, $seq)
+                    : sprintf('L%02d-%02d', $floorNumber, $seq);
+            } else {
+                $candidate = $customPrefix 
+                    ? sprintf('%s-B%d%02d', $customPrefix, abs($floorNumber), $seq)
+                    : sprintf('B%02d-%02d', abs($floorNumber), $seq);
+            }
+        } while (Unit::withTrashed()->where('building_id', $buildingId)->where('unit_code', $candidate)->exists());
+
+        return $candidate;
+    }
+
+    /**
      * Thêm mới mặt bằng văn phòng vào tòa nhà.
      *
      * @param array<string, mixed> $data
@@ -184,7 +296,17 @@ class UnitService
      */
     public function storeUnit(array $data, ?string $pmId = null): Unit
     {
-        // Kiểm tra unique composite (building_id, unit_code) bao gồm cả bản ghi đã xóa mềm
+        $building = Building::withTrashed()->findOrFail($data['building_id']);
+
+        // 1. Kiểm tra tính hợp lệ của tầng so với số tầng tòa nhà
+        $this->validateFloorNumber($building, (int) $data['floor_number']);
+
+        // 2. Tự động sinh mã sàn nếu để trống hoặc null
+        if (empty($data['unit_code'])) {
+            $data['unit_code'] = $this->generateUnitCode($data['building_id'], (int) $data['floor_number']);
+        }
+
+        // 3. Kiểm tra unique composite (building_id, unit_code) bao gồm cả bản ghi đã xóa mềm
         $exists = Unit::withTrashed()
             ->where('building_id', $data['building_id'])
             ->where('unit_code', $data['unit_code'])
@@ -196,6 +318,10 @@ class UnitService
 
         if (empty($data['status'])) {
             $data['status'] = UnitStatus::AVAILABLE;
+        }
+
+        if (empty($data['handover_condition'])) {
+            $data['handover_condition'] = 'BASIC';
         }
 
         if (empty($data['name'])) {
@@ -240,7 +366,13 @@ class UnitService
             );
         }
 
-        // 2. Kiểm tra mã phòng trùng nếu có đổi unit_code
+        // 2. Kiểm tra vị trí tầng nếu có thay đổi
+        if (isset($data['floor_number'])) {
+            $building = $unit->building ?: Building::withTrashed()->findOrFail($unit->building_id);
+            $this->validateFloorNumber($building, (int) $data['floor_number']);
+        }
+
+        // 3. Kiểm tra mã phòng trùng nếu có đổi unit_code
         if (!empty($data['unit_code']) && $data['unit_code'] !== $unit->unit_code) {
             $exists = Unit::withTrashed()
                 ->where('building_id', $unit->building_id)

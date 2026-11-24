@@ -7,6 +7,8 @@
     let currentAdminBuildingGrade = 'ALL';
     let currentActiveBuildingId = null;
     let currentActiveUnitBuildingId = null;
+    let currentActiveUnitBuilding = null;
+    let autoUnitCodeLastGenerated = '';
     let currentAdminBuildingPage = 1;
     let adminBuildingPageSize = 10;
     let adminBuildingPaginationMeta = {};
@@ -1251,6 +1253,39 @@
       });
     }
 
+    // Hàm tiện ích hỗ trợ Kéo - Thả file tải lên vào Modal
+    function setupDragDropForModal(formId, onFilesDrop) {
+      const form = document.getElementById(formId);
+      if (!form || form.dataset.dragDropReady) return;
+      form.dataset.dragDropReady = 'true';
+
+      ['dragenter', 'dragover'].forEach(name => {
+        form.addEventListener(name, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          form.style.borderColor = '#0284c7';
+          form.style.background = '#f0f9ff';
+        }, false);
+      });
+
+      ['dragleave', 'drop'].forEach(name => {
+        form.addEventListener(name, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          form.style.borderColor = '#cbd5e1';
+          form.style.background = '#f8fafc';
+        }, false);
+      });
+
+      form.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt ? Array.from(dt.files).filter(f => f.type.startsWith('image/')) : [];
+        if (files.length > 0) {
+          onFilesDrop(files);
+        }
+      }, false);
+    }
+
     // 6. Quản lý Album ảnh Tòa nhà (Supabase Storage): POST/DELETE /images & PATCH /set-primary
     async function openBuildingMediaModal(buildingId, buildingName) {
       currentActiveBuildingId = buildingId;
@@ -1258,7 +1293,19 @@
       if (!modal) return;
       const mediaBldName = document.getElementById('media-building-name');
       if (mediaBldName) mediaBldName.innerText = buildingName;
+
+      const fileInput = document.getElementById('building-images-input');
+      if (fileInput) fileInput.value = '';
+      const statusText = document.getElementById('building-images-file-status');
+      if (statusText) statusText.innerHTML = 'Hỗ trợ PNG, JPG, WebP (Tự động xem trước & tải lên ngay khi chọn)';
+      const submitBtn = document.getElementById('btn-submit-building-images');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Upload Supabase';
+      }
+
       modal.style.display = 'flex';
+      setupDragDropForModal('form-upload-building-images', uploadBuildingImageFiles);
       loadBuildingMedia(buildingId);
     }
 
@@ -1303,19 +1350,68 @@
       }
     }
 
+    async function handleBuildingImagesFileChange(input) {
+      if (!input || !input.files || input.files.length === 0) return;
+      const files = Array.from(input.files);
+      await uploadBuildingImageFiles(files);
+    }
+
     async function submitUploadBuildingImages(e) {
       if (e) e.preventDefault();
       if (!currentActiveBuildingId) return;
 
       const fileInput = document.getElementById('building-images-input');
       if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-        moToast('Vui lòng chọn ít nhất 1 ảnh (PNG, JPG).', 'warning', 'Chưa chọn tệp');
+        fileInput?.click();
         return;
       }
 
+      const files = Array.from(fileInput.files);
+      await uploadBuildingImageFiles(files);
+    }
+
+    async function uploadBuildingImageFiles(files) {
+      if (!currentActiveBuildingId || !files || files.length === 0) return;
+
+      const container = document.getElementById('building-images-grid');
+      const statusText = document.getElementById('building-images-file-status');
+      const submitBtn = document.getElementById('btn-submit-building-images');
+
+      if (statusText) {
+        statusText.innerHTML = `<span style="color:#0284c7;font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải lên ${files.length} ảnh...</span>`;
+      }
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang tải lên...';
+      }
+
+      // Preview tức thì trên form
+      if (container) {
+        if (container.innerText.includes('chưa có ảnh') || container.innerText.includes('Lỗi kết nối')) {
+          container.innerHTML = '';
+        }
+
+        const previewHtml = files.map((file, idx) => {
+          const tempUrl = URL.createObjectURL(file);
+          return `
+            <div id="bld-temp-img-${idx}" style="position:relative;border-radius:8px;overflow:hidden;border:2px dashed #0284c7;background:#f0f9ff;box-shadow:0 4px 6px -1px rgba(2,132,199,0.15);">
+              <img src="${tempUrl}" style="width:100%;height:130px;object-fit:cover;display:block;opacity:0.85;">
+              <div style="position:absolute;top:6px;left:6px;background:rgba(2,132,199,0.92);color:#fff;font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;display:flex;align-items:center;gap:4px;">
+                <i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...
+              </div>
+              <div style="padding:6px;background:#fff;border-top:1px solid #e2e8f0;font-size:11px;color:#0369a1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                ${escapeHtml(file.name)}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        container.insertAdjacentHTML('afterbegin', previewHtml);
+      }
+
       const formData = new FormData();
-      for (let i = 0; i < fileInput.files.length; i++) {
-        formData.append('images[]', fileInput.files[i]);
+      for (let i = 0; i < files.length; i++) {
+        formData.append('images[]', files[i]);
       }
 
       try {
@@ -1327,14 +1423,26 @@
 
         const json = await res.json();
         if (res.ok) {
-          moToast('Tải ảnh tòa nhà lên Supabase Storage thành công!', 'success', 'Thành công');
-          fileInput.value = '';
-          loadBuildingMedia(currentActiveBuildingId);
+          moToast(`Đã tải lên và lưu thành công ${files.length} ảnh tòa nhà!`, 'success', 'Thành công');
+          await loadBuildingMedia(currentActiveBuildingId);
+          loadAdminBuildingsList(currentAdminBuildingPage);
         } else {
           moToast('Lỗi tải ảnh: ' + (json.message || ''), 'error', 'Tải ảnh thất bại');
+          await loadBuildingMedia(currentActiveBuildingId);
         }
       } catch (err) {
-        moToast('Lỗi kết nối tải ảnh.', 'error', 'Lỗi kết nối');
+        moToast('Lỗi kết nối tải ảnh tòa nhà.', 'error', 'Lỗi kết nối');
+        await loadBuildingMedia(currentActiveBuildingId);
+      } finally {
+        const fileInput = document.getElementById('building-images-input');
+        if (fileInput) fileInput.value = '';
+        if (statusText) {
+          statusText.innerHTML = 'Hỗ trợ PNG, JPG, WebP (Tự động xem trước & tải lên ngay khi chọn)';
+        }
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Upload Supabase';
+        }
       }
     }
 
@@ -1382,7 +1490,22 @@
       if (!modal) return;
       const unitsBldName = document.getElementById('units-modal-building-name');
       if (unitsBldName) unitsBldName.innerText = buildingName;
+
+      // Tìm thông tin tòa nhà hiện tại trong danh sách hoặc fetch
+      currentActiveUnitBuilding = (adminBuildingsList || []).find(b => String(b.id) === String(buildingId)) || null;
+
+      // Reset form
+      const formEl = document.getElementById('form-create-unit');
+      if (formEl) formEl.reset();
+      const submitBtn = document.getElementById('btn-submit-create-unit');
+      if (submitBtn) submitBtn.disabled = false;
+
       modal.style.display = 'flex';
+
+      // Cập nhật thông số tầng và tự động sinh mã ban đầu
+      await updateBuildingUnitModalFloorLimits();
+
+      // Nạp danh sách mặt bằng
       loadBuildingUnits(buildingId, 1);
     }
 
@@ -1390,9 +1513,154 @@
       const modal = document.getElementById('modal-manage-units');
       if (modal) modal.style.display = 'none';
       currentActiveUnitBuildingId = null;
+      currentActiveUnitBuilding = null;
+      autoUnitCodeLastGenerated = '';
       currentUnitPage = 1;
       const paginationEl = document.getElementById('building-units-pagination');
       if (paginationEl) paginationEl.innerHTML = '';
+    }
+
+    async function updateBuildingUnitModalFloorLimits() {
+      if (!currentActiveUnitBuilding && currentActiveUnitBuildingId) {
+        try {
+          const res = await fetch(`/api/v1/admin/buildings/${currentActiveUnitBuildingId}`, {
+            headers: getAuthHeaders()
+          });
+          const json = await res.json();
+          if (json.data) {
+            currentActiveUnitBuilding = json.data;
+          }
+        } catch (e) {}
+      }
+
+      const totalFloors = parseInt(currentActiveUnitBuilding?.total_floors) || 0;
+      const totalBasements = parseInt(currentActiveUnitBuilding?.total_basements) || 0;
+
+      const statsEl = document.getElementById('units-modal-building-stats');
+      if (statsEl) {
+        let statsText = `Quy mô: ${totalFloors} tầng nổi`;
+        if (totalBasements > 0) statsText += `, ${totalBasements} tầng hầm`;
+        statsEl.innerText = statsText;
+      }
+
+      const hintEl = document.getElementById('new-unit-floor-hint');
+      if (hintEl) {
+        if (totalFloors > 0) {
+          hintEl.innerText = totalBasements > 0 
+            ? `(-${totalBasements} - ${totalFloors})`
+            : `(1 - ${totalFloors})`;
+        } else {
+          hintEl.innerText = '';
+        }
+      }
+
+      const floorInp = document.getElementById('new-unit-floor');
+      if (floorInp) {
+        floorInp.min = totalBasements > 0 ? -totalBasements : 1;
+        floorInp.max = totalFloors > 0 ? totalFloors : 99;
+        floorInp.placeholder = totalBasements > 0 ? `-${totalBasements} - ${totalFloors}` : `1 - ${totalFloors || 20}`;
+        floorInp.value = '1';
+        await handleUnitFloorChange(floorInp);
+      }
+    }
+
+    function handleFloorKeyDown(e) {
+      if (e.key === '0') {
+        const inp = e.target;
+        const isAllSelected = inp.selectionStart === 0 && inp.selectionEnd === inp.value.length;
+        if (inp.value === '' || isAllSelected) {
+          e.preventDefault();
+          return false;
+        }
+      }
+    }
+
+    function handleFloorBlur(inp) {
+      if (!inp) return;
+      const totalFloors = parseInt(currentActiveUnitBuilding?.total_floors) || 99;
+      const totalBasements = parseInt(currentActiveUnitBuilding?.total_basements) || 0;
+      const minFloor = totalBasements > 0 ? -totalBasements : 1;
+
+      let val = parseInt(inp.value);
+      if (isNaN(val) || val === 0) {
+        inp.value = '1';
+        val = 1;
+      } else if (val > totalFloors) {
+        inp.value = String(totalFloors);
+        val = totalFloors;
+      } else if (val < minFloor) {
+        inp.value = String(minFloor);
+        val = minFloor;
+      }
+      autoGenerateUnitCode(val);
+    }
+
+    async function handleUnitFloorChange(inputEl) {
+      if (!inputEl) return;
+      let raw = inputEl.value;
+      if (raw === '' || raw === '-') return; // Đang xóa hoặc gõ dấu âm
+
+      const totalFloors = parseInt(currentActiveUnitBuilding?.total_floors) || 99;
+      const totalBasements = parseInt(currentActiveUnitBuilding?.total_basements) || 0;
+      const minFloor = totalBasements > 0 ? -totalBasements : 1;
+
+      let val = parseInt(raw);
+      if (isNaN(val)) return;
+
+      // Không cho nhập số 0: tự động chuyển về 1
+      if (val === 0) {
+        inputEl.value = '1';
+        val = 1;
+      }
+
+      // Không cho nhập quá số tầng của tòa nhà: tự động chặn ở totalFloors
+      if (val > totalFloors) {
+        inputEl.value = String(totalFloors);
+        val = totalFloors;
+      }
+
+      // Không cho nhập quá số tầng hầm
+      if (val < minFloor) {
+        inputEl.value = String(minFloor);
+        val = minFloor;
+      }
+
+      const codeInp = document.getElementById('new-unit-code');
+      const currentCode = codeInp ? codeInp.value.trim() : '';
+      if (!currentCode || currentCode === autoUnitCodeLastGenerated) {
+        await autoGenerateUnitCode(val);
+      }
+    }
+
+    async function autoGenerateUnitCode(floor = null) {
+      if (!currentActiveUnitBuildingId) return;
+
+      const floorInp = document.getElementById('new-unit-floor');
+      const codeInp = document.getElementById('new-unit-code');
+      if (!codeInp) return;
+
+      let f = (floor !== null && floor !== undefined) ? parseInt(floor) : (parseInt(floorInp?.value) || 1);
+      if (isNaN(f) || f === 0) f = 1;
+
+      try {
+        const res = await fetch(`/api/v1/admin/units/suggest-code?building_id=${currentActiveUnitBuildingId}&floor_number=${f}`, {
+          method: 'GET',
+          headers: getAuthHeaders()
+        });
+        const json = await res.json();
+        if (res.ok && json.data?.unit_code) {
+          codeInp.value = json.data.unit_code;
+          autoUnitCodeLastGenerated = json.data.unit_code;
+        } else {
+          const fallback = f > 0 ? `L${String(f).padStart(2, '0')}-01` : `B${String(Math.abs(f)).padStart(2, '0')}-01`;
+          codeInp.value = fallback;
+          autoUnitCodeLastGenerated = fallback;
+        }
+      } catch (e) {
+        const fallback = f > 0 ? `L${String(f).padStart(2, '0')}-01` : `B${String(Math.abs(f)).padStart(2, '0')}-01`;
+        codeInp.value = fallback;
+        autoUnitCodeLastGenerated = fallback;
+      }
     }
 
     async function loadBuildingUnits(buildingId, page = null) {
@@ -1402,7 +1670,7 @@
       const tbody = document.getElementById('building-units-tbody');
       const paginationEl = document.getElementById('building-units-pagination');
       if (!tbody) return;
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang nạp danh sách mặt bằng...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Đang nạp danh sách mặt bằng...</td></tr>';
 
       try {
         const res = await fetch(`/api/v1/admin/units?building_id=${buildingId}&page=${currentUnitPage}&per_page=${unitPageSize}`, {
@@ -1419,7 +1687,7 @@
         };
 
         if (units.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#94a3b8;">Tòa nhà chưa có mặt bằng sàn nào được tạo.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:#94a3b8;">Tòa nhà chưa có mặt bằng sàn nào được tạo.</td></tr>';
           if (paginationEl) paginationEl.innerHTML = '';
           return;
         }
@@ -1434,15 +1702,23 @@
             statusBadge = '<span class="badge-filament danger">Đang bảo trì</span>';
           }
 
+          let handoverBadge = '<span class="badge-filament" style="background:#f1f5f9;color:#475569;">Cơ bản</span>';
+          if (u.handover_condition === 'RAW') {
+            handoverBadge = '<span class="badge-filament" style="background:#fef3c7;color:#92400e;">Thô</span>';
+          } else if (u.handover_condition === 'FULL_FURNISHED') {
+            handoverBadge = '<span class="badge-filament" style="background:#e0f2fe;color:#0369a1;">Full nội thất</span>';
+          }
+
           return `
             <tr>
               <td>
                 <strong style="color:var(--mo-primary);font-size:13px;">${escapeHtml(u.unit_code)}</strong>
                 ${u.name ? `<div style="font-size:11px;color:#64748b;">${escapeHtml(u.name)}</div>` : ''}
               </td>
-              <td>Tầng ${escapeHtml(String(u.floor_number ?? '---'))}</td>
+              <td>${parseInt(u.floor_number) < 0 ? `<span style="font-weight:600;color:#64748b;">Hầm B${Math.abs(parseInt(u.floor_number))}</span>` : `Tầng ${escapeHtml(String(u.floor_number ?? '---'))}`}</td>
               <td><strong>${escapeHtml(u.formatted_area || `${u.area || 0} m²`)}</strong></td>
               <td><span style="color:#ea580c;font-weight:700;">${escapeHtml(u.formatted_rent_price || '---')}</span></td>
+              <td>${handoverBadge}</td>
               <td>${statusBadge}</td>
               <td style="text-align:right;white-space:nowrap;">
                 ${u.status === 'AVAILABLE' ? `
@@ -1463,7 +1739,7 @@
 
         renderBuildingUnitsPagination(unitPaginationMeta);
       } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="6" style="color:#ef4444;text-align:center;">Lỗi kết nối tải mặt bằng.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="color:#ef4444;text-align:center;">Lỗi kết nối tải mặt bằng.</td></tr>';
         if (paginationEl) paginationEl.innerHTML = '';
       }
     }
@@ -1517,20 +1793,39 @@
       if (e) e.preventDefault();
       if (!currentActiveUnitBuildingId) return;
 
+      const floorInp = document.getElementById('new-unit-floor');
+      let floorNum = parseInt(floorInp?.value);
+      const totalFloors = parseInt(currentActiveUnitBuilding?.total_floors) || 99;
+      const totalBasements = parseInt(currentActiveUnitBuilding?.total_basements) || 0;
+      const minFloor = totalBasements > 0 ? -totalBasements : 1;
+
+      if (isNaN(floorNum) || floorNum === 0) {
+        floorNum = 1;
+        if (floorInp) floorInp.value = '1';
+      } else if (floorNum > totalFloors) {
+        floorNum = totalFloors;
+        if (floorInp) floorInp.value = String(totalFloors);
+      } else if (floorNum < minFloor) {
+        floorNum = minFloor;
+        if (floorInp) floorInp.value = String(minFloor);
+      }
+
+      let unitCode = document.getElementById('new-unit-code')?.value?.trim() || '';
+
       const payload = {
         building_id: currentActiveUnitBuildingId,
-        unit_code: document.getElementById('new-unit-code').value.trim(),
-        floor_number: parseInt(document.getElementById('new-unit-floor').value.trim()) || 1,
-        area_sqm: parseFloat(document.getElementById('new-unit-area').value) || 0,
-        base_rental_price: parseFloat(document.getElementById('new-unit-price').value) || 0,
-        area: parseFloat(document.getElementById('new-unit-area').value) || 0,
-        rent_price_per_sqm: parseFloat(document.getElementById('new-unit-price').value) || 0,
-        service_fee_per_sqm: parseFloat(document.getElementById('new-unit-service-fee').value) || 0,
-        handover_condition: document.getElementById('new-unit-handover')?.value?.trim() || null
+        unit_code: unitCode,
+        floor_number: floorNum,
+        area_sqm: parseFloat(document.getElementById('new-unit-area')?.value) || 0,
+        base_rental_price: parseFloat(document.getElementById('new-unit-price')?.value) || 0,
+        area: parseFloat(document.getElementById('new-unit-area')?.value) || 0,
+        rent_price_per_sqm: parseFloat(document.getElementById('new-unit-price')?.value) || 0,
+        service_fee_per_sqm: parseFloat(document.getElementById('new-unit-service-fee')?.value) || 0,
+        handover_condition: document.getElementById('new-unit-handover')?.value?.trim() || 'BASIC'
       };
 
-      if (!payload.unit_code || !payload.area || !payload.rent_price_per_sqm) {
-        moToast('Vui lòng nhập đầy đủ Mã sàn, Diện tích và Đơn giá thuê.', 'warning', 'Thiếu thông tin');
+      if (!payload.area || !payload.rent_price_per_sqm) {
+        moToast('Vui lòng nhập đầy đủ Diện tích và Đơn giá thuê.', 'warning', 'Thiếu thông tin');
         return;
       }
 
@@ -1547,6 +1842,13 @@
           document.getElementById('form-create-unit')?.reset();
           loadBuildingUnits(currentActiveUnitBuildingId, 1);
           loadAdminBuildingsList(currentAdminBuildingPage);
+
+          // Cập nhật lại tầng mặc định và tự sinh mã mới cho lần thêm tiếp theo
+          const floorInp = document.getElementById('new-unit-floor');
+          if (floorInp) {
+            floorInp.value = String(floorNum);
+            autoGenerateUnitCode(floorNum);
+          }
         } else {
           moToast('Lỗi tạo mặt bằng: ' + (json.message || ''), 'error', 'Tạo mặt bằng thất bại');
         }
@@ -1614,7 +1916,19 @@
       if (!modal) return;
       const codeEl = document.getElementById('media-unit-code');
       if (codeEl) codeEl.innerText = unitCode;
+
+      const fileInput = document.getElementById('unit-images-input');
+      if (fileInput) fileInput.value = '';
+      const statusText = document.getElementById('unit-images-file-status');
+      if (statusText) statusText.innerHTML = 'Hỗ trợ JPG, PNG, WebP (Tự động xem trước & tải lên ngay khi chọn)';
+      const submitBtn = document.getElementById('btn-submit-unit-images');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Upload Ảnh Sàn';
+      }
+
       modal.style.display = 'flex';
+      setupDragDropForModal('form-upload-unit-images', uploadUnitImageFiles);
       loadUnitMedia(unitId);
     }
 
@@ -1657,19 +1971,69 @@
       }
     }
 
+    async function handleUnitImagesFileChange(input) {
+      if (!input || !input.files || input.files.length === 0) return;
+      const files = Array.from(input.files);
+      await uploadUnitImageFiles(files);
+    }
+
     async function submitUploadUnitImages(e) {
       if (e) e.preventDefault();
       if (!currentActiveUnitId) return;
 
       const fileInput = document.getElementById('unit-images-input');
       if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-        moToast('Vui lòng chọn ít nhất 1 ảnh sơ đồ mặt bằng (PNG, JPG).', 'warning', 'Chưa chọn tệp');
+        fileInput?.click();
         return;
       }
 
+      const files = Array.from(fileInput.files);
+      await uploadUnitImageFiles(files);
+    }
+
+    async function uploadUnitImageFiles(files) {
+      if (!currentActiveUnitId || !files || files.length === 0) return;
+
+      const container = document.getElementById('unit-images-grid');
+      const statusText = document.getElementById('unit-images-file-status');
+      const submitBtn = document.getElementById('btn-submit-unit-images');
+
+      if (statusText) {
+        statusText.innerHTML = `<span style="color:#0284c7;font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải lên ${files.length} ảnh mặt bằng...</span>`;
+      }
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang tải lên...';
+      }
+
+      // 1. Hiển thị xem trước tức thì (Instant Preview) ngay trên form
+      if (container) {
+        if (container.innerText.includes('chưa có ảnh thực tế') || container.innerText.includes('Lỗi kết nối')) {
+          container.innerHTML = '';
+        }
+
+        const previewHtml = files.map((file, idx) => {
+          const tempUrl = URL.createObjectURL(file);
+          return `
+            <div id="unit-temp-img-${idx}" style="position:relative;border-radius:8px;overflow:hidden;border:2px dashed #0284c7;background:#f0f9ff;box-shadow:0 4px 6px -1px rgba(2,132,199,0.15);">
+              <img src="${tempUrl}" style="width:100%;height:130px;object-fit:cover;display:block;opacity:0.85;">
+              <div style="position:absolute;top:6px;left:6px;background:rgba(2,132,199,0.92);color:#fff;font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;display:flex;align-items:center;gap:4px;">
+                <i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...
+              </div>
+              <div style="padding:6px;background:#fff;border-top:1px solid #e2e8f0;font-size:11px;color:#0369a1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                ${escapeHtml(file.name)}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        container.insertAdjacentHTML('afterbegin', previewHtml);
+      }
+
+      // 2. Đóng gói FormData và gửi lên server
       const formData = new FormData();
-      for (let i = 0; i < fileInput.files.length; i++) {
-        formData.append('images[]', fileInput.files[i]);
+      for (let i = 0; i < files.length; i++) {
+        formData.append('images[]', files[i]);
       }
 
       try {
@@ -1681,15 +2045,28 @@
 
         const json = await res.json();
         if (res.ok) {
-          moToast('Tải lên ảnh sơ đồ mặt bằng thành công!', 'success', 'Thành công');
-          fileInput.value = '';
-          loadUnitMedia(currentActiveUnitId);
-          if (currentActiveUnitBuildingId) loadBuildingUnits(currentActiveUnitBuildingId);
+          moToast(`Đã tải lên và lưu thành công ${files.length} ảnh sơ đồ mặt bằng!`, 'success', 'Thành công');
+          await loadUnitMedia(currentActiveUnitId);
+          if (currentActiveUnitBuildingId) {
+            loadBuildingUnits(currentActiveUnitBuildingId);
+          }
         } else {
           moToast('Lỗi tải ảnh: ' + (json.message || ''), 'error', 'Tải ảnh thất bại');
+          await loadUnitMedia(currentActiveUnitId);
         }
       } catch (err) {
-        moToast('Lỗi kết nối tải ảnh mặt bằng.', 'error', 'Lỗi kết nối');
+        moToast('Lỗi kết nối khi tải ảnh mặt bằng.', 'error', 'Lỗi kết nối');
+        await loadUnitMedia(currentActiveUnitId);
+      } finally {
+        const fileInput = document.getElementById('unit-images-input');
+        if (fileInput) fileInput.value = '';
+        if (statusText) {
+          statusText.innerHTML = 'Hỗ trợ JPG, PNG, WebP (Tự động xem trước & tải lên ngay khi chọn)';
+        }
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Upload Ảnh Sàn';
+        }
       }
     }
 

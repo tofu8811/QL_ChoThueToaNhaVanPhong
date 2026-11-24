@@ -105,13 +105,25 @@ class ContractService
     /**
      * Khởi tạo Hợp đồng thuê bản nháp (DRAFT).
      */
-    public function createDraftContract(array $data, ?string $salesId = null): Contract
+    public function createDraftContract(array $data, ?string $salesId = null, mixed $actor = null): Contract
     {
-        return DB::transaction(function () use ($data, $salesId) {
+        return DB::transaction(function () use ($data, $salesId, $actor) {
             $building = Building::findOrFail($data['building_id']);
+            $actor = $actor ?? auth('sanctum')->user() ?? auth()->user();
 
-            // Kiểm tra phân quyền: Sales chỉ được tạo hợp đồng cho tòa nhà mình được phân công
-            if ($salesId) {
+            // Kiểm tra phân quyền theo vai trò (RBAC):
+            // - Admin / Super Admin: Có toàn quyền tạo hợp đồng cho mọi tòa nhà và mọi khách thuê
+            // - Property Manager: Phải được phân công quản lý tòa nhà này
+            // - Sales: Phải được phân công phụ trách tòa nhà này
+            if ($actor instanceof Admin) {
+                // Admin / Super Admin có quyền tối cao trên toàn hệ thống
+            } elseif ($actor instanceof PropertyManager) {
+                $this->ensurePmAssignedToBuilding($actor, $data['building_id']);
+            } elseif ($actor instanceof Sale) {
+                if (!$actor->buildings()->where('buildings.id', $data['building_id'])->exists()) {
+                    throw new BusinessException('Bạn không được phân công phụ trách tòa nhà ' . $building->name . ' nên không thể tạo hợp đồng.', 403);
+                }
+            } elseif (!$actor && $salesId) {
                 $sale = Sale::find($salesId);
                 if ($sale && !$sale->buildings()->where('buildings.id', $data['building_id'])->exists()) {
                     throw new BusinessException('Bạn không được phân công phụ trách tòa nhà ' . $building->name . ' nên không thể tạo hợp đồng.', 403);
@@ -138,7 +150,7 @@ class ContractService
                 'contract_number' => $contractNumber,
                 'building_id' => $data['building_id'],
                 'tenant_id' => $data['tenant_id'],
-                'created_by_sales_id' => $salesId ?? $data['created_by_sales_id'] ?? null,
+                'created_by_sales_id' => ($actor instanceof Sale ? $actor->id : ($salesId ?? $data['created_by_sales_id'] ?? null)),
                 'start_date' => $data['start_date'],
                 'end_date' => $data['end_date'],
                 'total_leased_area_sqm' => $initialTotalArea,
@@ -171,13 +183,25 @@ class ContractService
     /**
      * Khởi tạo Hợp đồng Đặt cọc giữ chỗ tạm thời (Booking / RESERVED).
      */
-    public function createBookingContract(array $data, ?string $salesId = null): Contract
+    public function createBookingContract(array $data, ?string $salesId = null, mixed $actor = null): Contract
     {
-        return DB::transaction(function () use ($data, $salesId) {
+        return DB::transaction(function () use ($data, $salesId, $actor) {
             $building = Building::findOrFail($data['building_id']);
+            $actor = $actor ?? auth('sanctum')->user() ?? auth()->user();
 
-            // Kiểm tra phân quyền: Sales chỉ được đặt cọc giữ chỗ cho tòa nhà mình được phân công
-            if ($salesId) {
+            // Kiểm tra phân quyền theo vai trò (RBAC):
+            // - Admin / Super Admin: Có toàn quyền đặt cọc giữ chỗ cho mọi tòa nhà và mọi khách thuê
+            // - Property Manager: Phải được phân công quản lý tòa nhà này
+            // - Sales: Phải được phân công phụ trách tòa nhà này
+            if ($actor instanceof Admin) {
+                // Admin / Super Admin có quyền tối cao trên toàn hệ thống
+            } elseif ($actor instanceof PropertyManager) {
+                $this->ensurePmAssignedToBuilding($actor, $data['building_id']);
+            } elseif ($actor instanceof Sale) {
+                if (!$actor->buildings()->where('buildings.id', $data['building_id'])->exists()) {
+                    throw new BusinessException('Bạn không được phân công phụ trách tòa nhà ' . $building->name . ' nên không thể đặt cọc giữ chỗ.', 403);
+                }
+            } elseif (!$actor && $salesId) {
                 $sale = Sale::find($salesId);
                 if ($sale && !$sale->buildings()->where('buildings.id', $data['building_id'])->exists()) {
                     throw new BusinessException('Bạn không được phân công phụ trách tòa nhà ' . $building->name . ' nên không thể đặt cọc giữ chỗ.', 403);
@@ -201,7 +225,7 @@ class ContractService
                 'contract_number' => $contractNumber,
                 'building_id' => $data['building_id'],
                 'tenant_id' => $data['tenant_id'],
-                'created_by_sales_id' => $salesId ?? $data['created_by_sales_id'] ?? null,
+                'created_by_sales_id' => ($actor instanceof Sale ? $actor->id : ($salesId ?? $data['created_by_sales_id'] ?? null)),
                 'start_date' => $data['start_date'],
                 'end_date' => $data['end_date'],
                 'total_leased_area_sqm' => $initialTotalArea,
@@ -301,11 +325,14 @@ class ContractService
     /**
      * Hủy bỏ / Xóa hợp đồng bản nháp hoặc giữ chỗ.
      */
-    public function deleteDraftContract(Contract $contract): void
+    public function deleteDraftContract(Contract $contract, mixed $user = null): void
     {
         if (!in_array($contract->status, [ContractStatus::DRAFT, ContractStatus::RESERVED])) {
             throw new BusinessException('Tuyệt đối cấm xóa hợp đồng đã được phê duyệt hoặc có hiệu lực pháp lý.', 403);
         }
+
+        $oldStatus = $contract->status instanceof \BackedEnum ? $contract->status->value : (string) $contract->status;
+        $contractClone = clone $contract;
 
         DB::transaction(function () use ($contract) {
             $unitIds = $contract->contractUnits()->pluck('unit_id')->toArray();
@@ -320,6 +347,18 @@ class ContractService
             $contract->contractUnits()->delete();
             $contract->delete();
         });
+
+        try {
+            \App\Events\ContractStatusChangedEvent::dispatch(
+                $contractClone,
+                'REJECTED',
+                $oldStatus,
+                'CANCELLED',
+                $user
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Broadcast realtime ContractStatusChangedEvent (reject/delete) failed: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -428,7 +467,7 @@ class ContractService
             $this->ensureSaleAssignedToContract($user, $contract);
         }
 
-        return DB::transaction(function () use ($contract, $user) {
+        $signedContract = DB::transaction(function () use ($contract, $user) {
             $updateData = [
                 'status' => ContractStatus::ACTIVE,
                 'signed_date' => now()->toDateString(),
@@ -487,6 +526,20 @@ class ContractService
 
             return $freshContract;
         });
+
+        try {
+            \App\Events\ContractStatusChangedEvent::dispatch(
+                $signedContract,
+                'SIGNED',
+                \App\Enums\ContractStatus::DRAFT->value,
+                \App\Enums\ContractStatus::ACTIVE->value,
+                $user
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Broadcast realtime ContractStatusChangedEvent (sign) failed: ' . $e->getMessage());
+        }
+
+        return $signedContract;
     }
 
     /**
@@ -509,7 +562,7 @@ class ContractService
 
         $cycleStartDate = Carbon::parse($oldContract->end_date)->addDay()->toDateString();
 
-        return DB::transaction(function () use ($oldContract, $data, $user, $cycleStartDate, $newEndDate) {
+        $newContract = DB::transaction(function () use ($oldContract, $data, $user, $cycleStartDate, $newEndDate) {
             // 1. Kiểm tra giao thoa thời gian chu kỳ mới cho toàn bộ các mặt bằng
             $units = $oldContract->contractUnits;
             foreach ($units as $cu) {
@@ -567,6 +620,20 @@ class ContractService
 
             return $newContract->fresh(['contractUnits.unit', 'parentContract']);
         });
+
+        try {
+            \App\Events\ContractStatusChangedEvent::dispatch(
+                $newContract,
+                'RENEWED',
+                $oldContract->status instanceof \BackedEnum ? $oldContract->status->value : (string) $oldContract->status,
+                \App\Enums\ContractStatus::ACTIVE->value,
+                $user
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Broadcast realtime ContractStatusChangedEvent (renew) failed: ' . $e->getMessage());
+        }
+
+        return $newContract;
     }
 
     /**
@@ -595,7 +662,9 @@ class ContractService
             throw new BusinessException(sprintf('Tổng tiền cọc hoàn lại (%s) và tiền phạt vi phạm (%s) không được vượt quá số tiền cọc ban đầu (%s).', number_format($refund), number_format($penalty), number_format($deposit)), 422);
         }
 
-        return DB::transaction(function () use ($contract, $data, $user, $refund, $penalty) {
+        $oldStatus = $contract->status instanceof \BackedEnum ? $contract->status->value : (string) $contract->status;
+
+        $terminatedContract = DB::transaction(function () use ($contract, $data, $user, $refund, $penalty) {
             $updateData = [
                 'status' => ContractStatus::TERMINATED,
                 'terminated_at' => $data['terminated_at'] ?? now()->toDateString(),
@@ -623,6 +692,20 @@ class ContractService
 
             return $contract->fresh(['contractUnits.unit', 'building', 'tenant']);
         });
+
+        try {
+            \App\Events\ContractStatusChangedEvent::dispatch(
+                $terminatedContract,
+                'TERMINATED',
+                $oldStatus,
+                \App\Enums\ContractStatus::TERMINATED->value,
+                $user
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Broadcast realtime ContractStatusChangedEvent (terminate) failed: ' . $e->getMessage());
+        }
+
+        return $terminatedContract;
     }
 
     /**

@@ -1,4 +1,27 @@
 <!-- MODAL: XÁC NHẬN HÀNH ĐỘNG ĐA TRẠNG THÁI (STATEFUL ACTION CONFIRMATION MODAL) -->
+<style>
+  @keyframes moSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  @keyframes modalScaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .mo-spinner {
+    display: inline-block;
+    width: 48px;
+    height: 48px;
+    border: 4px solid #e2e8f0;
+    border-top-color: var(--mo-primary, #0284c7);
+    border-radius: 50%;
+    animation: moSpin 0.75s linear infinite !important;
+  }
+</style>
 <div id="modal-confirm-action" class="mo-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.65);backdrop-filter:blur(4px);z-index:99999;align-items:center;justify-content:center;transition:all 0.2s ease;">
   <div style="background:#ffffff;border-radius:14px;width:480px;max-width:92vw;box-shadow:0 25px 50px -12px rgba(0,0,0,0.35);overflow:hidden;border:1px solid #cbd5e1;display:flex;flex-direction:column;position:relative;animation:modalScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
 
@@ -41,9 +64,9 @@
 
     <!-- TRẠNG THÁI 2: ĐANG XỬ LÝ (PROCESSING) -->
     <div id="confirm-state-processing" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:36px 24px 32px;text-align:center;">
-      <div style="width:48px;height:48px;border:4px solid #e2e8f0;border-top-color:var(--mo-primary,#0284c7);border-radius:50%;animation:moSpin 0.75s linear infinite;margin-bottom:16px;"></div>
-      <h4 style="margin:0 0 6px;font-size:16px;font-weight:700;color:#0f172a;">Đang xử lý yêu cầu...</h4>
-      <p style="margin:0;font-size:13px;color:#64748b;line-height:1.5;">Hệ thống đang kiểm tra ràng buộc và thực thi thao tác.<br>Vui lòng đợi trong giây lát.</p>
+      <div class="mo-spinner" style="width:48px;height:48px;border:4px solid #e2e8f0;border-top-color:var(--mo-primary,#0284c7);border-radius:50%;animation:moSpin 0.75s linear infinite;margin-bottom:16px;"></div>
+      <h4 id="confirm-modal-processing-title" style="margin:0 0 6px;font-size:16px;font-weight:700;color:#0f172a;">Đang xử lý yêu cầu...</h4>
+      <p id="confirm-modal-processing-message" style="margin:0;font-size:13px;color:#64748b;line-height:1.5;">Hệ thống đang kiểm tra ràng buộc và thực thi thao tác.<br>Vui lòng đợi trong giây lát.</p>
     </div>
 
     <!-- TRẠNG THÁI 3: THÀNH CÔNG (SUCCESS) -->

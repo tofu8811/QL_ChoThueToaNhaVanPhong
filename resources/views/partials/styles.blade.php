@@ -85,6 +85,38 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* Universal Spinner & Loading Animations */
+    @keyframes moSpin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes fa-spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes modalScaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .fa-spin, .animate-spin {
+      display: inline-block;
+      animation: moSpin 0.85s linear infinite !important;
+    }
+    .mo-spinner, .spinner-circle {
+      display: inline-block;
+      width: 48px;
+      height: 48px;
+      border: 4px solid #e2e8f0;
+      border-top-color: var(--mo-primary, #0284c7);
+      border-radius: 50%;
+      animation: moSpin 0.75s linear infinite !important;
+    }
+
     /* Common Buttons */
     .btn-mo-orange {
       white-space: nowrap !important;

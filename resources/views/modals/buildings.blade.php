@@ -259,7 +259,7 @@
       <!-- THANH NÚT ĐIỀU KHIỂN DƯỚI CÙNG -->
       <div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #e2e8f0;padding-top:12px;margin-top:auto;flex-shrink:0;">
         <button type="button" class="btn-mo-outline" onclick="closeCreateBuildingModal()" style="padding:7px 16px;font-size:13px;">Hủy</button>
-        <button type="submit" class="btn-mo-orange" style="padding:7px 24px;font-size:13px;font-weight:600;"><i class="fa-solid fa-save"></i> Lưu</button>
+        <button type="submit" id="btn-submit-create-building" class="btn-mo-orange" style="padding:7px 24px;font-size:13px;font-weight:600;"><i class="fa-solid fa-save"></i> Lưu</button>
       </div>
     </form>
   </div>
@@ -526,7 +526,7 @@
       <!-- THANH NÚT ĐIỀU KHIỂN DƯỚI CÙNG -->
       <div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #e2e8f0;padding-top:12px;margin-top:auto;flex-shrink:0;">
         <button type="button" class="btn-mo-outline" onclick="closeEditBuildingModal()" style="padding:7px 16px;font-size:13px;">Hủy</button>
-        <button type="submit" class="btn-mo-primary" style="padding:7px 24px;font-size:13px;font-weight:600;"><i class="fa-solid fa-save"></i> Lưu</button>
+        <button type="submit" id="btn-submit-edit-building" class="btn-mo-primary" style="padding:7px 24px;font-size:13px;font-weight:600;"><i class="fa-solid fa-save"></i> Lưu</button>
       </div>
     </form>
   </div>
@@ -586,11 +586,7 @@
             <input type="text" id="new-unit-code" placeholder="VD: L12-01" class="filament-input-sm" required style="height:32px;">
           </div>
           <div class="form-field">
-            <div style="margin-bottom:3px;height:18px;display:flex;align-items:center;white-space:nowrap;">
-              <label style="font-size:11px;font-weight:600;color:#475569;">Tầng</label>
-              <span id="new-unit-floor-hint" style="font-size:10px;color:#0284c7;font-weight:600;margin-left:3px;margin-right:2px;"></span>
-              <span style="color:#ef4444;font-size:11px;font-weight:600;">*</span>
-            </div>
+            <label style="font-size:11px;font-weight:600;color:#475569;margin-bottom:3px;height:18px;display:flex;align-items:center;white-space:nowrap;">Tầng <span style="color:#ef4444;margin-left:2px;">*</span></label>
             <input type="number" id="new-unit-floor" placeholder="VD: 1" class="filament-input-sm" required style="height:32px;" onkeydown="handleFloorKeyDown(event)" oninput="handleUnitFloorChange(this)" onblur="handleFloorBlur(this)">
           </div>
           <div class="form-field">

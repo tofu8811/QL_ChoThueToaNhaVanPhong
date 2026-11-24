@@ -835,6 +835,20 @@
         return;
       }
 
+      const submitBtn = document.getElementById('btn-submit-create-building');
+      const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+      }
+
+      if (typeof moShowLoading === 'function') {
+        moShowLoading(
+          'Đang lưu tòa nhà...',
+          'Hệ thống đang kiểm tra ràng buộc, xử lý hình ảnh và khởi tạo tòa nhà mới.<br>Vui lòng đợi trong giây lát...'
+        );
+      }
+
       const provSelect = document.getElementById('build-province');
       const selectedProvOpt = provSelect?.options[provSelect.selectedIndex];
       const provinceCode = parseInt(provSelect?.value);
@@ -898,10 +912,12 @@
 
         const json = await res.json();
         if (res.ok) {
+          if (typeof moHideLoading === 'function') moHideLoading();
           moToast('Tạo tòa nhà văn phòng mới và tải lên hình ảnh thành công!', 'success', 'Thành công');
           closeCreateBuildingModal();
           loadAdminBuildingsList();
         } else {
+          if (typeof moHideLoading === 'function') moHideLoading();
           // Ánh xạ lỗi 422 từ Laravel Server: hiển thị dòng đỏ dưới input, không popup toast
           if (json.errors) {
             moMapServerErrors(json.errors, SERVER_TO_CLIENT_FIELD_MAP_CREATE);
@@ -917,7 +933,14 @@
           }
         }
       } catch (err) {
+        if (typeof moHideLoading === 'function') moHideLoading();
         moToast('Lỗi kết nối API Tòa nhà.', 'error', 'Lỗi kết nối');
+      } finally {
+        if (typeof moHideLoading === 'function') moHideLoading();
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = origBtnHtml || '<i class="fa-solid fa-save"></i> Lưu';
+        }
       }
     }
 
@@ -1153,6 +1176,20 @@
         return;
       }
 
+      const submitBtn = document.getElementById('btn-submit-edit-building');
+      const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+      }
+
+      if (typeof moShowLoading === 'function') {
+        moShowLoading(
+          'Đang cập nhật tòa nhà...',
+          'Hệ thống đang kiểm tra ràng buộc và lưu thông tin tòa nhà.<br>Vui lòng đợi trong giây lát...'
+        );
+      }
+
       const editProvSelect = document.getElementById('edit-build-province');
       const editProvOpt = editProvSelect?.options[editProvSelect.selectedIndex];
       const editProvinceCode = parseInt(editProvSelect?.value);
@@ -1200,10 +1237,12 @@
 
         const json = await res.json();
         if (res.ok) {
+          if (typeof moHideLoading === 'function') moHideLoading();
           moToast('Cập nhật thông tin tòa nhà thành công!', 'success', 'Thành công');
           closeEditBuildingModal();
           loadAdminBuildingsList();
         } else {
+          if (typeof moHideLoading === 'function') moHideLoading();
           // Xử lý lỗi trả về từ Laravel Backend (422): hiển thị dòng đỏ dưới input, không popup toast
           if (json.errors) {
             moMapServerErrors(json.errors, SERVER_TO_CLIENT_FIELD_MAP_EDIT);
@@ -1219,7 +1258,14 @@
           }
         }
       } catch (e) {
+        if (typeof moHideLoading === 'function') moHideLoading();
         moToast('Lỗi kết nối cập nhật tòa nhà.', 'error', 'Lỗi kết nối');
+      } finally {
+        if (typeof moHideLoading === 'function') moHideLoading();
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = origBtnHtml || '<i class="fa-solid fa-save"></i> Lưu';
+        }
       }
     }
 
@@ -1545,20 +1591,14 @@
 
       const hintEl = document.getElementById('new-unit-floor-hint');
       if (hintEl) {
-        if (totalFloors > 0) {
-          hintEl.innerText = totalBasements > 0 
-            ? `(-${totalBasements} - ${totalFloors})`
-            : `(1 - ${totalFloors})`;
-        } else {
-          hintEl.innerText = '';
-        }
+        hintEl.innerText = '';
       }
 
       const floorInp = document.getElementById('new-unit-floor');
       if (floorInp) {
         floorInp.min = totalBasements > 0 ? -totalBasements : 1;
         floorInp.max = totalFloors > 0 ? totalFloors : 99;
-        floorInp.placeholder = totalBasements > 0 ? `-${totalBasements} - ${totalFloors}` : `1 - ${totalFloors || 20}`;
+        floorInp.placeholder = 'VD: 1';
         floorInp.value = '1';
         await handleUnitFloorChange(floorInp);
       }
@@ -1793,6 +1833,9 @@
       if (e) e.preventDefault();
       if (!currentActiveUnitBuildingId) return;
 
+      const submitBtn = document.getElementById('btn-submit-create-unit');
+      const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+
       const floorInp = document.getElementById('new-unit-floor');
       let floorNum = parseInt(floorInp?.value);
       const totalFloors = parseInt(currentActiveUnitBuilding?.total_floors) || 99;
@@ -1829,6 +1872,17 @@
         return;
       }
 
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang thêm...';
+      }
+      if (typeof moShowLoading === 'function') {
+        moShowLoading(
+          'Đang thêm sàn văn phòng...',
+          'Hệ thống đang kiểm tra diện tích và khởi tạo mặt bằng mới.<br>Vui lòng đợi trong giây lát...'
+        );
+      }
+
       try {
         const res = await fetch('/api/v1/admin/units', {
           method: 'POST',
@@ -1838,6 +1892,7 @@
 
         const json = await res.json();
         if (res.ok) {
+          if (typeof moHideLoading === 'function') moHideLoading();
           moToast('Tạo mặt bằng sàn mới thành công!', 'success', 'Thành công');
           document.getElementById('form-create-unit')?.reset();
           loadBuildingUnits(currentActiveUnitBuildingId, 1);
@@ -1850,10 +1905,18 @@
             autoGenerateUnitCode(floorNum);
           }
         } else {
+          if (typeof moHideLoading === 'function') moHideLoading();
           moToast('Lỗi tạo mặt bằng: ' + (json.message || ''), 'error', 'Tạo mặt bằng thất bại');
         }
       } catch (e) {
+        if (typeof moHideLoading === 'function') moHideLoading();
         moToast('Lỗi kết nối khi tạo mặt bằng.', 'error', 'Lỗi kết nối');
+      } finally {
+        if (typeof moHideLoading === 'function') moHideLoading();
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = origBtnHtml || '<i class="fa-solid fa-plus"></i> Thêm Sàn';
+        }
       }
     }
 

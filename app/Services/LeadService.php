@@ -20,6 +20,11 @@ use Illuminate\Support\Str;
  */
 class LeadService
 {
+    public function __construct(
+        protected ?TenantService $tenantService = null
+    ) {
+        $this->tenantService = $tenantService ?? app(TenantService::class);
+    }
     /**
      * Tiếp nhận yêu cầu tư vấn / Báo giá / Site tour từ Public Portal.
      *
@@ -514,31 +519,54 @@ class LeadService
             throw new BusinessException('Hồ sơ Lead này đã được chuyển đổi sang Khách thuê trước đó.', 422);
         }
 
-        return DB::transaction(function () use ($lead, $tenantData) {
-            $tenantCode = $tenantData['tenant_code'] ?? 'TNT-' . date('Y') . '-' . str_pad((string)(Tenant::withTrashed()->count() + 1), 4, '0', STR_PAD_LEFT);
+        $taxCode = trim($tenantData['tax_code'] ?? '');
+        if (empty($taxCode)) {
+            throw new BusinessException('Mã số thuế doanh nghiệp là bắt buộc khi chuyển đổi thành khách thuê chính thức.', 422);
+        }
 
-            $rawPassword = $tenantData['password'] ?? \App\Helpers\PasswordHelper::generateSecurePassword(10);
+        // Kiểm tra chống trùng lặp mã số thuế với các khách thuê trong hệ thống
+        $existingTenantWithTax = Tenant::withTrashed()->where('tax_code', $taxCode)->first();
+        if ($existingTenantWithTax) {
+            throw new BusinessException("Mã số thuế [{$taxCode}] đã tồn tại trong hệ thống (thuộc khách thuê [{$existingTenantWithTax->company_name} - {$existingTenantWithTax->tenant_code}]).", 422);
+        }
+
+        // Kiểm tra chống trùng lặp login_email với các khách thuê trong hệ thống
+        $loginEmail = trim($tenantData['login_email'] ?? $lead->email ?? '');
+        if (!empty($loginEmail)) {
+            $existingTenantWithEmail = Tenant::withTrashed()->where('login_email', $loginEmail)->first();
+            if ($existingTenantWithEmail) {
+                throw new BusinessException("Email đăng nhập [{$loginEmail}] đã tồn tại trong hệ thống (thuộc khách thuê [{$existingTenantWithEmail->company_name} - {$existingTenantWithEmail->tenant_code}]). Vui lòng sử dụng email khác.", 422);
+            }
+        }
+
+        return DB::transaction(function () use ($lead, $tenantData, $taxCode, $loginEmail) {
+            $tenantCode = $tenantData['tenant_code'] ?? $this->tenantService->generateTenantCode();
+
+            $hasExplicitPassword = !empty($tenantData['password']);
+            $rawPassword = $hasExplicitPassword ? $tenantData['password'] : \Illuminate\Support\Str::random(32);
 
             $tenant = Tenant::create([
                 'tenant_code' => $tenantCode,
                 'converted_from_lead_id' => $lead->id,
                 'company_name' => $tenantData['company_name'] ?? $lead->company_name ?? $lead->contact_full_name,
-                'tax_code' => $tenantData['tax_code'],
+                'tax_code' => $taxCode,
                 'business_license_private_path' => $tenantData['business_license_private_path'] ?? 'licenses/default.pdf',
                 'representative_name' => $tenantData['representative_name'] ?? $lead->contact_full_name,
                 'representative_position' => $tenantData['representative_position'] ?? 'Đại diện theo pháp luật',
                 'headquarter_address' => $tenantData['headquarter_address'] ?? 'Đang cập nhật',
-                'login_email' => $tenantData['login_email'] ?? $lead->email,
+                'login_email' => $loginEmail,
                 'billing_email' => $tenantData['billing_email'] ?? $lead->email,
                 'contact_phone' => $tenantData['contact_phone'] ?? $lead->phone,
                 'password' => $rawPassword,
                 'must_change_password' => true,
-                'initial_password_issued_at' => now(),
+                'initial_password_issued_at' => $hasExplicitPassword ? now() : null,
                 'status' => 'ACTIVE',
                 'created_by_sales_id' => $lead->assigned_sales_id,
             ]);
 
-            $tenant->initial_plain_password = $rawPassword;
+            if ($hasExplicitPassword) {
+                $tenant->initial_plain_password = $rawPassword;
+            }
 
             $lead->status = LeadStatus::WON;
             $lead->converted_tenant_id = $tenant->id;

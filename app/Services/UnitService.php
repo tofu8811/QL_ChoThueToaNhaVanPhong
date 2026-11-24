@@ -477,6 +477,8 @@ class UnitService
     public function uploadImages(Unit $unit, array $files, ?string $caption = null): array
     {
         $uploaded = [];
+        $hasPrimary = $unit->images()->where('is_primary', true)->exists();
+        $currentOrder = (int) ($unit->images()->max('display_order') ?? 0);
 
         foreach ($files as $index => $file) {
             $filename = Str::uuid()->toString() . '.' . $file->getClientOriginalExtension();
@@ -484,11 +486,15 @@ class UnitService
 
             try {
                 if (config('filesystems.disks.supabase.key')) {
-                    $mime = method_exists($file, 'getClientMimeType') ? $file->getClientMimeType() : null;
-                    Storage::disk('supabase')->put($path, file_get_contents($file), [
+                    $mime = method_exists($file, 'getClientMimeType') ? $file->getClientMimeType() : 'image/jpeg';
+                    $stream = fopen($file->getRealPath(), 'r');
+                    Storage::disk('supabase')->put($path, $stream, [
                         'mimetype' => $mime ?: 'image/jpeg',
                         'visibility' => 'public',
                     ]);
+                    if (is_resource($stream)) {
+                        fclose($stream);
+                    }
                     $url = Storage::disk('supabase')->url($path);
                 } else {
                     $localPath = $file->storeAs("public/units/{$unit->id}", $filename);
@@ -500,15 +506,18 @@ class UnitService
                 $url = Storage::url($localPath);
             }
 
-            $hasPrimary = $unit->images()->where('is_primary', true)->exists();
             $isPrimary = (!$hasPrimary && $index === 0);
+            if ($isPrimary) {
+                $hasPrimary = true;
+            }
 
+            $currentOrder++;
             $image = UnitImage::create([
                 'unit_id' => $unit->id,
                 'image_url' => $url,
                 'caption' => $caption ?? $file->getClientOriginalName(),
                 'is_primary' => $isPrimary,
-                'display_order' => $unit->images()->count() + 1,
+                'display_order' => $currentOrder,
             ]);
 
             $uploaded[] = $image;

@@ -896,7 +896,7 @@
       document.getElementById('cred-lead-company').innerText = tenant.company_name || '---';
       document.getElementById('cred-lead-email').innerText = tenant.login_email || '---';
       document.getElementById('cred-lead-phone').innerText = tenant.contact_phone || '---';
-      document.getElementById('cred-lead-password').innerText = tenant.initial_plain_password || '******';
+      document.getElementById('cred-lead-password').innerText = tenant.initial_plain_password || 'Cấp khi duyệt HĐ';
 
       const gotoBtn = document.getElementById('btn-lead-goto-contract');
       if (gotoBtn) {
@@ -919,11 +919,11 @@
 
     function copyLeadCredential() {
       if (!currentConvertedTenantData) return;
-      const text = `THÔNG TIN TÀI KHOẢN CỔNG KHÁCH THUÊ (TENANT PORTAL)\n` +
+      const text = `THÔNG TIN KHÁCH THUÊ DOANH NGHIỆP\n` +
         `- Doanh nghiệp: ${currentConvertedTenantData.company_name}\n` +
         `- Mã khách thuê: ${currentConvertedTenantData.tenant_code}\n` +
         `- Email đăng nhập: ${currentConvertedTenantData.login_email}\n` +
-        `- Mật khẩu khởi tạo: ${currentConvertedTenantData.initial_plain_password || 'Đã cấp mật khẩu an toàn'}\n` +
+        `- Mật khẩu Portal: ${currentConvertedTenantData.initial_plain_password || 'Được tự động kích hoạt và cấp phát khi Hợp đồng thuê được ký duyệt'}\n` +
         `- Đường link đăng nhập: ${window.location.origin}/portal/login`;
 
       if (navigator.clipboard && navigator.clipboard.writeText) {

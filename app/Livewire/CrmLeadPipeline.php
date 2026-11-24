@@ -10,6 +10,7 @@ use App\Models\Sale;
 use App\Services\LeadActivityService;
 use App\Services\LeadService;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -306,7 +307,12 @@ class CrmLeadPipeline extends Component
         $this->clearFlash();
 
         $this->validate([
-            'tenantTaxCode' => ['required', 'string', 'regex:/^[0-9\-]{10,14}$/'],
+            'tenantTaxCode' => [
+                'required',
+                'string',
+                'regex:/^[0-9\-]{10,14}$/',
+                Rule::unique('tenants', 'tax_code')->whereNull('deleted_at'),
+            ],
             'tenantCompanyName' => ['required', 'string', 'min:3'],
             'tenantRepName' => ['required', 'string'],
             'tenantEmail' => ['required', 'email'],
@@ -314,6 +320,7 @@ class CrmLeadPipeline extends Component
         ], [
             'tenantTaxCode.required' => 'Vui lòng nhập mã số thuế doanh nghiệp.',
             'tenantTaxCode.regex' => 'Mã số thuế không đúng định dạng (10 hoặc 13 số).',
+            'tenantTaxCode.unique' => 'Mã số thuế này đã tồn tại trên hồ sơ khách thuê khác trong hệ thống.',
             'tenantCompanyName.required' => 'Vui lòng nhập tên công ty doanh nghiệp.',
         ]);
 
@@ -330,7 +337,7 @@ class CrmLeadPipeline extends Component
                 'contact_phone' => $this->tenantPhone,
             ]);
 
-            $this->flashSuccess = "Chuyển đổi thành công! Đã tạo hồ sơ Khách thuê chính thức [{$tenant->tenant_code}].";
+            $this->flashSuccess = "Chuyển đổi thành công! Đã tạo hồ sơ Khách thuê chính thức [{$tenant->tenant_code}]. Tài khoản Tenant Portal sẽ được tự động kích hoạt và cấp phát khi Hợp đồng thuê được ký duyệt.";
             $this->showConvertModal = false;
             $this->convertLeadId = null;
 

@@ -205,13 +205,35 @@ class TenantService
     }
 
     /**
-     * Tự động sinh mã định danh khách thuê theo chuẩn TNT-YYYY-XXXX.
+     * Tự động sinh mã định danh khách thuê theo chuẩn TNT-YYYY-XXXX (hoặc TN-YYYY-XXXX).
+     * Quét toàn bộ CSDL kể cả các bản ghi đã xóa mềm (withTrashed) để triệt tiêu hoàn toàn nguy cơ trùng lặp.
      */
-    public function generateTenantCode(): string
+    public function generateTenantCode(string $prefix = 'TNT'): string
     {
         $year = date('Y');
-        $count = Tenant::withTrashed()->whereYear('created_at', $year)->count() + 1;
-        return sprintf('TNT-%s-%04d', $year, $count);
+        $existingCodes = Tenant::withTrashed()
+            ->where(function ($q) use ($year) {
+                $q->where('tenant_code', 'LIKE', "TNT-{$year}-%")
+                  ->orWhere('tenant_code', 'LIKE', "TN-{$year}-%");
+            })
+            ->pluck('tenant_code');
+
+        $maxSeq = 0;
+        foreach ($existingCodes as $code) {
+            if (preg_match('/(?:TNT|TN)-\d{4}-(\d+)$/', (string) $code, $matches)) {
+                $seq = (int) $matches[1];
+                if ($seq > $maxSeq) {
+                    $maxSeq = $seq;
+                }
+            }
+        }
+
+        do {
+            $maxSeq++;
+            $candidate = sprintf('%s-%s-%04d', $prefix, $year, $maxSeq);
+        } while (Tenant::withTrashed()->where('tenant_code', $candidate)->exists());
+
+        return $candidate;
     }
 
     /**

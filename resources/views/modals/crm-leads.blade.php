@@ -156,7 +156,7 @@
           <i class="fa-solid fa-sparkles"></i> Khách hàng đã được chuyển đổi sang hồ sơ Khách Thuê Doanh Nghiệp (Tenant)
         </div>
         <div style="font-size:12px;color:#15803d;">
-          Dưới đây là tài khoản đăng nhập Cổng thông tin Khách thuê (Tenant Portal). Sales vui lòng lưu lại để bàn giao:
+          Hồ sơ doanh nghiệp đã được khởi tạo để sẵn sàng lập hợp đồng thuê. Mật khẩu Tenant Portal sẽ được tự động kích hoạt và bàn giao khi Hợp đồng chính thức được duyệt.
         </div>
       </div>
 
@@ -178,8 +178,8 @@
           <strong id="cred-lead-phone" style="color:#0f172a;">---</strong>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px dashed #cbd5e1;">
-          <span style="color:#64748b;font-weight:600;">Mật khẩu ban đầu:</span>
-          <span id="cred-lead-password" style="font-family:monospace;font-size:16px;font-weight:800;color:#16a34a;background:#dcfce7;padding:3px 8px;border-radius:4px;border:1px solid #86efac;">---</span>
+          <span style="color:#64748b;font-weight:600;">Mật khẩu Portal:</span>
+          <span id="cred-lead-password" style="font-size:12px;font-weight:600;color:#0284c7;background:#e0f2fe;padding:3px 8px;border-radius:4px;border:1px solid #bae6fd;">Cấp khi duyệt HĐ</span>
         </div>
       </div>
 

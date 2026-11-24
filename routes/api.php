@@ -64,6 +64,7 @@ Route::prefix('v1')->group(function () {
 
         // Quản lý Mặt bằng sàn & Layout
         Route::get('units', [UnitApiController::class, 'adminIndex'])->name('v1.admin.units.index');
+        Route::get('units/suggest-code', [UnitApiController::class, 'suggestCode'])->name('v1.admin.units.suggest_code');
         Route::post('units', [UnitApiController::class, 'store'])->middleware('role:admin,pm')->name('v1.admin.units.store');
         Route::get('units/{id}', [UnitApiController::class, 'show'])->name('v1.admin.units.show');
         Route::put('units/{id}', [UnitApiController::class, 'update'])->middleware('role:admin,pm')->name('v1.admin.units.update');

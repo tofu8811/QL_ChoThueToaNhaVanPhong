@@ -24,7 +24,7 @@
       <p id="confirm-modal-message" style="margin:0 0 10px;font-size:13.5px;color:#475569;line-height:1.5;"></p>
 
       <!-- Note / Warning Callout -->
-      <div id="confirm-modal-note-wrap" style="display:none;width:100%;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-bottom:16px;font-size:12.5px;color:#92400e;line-height:1.45;text-align:left;box-sizing:border-box;display:flex;gap:8px;align-items:flex-start;">
+      <div id="confirm-modal-note-wrap" style="display:none;width:100%;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-bottom:16px;font-size:12.5px;color:#92400e;line-height:1.45;text-align:left;box-sizing:border-box;gap:8px;align-items:flex-start;">
         <i class="fa-solid fa-circle-info" style="color:#f59e0b;font-size:15px;margin-top:2px;flex-shrink:0;"></i>
         <span id="confirm-modal-note-text"></span>
       </div>

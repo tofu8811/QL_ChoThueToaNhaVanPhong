@@ -554,26 +554,34 @@
           badge.style.background = '#fee2e2';
           badge.style.color = '#dc2626';
           badge.style.boxShadow = '0 0 0 6px #fef2f2';
-          icon.className = 'fa-solid fa-trash-can';
+          icon.className = _moConfirmState.options.icon || 'fa-solid fa-trash-can';
           btnAction.style.background = '#dc2626';
           btnAction.style.boxShadow = '0 2px 4px rgba(220,38,38,0.25)';
-          btnIcon.className = 'fa-solid fa-trash-can';
+          btnIcon.className = _moConfirmState.options.btnIcon || 'fa-solid fa-trash-can';
         } else if (type === 'warning') {
           badge.style.background = '#fef3c7';
           badge.style.color = '#d97706';
           badge.style.boxShadow = '0 0 0 6px #fffbeb';
-          icon.className = 'fa-solid fa-triangle-exclamation';
+          icon.className = _moConfirmState.options.icon || 'fa-solid fa-triangle-exclamation';
           btnAction.style.background = '#d97706';
           btnAction.style.boxShadow = '0 2px 4px rgba(217,119,6,0.25)';
-          btnIcon.className = 'fa-solid fa-triangle-exclamation';
+          btnIcon.className = _moConfirmState.options.btnIcon || 'fa-solid fa-triangle-exclamation';
+        } else if (type === 'success') {
+          badge.style.background = '#dcfce7';
+          badge.style.color = '#16a34a';
+          badge.style.boxShadow = '0 0 0 6px #f0fdf4';
+          icon.className = _moConfirmState.options.icon || 'fa-solid fa-circle-check';
+          btnAction.style.background = '#16a34a';
+          btnAction.style.boxShadow = '0 2px 4px rgba(22,163,74,0.25)';
+          btnIcon.className = _moConfirmState.options.btnIcon || 'fa-solid fa-check';
         } else {
           badge.style.background = '#dbeafe';
           badge.style.color = '#2563eb';
           badge.style.boxShadow = '0 0 0 6px #eff6ff';
-          icon.className = 'fa-solid fa-circle-question';
+          icon.className = _moConfirmState.options.icon || 'fa-solid fa-circle-question';
           btnAction.style.background = '#2563eb';
           btnAction.style.boxShadow = '0 2px 4px rgba(37,99,235,0.25)';
-          btnIcon.className = 'fa-solid fa-check';
+          btnIcon.className = _moConfirmState.options.btnIcon || 'fa-solid fa-check';
         }
       }
 

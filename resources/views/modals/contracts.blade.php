@@ -206,7 +206,7 @@
       </span>
       <div style="display:flex;gap:10px;">
         <button type="button" class="btn-mo-outline" style="padding:7px 16px;font-size:13px;" onclick="closeCreateContractModal()">Hủy</button>
-        <button type="button" id="btn-submit-create-contract" class="btn-mo-orange" style="padding:7px 18px;font-size:13px;font-weight:700;" onclick="document.getElementById('form-create-contract').requestSubmit()"><i class="fa-solid fa-file-circle-plus"></i> Khởi Tạo Bản Nháp</button>
+        <button type="button" id="btn-submit-create-contract" class="btn-mo-orange" style="padding:7px 18px;font-size:13px;font-weight:700;" onclick="submitCreateContract(event)"><i class="fa-solid fa-file-circle-plus"></i> Khởi Tạo Bản Nháp</button>
       </div>
     </div>
   </div>

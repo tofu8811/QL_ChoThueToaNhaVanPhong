@@ -127,7 +127,7 @@ class Unit extends Model
     public function contracts(): BelongsToMany
     {
         return $this->belongsToMany(Contract::class, 'contract_units', 'unit_id', 'contract_id')
-            ->withPivot(['rental_price_per_sqm', 'service_fee_per_sqm', 'actual_handover_date', 'status'])
+            ->withPivot(['leased_area_sqm', 'agreed_rental_price_per_sqm', 'agreed_service_fee_per_sqm'])
             ->withTimestamps();
     }
 

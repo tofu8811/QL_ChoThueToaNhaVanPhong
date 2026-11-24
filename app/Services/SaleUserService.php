@@ -115,6 +115,15 @@ class SaleUserService
                 }
                 $sale->buildings()->sync($syncData);
                 $buildingNames = $sale->buildings()->pluck('name')->toArray();
+
+                try {
+                    $assignedBuildings = \App\Models\Building::whereIn('id', $data['building_ids'])->get();
+                    foreach ($assignedBuildings as $bld) {
+                        \App\Events\BuildingAssignedToStaffEvent::dispatch($bld, $sale->id, \App\Enums\UserRole::SALES, $admin);
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('Broadcast realtime BuildingAssignedToStaffEvent on createSale failed: ' . $e->getMessage());
+                }
             }
 
             // 4. Gửi email thông báo cấp tài khoản Sales sau khi commit
@@ -212,8 +221,11 @@ class SaleUserService
             $sale->update($updateData);
 
             if (array_key_exists('building_ids', $data) && is_array($data['building_ids'])) {
+                $oldBuildingIds = $sale->buildings()->pluck('buildings.id')->toArray();
+                $newBuildingIds = (array) $data['building_ids'];
+
                 $syncData = [];
-                foreach ($data['building_ids'] as $buildingId) {
+                foreach ($newBuildingIds as $buildingId) {
                     $syncData[$buildingId] = [
                         'is_active'            => true,
                         'assigned_by_admin_id' => $admin->id,
@@ -221,6 +233,31 @@ class SaleUserService
                     ];
                 }
                 $sale->buildings()->sync($syncData);
+
+                $addedIds = array_diff($newBuildingIds, $oldBuildingIds);
+                $removedIds = array_diff($oldBuildingIds, $newBuildingIds);
+
+                if (!empty($addedIds)) {
+                    try {
+                        $addedBuildings = \App\Models\Building::whereIn('id', $addedIds)->get();
+                        foreach ($addedBuildings as $bld) {
+                            \App\Events\BuildingAssignedToStaffEvent::dispatch($bld, $sale->id, \App\Enums\UserRole::SALES, $admin);
+                        }
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning('Broadcast realtime BuildingAssignedToStaffEvent on updateSale failed: ' . $e->getMessage());
+                    }
+                }
+
+                if (!empty($removedIds)) {
+                    try {
+                        $removedBuildings = \App\Models\Building::whereIn('id', $removedIds)->get();
+                        foreach ($removedBuildings as $bld) {
+                            \App\Events\BuildingStaffRemovedEvent::dispatch($bld, $sale->id, \App\Enums\UserRole::SALES);
+                        }
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning('Broadcast realtime BuildingStaffRemovedEvent on updateSale failed: ' . $e->getMessage());
+                    }
+                }
             }
 
             return $sale->load(['buildings']);

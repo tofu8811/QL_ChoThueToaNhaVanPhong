@@ -105,13 +105,25 @@ class ContractService
     /**
      * Khởi tạo Hợp đồng thuê bản nháp (DRAFT).
      */
-    public function createDraftContract(array $data, ?string $salesId = null): Contract
+    public function createDraftContract(array $data, ?string $salesId = null, mixed $actor = null): Contract
     {
-        return DB::transaction(function () use ($data, $salesId) {
+        return DB::transaction(function () use ($data, $salesId, $actor) {
             $building = Building::findOrFail($data['building_id']);
+            $actor = $actor ?? auth('sanctum')->user() ?? auth()->user();
 
-            // Kiểm tra phân quyền: Sales chỉ được tạo hợp đồng cho tòa nhà mình được phân công
-            if ($salesId) {
+            // Kiểm tra phân quyền theo vai trò (RBAC):
+            // - Admin / Super Admin: Có toàn quyền tạo hợp đồng cho mọi tòa nhà và mọi khách thuê
+            // - Property Manager: Phải được phân công quản lý tòa nhà này
+            // - Sales: Phải được phân công phụ trách tòa nhà này
+            if ($actor instanceof Admin) {
+                // Admin / Super Admin có quyền tối cao trên toàn hệ thống
+            } elseif ($actor instanceof PropertyManager) {
+                $this->ensurePmAssignedToBuilding($actor, $data['building_id']);
+            } elseif ($actor instanceof Sale) {
+                if (!$actor->buildings()->where('buildings.id', $data['building_id'])->exists()) {
+                    throw new BusinessException('Bạn không được phân công phụ trách tòa nhà ' . $building->name . ' nên không thể tạo hợp đồng.', 403);
+                }
+            } elseif (!$actor && $salesId) {
                 $sale = Sale::find($salesId);
                 if ($sale && !$sale->buildings()->where('buildings.id', $data['building_id'])->exists()) {
                     throw new BusinessException('Bạn không được phân công phụ trách tòa nhà ' . $building->name . ' nên không thể tạo hợp đồng.', 403);
@@ -138,7 +150,7 @@ class ContractService
                 'contract_number' => $contractNumber,
                 'building_id' => $data['building_id'],
                 'tenant_id' => $data['tenant_id'],
-                'created_by_sales_id' => $salesId ?? $data['created_by_sales_id'] ?? null,
+                'created_by_sales_id' => ($actor instanceof Sale ? $actor->id : ($salesId ?? $data['created_by_sales_id'] ?? null)),
                 'start_date' => $data['start_date'],
                 'end_date' => $data['end_date'],
                 'total_leased_area_sqm' => $initialTotalArea,
@@ -171,13 +183,25 @@ class ContractService
     /**
      * Khởi tạo Hợp đồng Đặt cọc giữ chỗ tạm thời (Booking / RESERVED).
      */
-    public function createBookingContract(array $data, ?string $salesId = null): Contract
+    public function createBookingContract(array $data, ?string $salesId = null, mixed $actor = null): Contract
     {
-        return DB::transaction(function () use ($data, $salesId) {
+        return DB::transaction(function () use ($data, $salesId, $actor) {
             $building = Building::findOrFail($data['building_id']);
+            $actor = $actor ?? auth('sanctum')->user() ?? auth()->user();
 
-            // Kiểm tra phân quyền: Sales chỉ được đặt cọc giữ chỗ cho tòa nhà mình được phân công
-            if ($salesId) {
+            // Kiểm tra phân quyền theo vai trò (RBAC):
+            // - Admin / Super Admin: Có toàn quyền đặt cọc giữ chỗ cho mọi tòa nhà và mọi khách thuê
+            // - Property Manager: Phải được phân công quản lý tòa nhà này
+            // - Sales: Phải được phân công phụ trách tòa nhà này
+            if ($actor instanceof Admin) {
+                // Admin / Super Admin có quyền tối cao trên toàn hệ thống
+            } elseif ($actor instanceof PropertyManager) {
+                $this->ensurePmAssignedToBuilding($actor, $data['building_id']);
+            } elseif ($actor instanceof Sale) {
+                if (!$actor->buildings()->where('buildings.id', $data['building_id'])->exists()) {
+                    throw new BusinessException('Bạn không được phân công phụ trách tòa nhà ' . $building->name . ' nên không thể đặt cọc giữ chỗ.', 403);
+                }
+            } elseif (!$actor && $salesId) {
                 $sale = Sale::find($salesId);
                 if ($sale && !$sale->buildings()->where('buildings.id', $data['building_id'])->exists()) {
                     throw new BusinessException('Bạn không được phân công phụ trách tòa nhà ' . $building->name . ' nên không thể đặt cọc giữ chỗ.', 403);
@@ -201,7 +225,7 @@ class ContractService
                 'contract_number' => $contractNumber,
                 'building_id' => $data['building_id'],
                 'tenant_id' => $data['tenant_id'],
-                'created_by_sales_id' => $salesId ?? $data['created_by_sales_id'] ?? null,
+                'created_by_sales_id' => ($actor instanceof Sale ? $actor->id : ($salesId ?? $data['created_by_sales_id'] ?? null)),
                 'start_date' => $data['start_date'],
                 'end_date' => $data['end_date'],
                 'total_leased_area_sqm' => $initialTotalArea,

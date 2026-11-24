@@ -764,6 +764,11 @@
       if (typeof loadAdminBuildingsList === 'function') {
         loadAdminBuildingsList();
       }
+
+      // Tự động tái khởi tạo kênh WebSocket Reverb theo vai trò và nhân sự đang chọn
+      if (typeof initRealtimeNotifications === 'function') {
+        initRealtimeNotifications(window.currentStaffUser, role);
+      }
     }
 
     function toggleBmsMobileSidebar() {

@@ -113,6 +113,11 @@
       const modal = document.getElementById('modal-create-tenant');
       if (!modal) return;
       document.getElementById('form-create-tenant')?.reset();
+      const pwdInput = document.getElementById('tenant-password');
+      if (pwdInput) pwdInput.value = '{{ \App\Helpers\PasswordHelper::DEFAULT_PASSWORD }}';
+      ['company-name', 'tax-code', 'rep-name', 'contact-phone', 'contact-email', 'address', 'password'].forEach(f => {
+        moClearFieldError(`tenant-${f}`, `err-tenant-${f}`);
+      });
       modal.style.display = 'flex';
     }
 
@@ -125,18 +130,17 @@
       if (e) e.preventDefault();
       const form = document.getElementById('form-create-tenant');
 
-      moClearFieldError('tenant-company-name', 'err-tenant-company-name');
-      moClearFieldError('tenant-tax-code', 'err-tenant-tax-code');
-      moClearFieldError('tenant-rep-name', 'err-tenant-rep-name');
-      moClearFieldError('tenant-contact-phone', 'err-tenant-contact-phone');
-      moClearFieldError('tenant-contact-email', 'err-tenant-contact-email');
+      ['company-name', 'tax-code', 'rep-name', 'contact-phone', 'contact-email', 'address', 'password'].forEach(f => {
+        moClearFieldError(`tenant-${f}`, `err-tenant-${f}`);
+      });
 
       const companyName = document.getElementById('tenant-company-name')?.value.trim() || '';
       const taxCode = document.getElementById('tenant-tax-code')?.value.trim() || '';
       const repName = document.getElementById('tenant-rep-name')?.value.trim() || '';
       const contactPhone = document.getElementById('tenant-contact-phone')?.value.trim() || '';
-      const contactEmail = document.getElementById('tenant-contact-email')?.value.trim() || '';
-      const businessAddress = document.getElementById('tenant-address')?.value.trim() || '';
+      const loginEmail = document.getElementById('tenant-contact-email')?.value.trim() || '';
+      const headquarterAddress = document.getElementById('tenant-address')?.value.trim() || '';
+      const password = document.getElementById('tenant-password')?.value || '';
       const status = document.getElementById('tenant-status')?.value || 'ACTIVE';
 
       // 1. Validation 0ms
@@ -146,48 +150,58 @@
         return;
       }
 
-      if (taxCode) {
-        const mstRegex = /^[0-9]{10}(-[0-9]{3})?$/;
-        if (!mstRegex.test(taxCode)) {
-          moSetFieldError('tenant-tax-code', 'err-tenant-tax-code', 'Mã số thuế phải có 10 hoặc 13 chữ số (VD: 0312345678 hoặc 0312345678-001).');
-          document.getElementById('tenant-tax-code')?.focus();
-          return;
-        }
+      const mstRegex = /^[0-9]{10}(-[0-9]{3})?$/;
+      if (!taxCode || !mstRegex.test(taxCode)) {
+        moSetFieldError('tenant-tax-code', 'err-tenant-tax-code', 'Mã số thuế là bắt buộc (10 hoặc 13 chữ số, VD: 0312345678).');
+        document.getElementById('tenant-tax-code')?.focus();
+        return;
       }
 
-      if (repName && repName.length < 2) {
-        moSetFieldError('tenant-rep-name', 'err-tenant-rep-name', 'Họ tên người đại diện tối thiểu 2 ký tự.');
+      if (!repName || repName.length < 2) {
+        moSetFieldError('tenant-rep-name', 'err-tenant-rep-name', 'Họ tên người đại diện pháp luật là bắt buộc (tối thiểu 2 ký tự).');
         document.getElementById('tenant-rep-name')?.focus();
         return;
       }
 
-      if (contactPhone) {
-        const vPhone = moValidatePhone(contactPhone);
-        if (!vPhone.valid) {
-          moSetFieldError('tenant-contact-phone', 'err-tenant-contact-phone', vPhone.message);
-          document.getElementById('tenant-contact-phone')?.focus();
-          return;
-        }
+      const vPhone = moValidatePhone(contactPhone);
+      if (!vPhone.valid) {
+        moSetFieldError('tenant-contact-phone', 'err-tenant-contact-phone', vPhone.message);
+        document.getElementById('tenant-contact-phone')?.focus();
+        return;
       }
 
-      if (contactEmail) {
-        const vEmail = moValidateEmail(contactEmail);
-        if (!vEmail.valid) {
-          moSetFieldError('tenant-contact-email', 'err-tenant-contact-email', vEmail.message);
-          document.getElementById('tenant-contact-email')?.focus();
-          return;
-        }
+      const vEmail = moValidateEmail(loginEmail);
+      if (!vEmail.valid) {
+        moSetFieldError('tenant-contact-email', 'err-tenant-contact-email', vEmail.message);
+        document.getElementById('tenant-contact-email')?.focus();
+        return;
+      }
+
+      if (!headquarterAddress || headquarterAddress.length < 5) {
+        moSetFieldError('tenant-address', 'err-tenant-address', 'Địa chỉ trụ sở chính theo ĐKKD là bắt buộc.');
+        document.getElementById('tenant-address')?.focus();
+        return;
+      }
+
+      if (password && typeof moEvaluatePassword === 'function' && !moEvaluatePassword(password).valid) {
+        moSetFieldError('tenant-password', 'err-tenant-password', 'Mật khẩu phải tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt.');
+        document.getElementById('tenant-password')?.focus();
+        return;
       }
 
       const payload = {
         company_name: companyName,
-        tax_code: taxCode || null,
-        representative_name: repName || null,
-        contact_phone: contactPhone || null,
-        contact_email: contactEmail || null,
-        business_address: businessAddress || null,
+        tax_code: taxCode,
+        representative_name: repName,
+        contact_phone: contactPhone,
+        login_email: loginEmail,
+        billing_email: loginEmail,
+        headquarter_address: headquarterAddress,
         status: status
       };
+      if (password.trim() !== '') {
+        payload.password = password.trim();
+      }
 
       const btn = document.getElementById('btn-submit-create-tenant');
       const originalHtml = btn ? btn.innerHTML : '';
@@ -216,7 +230,9 @@
               tax_code: ['tenant-tax-code', 'err-tenant-tax-code'],
               representative_name: ['tenant-rep-name', 'err-tenant-rep-name'],
               contact_phone: ['tenant-contact-phone', 'err-tenant-contact-phone'],
-              contact_email: ['tenant-contact-email', 'err-tenant-contact-email']
+              login_email: ['tenant-contact-email', 'err-tenant-contact-email'],
+              headquarter_address: ['tenant-address', 'err-tenant-address'],
+              password: ['tenant-password', 'err-tenant-password']
             });
           }
           moToast(json.message || 'Lỗi tạo khách thuê. Vui lòng kiểm tra lại.', 'error');
@@ -341,8 +357,8 @@
         tax_code: taxCode || null,
         representative_name: repName || null,
         contact_phone: contactPhone || null,
-        contact_email: contactEmail || null,
-        business_address: businessAddress || null,
+        login_email: contactEmail || null,
+        headquarter_address: businessAddress || null,
         status: status
       };
 
@@ -372,7 +388,8 @@
               tax_code: ['edit-tenant-tax-code', 'err-edit-tenant-tax-code'],
               representative_name: ['edit-tenant-rep-name', 'err-edit-tenant-rep-name'],
               contact_phone: ['edit-tenant-contact-phone', 'err-edit-tenant-contact-phone'],
-              contact_email: ['edit-tenant-contact-email', 'err-edit-tenant-contact-email']
+              login_email: ['edit-tenant-contact-email', 'err-edit-tenant-contact-email'],
+              headquarter_address: ['edit-tenant-address', 'err-edit-tenant-address']
             });
           }
           moToast(json.message || 'Lỗi cập nhật. Vui lòng kiểm tra lại.', 'error');

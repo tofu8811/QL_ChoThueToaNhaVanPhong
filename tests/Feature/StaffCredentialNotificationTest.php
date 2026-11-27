@@ -50,7 +50,7 @@ class StaffCredentialNotificationTest extends TestCase
     }
 
     /**
-     * 1. Test tạo mới Admin để trống mật khẩu -> Hệ thống tự sinh pass Ad@... và gửi AdminCredentialNotification.
+     * 1. Test tạo mới Admin để trống mật khẩu -> Hệ thống tự cấp pass mặc định 123456Aa@ và gửi AdminCredentialNotification.
      */
     public function test_creating_admin_with_auto_generated_password_dispatches_notification(): void
     {
@@ -60,7 +60,7 @@ class StaffCredentialNotificationTest extends TestCase
             'full_name'      => 'Đỗ Minh Admin Test',
             'email'          => 'admin.auto@officeleasing.vn',
             'phone'          => '0911223344',
-            'password'       => '', // Để trống để backend tự sinh mật khẩu an toàn
+            'password'       => '', // Để trống để backend tự cấp mật khẩu mặc định
             'is_super_admin' => false,
             'status'         => 'ACTIVE',
         ];
@@ -70,8 +70,7 @@ class StaffCredentialNotificationTest extends TestCase
 
         $res->assertStatus(201);
         $plainPass = $res->json('data.plain_password');
-        $this->assertNotEmpty($plainPass);
-        $this->assertStringStartsWith('Ad@', $plainPass);
+        $this->assertEquals('123456Aa@', $plainPass);
 
         $newAdmin = Admin::where('email', 'admin.auto@officeleasing.vn')->firstOrFail();
         $this->assertTrue(Hash::check($plainPass, $newAdmin->password));
@@ -82,7 +81,7 @@ class StaffCredentialNotificationTest extends TestCase
     }
 
     /**
-     * 2. Test Super Admin cấp lại mật khẩu cho Admin -> Sinh pass mới, xóa token cũ và gửi notification.
+     * 2. Test Super Admin cấp lại mật khẩu cho Admin -> Cấp pass mặc định 123456Aa@, xóa token cũ và gửi notification.
      */
     public function test_super_admin_can_reset_admin_password(): void
     {
@@ -102,8 +101,7 @@ class StaffCredentialNotificationTest extends TestCase
 
         $res->assertStatus(200);
         $newPass = $res->json('data.new_password');
-        $this->assertNotEmpty($newPass);
-        $this->assertStringStartsWith('Ad@', $newPass);
+        $this->assertEquals('123456Aa@', $newPass);
 
         // Kiểm tra mật khẩu trong DB đã đổi sang mật khẩu mới
         $freshAdmin = $targetAdmin->fresh();
@@ -117,7 +115,7 @@ class StaffCredentialNotificationTest extends TestCase
     }
 
     /**
-     * 3. Test tạo mới Sales kèm tòa nhà -> Sinh pass Sa@... và gửi SaleCredentialNotification.
+     * 3. Test tạo mới Sales kèm tòa nhà -> Cấp pass mặc định 123456Aa@ và gửi SaleCredentialNotification.
      */
     public function test_creating_sale_and_resetting_password(): void
     {
@@ -127,7 +125,7 @@ class StaffCredentialNotificationTest extends TestCase
             'full_name'            => 'Lê Thị Sale Test',
             'email'                => 'sale.auto@officeleasing.vn',
             'phone'                => '0933557799',
-            'password'             => '', // Tự sinh
+            'password'             => '', // Tự cấp mặc định
             'commission_rate'      => 2.0,
             'max_concurrent_leads' => 15,
             'status'               => 'ACTIVE',
@@ -139,7 +137,7 @@ class StaffCredentialNotificationTest extends TestCase
 
         $res->assertStatus(201);
         $plainPass = $res->json('data.plain_password');
-        $this->assertStringStartsWith('Sa@', $plainPass);
+        $this->assertEquals('123456Aa@', $plainPass);
 
         $newSale = Sale::where('email', 'sale.auto@officeleasing.vn')->firstOrFail();
         Notification::assertSentTo($newSale, SaleCredentialNotification::class, function ($n) use ($plainPass) {
@@ -154,7 +152,7 @@ class StaffCredentialNotificationTest extends TestCase
 
         $resetRes->assertStatus(200);
         $newPass = $resetRes->json('data.new_password');
-        $this->assertStringStartsWith('Sa@', $newPass);
+        $this->assertEquals('123456Aa@', $newPass);
 
         Notification::assertSentTo($newSale->fresh(), SaleCredentialNotification::class, function ($n) use ($newPass) {
             return $n->plainPassword === $newPass && $n->isReset === true;
@@ -184,7 +182,7 @@ class StaffCredentialNotificationTest extends TestCase
 
         $res->assertStatus(201);
         $plainPass = $res->json('data.plain_password');
-        $this->assertStringStartsWith('Pm@', $plainPass);
+        $this->assertEquals('123456Aa@', $plainPass);
 
         $newPm = PropertyManager::where('email', 'pm.auto@officeleasing.vn')->firstOrFail();
         Notification::assertSentTo($newPm, PropertyManagerCredentialNotification::class, function ($n) use ($plainPass) {
@@ -199,7 +197,7 @@ class StaffCredentialNotificationTest extends TestCase
 
         $resetRes->assertStatus(200);
         $newPass = $resetRes->json('data.new_password');
-        $this->assertStringStartsWith('Pm@', $newPass);
+        $this->assertEquals('123456Aa@', $newPass);
 
         Notification::assertSentTo($newPm->fresh(), PropertyManagerCredentialNotification::class, function ($n) use ($newPass) {
             return $n->plainPassword === $newPass && $n->isReset === true;
@@ -228,7 +226,7 @@ class StaffCredentialNotificationTest extends TestCase
 
         $res->assertStatus(201);
         $plainPass = $res->json('data.plain_password');
-        $this->assertStringStartsWith('Ac@', $plainPass);
+        $this->assertEquals('123456Aa@', $plainPass);
 
         $newAcc = Accountant::where('email', 'acc.auto@officeleasing.vn')->firstOrFail();
         Notification::assertSentTo($newAcc, AccountantCredentialNotification::class, function ($n) use ($plainPass) {
@@ -243,7 +241,7 @@ class StaffCredentialNotificationTest extends TestCase
 
         $resetRes->assertStatus(200);
         $newPass = $resetRes->json('data.new_password');
-        $this->assertStringStartsWith('Ac@', $newPass);
+        $this->assertEquals('123456Aa@', $newPass);
 
         Notification::assertSentTo($newAcc->fresh(), AccountantCredentialNotification::class, function ($n) use ($newPass) {
             return $n->plainPassword === $newPass && $n->isReset === true;
@@ -295,5 +293,31 @@ class StaffCredentialNotificationTest extends TestCase
         $this->assertNotEmpty($loginResult['access_token']);
         // Bắt buộc: must_change_password phải là false đối với nhân sự nội bộ
         $this->assertFalse($loginResult['must_change_password']);
+    }
+
+    /**
+     * 8. Test đồng bộ chuẩn mật khẩu mạnh cho tất cả role nhân sự (Sales, PM, Accountant).
+     */
+    public function test_all_staff_roles_enforce_synchronized_strong_password_rule(): void
+    {
+        $endpoints = [
+            '/api/v1/admin/users/admins',
+            '/api/v1/admin/users/sales',
+            '/api/v1/admin/users/property-managers',
+            '/api/v1/admin/users/accountants',
+        ];
+
+        foreach ($endpoints as $idx => $endpoint) {
+            $res = $this->withHeader('Authorization', "Bearer {$this->superAdminToken}")
+                ->postJson($endpoint, [
+                    'full_name' => 'Test Weak ' . $idx,
+                    'email'     => "weak.staff{$idx}@officeleasing.vn",
+                    'phone'     => '090911223' . $idx,
+                    'password'  => '123456Aa', // Thiếu ký tự đặc biệt
+                    'status'    => 'ACTIVE',
+                ]);
+
+            $res->assertStatus(422)->assertJsonValidationErrors(['password']);
+        }
     }
 }

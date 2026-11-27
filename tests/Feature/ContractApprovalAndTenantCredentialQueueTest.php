@@ -160,8 +160,7 @@ class ContractApprovalAndTenantCredentialQueueTest extends TestCase
         $issued = $signedContract->tenant_credential_issued;
         $this->assertEquals('contact@alphasolutions.test', $issued['login_email']);
         $this->assertEquals('TNT-2026-0001', $issued['tenant_code']);
-        $this->assertStringStartsWith('Tn@', $issued['password']);
-        $this->assertEquals(10, strlen($issued['password']));
+        $this->assertEquals('123456Aa@', $issued['password']);
 
         // 4. Mật khẩu thuần khớp với hash đã lưu
         $this->assertTrue(Hash::check($issued['password'], $updatedTenant->password));
@@ -256,8 +255,7 @@ class ContractApprovalAndTenantCredentialQueueTest extends TestCase
         $tempPassword = $tenantService->adminResetPassword($this->tenant, $this->admin);
 
         // 1. Kiểm tra mật khẩu tạm mới sinh ra
-        $this->assertStringStartsWith('Tn@', $tempPassword);
-        $this->assertEquals(10, strlen($tempPassword));
+        $this->assertEquals('123456Aa@', $tempPassword);
 
         // 2. Mật khẩu mới khớp với CSDL
         $updated = $this->tenant->fresh();
@@ -282,7 +280,7 @@ class ContractApprovalAndTenantCredentialQueueTest extends TestCase
             ->assertSet('showCredentialModal', true)
             ->assertSee('Bàn giao tài khoản Cổng Khách Thuê')
             ->assertSee('contact@alphasolutions.test')
-            ->assertSee('Tn@');
+            ->assertSee('123456Aa@');
     }
 
     /**
@@ -307,5 +305,100 @@ class ContractApprovalAndTenantCredentialQueueTest extends TestCase
         $this->assertEquals('auto-generated', $symfonyEmail->getHeaders()->get('Auto-Submitted')?->getBodyAsString());
         $this->assertEquals('All', $symfonyEmail->getHeaders()->get('X-Auto-Response-Suppress')?->getBodyAsString());
         $this->assertEquals('bulk', $symfonyEmail->getHeaders()->get('Precedence')?->getBodyAsString());
+    }
+
+    /**
+     * Test 7: Livewire TenantManager::confirmResetPassword hoạt động đúng, cấp lại '123456Aa@' và gửi mail khi có HĐ.
+     */
+    public function test_tenant_manager_confirm_reset_password_works_and_resets_to_default(): void
+    {
+        Notification::fake();
+
+        Auth::setUser($this->admin);
+
+        Livewire::test(\App\Livewire\TenantManager::class)
+            ->call('openResetModal', $this->tenant->id)
+            ->call('confirmResetPassword')
+            ->assertSet('generatedNewPassword', '123456Aa@')
+            ->assertSet('flashType', 'success');
+
+        $updated = $this->tenant->fresh();
+        $this->assertTrue(Hash::check('123456Aa@', $updated->password));
+        Notification::assertSentTo($updated, TenantCredentialNotification::class);
+    }
+
+    /**
+     * Test 8: TenantService::createTenant với password rỗng đặt mặc định '123456Aa@';
+     * và adminResetPassword khi Tenant chưa có hợp đồng thì KHÔNG gửi mail.
+     */
+    public function test_tenant_without_contract_gets_default_password_without_email_on_reset(): void
+    {
+        Notification::fake();
+
+        $tenantService = app(TenantService::class);
+        $newTenant = $tenantService->createTenant([
+            'company_name' => 'Công Ty Chưa Có HĐ',
+            'tax_code' => '0319997777',
+            'representative_name' => 'Nguyễn Văn Mới',
+            'headquarter_address' => 'Quận 1, TP.HCM',
+            'login_email' => 'nocontract@test.vn',
+            'contact_phone' => '0909888777',
+            'password' => '',
+        ]);
+
+        $this->assertTrue(Hash::check('123456Aa@', $newTenant->password));
+
+        $resetPass = $tenantService->adminResetPassword($newTenant, $this->admin);
+        $this->assertEquals('123456Aa@', $resetPass);
+        $this->assertTrue(Hash::check('123456Aa@', $newTenant->fresh()->password));
+        Notification::assertNothingSent();
+    }
+
+    /**
+     * Test 9: API POST /api/v1/admin/tenants/{id}/reset-password hoạt động và đồng bộ đủ 5 role.
+     */
+    public function test_api_admin_can_reset_tenant_password(): void
+    {
+        Notification::fake();
+
+        $token = $this->admin->createToken('admin')->plainTextToken;
+        $res = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson("/api/v1/admin/tenants/{$this->tenant->id}/reset-password");
+
+        $res->assertStatus(200)
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('data.new_password', '123456Aa@')
+            ->assertJsonPath('data.email', $this->tenant->login_email);
+
+        $updated = $this->tenant->fresh();
+        $this->assertTrue(Hash::check('123456Aa@', $updated->password));
+        Notification::assertSentTo($updated, TenantCredentialNotification::class);
+    }
+
+    /**
+     * Test 10: Kiểm tra đồng bộ rule mật khẩu mạnh cho Tenant (tạo mới qua API và đổi MK lần đầu Livewire).
+     */
+    public function test_tenant_enforces_synchronized_strong_password_rule(): void
+    {
+        $token = $this->admin->createToken('admin')->plainTextToken;
+        $res = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/v1/admin/tenants', [
+                'company_name' => 'Công Ty Weak Pass',
+                'tax_code' => '0319996666',
+                'representative_name' => 'Lê Văn Test',
+                'headquarter_address' => 'Quận 1, TP.HCM',
+                'login_email' => 'weaktenant@test.vn',
+                'contact_phone' => '0909123123',
+                'password' => '123456Aa', // Thiếu ký tự đặc biệt
+            ]);
+
+        $res->assertStatus(422)->assertJsonValidationErrors(['password']);
+
+        Livewire::test(\App\Livewire\TenantPortalWorkspace::class, ['tenantId' => $this->tenant->id])
+            ->set('current_password', 'InitialPassword123')
+            ->set('new_password', '123456Aa')
+            ->set('new_password_confirmation', '123456Aa')
+            ->call('updateInitialPassword')
+            ->assertHasErrors(['new_password']);
     }
 }

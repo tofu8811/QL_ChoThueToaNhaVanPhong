@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests\V1\Traits;
 
+use App\Helpers\PasswordHelper;
 use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
 /**
  * Trait cung cấp các quy tắc xác thực chung cho các tài khoản nhân sự nội bộ
@@ -27,13 +27,12 @@ trait HasStaffRules
         ?string $ignoreId = null,
         bool $isUpdate = false,
         bool $includeBuildingIds = true,
-        bool $strongPassword = false
+        bool $strongPassword = true
     ): array {
         $prefix = $isUpdate ? 'sometimes' : 'required';
 
-        $passwordRule = $strongPassword
-            ? Password::min(8)->letters()->mixedCase()->numbers()->symbols()
-            : Password::min(8);
+        // Đồng bộ chuẩn mật khẩu mạnh thống nhất cho toàn bộ các vai trò nhân sự
+        $passwordRule = PasswordHelper::strongRule();
 
         $rules = [
             'employee_code' => ['nullable', 'string', 'max:30', Rule::unique($table, 'employee_code')->ignore($ignoreId)->whereNull('deleted_at')],
@@ -78,6 +77,10 @@ trait HasStaffRules
             'phone.unique'          => "Số điện thoại này đã được sử dụng bởi một tài khoản khác.",
             'password.required'     => 'Mật khẩu là bắt buộc.',
             'password.min'          => 'Mật khẩu phải có tối thiểu 8 ký tự.',
+            'password.letters'      => 'Mật khẩu phải chứa chữ cái.',
+            'password.mixed'        => 'Mật khẩu phải chứa cả chữ hoa và chữ thường.',
+            'password.numbers'      => 'Mật khẩu phải chứa ít nhất 1 chữ số.',
+            'password.symbols'      => 'Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt.',
             'building_ids.*.exists' => 'Mã tòa nhà được phân công không tồn tại trong hệ thống.',
         ];
     }

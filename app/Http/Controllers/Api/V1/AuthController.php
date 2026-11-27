@@ -170,7 +170,7 @@ class AuthController extends BaseApiController
         $request->validate([
             'token' => ['required', 'string'],
             'email' => ['required', 'email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['required', 'string', \App\Helpers\PasswordHelper::strongRule(), 'confirmed'],
         ], [
             'token.required' => 'Mã xác thực token là bắt buộc.',
             'email.required' => 'Địa chỉ email là bắt buộc.',

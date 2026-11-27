@@ -210,6 +210,15 @@
       if (caret) caret.style.transform = "rotate(0deg)";
     }
 
+    // Chỉ đóng modal khi cả mousedown lẫn click đều diễn ra trực tiếp trên backdrop
+    // (tránh bị văng khỏi form khi người dùng bôi đen/copy chữ trong ô input kéo ra ngoài)
+    let moBackdropMouseDownTarget = null;
+    window.addEventListener("mousedown", (e) => {
+      moBackdropMouseDownTarget = (e.target && e.target.classList && e.target.classList.contains('mo-modal'))
+        ? e.target
+        : null;
+    });
+
     // Đóng dropdown & modal khi click bên ngoài backdrop
     window.addEventListener("click", (e) => {
       if (!e.target.closest("#user-logged-box")) {
@@ -218,6 +227,11 @@
       if (!e.target.closest("#admin-user-box")) {
         closeAdminUserDropdown();
       }
+
+      const isValidBackdropClick = moBackdropMouseDownTarget !== null && moBackdropMouseDownTarget === e.target;
+      moBackdropMouseDownTarget = null;
+      if (!isValidBackdropClick) return;
+
       if (e.target.id === 'login-modal') closeLoginModal();
       if (e.target.id === 'profile-modal') closeProfileModal();
       if (e.target.id === 'building-modal') closeBuildingModal();
@@ -376,30 +390,30 @@
       const token = localStorage.getItem('auth_token');
       const csrfMeta = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
+      const requests = [];
       if (token) {
-        try {
-          await fetch('/api/v1/auth/logout', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Accept': 'application/json'
-            }
-          });
-        } catch (e) {
-          console.log('Logout cleanup error:', e);
-        }
-      }
-
-      try {
-        await fetch('/logout', {
+        requests.push(fetch('/api/v1/auth/logout', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfMeta,
+            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json'
           },
-          body: JSON.stringify({ auth_token: token })
-        });
+          signal: AbortSignal.timeout ? AbortSignal.timeout(4000) : undefined
+        }));
+      }
+      requests.push(fetch('/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfMeta,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ auth_token: token }),
+        signal: AbortSignal.timeout ? AbortSignal.timeout(4000) : undefined
+      }));
+
+      try {
+        await Promise.allSettled(requests);
       } catch (e) {}
 
       localStorage.removeItem('auth_token');

@@ -36,7 +36,7 @@
           <select id="tenant-status-select" class="filament-input-sm" onchange="handleTenantStatusFilter(this.value)" style="height:38px;font-size:13px;border-radius:6px;min-width:180px;cursor:pointer;">
             <option value="ALL">-- Tất cả trạng thái --</option>
             <option value="ACTIVE">Đang hoạt động (ACTIVE)</option>
-            <option value="INACTIVE">Ngừng hoạt động (INACTIVE)</option>
+            <option value="LOCKED">Tạm khóa / Ngừng hoạt động (LOCKED)</option>
           </select>
         </div>
         <button type="button" class="btn-mo-outline" onclick="resetTenantFilters()" style="height:38px;padding:0 14px;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;border-radius:6px;cursor:pointer;background:#fff;" title="Đặt lại bộ lọc & hiển thị toàn bộ Khách thuê">

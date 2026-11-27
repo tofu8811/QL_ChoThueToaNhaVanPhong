@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests\V1\Auth;
 
+use App\Helpers\PasswordHelper;
 use App\Http\Requests\V1\BaseApiRequest;
-use Illuminate\Validation\Rules\Password;
 
 /**
  * FormRequest kiểm thực dữ liệu đổi mật khẩu cá nhân (/api/v1/auth/password).
@@ -23,10 +23,7 @@ class ChangePasswordRequest extends BaseApiRequest
                 'required',
                 'string',
                 'confirmed',
-                Password::min(8)
-                    ->mixedCase()
-                    ->numbers()
-                    ->symbols(),
+                PasswordHelper::strongRule(),
             ],
             'password_confirmation' => ['required', 'string'],
         ];

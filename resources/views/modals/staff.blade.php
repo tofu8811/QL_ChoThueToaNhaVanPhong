@@ -42,12 +42,12 @@
                 <label style="font-size:13px; font-weight:600; margin-bottom:0;">
                   Mật khẩu đăng nhập <span id="admin-form-password-req" style="color:#ef4444; display:none;">*</span>
                 </label>
-                <button type="button" onclick="generateRandomPasswordForInput('admin-form-password', 'Ad@')" class="btn-mo-outline" style="padding:2px 8px; font-size:11px; border-radius:4px;" title="Sinh mật khẩu an toàn">
-                  <i class="fa-solid fa-dice"></i> Sinh MK Ngẫu Nhiên
+                <button type="button" onclick="generateRandomPasswordForInput('admin-form-password', 'Ad@')" class="btn-mo-outline" style="padding:2px 8px; font-size:11px; border-radius:4px;" title="Điền mật khẩu mặc định">
+                  <i class="fa-solid fa-key"></i> Dùng MK Mặc Định
                 </button>
               </div>
               <div style="position:relative;">
-                <input type="password" id="admin-form-password" class="form-control" placeholder="Để trống để hệ thống tự sinh mật khẩu an toàn..." oninput="moClearFieldError('admin-form-password', 'err-admin-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
+                <input type="password" id="admin-form-password" class="form-control" placeholder="Để trống để hệ thống tự đặt mật khẩu mặc định (123456Aa@)..." oninput="moClearFieldError('admin-form-password', 'err-admin-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
                 <button type="button" onclick="moTogglePasswordVisibility('admin-form-password', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; padding:4px;" title="Ẩn/Hiện mật khẩu">
                   <i class="fa-regular fa-eye"></i>
                 </button>
@@ -152,12 +152,12 @@
                 <label style="font-size:13px; font-weight:600; margin-bottom:0;">
                   Mật khẩu đăng nhập <span id="sale-form-password-req" style="color:#ef4444; display:none;">*</span>
                 </label>
-                <button type="button" onclick="generateRandomPasswordForInput('sale-form-password', 'Sa@')" class="btn-mo-outline" style="padding:2px 8px; font-size:11px; border-radius:4px;" title="Sinh mật khẩu an toàn">
-                  <i class="fa-solid fa-dice"></i> Sinh MK Ngẫu Nhiên
+                <button type="button" onclick="generateRandomPasswordForInput('sale-form-password', 'Sa@')" class="btn-mo-outline" style="padding:2px 8px; font-size:11px; border-radius:4px;" title="Điền mật khẩu mặc định">
+                  <i class="fa-solid fa-key"></i> Dùng MK Mặc Định
                 </button>
               </div>
               <div style="position:relative;">
-                <input type="password" id="sale-form-password" class="form-control" placeholder="Để trống để hệ thống tự sinh mật khẩu an toàn..." oninput="moClearFieldError('sale-form-password', 'err-sale-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
+                <input type="password" id="sale-form-password" class="form-control" placeholder="Để trống để hệ thống tự đặt mật khẩu mặc định (123456Aa@)..." oninput="moClearFieldError('sale-form-password', 'err-sale-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
                 <button type="button" onclick="moTogglePasswordVisibility('sale-form-password', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; padding:4px;" title="Ẩn/Hiện mật khẩu">
                   <i class="fa-regular fa-eye"></i>
                 </button>
@@ -275,12 +275,12 @@
                 <label style="font-size:13px; font-weight:600; margin-bottom:0;">
                   Mật khẩu đăng nhập <span id="pm-form-password-req" style="color:#ef4444; display:none;">*</span>
                 </label>
-                <button type="button" onclick="generateRandomPasswordForInput('pm-form-password', 'Pm@')" class="btn-mo-outline" style="padding:2px 8px; font-size:11px; border-radius:4px;" title="Sinh mật khẩu an toàn">
-                  <i class="fa-solid fa-dice"></i> Sinh MK Ngẫu Nhiên
+                <button type="button" onclick="generateRandomPasswordForInput('pm-form-password', 'Pm@')" class="btn-mo-outline" style="padding:2px 8px; font-size:11px; border-radius:4px;" title="Điền mật khẩu mặc định">
+                  <i class="fa-solid fa-key"></i> Dùng MK Mặc Định
                 </button>
               </div>
               <div style="position:relative;">
-                <input type="password" id="pm-form-password" class="form-control" placeholder="Để trống để hệ thống tự sinh mật khẩu an toàn..." oninput="moClearFieldError('pm-form-password', 'err-pm-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
+                <input type="password" id="pm-form-password" class="form-control" placeholder="Để trống để hệ thống tự đặt mật khẩu mặc định (123456Aa@)..." oninput="moClearFieldError('pm-form-password', 'err-pm-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
                 <button type="button" onclick="moTogglePasswordVisibility('pm-form-password', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; padding:4px;" title="Ẩn/Hiện mật khẩu">
                   <i class="fa-regular fa-eye"></i>
                 </button>
@@ -370,12 +370,12 @@
                 <label style="font-size:13px; font-weight:600; margin-bottom:0;">
                   Mật khẩu đăng nhập <span id="acc-form-password-req" style="color:#ef4444; display:none;">*</span>
                 </label>
-                <button type="button" onclick="generateRandomPasswordForInput('acc-form-password', 'Ac@')" class="btn-mo-outline" style="padding:2px 8px; font-size:11px; border-radius:4px;" title="Sinh mật khẩu an toàn">
-                  <i class="fa-solid fa-dice"></i> Sinh MK Ngẫu Nhiên
+                <button type="button" onclick="generateRandomPasswordForInput('acc-form-password', 'Ac@')" class="btn-mo-outline" style="padding:2px 8px; font-size:11px; border-radius:4px;" title="Điền mật khẩu mặc định">
+                  <i class="fa-solid fa-key"></i> Dùng MK Mặc Định
                 </button>
               </div>
               <div style="position:relative;">
-                <input type="password" id="acc-form-password" class="form-control" placeholder="Để trống để hệ thống tự sinh mật khẩu an toàn..." oninput="moClearFieldError('acc-form-password', 'err-acc-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
+                <input type="password" id="acc-form-password" class="form-control" placeholder="Để trống để hệ thống tự đặt mật khẩu mặc định (123456Aa@)..." oninput="moClearFieldError('acc-form-password', 'err-acc-password')" style="width:100%; height:40px; border-radius:6px; border:1px solid #cbd5e1; padding:0 38px 0 12px;">
                 <button type="button" onclick="moTogglePasswordVisibility('acc-form-password', this)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; padding:4px;" title="Ẩn/Hiện mật khẩu">
                   <i class="fa-regular fa-eye"></i>
                 </button>

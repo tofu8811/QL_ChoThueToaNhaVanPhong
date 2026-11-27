@@ -3,9 +3,10 @@
 namespace App\Livewire;
 
 use App\Exceptions\BusinessException;
+use App\Helpers\PasswordHelper;
 use App\Models\Tenant;
 use App\Services\TenantService;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -81,7 +82,7 @@ class TenantManager extends Component
         $this->login_email = '';
         $this->billing_email = '';
         $this->contact_phone = '';
-        $this->password = Str::random(10);
+        $this->password = PasswordHelper::DEFAULT_PASSWORD;
         $this->licenseFile = null;
         $this->showFormModal = true;
     }
@@ -134,6 +135,7 @@ class TenantManager extends Component
             'login_email' => $emailRule,
             'billing_email' => 'required|email|max:100',
             'contact_phone' => 'required|string|max:20',
+            'password' => ['nullable', 'string', PasswordHelper::strongRule()],
         ];
 
         if ($this->licenseFile) {
@@ -173,7 +175,7 @@ class TenantManager extends Component
                 $this->flashMessage = "Cập nhật hồ sơ doanh nghiệp {$tenant->company_name} thành công!";
             } else {
                 $data['tenant_code'] = $this->tenant_code;
-                $data['password'] = $this->password ?: Str::random(12);
+                $data['password'] = !empty(trim($this->password)) ? trim($this->password) : PasswordHelper::DEFAULT_PASSWORD;
                 $tenant = $tenantService->createTenant($data);
                 if ($this->licenseFile) {
                     $tenantService->uploadBusinessLicense($tenant, $this->licenseFile);

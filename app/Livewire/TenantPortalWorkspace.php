@@ -106,7 +106,7 @@ class TenantPortalWorkspace extends Component
 
         $this->validate([
             'current_password' => ['required'],
-            'new_password' => ['required', 'string', 'min:8', 'confirmed'],
+            'new_password' => ['required', 'string', \App\Helpers\PasswordHelper::strongRule(), 'confirmed'],
         ], [
             'current_password.required' => 'Vui lòng nhập mật khẩu khởi tạo hiện tại.',
             'new_password.required' => 'Vui lòng nhập mật khẩu mới.',

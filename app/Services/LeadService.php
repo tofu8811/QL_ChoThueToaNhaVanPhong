@@ -543,7 +543,7 @@ class LeadService
             $tenantCode = $tenantData['tenant_code'] ?? $this->tenantService->generateTenantCode();
 
             $hasExplicitPassword = !empty($tenantData['password']);
-            $rawPassword = $hasExplicitPassword ? $tenantData['password'] : \Illuminate\Support\Str::random(32);
+            $rawPassword = $hasExplicitPassword ? $tenantData['password'] : \App\Helpers\PasswordHelper::DEFAULT_PASSWORD;
 
             $tenant = Tenant::create([
                 'tenant_code' => $tenantCode,

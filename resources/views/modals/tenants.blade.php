@@ -13,26 +13,26 @@
           <div class="field-error-slot" id="err-tenant-company-name"></div>
         </div>
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Mã Số Thuế (MST)</label>
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Mã Số Thuế (MST) <span style="color:#ef4444;">*</span></label>
           <input type="text" id="tenant-tax-code" class="filament-input-sm" placeholder="0312345678" oninput="moClearFieldError('tenant-tax-code', 'err-tenant-tax-code')">
           <div class="field-error-slot" id="err-tenant-tax-code"></div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Người Đại Diện Pháp Luật</label>
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Người Đại Diện Pháp Luật <span style="color:#ef4444;">*</span></label>
           <input type="text" id="tenant-rep-name" class="filament-input-sm" placeholder="Nguyễn Văn B" oninput="moClearFieldError('tenant-rep-name', 'err-tenant-rep-name')">
           <div class="field-error-slot" id="err-tenant-rep-name"></div>
         </div>
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Số Điện Thoại Liên Hệ</label>
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Số Điện Thoại Liên Hệ <span style="color:#ef4444;">*</span></label>
           <input type="tel" id="tenant-contact-phone" class="filament-input-sm" placeholder="0987654321" oninput="moClearFieldError('tenant-contact-phone', 'err-tenant-contact-phone')">
           <div class="field-error-slot" id="err-tenant-contact-phone"></div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Email Công Ty / Kế Toán</label>
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Email Đăng Nhập Portal <span style="color:#ef4444;">*</span></label>
           <input type="email" id="tenant-contact-email" class="filament-input-sm" placeholder="contact@vinatech.vn" oninput="moClearFieldError('tenant-contact-email', 'err-tenant-contact-email')">
           <div class="field-error-slot" id="err-tenant-contact-email"></div>
         </div>
@@ -40,13 +40,24 @@
           <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Trạng Thái Hồ Sơ</label>
           <select id="tenant-status" class="filament-input-sm">
             <option value="ACTIVE">Đang Hoạt Động</option>
-            <option value="INACTIVE">Ngừng Hoạt Động</option>
+            <option value="LOCKED">Tạm Khóa / Ngừng Hoạt Động</option>
           </select>
         </div>
       </div>
+      <div class="form-field" style="margin-bottom:12px;">
+        <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Địa Chỉ Trụ Sở ĐKKD <span style="color:#ef4444;">*</span></label>
+        <input type="text" id="tenant-address" class="filament-input-sm" placeholder="Tầng 10, Tòa nhà Bitexco, Q.1, TP.HCM" oninput="moClearFieldError('tenant-address', 'err-tenant-address')">
+        <div class="field-error-slot" id="err-tenant-address"></div>
+      </div>
       <div class="form-field" style="margin-bottom:16px;">
-        <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Địa Chỉ Trụ Sở ĐKKD</label>
-        <input type="text" id="tenant-address" class="filament-input-sm" placeholder="Tầng 10, Tòa nhà Bitexco, Q.1, TP.HCM">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <label style="font-size:12px;font-weight:600;color:#334155;margin:0;">Mật Khẩu Khởi Tạo Portal</label>
+          <button type="button" onclick="document.getElementById('tenant-password').value='{{ \App\Helpers\PasswordHelper::DEFAULT_PASSWORD }}'; moClearFieldError('tenant-password', 'err-tenant-password');" class="btn-mo-outline" style="padding:2px 8px;font-size:11px;border-radius:4px;">
+            <i class="fa-solid fa-key"></i> Dùng MK Mặc Định
+          </button>
+        </div>
+        <input type="text" id="tenant-password" class="filament-input-sm" value="{{ \App\Helpers\PasswordHelper::DEFAULT_PASSWORD }}" placeholder="Để trống để tự cấp mật khẩu mặc định ({{ \App\Helpers\PasswordHelper::DEFAULT_PASSWORD }})..." style="font-family:monospace;" oninput="moClearFieldError('tenant-password', 'err-tenant-password')">
+        <div class="field-error-slot" id="err-tenant-password"></div>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #f1f5f9;padding-top:14px;">
         <button type="button" class="btn-mo-outline" onclick="closeCreateTenantModal()">Hủy Bỏ</button>
@@ -90,7 +101,7 @@
       </div>
       <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="form-field">
-          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Email Liên Hệ</label>
+          <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Email Đăng Nhập Portal <span style="color:#ef4444;">*</span></label>
           <input type="email" id="edit-tenant-contact-email" class="filament-input-sm" oninput="moClearFieldError('edit-tenant-contact-email', 'err-edit-tenant-contact-email')">
           <div class="field-error-slot" id="err-edit-tenant-contact-email"></div>
         </div>
@@ -98,13 +109,14 @@
           <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Trạng Thái</label>
           <select id="edit-tenant-status" class="filament-input-sm">
             <option value="ACTIVE">Đang Hoạt Động</option>
-            <option value="INACTIVE">Ngừng Hoạt Động</option>
+            <option value="LOCKED">Tạm Khóa / Ngừng Hoạt Động</option>
           </select>
         </div>
       </div>
       <div class="form-field" style="margin-bottom:16px;">
-        <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Địa Chỉ Trụ Sở</label>
-        <input type="text" id="edit-tenant-address" class="filament-input-sm">
+        <label style="font-size:12px;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Địa Chỉ Trụ Sở ĐKKD <span style="color:#ef4444;">*</span></label>
+        <input type="text" id="edit-tenant-address" class="filament-input-sm" oninput="moClearFieldError('edit-tenant-address', 'err-edit-tenant-address')">
+        <div class="field-error-slot" id="err-edit-tenant-address"></div>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #f1f5f9;padding-top:14px;">
         <button type="button" class="btn-mo-outline" onclick="closeEditTenantModal()">Đóng</button>

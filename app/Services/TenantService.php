@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ContractStatus;
 use App\Exceptions\BusinessException;
+use App\Helpers\PasswordHelper;
 use App\Models\Tenant;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
@@ -11,7 +12,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Str;
 
 class TenantService
 {
@@ -78,7 +78,9 @@ class TenantService
     {
         return DB::transaction(function () use ($data, $salesId) {
             $tenantCode = $data['tenant_code'] ?? $this->generateTenantCode();
-            $rawPassword = $data['password'] ?? Str::random(12);
+            $rawPassword = !empty($data['password'])
+                ? trim((string) $data['password'])
+                : PasswordHelper::DEFAULT_PASSWORD;
 
             return Tenant::create([
                 'tenant_code' => $tenantCode,

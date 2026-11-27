@@ -413,14 +413,19 @@
       const rawFiles = Array.from(input.files);
       input.value = '';
 
+      const validFiles = [];
       for (let i = 0; i < rawFiles.length; i++) {
         const file = rawFiles[i];
         if (file.size > 15 * 1024 * 1024) {
           moToast(`Ảnh "${file.name}" vượt quá 15MB. Vui lòng chọn ảnh dung lượng nhỏ hơn.`, 'warning', 'Tệp quá lớn');
           continue;
         }
-        const compressed = await compressImageFile(file);
-        selectedCreateBuildingFiles.push(compressed);
+        validFiles.push(file);
+      }
+
+      if (validFiles.length > 0) {
+        const compressedFiles = await Promise.all(validFiles.map(f => compressImageFile(f)));
+        selectedCreateBuildingFiles.push(...compressedFiles);
       }
       renderCreateBuildingPreviews();
     }
@@ -430,6 +435,7 @@
       e.currentTarget.style.borderColor = '#cbd5e1';
       if (e.dataTransfer && e.dataTransfer.files) {
         const rawFiles = Array.from(e.dataTransfer.files);
+        const validFiles = [];
         for (let i = 0; i < rawFiles.length; i++) {
           const file = rawFiles[i];
           if (!file.type.startsWith('image/')) continue;
@@ -437,8 +443,12 @@
             moToast(`Ảnh "${file.name}" vượt quá 15MB. Vui lòng chọn ảnh dung lượng nhỏ hơn.`, 'warning', 'Tệp quá lớn');
             continue;
           }
-          const compressed = await compressImageFile(file);
-          selectedCreateBuildingFiles.push(compressed);
+          validFiles.push(file);
+        }
+
+        if (validFiles.length > 0) {
+          const compressedFiles = await Promise.all(validFiles.map(f => compressImageFile(f)));
+          selectedCreateBuildingFiles.push(...compressedFiles);
         }
         renderCreateBuildingPreviews();
       }
@@ -968,8 +978,7 @@
       }
       formData.append('primary_image_index', selectedCreateBuildingPrimaryIndex);
       for (let i = 0; i < selectedCreateBuildingFiles.length; i++) {
-        const compressedFile = await compressImageFile(selectedCreateBuildingFiles[i]);
-        formData.append('images[]', compressedFile);
+        formData.append('images[]', selectedCreateBuildingFiles[i]);
       }
 
       try {
@@ -1055,16 +1064,26 @@
       if (!input.files || input.files.length === 0) return;
       if (!currentEditBuildingId) return;
 
-      const formData = new FormData();
-      for (let i = 0; i < input.files.length; i++) {
-        const file = input.files[i];
-        if (file.size > 5 * 1024 * 1024) {
-          moToast(`Ảnh "${file.name}" vượt quá 5MB. Vui lòng chọn ảnh dung lượng nhỏ hơn.`, 'warning', 'Tệp quá lớn');
+      const rawFiles = Array.from(input.files);
+      input.value = '';
+
+      const validFiles = [];
+      for (let i = 0; i < rawFiles.length; i++) {
+        const file = rawFiles[i];
+        if (file.size > 15 * 1024 * 1024) {
+          moToast(`Ảnh "${file.name}" vượt quá 15MB. Vui lòng chọn ảnh dung lượng nhỏ hơn.`, 'warning', 'Tệp quá lớn');
           continue;
         }
-        formData.append('images[]', file);
+        validFiles.push(file);
       }
-      input.value = '';
+
+      if (validFiles.length === 0) return;
+
+      const compressedFiles = await Promise.all(validFiles.map(f => compressImageFile(f)));
+      const formData = new FormData();
+      for (let i = 0; i < compressedFiles.length; i++) {
+        formData.append('images[]', compressedFiles[i]);
+      }
 
       try {
         const res = await fetch(`/api/v1/admin/buildings/${currentEditBuildingId}/images`, {

@@ -45,7 +45,7 @@
               <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditAdminModal('${a.id}')" title="Chỉnh sửa">
                 <i class="fa-regular fa-pen-to-square"></i>
               </button>
-              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('admin', '${a.id}', '${escapeHtml(a.full_name || a.name)}')" title="Cấp lại mật khẩu & gửi email">
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('admin', '${a.id}', '${escapeHtml(a.full_name || a.name)}', '${escapeHtml(a.email || '')}')" title="Cấp lại mật khẩu & gửi email">
                 <i class="fa-solid fa-key"></i>
               </button>
               <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffAdmin('${a.id}', '${escapeHtml(a.full_name || a.name)}')" title="Xóa mềm">
@@ -92,7 +92,7 @@
               <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditSaleModal('${s.id}')" title="Chỉnh sửa">
                 <i class="fa-regular fa-pen-to-square"></i>
               </button>
-              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('sales', '${s.id}', '${escapeHtml(s.full_name || s.name)}')" title="Cấp lại mật khẩu & gửi email">
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('sales', '${s.id}', '${escapeHtml(s.full_name || s.name)}', '${escapeHtml(s.email || '')}')" title="Cấp lại mật khẩu & gửi email">
                 <i class="fa-solid fa-key"></i>
               </button>
               <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffSale('${s.id}', '${escapeHtml(s.full_name || s.name)}')" title="Xóa mềm">
@@ -146,7 +146,7 @@
               <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditPmModal('${p.id}')" title="Chỉnh sửa">
                 <i class="fa-regular fa-pen-to-square"></i>
               </button>
-              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('pm', '${p.id}', '${escapeHtml(p.full_name || p.name)}')" title="Cấp lại mật khẩu & gửi email">
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('pm', '${p.id}', '${escapeHtml(p.full_name || p.name)}', '${escapeHtml(p.email || '')}')" title="Cấp lại mật khẩu & gửi email">
                 <i class="fa-solid fa-key"></i>
               </button>
               <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffPm('${p.id}', '${escapeHtml(p.full_name || p.name)}')" title="Xóa mềm">
@@ -194,7 +194,7 @@
               <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditAccountantModal('${a.id}')" title="Chỉnh sửa">
                 <i class="fa-regular fa-pen-to-square"></i>
               </button>
-              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('accountant', '${a.id}', '${escapeHtml(a.full_name || a.name)}')" title="Cấp lại mật khẩu & gửi email">
+              <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('accountant', '${a.id}', '${escapeHtml(a.full_name || a.name)}', '${escapeHtml(a.email || '')}')" title="Cấp lại mật khẩu & gửi email">
                 <i class="fa-solid fa-key"></i>
               </button>
               <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffAccountant('${a.id}', '${escapeHtml(a.full_name || a.name)}')" title="Xóa mềm">
@@ -745,9 +745,7 @@
         }
       }
 
-      if (pwd && pwd.length < 8) {
-        moSetFieldError('admin-form-password', 'err-admin-password', 'Mật khẩu phải có tối thiểu 8 ký tự.');
-        document.getElementById('admin-form-password').focus();
+      if (!validateStaffOptionalStrongPassword(pwd, 'admin-form-password', 'err-admin-password')) {
         return;
       }
 
@@ -1087,9 +1085,7 @@
         }
       }
 
-      if (pwd && pwd.length < 8) {
-        moSetFieldError('sale-form-password', 'err-sale-password', 'Mật khẩu phải có tối thiểu 8 ký tự.');
-        document.getElementById('sale-form-password').focus();
+      if (!validateStaffOptionalStrongPassword(pwd, 'sale-form-password', 'err-sale-password')) {
         return;
       }
 
@@ -1434,9 +1430,7 @@
         }
       }
 
-      if (pwd && pwd.length < 8) {
-        moSetFieldError('pm-form-password', 'err-pm-password', 'Mật khẩu phải có tối thiểu 8 ký tự.');
-        document.getElementById('pm-form-password').focus();
+      if (!validateStaffOptionalStrongPassword(pwd, 'pm-form-password', 'err-pm-password')) {
         return;
       }
 
@@ -1758,9 +1752,7 @@
         }
       }
 
-      if (pwd && pwd.length < 8) {
-        moSetFieldError('acc-form-password', 'err-acc-password', 'Mật khẩu phải có tối thiểu 8 ký tự.');
-        document.getElementById('acc-form-password').focus();
+      if (!validateStaffOptionalStrongPassword(pwd, 'acc-form-password', 'err-acc-password')) {
         return;
       }
 
@@ -1938,25 +1930,24 @@
         </div>
       `;
     }
-    // Sinh mật khẩu ngẫu nhiên an toàn vào input
-    function generateRandomPasswordForInput(inputId, prefix = 'Bms@') {
-      const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-      const lower = 'abcdefghjkmnpqrstuvwxyz';
-      const digits = '23456789';
-      const specials = '#!$%*';
-      const all = upper + lower + digits + specials;
-      
-      let pass = [
-        upper[Math.floor(Math.random() * upper.length)],
-        lower[Math.floor(Math.random() * lower.length)],
-        digits[Math.floor(Math.random() * digits.length)],
-        specials[Math.floor(Math.random() * specials.length)]
-      ];
-      while (pass.length < 6) {
-        pass.push(all[Math.floor(Math.random() * all.length)]);
+    // Kiểm tra mật khẩu tùy chọn (khi có nhập) theo chuẩn mạnh đồng bộ cho tất cả các role
+    function validateStaffOptionalStrongPassword(pwd, inputId, errSlotId) {
+      if (!pwd) return true;
+      const evalRes = typeof moEvaluatePassword === 'function' ? moEvaluatePassword(pwd) : null;
+      const isValid = evalRes
+        ? evalRes.valid
+        : (pwd.length >= 8 && /[a-z]/.test(pwd) && /[A-Z]/.test(pwd) && /[0-9]/.test(pwd) && /[^A-Za-z0-9]/.test(pwd));
+      if (!isValid) {
+        moSetFieldError(inputId, errSlotId, 'Mật khẩu phải tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt.');
+        document.getElementById(inputId)?.focus();
+        return false;
       }
-      pass.sort(() => 0.5 - Math.random());
-      const generated = prefix + pass.join('');
+      return true;
+    }
+
+    // Điền mật khẩu mặc định chuẩn bảo mật vào ô input
+    function generateRandomPasswordForInput(inputId, prefix = 'Bms@') {
+      const generated = '{{ \App\Helpers\PasswordHelper::DEFAULT_PASSWORD }}';
 
       const input = document.getElementById(inputId);
       if (input) {
@@ -1981,17 +1972,17 @@
 
     // Mở popup hiển thị mật khẩu khởi tạo / cấp lại
     function showStaffCredentialSuccessModal(opts) {
-      if (opts.title) document.getElementById('staff-credential-modal-title').innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + opts.title;
-      if (opts.desc) document.getElementById('staff-credential-modal-desc').innerHTML = opts.desc;
-      if (opts.name) document.getElementById('staff-credential-name').innerText = opts.name;
-      if (opts.email) document.getElementById('staff-credential-email').innerText = opts.email;
-      if (opts.password) document.getElementById('staff-credential-password').innerText = opts.password;
+      document.getElementById('staff-credential-modal-title').innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + (opts.title || 'Cấp Mật Khẩu Thành Công');
+      document.getElementById('staff-credential-modal-desc').innerHTML = opts.desc || 'Tài khoản nhân sự đã được thiết lập thành công. Vui lòng sao chép mật khẩu bên dưới:';
+      document.getElementById('staff-credential-name').innerText = opts.name || '---';
+      document.getElementById('staff-credential-email').innerText = opts.email || '---';
+      document.getElementById('staff-credential-password').innerText = opts.password || '---';
       openModal('staff-credential-success-modal');
     }
 
     // Cấp lại mật khẩu cho nhân sự (Admin-Assisted Password Reset)
-    async function resetStaffPassword(role, id, name) {
-      if (!confirm(`Bạn có chắc chắn muốn cấp lại mật khẩu cho nhân sự [${name}]?\n\nHệ thống sẽ tự động tạo mật khẩu ngẫu nhiên mới, thu hồi toàn bộ phiên đăng nhập cũ và gửi email thông báo mật khẩu mới cho nhân sự.`)) {
+    async function resetStaffPassword(role, id, name, email = '') {
+      if (!confirm(`Bạn có chắc chắn muốn cấp lại mật khẩu cho nhân sự [${name}]?\n\nHệ thống sẽ tự động cấp lại mật khẩu mặc định, thu hồi toàn bộ phiên đăng nhập cũ và gửi email thông báo mật khẩu mới cho nhân sự.`)) {
         return;
       }
 
@@ -2022,7 +2013,7 @@
           title: 'Cấp Lại Mật Khẩu Thành Công',
           desc: `Đã cấp lại mật khẩu mới cho nhân sự <strong>${escapeHtml(name)}</strong>. Email thông báo mật khẩu mới đã được tự động xếp vào hàng đợi gửi đi.`,
           name: name,
-          email: json.data?.email || '',
+          email: json.data?.email || email || '---',
           password: newPass
         });
       } catch (e) {

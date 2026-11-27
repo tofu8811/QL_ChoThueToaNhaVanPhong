@@ -63,9 +63,7 @@
           <i class="fa-solid fa-globe"></i> Cổng thông tin
         </a>
         <div style="height: 20px; width: 1px; background: #cbd5e1;"></div>
-        <button type="button" class="btn-mo-outline" style="padding: 6px 14px; font-size: 13px; border-radius: 8px;" onclick="handleLogout()">
-          <i class="fa-solid fa-arrow-right-from-bracket"></i> Đăng xuất
-        </button>
+        @include('components.user-dropdown-menu')
       </div>
     </div>
   </header>

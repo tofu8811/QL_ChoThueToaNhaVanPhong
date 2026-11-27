@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V1\Tenant;
 
+use App\Helpers\PasswordHelper;
 use App\Http\Requests\V1\BaseApiRequest;
 use App\Rules\VietnamesePhoneNumber;
 
@@ -21,7 +22,7 @@ class StoreTenantRequest extends BaseApiRequest
             'login_email' => ['required', 'email', 'max:150', 'unique:tenants,login_email'],
             'billing_email' => ['nullable', 'email', 'max:150'],
             'contact_phone' => ['required', 'string', new VietnamesePhoneNumber],
-            'password' => ['nullable', 'string', 'min:8'],
+            'password' => ['nullable', 'string', PasswordHelper::strongRule()],
             'business_license_private_path' => ['nullable', 'string', 'max:255'],
             'converted_from_lead_id' => ['nullable', 'uuid', 'exists:leads,id'],
         ];

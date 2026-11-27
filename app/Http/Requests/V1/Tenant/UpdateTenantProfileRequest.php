@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V1\Tenant;
 
+use App\Helpers\PasswordHelper;
 use App\Http\Requests\V1\BaseApiRequest;
 use App\Rules\VietnamesePhoneNumber;
 
@@ -15,7 +16,7 @@ class UpdateTenantProfileRequest extends BaseApiRequest
         return [
             'billing_email' => ['sometimes', 'required', 'email', 'max:150'],
             'contact_phone' => ['sometimes', 'required', 'string', new VietnamesePhoneNumber],
-            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'password' => ['nullable', 'string', PasswordHelper::strongRule(), 'confirmed'],
         ];
     }
 

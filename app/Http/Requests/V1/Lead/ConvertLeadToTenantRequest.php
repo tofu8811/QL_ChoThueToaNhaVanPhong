@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\V1\Lead;
 
+use App\Helpers\PasswordHelper;
 use App\Http\Requests\V1\BaseApiRequest;
 use App\Rules\VietnamesePhoneNumber;
 use Illuminate\Validation\Rule;
@@ -29,7 +30,7 @@ class ConvertLeadToTenantRequest extends BaseApiRequest
             'business_license_private_path' => ['nullable', 'string', 'max:255'],
             'billing_email' => ['nullable', 'email', 'max:150'],
             'contact_phone' => ['nullable', 'string', new VietnamesePhoneNumber],
-            'password' => ['nullable', 'string', 'min:8'],
+            'password' => ['nullable', 'string', PasswordHelper::strongRule()],
         ];
     }
 

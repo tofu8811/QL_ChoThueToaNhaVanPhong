@@ -243,9 +243,15 @@
                         </div>
                         @if(!$isEditing)
                             <div>
-                                <label style="display:block;font-size:12.5px;font-weight:600;color:#334155;margin-bottom:4px;">Mật Khẩu Khởi Tạo:</label>
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                                    <label style="font-size:12.5px;font-weight:600;color:#334155;margin:0;">Mật Khẩu Khởi Tạo:</label>
+                                    <button type="button" wire:click="$set('password', '{{ \App\Helpers\PasswordHelper::DEFAULT_PASSWORD }}')" class="btn-mo-outline" style="padding:2px 8px;font-size:11px;border-radius:4px;">
+                                        <i class="fa-solid fa-key"></i> Mặc định
+                                    </button>
+                                </div>
                                 <input type="text" wire:model="password"
                                     style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13.5px;box-sizing:border-box;font-family:monospace;">
+                                @error('password') <span style="color:red;font-size:12px;">{{ $message }}</span> @enderror
                             </div>
                         @endif
                     </div>
@@ -420,7 +426,7 @@
                         <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;font-size:12.5px;color:#92400e;line-height:1.5;margin-bottom:18px;">
                             <i class="fa-solid fa-triangle-exclamation"></i> <strong>Quy trình xử lý an toàn:</strong>
                             <ul style="margin:6px 0 0 18px;padding:0;">
-                                <li>Hệ thống sẽ tự động sinh mật khẩu ngẫu nhiên an toàn 10 ký tự.</li>
+                                <li>Hệ thống sẽ tự động cấp lại mật khẩu mặc định chuẩn bảo mật ({{ \App\Helpers\PasswordHelper::DEFAULT_PASSWORD }}).</li>
                                 <li>Thu hồi (Revoke) mọi phiên làm việc cũ của khách thuê.</li>
                                 <li>Đẩy thông báo email mới vào hàng đợi Queue gửi tới khách.</li>
                                 <li>Yêu cầu khách thuê đổi mật khẩu mới ở lần đăng nhập tiếp theo.</li>

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\UnitStatus;
 use App\Exceptions\BusinessException;
+use App\Helpers\StorageUploadHelper;
 use App\Models\Building;
 use App\Models\ContractUnit;
 use App\Models\Unit;
@@ -480,47 +481,36 @@ class UnitService
         $hasPrimary = $unit->images()->where('is_primary', true)->exists();
         $currentOrder = (int) ($unit->images()->max('display_order') ?? 0);
 
+        $items = [];
         foreach ($files as $index => $file) {
-            $filename = Str::uuid()->toString() . '.' . $file->getClientOriginalExtension();
-            $path = "units/{$unit->id}/{$filename}";
-
-            try {
-                if (config('filesystems.disks.supabase.key')) {
-                    $mime = method_exists($file, 'getClientMimeType') ? $file->getClientMimeType() : 'image/jpeg';
-                    $stream = fopen($file->getRealPath(), 'r');
-                    Storage::disk('supabase')->put($path, $stream, [
-                        'mimetype' => $mime ?: 'image/jpeg',
-                        'visibility' => 'public',
-                    ]);
-                    if (is_resource($stream)) {
-                        fclose($stream);
-                    }
-                    $url = Storage::disk('supabase')->url($path);
-                } else {
-                    $localPath = $file->storeAs("public/units/{$unit->id}", $filename);
-                    $url = Storage::url($localPath);
-                }
-            } catch (\Throwable $e) {
-                Log::warning("Supabase upload failed, fallback to local storage: " . $e->getMessage());
-                $localPath = $file->storeAs("public/units/{$unit->id}", $filename);
-                $url = Storage::url($localPath);
+            if (!$file instanceof UploadedFile) {
+                continue;
             }
+            $filename = Str::uuid()->toString() . '.' . $file->getClientOriginalExtension();
+            $items[$index] = [
+                'file' => $file,
+                'path' => "units/{$unit->id}/{$filename}",
+                'fallback_dir' => "public/units/{$unit->id}",
+                'filename' => $filename,
+            ];
+        }
 
+        $uploadResults = StorageUploadHelper::uploadBatch($items, 'supabase', 'public', 'public');
+
+        foreach ($uploadResults as $index => $result) {
             $isPrimary = (!$hasPrimary && $index === 0);
             if ($isPrimary) {
                 $hasPrimary = true;
             }
 
             $currentOrder++;
-            $image = UnitImage::create([
+            $uploaded[] = UnitImage::create([
                 'unit_id' => $unit->id,
-                'image_url' => $url,
-                'caption' => $caption ?? $file->getClientOriginalName(),
+                'image_url' => $result['url'],
+                'caption' => $caption ?? $result['original_name'],
                 'is_primary' => $isPrimary,
                 'display_order' => $currentOrder,
             ]);
-
-            $uploaded[] = $image;
         }
 
         return $uploaded;

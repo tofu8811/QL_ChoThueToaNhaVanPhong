@@ -101,4 +101,16 @@ class TenantApiController extends BaseApiController
             'expires_in_minutes' => 10,
         ], 'Tạo liên kết tải Giấy phép ĐKKD thành công.');
     }
+
+    // Cấp lại mật khẩu mặc định cho tài khoản Khách thuê
+    public function resetPassword(string $id, Request $request): JsonResponse
+    {
+        $tenant = Tenant::findOrFail($id);
+        $newPassword = $this->tenantService->adminResetPassword($tenant, $request->user());
+
+        return $this->successResponse([
+            'new_password' => $newPassword,
+            'email' => $tenant->login_email,
+        ], 'Cấp lại mật khẩu cho khách thuê thành công.');
+    }
 }

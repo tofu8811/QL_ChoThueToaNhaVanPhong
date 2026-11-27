@@ -86,6 +86,7 @@ Route::prefix('v1')->group(function () {
 
         Route::post('tenants/{id}/upload-license', [TenantApiController::class, 'uploadLicense'])->middleware('role:admin,pm,sales')->name('v1.admin.tenants.uploadLicense');
         Route::get('tenants/{id}/download-license', [TenantApiController::class, 'downloadLicense'])->name('v1.admin.tenants.downloadLicense');
+        Route::post('tenants/{id}/reset-password', [TenantApiController::class, 'resetPassword'])->middleware('role:admin,pm,sales')->name('v1.admin.tenants.reset-password');
 
 
         // =====================================================================

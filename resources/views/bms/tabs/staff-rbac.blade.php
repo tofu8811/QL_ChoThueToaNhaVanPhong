@@ -126,7 +126,7 @@
                             <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditAdminModal('{{ $a->id }}')" title="Chỉnh sửa">
                               <i class="fa-regular fa-pen-to-square"></i>
                             </button>
-                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('admin', '{{ $a->id }}', '{{ addslashes($a->full_name ?? $a->name ?? '') }}')" title="Cấp lại mật khẩu & gửi email">
+                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('admin', '{{ $a->id }}', '{{ addslashes($a->full_name ?? $a->name ?? '') }}', '{{ addslashes($a->email ?? '') }}')" title="Cấp lại mật khẩu & gửi email">
                               <i class="fa-solid fa-key"></i>
                             </button>
                             <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffAdmin('{{ $a->id }}', '{{ addslashes($a->full_name ?? $a->name ?? '') }}')" title="Xóa mềm">
@@ -237,7 +237,7 @@
                             <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditSaleModal('{{ $s->id }}')" title="Chỉnh sửa">
                               <i class="fa-regular fa-pen-to-square"></i>
                             </button>
-                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('sales', '{{ $s->id }}', '{{ addslashes($s->full_name ?? $s->name ?? '') }}')" title="Cấp lại mật khẩu & gửi email">
+                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('sales', '{{ $s->id }}', '{{ addslashes($s->full_name ?? $s->name ?? '') }}', '{{ addslashes($s->email ?? '') }}')" title="Cấp lại mật khẩu & gửi email">
                               <i class="fa-solid fa-key"></i>
                             </button>
                             <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffSale('{{ $s->id }}', '{{ addslashes($s->full_name ?? $s->name ?? '') }}')" title="Xóa mềm">
@@ -359,7 +359,7 @@
                             <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditPmModal('{{ $p->id }}')" title="Chỉnh sửa">
                               <i class="fa-regular fa-pen-to-square"></i>
                             </button>
-                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('pm', '{{ $p->id }}', '{{ addslashes($p->full_name ?? $p->name ?? '') }}')" title="Cấp lại mật khẩu & gửi email">
+                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('pm', '{{ $p->id }}', '{{ addslashes($p->full_name ?? $p->name ?? '') }}', '{{ addslashes($p->email ?? '') }}')" title="Cấp lại mật khẩu & gửi email">
                               <i class="fa-solid fa-key"></i>
                             </button>
                             <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffPm('{{ $p->id }}', '{{ addslashes($p->full_name ?? $p->name ?? '') }}')" title="Xóa mềm">
@@ -477,7 +477,7 @@
                             <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px;" onclick="openEditAccountantModal('{{ $a->id }}')" title="Chỉnh sửa">
                               <i class="fa-regular fa-pen-to-square"></i>
                             </button>
-                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('accountant', '{{ $a->id }}', '{{ addslashes($a->full_name ?? $a->name ?? '') }}')" title="Cấp lại mật khẩu & gửi email">
+                            <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#d97706; border-color:#fde68a;" onclick="resetStaffPassword('accountant', '{{ $a->id }}', '{{ addslashes($a->full_name ?? $a->name ?? '') }}', '{{ addslashes($a->email ?? '') }}')" title="Cấp lại mật khẩu & gửi email">
                               <i class="fa-solid fa-key"></i>
                             </button>
                             <button class="btn-mo-outline" style="padding:4px 8px; font-size:12px; color:#dc2626; border-color:#fca5a5;" onclick="deleteStaffAccountant('{{ $a->id }}', '{{ addslashes($a->full_name ?? $a->name ?? '') }}')" title="Xóa mềm">

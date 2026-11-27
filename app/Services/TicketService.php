@@ -8,6 +8,7 @@ use App\Enums\TicketProofType;
 use App\Enums\TicketStatus;
 use App\Events\TicketCreatedEvent;
 use App\Exceptions\BusinessException;
+use App\Helpers\StorageUploadHelper;
 use App\Models\Admin;
 use App\Models\Contract;
 use App\Models\PropertyManager;
@@ -176,18 +177,15 @@ class TicketService
 
             // 5. Lưu ảnh hiện trạng đính kèm (nếu có)
             if (!empty($data['images']) && is_array($data['images'])) {
-                foreach ($data['images'] as $imageItem) {
-                    $url = $this->storeProofImageFile($ticket->id, $imageItem);
-                    if ($url) {
-                        TicketProofImage::create([
-                            'ticket_id'              => $ticket->id,
-                            'ticket_history_id'      => $history->id,
-                            'image_url'              => $url,
-                            'proof_type'             => TicketProofType::INCIDENT->value,
-                            'caption'                => 'Ảnh hiện trường sự cố ban đầu',
-                            'uploaded_by_actor_type' => 'TENANT',
-                        ]);
-                    }
+                foreach ($this->storeProofImageFiles($ticket->id, $data['images']) as $url) {
+                    TicketProofImage::create([
+                        'ticket_id'              => $ticket->id,
+                        'ticket_history_id'      => $history->id,
+                        'image_url'              => $url,
+                        'proof_type'             => TicketProofType::INCIDENT->value,
+                        'caption'                => 'Ảnh hiện trường sự cố ban đầu',
+                        'uploaded_by_actor_type' => 'TENANT',
+                    ]);
                 }
             }
 
@@ -427,19 +425,15 @@ class TicketService
         $images = $data['images'] ?? [];
         $uploaded = [];
 
-        foreach ($images as $img) {
-            $url = $this->storeProofImageFile($ticket->id, $img);
-            if ($url) {
-                $proof = TicketProofImage::create([
-                    'ticket_id'              => $ticket->id,
-                    'ticket_history_id'      => null,
-                    'image_url'              => $url,
-                    'proof_type'             => $proofType,
-                    'caption'                => $caption,
-                    'uploaded_by_actor_type' => $actorType,
-                ]);
-                $uploaded[] = $proof;
-            }
+        foreach ($this->storeProofImageFiles($ticket->id, $images) as $url) {
+            $uploaded[] = TicketProofImage::create([
+                'ticket_id'              => $ticket->id,
+                'ticket_history_id'      => null,
+                'image_url'              => $url,
+                'proof_type'             => $proofType,
+                'caption'                => $caption,
+                'uploaded_by_actor_type' => $actorType,
+            ]);
         }
 
         return $uploaded;
@@ -518,36 +512,37 @@ class TicketService
     }
 
     /**
-     * Lưu trữ file ảnh lên Supabase hoặc Local Storage.
+     * Lưu trữ hàng loạt tệp ảnh bằng chứng sự cố lên Supabase hoặc Local Storage.
      *
      * @param string $ticketId
-     * @param mixed $fileItem
-     * @return string|null
+     * @param array<int, mixed> $fileItems
+     * @return array<int, string>
      */
-    protected function storeProofImageFile(string $ticketId, mixed $fileItem): ?string
+    protected function storeProofImageFiles(string $ticketId, array $fileItems): array
     {
-        if (is_string($fileItem) && filter_var($fileItem, FILTER_VALIDATE_URL)) {
-            return $fileItem;
-        }
-
-        if ($fileItem instanceof UploadedFile) {
-            $filename = Str::uuid()->toString() . '.' . $fileItem->getClientOriginalExtension();
-            $path = "tickets/{$ticketId}/{$filename}";
-
-            try {
-                if (config('filesystems.disks.supabase.key')) {
-                    Storage::disk('supabase')->put($path, file_get_contents($fileItem));
-                    return Storage::disk('supabase')->url($path);
-                }
-            } catch (\Throwable $e) {
-                Log::warning("Supabase upload failed for ticket proof: " . $e->getMessage());
+        $items = [];
+        foreach ($fileItems as $index => $fileItem) {
+            if (is_string($fileItem) && filter_var($fileItem, FILTER_VALIDATE_URL)) {
+                $items[$index] = [
+                    'file' => $fileItem,
+                    'path' => $fileItem,
+                    'fallback_dir' => "public/tickets/{$ticketId}",
+                    'filename' => basename($fileItem),
+                ];
+            } elseif ($fileItem instanceof UploadedFile) {
+                $filename = Str::uuid()->toString() . '.' . $fileItem->getClientOriginalExtension();
+                $items[$index] = [
+                    'file' => $fileItem,
+                    'path' => "tickets/{$ticketId}/{$filename}",
+                    'fallback_dir' => "public/tickets/{$ticketId}",
+                    'filename' => $filename,
+                ];
             }
-
-            $localPath = $fileItem->storeAs("public/tickets/{$ticketId}", $filename);
-            return Storage::url($localPath);
         }
 
-        return null;
+        $uploadResults = StorageUploadHelper::uploadBatch($items, 'supabase', 'public', 'public');
+
+        return array_values(array_map(fn (array $res) => $res['url'], $uploadResults));
     }
 
     /**

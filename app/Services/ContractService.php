@@ -7,6 +7,7 @@ use App\Enums\UnitStatus;
 use App\Exceptions\BusinessException;
 use App\Exceptions\LeaseOverlapException;
 use App\Helpers\NumberToWordsHelper;
+use App\Helpers\StorageUploadHelper;
 use App\Models\Admin;
 use App\Models\Building;
 use App\Models\Contract;
@@ -135,11 +136,23 @@ class ContractService
                 throw new BusinessException('Hợp đồng phải có ít nhất một mặt bằng cho thuê.', 422);
             }
 
+            $normalizedUnits = [];
+            foreach ($data['units'] as $unitItem) {
+                $normalizedUnits[$unitItem['unit_id']] = $unitItem;
+            }
+            $unitIds = array_keys($normalizedUnits);
+            $startDate = Carbon::parse($data['start_date'])->toDateString();
+            $endDate = Carbon::parse($data['end_date'])->toDateString();
+
+            // Khóa bi quan hàng loạt theo thứ tự ID tăng dần & kiểm tra trùng lịch trong 1 câu SQL
+            $this->lockAndCheckUnits($unitIds, $data['building_id']);
+            $this->validateNoOverlap($unitIds, $startDate, $endDate);
+
             $contractNumber = $data['contract_number'] ?? $this->generateContractNumber($building->building_code);
 
-            // Tính tổng diện tích ban đầu để thỏa mãn constraint chk_contracts_area (total_leased_area_sqm > 0)
+            // Tính tổng diện tích một lần duy nhất để thỏa mãn constraint chk_contracts_area (total_leased_area_sqm > 0)
             $initialTotalArea = 0.0;
-            foreach ($data['units'] as $unitItem) {
+            foreach ($normalizedUnits as $unitItem) {
                 $initialTotalArea += (float) ($unitItem['leased_area_sqm'] ?? 0.0);
             }
             if ($initialTotalArea <= 0.0) {
@@ -163,20 +176,24 @@ class ContractService
                 'status' => ContractStatus::DRAFT,
             ]);
 
-            // Gán danh sách mặt bằng ban đầu (nếu có)
-            if (!empty($data['units']) && is_array($data['units'])) {
-                foreach ($data['units'] as $unitData) {
-                    $this->attachUnitToContract(
-                        $contract,
-                        $unitData['unit_id'],
-                        (float) $unitData['leased_area_sqm'],
-                        (float) $unitData['agreed_rental_price_per_sqm'],
-                        (float) ($unitData['agreed_service_fee_per_sqm'] ?? 0.0)
-                    );
-                }
+            // Chèn hàng loạt danh sách mặt bằng trong 1 câu lệnh SQL duy nhất
+            $now = now();
+            $rows = [];
+            foreach ($normalizedUnits as $unitData) {
+                $rows[] = [
+                    'contract_id' => $contract->id,
+                    'unit_id' => $unitData['unit_id'],
+                    'building_id' => $contract->building_id,
+                    'leased_area_sqm' => (float) $unitData['leased_area_sqm'],
+                    'agreed_rental_price_per_sqm' => (float) $unitData['agreed_rental_price_per_sqm'],
+                    'agreed_service_fee_per_sqm' => (float) ($unitData['agreed_service_fee_per_sqm'] ?? 0.0),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
             }
+            ContractUnit::insert($rows);
 
-            return $contract->fresh(['contractUnits.unit']);
+            return $contract->load(['contractUnits.unit']);
         });
     }
 
@@ -208,14 +225,28 @@ class ContractService
                 }
             }
 
+            if (empty($data['units']) || !is_array($data['units']) || count($data['units']) === 0) {
+                throw new BusinessException('Hợp đồng giữ chỗ phải có ít nhất một mặt bằng.', 422);
+            }
+
+            $normalizedUnits = [];
+            foreach ($data['units'] as $unitItem) {
+                $normalizedUnits[$unitItem['unit_id']] = $unitItem;
+            }
+            $unitIds = array_keys($normalizedUnits);
+            $startDate = Carbon::parse($data['start_date'])->toDateString();
+            $endDate = Carbon::parse($data['end_date'])->toDateString();
+
+            // Khóa bi quan hàng loạt theo thứ tự ID tăng dần & kiểm tra trùng lịch trong 1 câu SQL
+            $this->lockAndCheckUnits($unitIds, $data['building_id']);
+            $this->validateNoOverlap($unitIds, $startDate, $endDate);
+
             $contractNumber = $data['contract_number'] ?? $this->generateContractNumber($building->building_code, 'BOOKING');
 
-            // Tính tổng diện tích ban đầu để thỏa mãn constraint chk_contracts_area (total_leased_area_sqm > 0)
+            // Tính tổng diện tích một lần duy nhất để thỏa mãn constraint chk_contracts_area (total_leased_area_sqm > 0)
             $initialTotalArea = 0.0;
-            if (!empty($data['units']) && is_array($data['units'])) {
-                foreach ($data['units'] as $unitItem) {
-                    $initialTotalArea += (float) ($unitItem['leased_area_sqm'] ?? 0.0);
-                }
+            foreach ($normalizedUnits as $unitItem) {
+                $initialTotalArea += (float) ($unitItem['leased_area_sqm'] ?? 0.0);
             }
             if ($initialTotalArea <= 0.0) {
                 $initialTotalArea = 1.0;
@@ -234,21 +265,34 @@ class ContractService
                 'reservation_expires_at' => $data['reservation_expires_at'],
                 'payment_cycle_months' => $data['payment_cycle_months'] ?? config('leasing.default_payment_cycle', 1),
                 'payment_due_day' => $data['payment_due_day'] ?? config('leasing.default_payment_due_day', 5),
+                'late_fee_interest_percent' => $data['late_fee_interest_percent'] ?? 0.05,
+                'annual_price_escalation_percent' => $data['annual_price_escalation_percent'] ?? 5.00,
                 'status' => ContractStatus::RESERVED,
             ]);
 
-            // Gán mặt bằng và chuyển trạng thái phòng sang RESERVED
-            foreach ($data['units'] as $unitData) {
-                $this->attachUnitToContract(
-                    $contract,
-                    $unitData['unit_id'],
-                    (float) $unitData['leased_area_sqm'],
-                    (float) $unitData['agreed_rental_price_per_sqm'],
-                    (float) ($unitData['agreed_service_fee_per_sqm'] ?? 0.0)
-                );
+            // Chèn hàng loạt mặt bằng và chuyển trạng thái phòng sang RESERVED bằng 1 câu SQL
+            $now = now();
+            $rows = [];
+            foreach ($normalizedUnits as $unitData) {
+                $rows[] = [
+                    'contract_id' => $contract->id,
+                    'unit_id' => $unitData['unit_id'],
+                    'building_id' => $contract->building_id,
+                    'leased_area_sqm' => (float) $unitData['leased_area_sqm'],
+                    'agreed_rental_price_per_sqm' => (float) $unitData['agreed_rental_price_per_sqm'],
+                    'agreed_service_fee_per_sqm' => (float) ($unitData['agreed_service_fee_per_sqm'] ?? 0.0),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
             }
+            ContractUnit::insert($rows);
 
-            return $contract->fresh(['contractUnits.unit']);
+            Unit::whereIn('id', $unitIds)->update([
+                'status' => UnitStatus::RESERVED,
+                'last_status_changed_at' => $now,
+            ]);
+
+            return $contract->load(['contractUnits.unit']);
         });
     }
 
@@ -262,8 +306,14 @@ class ContractService
         }
 
         return DB::transaction(function () use ($contract, $data) {
-            $startDate = $data['start_date'] ?? $contract->start_date->toDateString();
-            $endDate = $data['end_date'] ?? $contract->end_date->toDateString();
+            $startDate = isset($data['start_date'])
+                ? Carbon::parse($data['start_date'])->toDateString()
+                : $contract->start_date->toDateString();
+            $endDate = isset($data['end_date'])
+                ? Carbon::parse($data['end_date'])->toDateString()
+                : $contract->end_date->toDateString();
+
+            $contractFields = collect($data)->except(['units'])->toArray();
 
             // Nếu cập nhật danh sách mặt bằng (hỗ trợ nhiều mặt bằng)
             if (isset($data['units'])) {
@@ -271,54 +321,76 @@ class ContractService
                     throw new BusinessException('Hợp đồng phải có ít nhất một mặt bằng cho thuê.', 422);
                 }
 
-                $newUnitIds = [];
+                $normalizedUnits = [];
                 foreach ($data['units'] as $unitData) {
-                    $newUnitIds[] = $unitData['unit_id'];
-                    $this->validateNoOverlap($unitData['unit_id'], $startDate, $endDate, $contract->id);
+                    $normalizedUnits[$unitData['unit_id']] = $unitData;
                 }
+                $newUnitIds = array_keys($normalizedUnits);
 
-                // Gỡ các mặt bằng cũ không còn trong danh sách mới
-                $removedUnitIds = $contract->contractUnits()->whereNotIn('unit_id', $newUnitIds)->pluck('unit_id')->toArray();
-                if (!empty($removedUnitIds)) {
-                    $contract->contractUnits()->whereIn('unit_id', $removedUnitIds)->delete();
-                    if ($contract->status === ContractStatus::RESERVED) {
+                // Khóa bi quan & kiểm tra trùng lịch đúng 1 lần duy nhất cho toàn bộ danh sách mặt bằng mới
+                $this->lockAndCheckUnits($newUnitIds, $contract->building_id);
+                $this->validateNoOverlap($newUnitIds, $startDate, $endDate, $contract->id);
+
+                $now = now();
+
+                // Giải phóng trạng thái các mặt bằng cũ bị loại khỏi hợp đồng giữ chỗ
+                if ($contract->status === ContractStatus::RESERVED) {
+                    $removedUnitIds = $contract->contractUnits()->whereNotIn('unit_id', $newUnitIds)->pluck('unit_id')->all();
+                    if (!empty($removedUnitIds)) {
                         Unit::whereIn('id', $removedUnitIds)
                             ->where('status', UnitStatus::RESERVED)
-                            ->update(['status' => UnitStatus::AVAILABLE]);
+                            ->update([
+                                'status' => UnitStatus::AVAILABLE,
+                                'last_status_changed_at' => $now,
+                            ]);
                     }
                 }
 
-                // Gán / Cập nhật các mặt bằng trong danh sách mới
-                foreach ($data['units'] as $unitData) {
-                    $this->attachUnitToContract(
-                        $contract,
-                        $unitData['unit_id'],
-                        (float) $unitData['leased_area_sqm'],
-                        (float) $unitData['agreed_rental_price_per_sqm'],
-                        (float) ($unitData['agreed_service_fee_per_sqm'] ?? 0.0)
-                    );
+                // Làm mới danh sách mặt bằng chi tiết bằng 1 lệnh delete + 1 lệnh bulk insert
+                $contract->contractUnits()->delete();
+
+                $rows = [];
+                $totalArea = 0.0;
+                foreach ($normalizedUnits as $unitData) {
+                    $area = (float) $unitData['leased_area_sqm'];
+                    $totalArea += $area;
+                    $rows[] = [
+                        'contract_id' => $contract->id,
+                        'unit_id' => $unitData['unit_id'],
+                        'building_id' => $contract->building_id,
+                        'leased_area_sqm' => $area,
+                        'agreed_rental_price_per_sqm' => (float) $unitData['agreed_rental_price_per_sqm'],
+                        'agreed_service_fee_per_sqm' => (float) ($unitData['agreed_service_fee_per_sqm'] ?? 0.0),
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                }
+                ContractUnit::insert($rows);
+
+                if ($contract->status === ContractStatus::RESERVED) {
+                    Unit::whereIn('id', $newUnitIds)->update([
+                        'status' => UnitStatus::RESERVED,
+                        'last_status_changed_at' => $now,
+                    ]);
+                }
+
+                if ($totalArea > 0) {
+                    $contractFields['total_leased_area_sqm'] = $totalArea;
                 }
             } elseif ($startDate !== $contract->start_date->toDateString() || $endDate !== $contract->end_date->toDateString()) {
-                // Nếu thay đổi ngày nhưng giữ nguyên danh sách phòng, kiểm tra lại xung đột lịch
-                $assignedUnitIds = $contract->contractUnits()->pluck('unit_id')->toArray();
-                foreach ($assignedUnitIds as $unitId) {
-                    $this->validateNoOverlap($unitId, $startDate, $endDate, $contract->id);
+                // Nếu thay đổi ngày nhưng giữ nguyên danh sách phòng, khóa và kiểm tra xung đột lịch trong 1 câu SQL
+                $assignedUnitIds = $contract->contractUnits()->pluck('unit_id')->all();
+                if (!empty($assignedUnitIds)) {
+                    $this->lockAndCheckUnits($assignedUnitIds, $contract->building_id, false);
+                    $this->validateNoOverlap($assignedUnitIds, $startDate, $endDate, $contract->id);
                 }
             }
 
-            // Loại bỏ 'units' khỏi $data trước khi update bảng contracts
-            $contractFields = collect($data)->except(['units'])->toArray();
             if (!empty($contractFields)) {
                 $contract->update($contractFields);
             }
 
-            // Tính lại tổng diện tích sàn
-            $totalArea = $contract->contractUnits()->sum('leased_area_sqm');
-            if ($totalArea > 0) {
-                $contract->update(['total_leased_area_sqm' => $totalArea]);
-            }
-
-            return $contract->fresh(['contractUnits.unit']);
+            return $contract->unsetRelation('contractUnits')->unsetRelation('units')->load(['contractUnits.unit']);
         });
     }
 
@@ -563,10 +635,14 @@ class ContractService
         $cycleStartDate = Carbon::parse($oldContract->end_date)->addDay()->toDateString();
 
         $newContract = DB::transaction(function () use ($oldContract, $data, $user, $cycleStartDate, $newEndDate) {
-            // 1. Kiểm tra giao thoa thời gian chu kỳ mới cho toàn bộ các mặt bằng
+            // 1. Khóa bi quan và kiểm tra giao thoa thời gian chu kỳ mới cho toàn bộ mặt bằng trong 1 câu SQL
+            $oldContract->loadMissing('contractUnits');
             $units = $oldContract->contractUnits;
-            foreach ($units as $cu) {
-                $this->validateNoOverlap($cu->unit_id, $cycleStartDate, $newEndDate, $oldContract->id);
+            $unitIds = $units->pluck('unit_id')->all();
+
+            if (!empty($unitIds)) {
+                $this->lockAndCheckUnits($unitIds, $oldContract->building_id, false);
+                $this->validateNoOverlap($unitIds, $cycleStartDate, $newEndDate, $oldContract->id);
             }
 
             // 2. Chuyển hợp đồng cũ sang RENEWED
@@ -602,23 +678,32 @@ class ContractService
 
             $newContract = Contract::create($newContractData);
 
-            // 4. Sao chép các mặt bằng sang hợp đồng mới kèm điều chỉnh giá theo biên độ leo thang
-            foreach ($units as $cu) {
-                $newPrice = round($cu->agreed_rental_price_per_sqm * (1 + $escalation / 100), 2);
-                ContractUnit::create([
-                    'contract_id' => $newContract->id,
-                    'unit_id' => $cu->unit_id,
-                    'building_id' => $newContract->building_id,
-                    'leased_area_sqm' => $cu->leased_area_sqm,
-                    'agreed_rental_price_per_sqm' => $newPrice,
-                    'agreed_service_fee_per_sqm' => $cu->agreed_service_fee_per_sqm,
+            // 4. Sao chép hàng loạt các mặt bằng sang hợp đồng mới kèm điều chỉnh giá theo biên độ leo thang
+            if ($units->isNotEmpty()) {
+                $now = now();
+                $rows = [];
+                foreach ($units as $cu) {
+                    $rows[] = [
+                        'contract_id' => $newContract->id,
+                        'unit_id' => $cu->unit_id,
+                        'building_id' => $newContract->building_id,
+                        'leased_area_sqm' => (float) $cu->leased_area_sqm,
+                        'agreed_rental_price_per_sqm' => round((float) $cu->agreed_rental_price_per_sqm * (1 + $escalation / 100), 2),
+                        'agreed_service_fee_per_sqm' => (float) $cu->agreed_service_fee_per_sqm,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                }
+                ContractUnit::insert($rows);
+
+                // 5. Đổi trạng thái các mặt bằng về LEASED
+                Unit::whereIn('id', $unitIds)->update([
+                    'status' => UnitStatus::LEASED,
+                    'last_status_changed_at' => $now,
                 ]);
             }
 
-            // 5. Đổi trạng thái các mặt bằng về LEASED
-            Unit::whereIn('id', $units->pluck('unit_id'))->update(['status' => UnitStatus::LEASED]);
-
-            return $newContract->fresh(['contractUnits.unit', 'parentContract']);
+            return $newContract->load(['contractUnits.unit', 'parentContract']);
         });
 
         try {
@@ -715,44 +800,38 @@ class ContractService
     {
         $uploadedRecords = [];
         $files = is_array($files) ? $files : [$files];
-        $hasSupabase = !empty(config('filesystems.disks.supabase_private.key'));
 
-        foreach ($files as $file) {
-            if ($file instanceof UploadedFile) {
-                $fileName = $file->getClientOriginalName();
-                $extension = $file->getClientOriginalExtension();
-                $storedName = 'contract_' . $contract->id . '_' . time() . '_' . Str::random(6) . '.' . $extension;
-                $objectPath = "contracts/{$contract->id}/{$storedName}";
-
-                // Thử upload lên Supabase Private Storage, nếu lỗi hoặc chưa cấu hình sẽ fallback về local storage
-                try {
-                    if ($hasSupabase) {
-                        $path = $file->storeAs("contracts/{$contract->id}", $storedName, [
-                            'disk' => 'supabase_private',
-                            'visibility' => 'private',
-                        ]);
-                    } else {
-                        $path = $file->storeAs("contracts/{$contract->id}", $storedName, 'local');
-                    }
-                } catch (\Throwable $e) {
-                    Log::warning("Supabase private upload failed, fallback to local storage: " . $e->getMessage());
-                    $path = $file->storeAs("contracts/{$contract->id}", $storedName, 'local');
-                }
-
-                $imageRecord = ContractImage::create([
-                    'contract_id' => $contract->id,
-                    'image_url' => $path,
-                    'file_name' => $fileName,
-                    'document_type' => $documentType,
-                ]);
-
-                // Nếu là bản scan hợp đồng chính và hợp đồng chưa có path chính, cập nhật luôn
-                if ($documentType === 'SIGNED_CONTRACT_SCAN' && empty($contract->contract_pdf_private_path)) {
-                    $contract->update(['contract_pdf_private_path' => $path]);
-                }
-
-                $uploadedRecords[] = $imageRecord;
+        $items = [];
+        foreach ($files as $index => $file) {
+            if (!$file instanceof UploadedFile) {
+                continue;
             }
+            $storedName = 'contract_' . $contract->id . '_' . time() . '_' . Str::random(6) . '.' . $file->getClientOriginalExtension();
+            $items[$index] = [
+                'file' => $file,
+                'path' => "contracts/{$contract->id}/{$storedName}",
+                'fallback_dir' => "contracts/{$contract->id}",
+                'filename' => $storedName,
+            ];
+        }
+
+        $uploadResults = StorageUploadHelper::uploadBatch($items, 'supabase_private', 'local', 'private');
+
+        foreach ($uploadResults as $result) {
+            $path = $result['path'];
+            $imageRecord = ContractImage::create([
+                'contract_id' => $contract->id,
+                'image_url' => $path,
+                'file_name' => $result['original_name'],
+                'document_type' => $documentType,
+            ]);
+
+            // Nếu là bản scan hợp đồng chính và hợp đồng chưa có path chính, cập nhật luôn
+            if ($documentType === 'SIGNED_CONTRACT_SCAN' && empty($contract->contract_pdf_private_path)) {
+                $contract->update(['contract_pdf_private_path' => $path]);
+            }
+
+            $uploadedRecords[] = $imageRecord;
         }
 
         return $uploadedRecords;
@@ -795,15 +874,72 @@ class ContractService
     }
 
     /**
+     * Khóa bi quan danh sách mặt bằng theo thứ tự định danh tăng dần (chống Deadlock chéo)
+     * và kiểm tra ràng buộc thuộc tòa nhà, trạng thái bảo trì.
+     *
+     * @param array<int, string> $unitIds
+     * @param string $buildingId
+     * @param bool $checkMaintenance
+     * @return void
+     * @throws BusinessException
+     */
+    protected function lockAndCheckUnits(array $unitIds, string $buildingId, bool $checkMaintenance = true): void
+    {
+        $sortedIds = array_values(array_unique($unitIds));
+        if (empty($sortedIds)) {
+            return;
+        }
+        sort($sortedIds);
+
+        $units = Unit::whereIn('id', $sortedIds)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get()
+            ->keyBy('id');
+
+        if ($units->count() !== count($sortedIds)) {
+            $missingIds = array_values(array_diff($sortedIds, $units->keys()->all()));
+            throw (new \Illuminate\Database\Eloquent\ModelNotFoundException())->setModel(Unit::class, $missingIds);
+        }
+
+        foreach ($unitIds as $uid) {
+            $unit = $units->get($uid);
+            if ($unit->building_id !== $buildingId) {
+                throw new BusinessException('Mặt bằng không thuộc tòa nhà của hợp đồng này.', 422);
+            }
+
+            if ($checkMaintenance && $unit->status === UnitStatus::MAINTENANCE) {
+                throw new BusinessException(
+                    sprintf('Mặt bằng %s đang trong quá trình bảo trì kỹ thuật, tạm thời không thể đưa vào hợp đồng.', $unit->unit_code),
+                    422
+                );
+            }
+        }
+    }
+
+    /**
      * THUẬT TOÁN TOÁN HỌC CHỐNG TRÙNG LỊCH THUÊ MẶT BẰNG:
      * Hai khoảng thời gian [StartA, EndA] và [StartB, EndB] giao nhau khi:
      * (StartA <= EndB) AND (EndA >= StartB)
+     * Hỗ trợ kiểm tra một mặt bằng hoặc danh sách nhiều mặt bằng trong 1 câu SQL duy nhất.
+     *
+     * @param string|array<int, string> $unitIds
+     * @param string $startDate
+     * @param string $endDate
+     * @param string|null $ignoreContractId
+     * @return void
+     * @throws LeaseOverlapException
      */
-    public function validateNoOverlap(string $unitId, string $startDate, string $endDate, ?string $ignoreContractId = null): void
+    public function validateNoOverlap(string|array $unitIds, string $startDate, string $endDate, ?string $ignoreContractId = null): void
     {
+        $ids = array_values(array_unique(array_filter((array) $unitIds)));
+        if (empty($ids)) {
+            return;
+        }
+
         $overlappingContract = Contract::query()
             ->join('contract_units', 'contracts.id', '=', 'contract_units.contract_id')
-            ->where('contract_units.unit_id', $unitId)
+            ->whereIn('contract_units.unit_id', $ids)
             ->whereNull('contracts.deleted_at')
             ->whereIn('contracts.status', [
                 ContractStatus::ACTIVE,
@@ -816,12 +952,13 @@ class ContractService
                 $q->where('contracts.start_date', '<=', $endDate)
                   ->where('contracts.end_date', '>=', $startDate);
             })
-            ->select('contracts.*')
+            ->select(['contracts.*', 'contract_units.unit_id as conflicting_unit_id'])
             ->first();
 
         if ($overlappingContract) {
-            $unit = Unit::find($unitId);
-            $unitCode = $unit?->unit_code ?? $unitId;
+            $conflictingUnitId = (string) $overlappingContract->conflicting_unit_id;
+            $unit = Unit::find($conflictingUnitId);
+            $unitCode = $unit?->unit_code ?? $conflictingUnitId;
 
             throw new LeaseOverlapException(
                 sprintf(
@@ -832,7 +969,7 @@ class ContractService
                     $overlappingContract->end_date->format('d/m/Y')
                 ),
                 [
-                    'unit_id' => $unitId,
+                    'unit_id' => $conflictingUnitId,
                     'unit_code' => $unitCode,
                     'conflicting_contract_id' => $overlappingContract->id,
                     'conflicting_contract_number' => $overlappingContract->contract_number,

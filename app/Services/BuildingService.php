@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\BusinessException;
+use App\Helpers\StorageUploadHelper;
 use App\Models\Building;
 use App\Models\BuildingImage;
 use App\Models\Contract;
@@ -438,48 +439,36 @@ class BuildingService
         $hasPrimary = $building->images()->where('is_primary', true)->exists();
         $currentOrder = (int) ($building->images()->max('display_order') ?? 0);
 
+        $items = [];
         foreach ($files as $index => $file) {
-            $filename = Str::uuid()->toString() . '.' . $file->getClientOriginalExtension();
-            $path = "buildings/{$building->id}/{$filename}";
-
-            // Fallback lưu local nếu Supabase disk chưa cấu hình hoặc lỗi kết nối
-            try {
-                if (config('filesystems.disks.supabase.key')) {
-                    $mime = method_exists($file, 'getClientMimeType') ? $file->getClientMimeType() : 'image/jpeg';
-                    $stream = fopen($file->getRealPath(), 'r');
-                    Storage::disk('supabase')->put($path, $stream, [
-                        'mimetype' => $mime ?: 'image/jpeg',
-                        'visibility' => 'public',
-                    ]);
-                    if (is_resource($stream)) {
-                        fclose($stream);
-                    }
-                    $url = Storage::disk('supabase')->url($path);
-                } else {
-                    $localPath = $file->storeAs("public/buildings/{$building->id}", $filename);
-                    $url = Storage::url($localPath);
-                }
-            } catch (\Throwable $e) {
-                Log::warning("Supabase upload failed, fallback to local storage: " . $e->getMessage());
-                $localPath = $file->storeAs("public/buildings/{$building->id}", $filename);
-                $url = Storage::url($localPath);
+            if (!$file instanceof UploadedFile) {
+                continue;
             }
+            $filename = Str::uuid()->toString() . '.' . $file->getClientOriginalExtension();
+            $items[$index] = [
+                'file' => $file,
+                'path' => "buildings/{$building->id}/{$filename}",
+                'fallback_dir' => "public/buildings/{$building->id}",
+                'filename' => $filename,
+            ];
+        }
 
+        $uploadResults = StorageUploadHelper::uploadBatch($items, 'supabase', 'public', 'public');
+
+        foreach ($uploadResults as $index => $result) {
             $isPrimary = (!$hasPrimary && $index === $targetPrimary);
             if ($isPrimary) {
                 $hasPrimary = true;
             }
 
             $currentOrder++;
-            $image = BuildingImage::create([
+            $uploaded[] = BuildingImage::create([
                 'building_id' => $building->id,
-                'image_url' => $url,
-                'caption' => $caption ?? $file->getClientOriginalName(),
+                'image_url' => $result['url'],
+                'caption' => $caption ?? $result['original_name'],
                 'is_primary' => $isPrimary,
                 'display_order' => $currentOrder,
             ]);
-
-            $uploaded[] = $image;
         }
 
         return $uploaded;

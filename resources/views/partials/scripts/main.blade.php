@@ -522,6 +522,7 @@
     }
 
     window.moConfirmAction = function(options) {
+      _moConfirmState.isExecuting = false;
       _moConfirmState.options = Object.assign({
         title: 'Xác Nhận Thao Tác',
         message: 'Bạn có chắc chắn muốn thực hiện hành động này?',
@@ -689,6 +690,11 @@
 
     window.moExecuteConfirmAction = async function() {
       if (!_moConfirmState.options || typeof _moConfirmState.options.action !== 'function') return;
+      if (_moConfirmState.isExecuting) return;
+      _moConfirmState.isExecuting = true;
+
+      const btnAction = document.getElementById('confirm-modal-btn-action');
+      if (btnAction) btnAction.disabled = true;
 
       _moSwitchConfirmState('processing');
 
@@ -722,6 +728,9 @@
         const elFailedMsg = document.getElementById('confirm-modal-failed-message');
         if (elFailedMsg) elFailedMsg.innerText = errorMsg;
         _moSwitchConfirmState('failed');
+      } finally {
+        _moConfirmState.isExecuting = false;
+        if (btnAction) btnAction.disabled = false;
       }
     };
 

@@ -523,6 +523,16 @@ class ContractService
      */
     public function signContract(Contract $contract, mixed $user): Contract
     {
+        // Cơ chế Idempotent: Nếu hợp đồng đã ACTIVE do chính người dùng này duyệt trước đó (chống lỗi do nhấp đúp / trùng request), trả về luôn thành công
+        $isAlreadyApprovedByCurrentUser = $contract->status === ContractStatus::ACTIVE && (
+            ($user instanceof Admin && $contract->approved_by_admin_id === $user->id) ||
+            ($user instanceof PropertyManager && $contract->approved_by_pm_id === $user->id)
+        );
+
+        if ($isAlreadyApprovedByCurrentUser) {
+            return $contract->fresh(['contractUnits.unit', 'building', 'tenant']);
+        }
+
         if (!in_array($contract->status, [ContractStatus::DRAFT, ContractStatus::RESERVED])) {
             throw new BusinessException('Hợp đồng đã được duyệt ký hoặc đang ở trạng thái không thể kích hoạt.', 422);
         }

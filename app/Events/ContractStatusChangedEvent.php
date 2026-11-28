@@ -5,6 +5,7 @@ namespace App\Events;
 use App\Models\Contract;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class ContractStatusChangedEvent implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets, Queueable, SerializesModels;
 
     /**
      * Khởi tạo sự kiện khi hợp đồng thuê thay đổi trạng thái (Ký duyệt, Từ chối, Thanh lý, Gia hạn).

@@ -1412,9 +1412,13 @@
             return json.message || 'Ký duyệt và kích hoạt hợp đồng thành công!';
           },
           onSuccess: () => {
-            loadContractsList();
+            try {
+              loadContractsList();
+            } catch (e) {}
             if (currentViewingContract && String(currentViewingContract.id) === String(contractId)) {
-              openContractDetailModal(contractId);
+              try {
+                openContractDetailModal(contractId);
+              } catch (e) {}
             }
             if (issuedCreds && issuedCreds.password) {
               showTenantCredentialModal(issuedCreds);

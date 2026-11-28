@@ -107,8 +107,8 @@ class AuthService
         }
 
         try {
-            // Cập nhật thời điểm đăng nhập gần nhất nếu cột tồn tại
-            if (isset($authenticatedUser->last_login_at)) {
+            // Cập nhật thời điểm đăng nhập gần nhất nếu model có trường last_login_at
+            if (array_key_exists('last_login_at', $authenticatedUser->getAttributes())) {
                 $authenticatedUser->update(['last_login_at' => now()]);
             }
 

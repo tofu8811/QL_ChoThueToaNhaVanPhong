@@ -518,7 +518,7 @@
               <div class="field-error-slot" id="err-new-act-content" style="margin-bottom:8px;"></div>
               <div style="text-align:right;">
                 <button class="btn-mo-outline" style="padding:4px 8px;font-size:11px;" onclick="toggleAddActivityForm()">Hủy</button>
-                <button class="btn-mo-primary" style="padding:4px 10px;font-size:11px;margin-left:4px;" onclick="submitNewLeadActivity('${lead.id}')">Lưu Nhật Ký</button>
+                <button id="btn-save-lead-act" class="btn-mo-primary" style="padding:4px 10px;font-size:11px;margin-left:4px;" onclick="submitNewLeadActivity('${lead.id}')">Lưu Nhật Ký</button>
               </div>
             </div>
 
@@ -614,32 +614,34 @@
         (type === 'EMAIL' ? 'Gửi email báo giá và thông tin sàn' : 'Ghi nhận chăm sóc khách hàng'))
       );
 
-      try {
-        const res = await fetch(`/api/v1/crm/leads/${leadId}/activities`, {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({
-            activity_type: type,
-            title: defaultTitle,
-            summary: defaultTitle,
-            content: content,
-            event_at: new Date().toISOString(),
-            interaction_at: new Date().toISOString()
-          })
-        });
+      await moWrapActionWithBusyState('btn-save-lead-act', 'Đang lưu...', async () => {
+        try {
+          const res = await fetch(`/api/v1/crm/leads/${leadId}/activities`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              activity_type: type,
+              title: defaultTitle,
+              summary: defaultTitle,
+              content: content,
+              event_at: new Date().toISOString(),
+              interaction_at: new Date().toISOString()
+            })
+          });
 
-        const json = await res.json();
-        if (res.ok) {
-          moToast('Ghi nhận nhật ký chăm sóc thành công!', 'success');
-          toggleAddActivityForm();
-          loadLeadActivities(leadId);
-          loadCrmLeads();
-        } else {
-          moToast(json.message || 'Dữ liệu nhật ký không hợp lệ.', 'error');
+          const json = await res.json();
+          if (res.ok) {
+            moToast('Ghi nhận nhật ký chăm sóc thành công!', 'success');
+            toggleAddActivityForm();
+            loadLeadActivities(leadId);
+            loadCrmLeads();
+          } else {
+            moToast(json.message || 'Dữ liệu nhật ký không hợp lệ.', 'error');
+          }
+        } catch (e) {
+          moToast('Lỗi kết nối khi lưu nhật ký tương tác: ' + (e.message || 'Lỗi mạng'), 'error');
         }
-      } catch (e) {
-        moToast('Lỗi kết nối khi lưu nhật ký tương tác: ' + (e.message || 'Lỗi mạng'), 'error');
-      }
+      });
     }
 
     // 6. Cập nhật trạng thái Pipeline: PATCH /api/v1/crm/leads/{id}/status
@@ -774,27 +776,29 @@
         return;
       }
 
-      try {
-        const res = await fetch(`/api/v1/crm/leads/${currentAssignLeadId}/assign`, {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({ sales_id: salesId, assigned_sales_id: salesId })
-        });
+      await moWrapActionWithBusyState('btn-submit-assign-sales', 'Đang phân công...', async () => {
+        try {
+          const res = await fetch(`/api/v1/crm/leads/${currentAssignLeadId}/assign`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ sales_id: salesId, assigned_sales_id: salesId })
+          });
 
-        const json = await res.json();
-        if (res.ok) {
-          moToast('Phân công Sales thành công!', 'success');
-          closeAssignSalesModal();
-          loadCrmLeads();
-          if (currentViewingLeadId === currentAssignLeadId) {
-            openLeadDetailModal(currentAssignLeadId);
+          const json = await res.json();
+          if (res.ok) {
+            moToast('Phân công Sales thành công!', 'success');
+            closeAssignSalesModal();
+            loadCrmLeads();
+            if (currentViewingLeadId === currentAssignLeadId) {
+              openLeadDetailModal(currentAssignLeadId);
+            }
+          } else {
+            moToast('Lỗi phân công: ' + (json.message || 'Không thể phân công'), 'error');
           }
-        } else {
-          moToast('Lỗi phân công: ' + (json.message || 'Không thể phân công'), 'error');
+        } catch (e) {
+          moToast('Lỗi kết nối khi phân công Sales: ' + (e.message || 'Lỗi mạng'), 'error');
         }
-      } catch (e) {
-        moToast('Lỗi kết nối khi phân công Sales: ' + (e.message || 'Lỗi mạng'), 'error');
-      }
+      });
     }
 
     // 8. Chuyển đổi Lead thành Khách thuê chính thức: POST /api/v1/crm/leads/{id}/convert-to-tenant
@@ -852,37 +856,39 @@
 
       if (hasErr) return;
 
-      try {
-        const res = await fetch(`/api/v1/crm/leads/${currentConvertLeadId}/convert-to-tenant`, {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({
-            company_name: compName,
-            tax_code: taxCode
-          })
-        });
+      await moWrapActionWithBusyState('btn-submit-convert-lead', 'Đang khởi tạo khách thuê...', async () => {
+        try {
+          const res = await fetch(`/api/v1/crm/leads/${currentConvertLeadId}/convert-to-tenant`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              company_name: compName,
+              tax_code: taxCode
+            })
+          });
 
-        const json = await res.json();
-        if (res.ok) {
-          moToast('Chuyển đổi sang Khách Thuê Doanh Nghiệp thành công!', 'success');
-          const tenant = json.data;
-          const leadObj = (crmLeadsList || []).find(l => String(l.id) === String(currentConvertLeadId));
-          closeConvertToTenantModal();
-          loadCrmLeads();
+          const json = await res.json();
+          if (res.ok) {
+            moToast('Chuyển đổi sang Khách Thuê Doanh Nghiệp thành công!', 'success');
+            const tenant = json.data;
+            const leadObj = (crmLeadsList || []).find(l => String(l.id) === String(currentConvertLeadId));
+            closeConvertToTenantModal();
+            loadCrmLeads();
 
-          showLeadConvertedCredentialModal(tenant, leadObj);
-        } else {
-          if (json.errors) {
-            moMapServerErrors(json.errors, {
-              company_name: { inputId: 'convert-company-name', slotId: 'err-convert-company-name' },
-              tax_code: { inputId: 'convert-tax-code', slotId: 'err-convert-tax-code' }
-            });
+            showLeadConvertedCredentialModal(tenant, leadObj);
+          } else {
+            if (json.errors) {
+              moMapServerErrors(json.errors, {
+                company_name: { inputId: 'convert-company-name', slotId: 'err-convert-company-name' },
+                tax_code: { inputId: 'convert-tax-code', slotId: 'err-convert-tax-code' }
+              });
+            }
+            moToast(json.message || 'Dữ liệu chuyển đổi không hợp lệ. Vui lòng kiểm tra lại.', 'error');
           }
-          moToast(json.message || 'Dữ liệu chuyển đổi không hợp lệ. Vui lòng kiểm tra lại.', 'error');
+        } catch (e) {
+          moToast('Lỗi kết nối máy chủ khi chuyển đổi Lead: ' + (e.message || 'Lỗi mạng'), 'error');
         }
-      } catch (e) {
-        moToast('Lỗi kết nối máy chủ khi chuyển đổi Lead: ' + (e.message || 'Lỗi mạng'), 'error');
-      }
+      });
     }
 
     // Modal hiển thị thông tin tài khoản Khách Thuê sau khi chuyển đổi thành công

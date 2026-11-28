@@ -353,10 +353,10 @@
             <textarea id="confirm-feedback" rows="3" placeholder="Nhập nhận xét hoặc lý do nếu cần sửa lại..." style="width:100%;padding:9px 14px;border:1px solid #cbd5e1;border-radius:6px;">Đã nghiệm thu hiện trường, kỹ thuật xử lý tốt.</textarea>
           </div>
           <div style="display:flex;gap:10px;">
-            <button type="button" class="btn-mo-primary" style="flex:1;justify-content:center;background:#059669;color:#fff;padding:11px;" onclick="submitTicketConfirm(true)">
+            <button type="button" id="btn-confirm-ticket-accept" class="btn-mo-primary" style="flex:1;justify-content:center;background:#059669;color:#fff;padding:11px;" onclick="submitTicketConfirm(true)">
               <i class="fa-solid fa-circle-check"></i> Đồng Ý Nghiệm Thu (COMPLETED)
             </button>
-            <button type="button" class="btn-mo-outline" style="justify-content:center;color:#dc2626;border-color:#fca5a5;padding:11px;" onclick="submitTicketConfirm(false)">
+            <button type="button" id="btn-confirm-ticket-reject" class="btn-mo-outline" style="justify-content:center;color:#dc2626;border-color:#fca5a5;padding:11px;" onclick="submitTicketConfirm(false)">
               <i class="fa-solid fa-rotate-left"></i> Yêu Cầu Sửa Lại
             </button>
           </div>

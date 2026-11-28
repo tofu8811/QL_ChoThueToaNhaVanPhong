@@ -734,6 +734,42 @@
       }
     };
 
+    /**
+     * Helper toàn cục khóa nút bấm & chống duplicate submit / double-click
+     * @param {HTMLElement|string} btn - Element hoặc ID của nút
+     * @param {string} busyText - Nội dung hiển thị khi đang xử lý
+     * @param {Function} asyncAction - Hàm async cần thực thi
+     * @returns {Promise<any>}
+     */
+    window.moWrapActionWithBusyState = async function(btn, busyText, asyncAction) {
+      const el = typeof btn === 'string' ? document.getElementById(btn) : btn;
+      if (!el) {
+        if (typeof asyncAction === 'function') return await asyncAction();
+        return;
+      }
+      if (el.disabled || el.getAttribute('data-mo-busy') === 'true') {
+        console.warn('[moWrapActionWithBusyState] Bỏ qua request trùng lặp do thao tác trước đó chưa hoàn tất.');
+        return;
+      }
+
+      el.setAttribute('data-mo-busy', 'true');
+      el.disabled = true;
+      const originalHtml = el.innerHTML;
+      if (busyText) {
+        el.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${busyText}`;
+      }
+
+      try {
+        if (typeof asyncAction === 'function') {
+          return await asyncAction();
+        }
+      } finally {
+        el.disabled = false;
+        el.removeAttribute('data-mo-busy');
+        el.innerHTML = originalHtml;
+      }
+    };
+
     // Close on click backdrop or escape
     document.addEventListener('DOMContentLoaded', function() {
       const modal = document.getElementById('modal-confirm-action');

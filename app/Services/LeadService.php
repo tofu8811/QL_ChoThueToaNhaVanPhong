@@ -515,8 +515,13 @@ class LeadService
      */
     public function convertToTenant(Lead $lead, array $tenantData): Tenant
     {
-        if ($lead->converted_tenant_id !== null) {
-            throw new BusinessException('Hồ sơ Lead này đã được chuyển đổi sang Khách thuê trước đó.', 422);
+        // Idempotency Guard: Nếu hồ sơ Lead này đã được chuyển đổi thành công trước đó (do request retry hoặc duplicate submit)
+        $freshLead = $lead->fresh() ?? $lead;
+        if ($freshLead->converted_tenant_id !== null) {
+            $convertedTenant = Tenant::find($freshLead->converted_tenant_id);
+            if ($convertedTenant) {
+                return $convertedTenant;
+            }
         }
 
         $taxCode = trim($tenantData['tax_code'] ?? '');
@@ -527,6 +532,10 @@ class LeadService
         // Kiểm tra chống trùng lặp mã số thuế với các khách thuê trong hệ thống
         $existingTenantWithTax = Tenant::withTrashed()->where('tax_code', $taxCode)->first();
         if ($existingTenantWithTax) {
+            // Idempotency check: Nếu đúng là khách thuê được tạo từ chính Lead này
+            if ($existingTenantWithTax->converted_from_lead_id === $lead->id) {
+                return $existingTenantWithTax;
+            }
             throw new BusinessException("Mã số thuế [{$taxCode}] đã tồn tại trong hệ thống (thuộc khách thuê [{$existingTenantWithTax->company_name} - {$existingTenantWithTax->tenant_code}]).", 422);
         }
 

@@ -405,8 +405,13 @@
                 <!-- Modal Footer -->
                 <div style="padding:16px 24px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:12px;">
                     <button wire:click="closeCreateModal" type="button" class="btn-mo-outline" style="padding:8px 18px;">Hủy Bỏ</button>
-                    <button wire:click="saveContract" type="button" class="btn-mo-orange" style="padding:8px 20px;">
-                        <i class="fa-solid fa-floppy-disk"></i> Lưu Hợp Đồng
+                    <button wire:click="saveContract" wire:loading.attr="disabled" type="button" class="btn-mo-orange" style="padding:8px 20px;">
+                        <span wire:loading.remove wire:target="saveContract">
+                            <i class="fa-solid fa-floppy-disk"></i> Lưu Hợp Đồng
+                        </span>
+                        <span wire:loading wire:target="saveContract">
+                            <i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...
+                        </span>
                     </button>
                 </div>
             </div>
@@ -664,8 +669,13 @@
 
                 <div style="padding:16px 24px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:10px;">
                     <button wire:click="closeRenewModal" class="btn-mo-outline" style="padding:8px 16px;">Hủy</button>
-                    <button wire:click="confirmRenew" class="btn-mo-primary" style="padding:8px 18px;">
-                        <i class="fa-solid fa-check"></i> Xác Nhận Gia Hạn
+                    <button wire:click="confirmRenew" wire:loading.attr="disabled" class="btn-mo-primary" style="padding:8px 18px;">
+                        <span wire:loading.remove wire:target="confirmRenew">
+                            <i class="fa-solid fa-check"></i> Xác Nhận Gia Hạn
+                        </span>
+                        <span wire:loading wire:target="confirmRenew">
+                            <i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...
+                        </span>
                     </button>
                 </div>
             </div>
@@ -717,8 +727,13 @@
 
                 <div style="padding:16px 24px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:10px;">
                     <button wire:click="closeTerminateModal" class="btn-mo-outline" style="padding:8px 16px;">Hủy</button>
-                    <button wire:click="confirmTerminate" class="btn-mo-primary" style="background:#dc2626;border-color:#dc2626;padding:8px 18px;">
-                        <i class="fa-solid fa-triangle-exclamation"></i> Xác Nhận Thanh Lý
+                    <button wire:click="confirmTerminate" wire:loading.attr="disabled" class="btn-mo-primary" style="background:#dc2626;border-color:#dc2626;padding:8px 18px;">
+                        <span wire:loading.remove wire:target="confirmTerminate">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Xác Nhận Thanh Lý
+                        </span>
+                        <span wire:loading wire:target="confirmTerminate">
+                            <i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...
+                        </span>
                     </button>
                 </div>
             </div>

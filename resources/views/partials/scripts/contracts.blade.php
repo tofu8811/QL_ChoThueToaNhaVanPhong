@@ -776,8 +776,14 @@
       recalculateContractFinancials();
     }
 
+    let _isSubmittingCreateContract = false;
     async function submitCreateContract(e) {
       if (e) e.preventDefault();
+      if (_isSubmittingCreateContract) {
+        console.warn('Bỏ qua submit hợp đồng do thao tác trước đó chưa kết thúc.');
+        return;
+      }
+      _isSubmittingCreateContract = true;
 
       moClearFieldError('contract-tenant-select', 'err-contract-tenant');
       moClearFieldError('contract-building-select', 'err-contract-building');
@@ -907,6 +913,7 @@
           firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
           if (typeof firstErr.focus === 'function') firstErr.focus();
         }
+        _isSubmittingCreateContract = false;
         return;
       }
 
@@ -1017,6 +1024,7 @@
       } catch (err) {
         moToast('Lỗi kết nối máy chủ API: ' + (err.message || 'Lỗi mạng'), 'error');
       } finally {
+        _isSubmittingCreateContract = false;
         if (btn) {
           btn.disabled = false;
           btn.innerHTML = originalHtml;
@@ -1179,28 +1187,30 @@
       };
 
       if (!payload.tenant_id || !payload.building_id || !payload.reservation_expiry_date) {
-        alert('Vui lòng chọn Khách thuê, Tòa nhà và Ngày hết hạn giữ chỗ.');
+        moToast('Vui lòng chọn Khách thuê, Tòa nhà và Ngày hết hạn giữ chỗ.', 'warning');
         return;
       }
 
-      try {
-        const res = await fetch('/api/v1/admin/contracts/reserve', {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify(payload)
-        });
+      await moWrapActionWithBusyState('btn-submit-reserve-contract', 'Đang tạo giữ chỗ...', async () => {
+        try {
+          const res = await fetch('/api/v1/admin/contracts/reserve', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(payload)
+          });
 
-        const json = await res.json();
-        if (res.ok) {
-          alert('Tạo hợp đồng giữ chỗ sàn (RESERVED) thành công!');
-          closeReserveContractModal();
-          loadContractsList();
-        } else {
-          alert('Lỗi giữ chỗ: ' + (json.message || ''));
+          const json = await res.json();
+          if (res.ok) {
+            moToast('Tạo hợp đồng giữ chỗ sàn (RESERVED) thành công!', 'success');
+            closeReserveContractModal();
+            loadContractsList();
+          } else {
+            moToast('Lỗi giữ chỗ: ' + (json.message || ''), 'error');
+          }
+        } catch (err) {
+          moToast('Lỗi kết nối API giữ chỗ: ' + (err.message || 'Lỗi mạng'), 'error');
         }
-      } catch (err) {
-        alert('Lỗi kết nối API giữ chỗ.');
-      }
+      });
     }
 
     // 5. Xem chi tiết hợp đồng, danh sách sàn và file scan: GET /api/v1/admin/contracts/{id}
@@ -1645,32 +1655,34 @@
       const reason = document.getElementById('renew-notes').value.trim() || null;
 
       if (!newEndDate) {
-        alert('Vui lòng chọn ngày kết thúc thuê mới sau gia hạn.');
+        moToast('Vui lòng chọn ngày kết thúc thuê mới sau gia hạn.', 'warning');
         return;
       }
 
-      try {
-        const res = await fetch(`/api/v1/admin/contracts/${currentRenewContractId}/renew`, {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({
-            new_end_date: newEndDate,
-            new_rent_amount: newRent,
-            notes: reason
-          })
-        });
+      await moWrapActionWithBusyState('btn-submit-renew-contract', 'Đang xử lý gia hạn...', async () => {
+        try {
+          const res = await fetch(`/api/v1/admin/contracts/${currentRenewContractId}/renew`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              new_end_date: newEndDate,
+              new_rent_amount: newRent,
+              notes: reason
+            })
+          });
 
-        const json = await res.json();
-        if (res.ok) {
-          alert('Lập phụ lục gia hạn hợp đồng thành công!');
-          closeRenewContractModal();
-          loadContractsList();
-        } else {
-          alert('Lỗi gia hạn: ' + (json.message || ''));
+          const json = await res.json();
+          if (res.ok) {
+            moToast('Lập phụ lục gia hạn hợp đồng thành công!', 'success');
+            closeRenewContractModal();
+            loadContractsList();
+          } else {
+            moToast('Lỗi gia hạn: ' + (json.message || ''), 'error');
+          }
+        } catch (e) {
+          moToast('Lỗi kết nối khi gia hạn hợp đồng: ' + (e.message || 'Lỗi mạng'), 'error');
         }
-      } catch (e) {
-        alert('Lỗi kết nối khi gia hạn hợp đồng.');
-      }
+      });
     }
 
     // 10. Thanh lý hợp đồng & Trả phòng: POST /api/v1/admin/contracts/{id}/terminate
@@ -1704,32 +1716,34 @@
       const reason = document.getElementById('terminate-reason').value.trim();
 
       if (!terminationDate) {
-        alert('Vui lòng chọn ngày thanh lý hợp đồng.');
+        moToast('Vui lòng chọn ngày thanh lý hợp đồng.', 'warning');
         return;
       }
 
-      try {
-        const res = await fetch(`/api/v1/admin/contracts/${currentTerminateContractId}/terminate`, {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({
-            termination_date: terminationDate,
-            refund_deposit_amount: refund,
-            termination_reason: reason || null
-          })
-        });
+      await moWrapActionWithBusyState('btn-submit-terminate-contract', 'Đang thanh lý hợp đồng...', async () => {
+        try {
+          const res = await fetch(`/api/v1/admin/contracts/${currentTerminateContractId}/terminate`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              termination_date: terminationDate,
+              refund_deposit_amount: refund,
+              termination_reason: reason || null
+            })
+          });
 
-        const json = await res.json();
-        if (res.ok) {
-          alert('Thanh lý hợp đồng thành công! Mặt bằng đã được giải phóng sang trạng thái bảo trì/trống.');
-          closeTerminateContractModal();
-          loadContractsList();
-        } else {
-          alert('Lỗi thanh lý: ' + (json.message || ''));
+          const json = await res.json();
+          if (res.ok) {
+            moToast('Thanh lý hợp đồng thành công! Mặt bằng đã được giải phóng sang trạng thái bảo trì/trống.', 'success');
+            closeTerminateContractModal();
+            loadContractsList();
+          } else {
+            moToast('Lỗi thanh lý: ' + (json.message || ''), 'error');
+          }
+        } catch (e) {
+          moToast('Lỗi kết nối khi thanh lý hợp đồng: ' + (e.message || 'Lỗi mạng'), 'error');
         }
-      } catch (e) {
-        alert('Lỗi kết nối khi thanh lý hợp đồng.');
-      }
+      });
     }
 
     // 11. Tải lên file scan hợp đồng: POST /api/v1/admin/contracts/{id}/upload-files

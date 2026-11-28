@@ -722,28 +722,30 @@
       const note = document.getElementById("assign-note").value;
       const token = localStorage.getItem('auth_token');
 
-      try {
-        const res = await fetch(`/api/v1/tickets/` + id + `/assign`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': 'Bearer ' + token
-          },
-          body: JSON.stringify({ assigned_pm_id, expected_completion_at, note })
-        });
-        const json = await res.json();
-        if (res.ok && json.status === 'success') {
-          alert("Tiếp nhận và phân công nhân viên xử lý thành công!\nTrạng thái chuyển sang: IN_PROGRESS.");
-          closeTicketAssignModal();
-          openTicketDetail(id);
-          loadTicketsList();
-        } else {
-          alert("Lỗi phân công: " + (json.message || 'Yêu cầu quyền BQL / Admin'));
+      await moWrapActionWithBusyState('btn-submit-assign', 'Đang phân công...', async () => {
+        try {
+          const res = await fetch(`/api/v1/tickets/` + id + `/assign`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ assigned_pm_id, expected_completion_at, note })
+          });
+          const json = await res.json();
+          if (res.ok && json.status === 'success') {
+            alert("Tiếp nhận và phân công nhân viên xử lý thành công!\nTrạng thái chuyển sang: IN_PROGRESS.");
+            closeTicketAssignModal();
+            openTicketDetail(id);
+            loadTicketsList();
+          } else {
+            alert("Lỗi phân công: " + (json.message || 'Yêu cầu quyền BQL / Admin'));
+          }
+        } catch (err) {
+          console.error("Assign ticket error:", err);
         }
-      } catch (err) {
-        console.error("Assign ticket error:", err);
-      }
+      });
     }
 
     // 63. PATCH /api/v1/tickets/{id}/status: Cập nhật tiến độ xử lý
@@ -782,32 +784,34 @@
       const note = document.getElementById("status-note")?.value;
       const token = localStorage.getItem('auth_token');
 
-      try {
-        const payload = { status, note };
-        if (status === 'RESOLVED') payload.resolution_summary = resolution_summary;
-        if (status === 'ON_HOLD') payload.on_hold_reason = on_hold_reason;
+      await moWrapActionWithBusyState('btn-submit-status', 'Đang lưu tiến độ...', async () => {
+        try {
+          const payload = { status, note };
+          if (status === 'RESOLVED') payload.resolution_summary = resolution_summary;
+          if (status === 'ON_HOLD') payload.on_hold_reason = on_hold_reason;
 
-        const res = await fetch(`/api/v1/tickets/` + id + `/status`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': 'Bearer ' + token
-          },
-          body: JSON.stringify(payload)
-        });
-        const json = await res.json();
-        if (res.ok && json.status === 'success') {
-          alert("Cập nhật tiến độ xử lý ticket thành công!");
-          closeTicketStatusModal();
-          openTicketDetail(id);
-          loadTicketsList();
-        } else {
-          alert("Lỗi cập nhật tiến độ: " + (json.message || 'Không thành công'));
+          const res = await fetch(`/api/v1/tickets/` + id + `/status`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify(payload)
+          });
+          const json = await res.json();
+          if (res.ok && json.status === 'success') {
+            alert("Cập nhật tiến độ xử lý ticket thành công!");
+            closeTicketStatusModal();
+            openTicketDetail(id);
+            loadTicketsList();
+          } else {
+            alert("Lỗi cập nhật tiến độ: " + (json.message || 'Không thành công'));
+          }
+        } catch (err) {
+          console.error("Update status error:", err);
         }
-      } catch (err) {
-        console.error("Update status error:", err);
-      }
+      });
     }
 
     // 64. POST /api/v1/tickets/{id}/proof-images: Tải lên ảnh bằng chứng Before / After
@@ -874,32 +878,35 @@
       const id = document.getElementById("confirm-ticket-id").value;
       const feedback = document.getElementById("confirm-feedback").value;
       const token = localStorage.getItem('auth_token');
+      const btnId = isConfirmed ? 'btn-confirm-ticket-accept' : 'btn-confirm-ticket-reject';
 
-      try {
-        const res = await fetch(`/api/v1/tenant/tickets/` + id + `/confirm`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': 'Bearer ' + token
-          },
-          body: JSON.stringify({
-            confirmed: isConfirmed,
-            feedback: feedback
-          })
-        });
-        const json = await res.json();
-        if (res.ok && json.status === 'success') {
-          alert(json.message || (isConfirmed ? "Đã nghiệm thu hoàn tất phiếu hỗ trợ!" : "Đã gửi phản hồi yêu cầu BQL khắc phục lại!"));
-          closeTicketConfirmModal();
-          openTicketDetail(id);
-          loadTicketsList();
-        } else {
-          alert("Lỗi nghiệm thu: " + (json.message || 'Yêu cầu tài khoản Khách thuê (Tenant)'));
+      await moWrapActionWithBusyState(btnId, 'Đang gửi...', async () => {
+        try {
+          const res = await fetch(`/api/v1/tenant/tickets/` + id + `/confirm`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({
+              confirmed: isConfirmed,
+              feedback: feedback
+            })
+          });
+          const json = await res.json();
+          if (res.ok && json.status === 'success') {
+            alert(json.message || (isConfirmed ? "Đã nghiệm thu hoàn tất phiếu hỗ trợ!" : "Đã gửi phản hồi yêu cầu BQL khắc phục lại!"));
+            closeTicketConfirmModal();
+            openTicketDetail(id);
+            loadTicketsList();
+          } else {
+            alert("Lỗi nghiệm thu: " + (json.message || 'Yêu cầu tài khoản Khách thuê (Tenant)'));
+          }
+        } catch (err) {
+          console.error("Confirm ticket error:", err);
         }
-      } catch (err) {
-        console.error("Confirm ticket error:", err);
-      }
+      });
     }
 
     // 66. POST /api/v1/tenant/tickets/{id}/rate: Đánh giá CSAT
@@ -940,31 +947,33 @@
       const feedback = document.getElementById("rate-feedback").value;
       const token = localStorage.getItem('auth_token');
 
-      try {
-        const res = await fetch(`/api/v1/tenant/tickets/` + id + `/rate`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': 'Bearer ' + token
-          },
-          body: JSON.stringify({
-            rating: CSAT_SELECTED_STAR,
-            feedback: feedback
-          })
-        });
-        const json = await res.json();
-        if (res.ok && json.status === 'success') {
-          alert("Cảm ơn bạn đã gửi đánh giá chất lượng phục vụ cho Ban Quản Lý!");
-          closeTicketRateModal();
-          openTicketDetail(id);
-          loadTicketsList();
-        } else {
-          alert("Lỗi gửi đánh giá: " + (json.message || 'Yêu cầu tài khoản Khách thuê'));
+      await moWrapActionWithBusyState('btn-submit-rate', 'Đang gửi đánh giá...', async () => {
+        try {
+          const res = await fetch(`/api/v1/tenant/tickets/` + id + `/rate`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({
+              rating: CSAT_SELECTED_STAR,
+              feedback: feedback
+            })
+          });
+          const json = await res.json();
+          if (res.ok && json.status === 'success') {
+            alert("Cảm ơn bạn đã gửi đánh giá chất lượng phục vụ cho Ban Quản Lý!");
+            closeTicketRateModal();
+            openTicketDetail(id);
+            loadTicketsList();
+          } else {
+            alert("Lỗi gửi đánh giá: " + (json.message || 'Yêu cầu tài khoản Khách thuê'));
+          }
+        } catch (err) {
+          console.error("Rate ticket error:", err);
         }
-      } catch (err) {
-        console.error("Rate ticket error:", err);
-      }
+      });
     }
 
     function resetTicketFilters(viewType = 'admin') {

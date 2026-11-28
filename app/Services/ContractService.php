@@ -629,6 +629,20 @@ class ContractService
      */
     public function renewContract(Contract $oldContract, array $data, mixed $user): Contract
     {
+        $newEndDate = $data['new_end_date'];
+
+        // Idempotency Guard: Nếu hợp đồng cũ đã chuyển sang RENEWED trước đó (do request retry hoặc duplicate submit)
+        if ($oldContract->status === ContractStatus::RENEWED) {
+            $existingRenewedContract = Contract::where('parent_contract_id', $oldContract->id)
+                ->where('end_date', $newEndDate)
+                ->latest()
+                ->first();
+
+            if ($existingRenewedContract) {
+                return $existingRenewedContract->load(['contractUnits.unit', 'parentContract']);
+            }
+        }
+
         if (!in_array($oldContract->status, [ContractStatus::ACTIVE, ContractStatus::EXPIRING_SOON])) {
             throw new BusinessException('Chỉ có thể gia hạn hợp đồng đang có hiệu lực hoặc sắp hết hạn.', 422);
         }
@@ -737,6 +751,14 @@ class ContractService
      */
     public function terminateContract(Contract $contract, array $data, mixed $user): Contract
     {
+        // Idempotency Guard: Nếu hợp đồng đã thanh lý trước đó (do request retry hoặc duplicate submit)
+        if ($contract->status === ContractStatus::TERMINATED) {
+            if ($user instanceof PropertyManager) {
+                $this->ensurePmAssignedToBuilding($user, $contract->building_id);
+            }
+            return $contract->fresh(['contractUnits.unit', 'building', 'tenant']);
+        }
+
         if (!in_array($contract->status, [ContractStatus::ACTIVE, ContractStatus::EXPIRING_SOON])) {
             throw new BusinessException('Chỉ có thể thanh lý hợp đồng đang có hiệu lực hoặc sắp hết hạn.', 422);
         }

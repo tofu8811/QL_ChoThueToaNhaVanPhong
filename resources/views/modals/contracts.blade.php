@@ -244,7 +244,7 @@
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;">
         <button type="button" class="btn-mo-outline" onclick="closeReserveContractModal()">Hủy</button>
-        <button type="submit" class="btn-mo-primary" style="background:#d97706;border-color:#d97706;"><i class="fa-solid fa-check"></i> Tạo Giữ Chỗ (RESERVED)</button>
+        <button type="submit" id="btn-submit-reserve-contract" class="btn-mo-primary" style="background:#d97706;border-color:#d97706;"><i class="fa-solid fa-check"></i> Tạo Giữ Chỗ (RESERVED)</button>
       </div>
     </form>
   </div>
@@ -315,7 +315,7 @@
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;">
         <button type="button" class="btn-mo-outline" onclick="closeRenewContractModal()">Hủy</button>
-        <button type="button" class="btn-mo-primary" style="background:#0284c7;border-color:#0284c7;" onclick="submitRenewContract()"><i class="fa-solid fa-check"></i> Xác Nhận Gia Hạn</button>
+        <button type="button" id="btn-submit-renew-contract" class="btn-mo-primary" style="background:#0284c7;border-color:#0284c7;" onclick="submitRenewContract()"><i class="fa-solid fa-check"></i> Xác Nhận Gia Hạn</button>
       </div>
     </div>
   </div>
@@ -352,7 +352,7 @@
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;">
         <button type="button" class="btn-mo-outline" onclick="closeTerminateContractModal()">Hủy</button>
-        <button type="button" class="btn-mo-primary" style="background:#dc2626;border-color:#dc2626;" onclick="submitTerminateContract()"><i class="fa-solid fa-check"></i> Xác Nhận Thanh Lý</button>
+        <button type="button" id="btn-submit-terminate-contract" class="btn-mo-primary" style="background:#dc2626;border-color:#dc2626;" onclick="submitTerminateContract()"><i class="fa-solid fa-check"></i> Xác Nhận Thanh Lý</button>
       </div>
     </div>
   </div>

@@ -104,7 +104,7 @@
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;">
         <button type="button" class="btn-mo-outline" onclick="closeAssignSalesModal()">Đóng</button>
-        <button type="button" class="btn-mo-primary" onclick="submitAssignLeadSales()"><i class="fa-solid fa-check"></i> Xác Nhận Phân Công</button>
+        <button type="button" id="btn-submit-assign-sales" class="btn-mo-primary" onclick="submitAssignLeadSales()"><i class="fa-solid fa-check"></i> Xác Nhận Phân Công</button>
       </div>
     </div>
   </div>
@@ -133,7 +133,7 @@
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;">
         <button type="button" class="btn-mo-outline" onclick="closeConvertToTenantModal()">Hủy</button>
-        <button type="button" class="btn-mo-primary" style="background:#16a34a;border-color:#16a34a;" onclick="submitConvertToTenant()">
+        <button type="button" id="btn-submit-convert-lead" class="btn-mo-primary" style="background:#16a34a;border-color:#16a34a;" onclick="submitConvertToTenant()">
           <i class="fa-solid fa-arrow-right-to-bracket"></i> Tạo Khách Thuê & Chốt Won
         </button>
       </div>
